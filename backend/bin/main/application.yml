@@ -1,9 +1,13 @@
 spring:
   application:
     name: hwaryeok-api
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:backend/.env[.properties]
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hwaryeok}
-    username: ${DB_USER:hwaryeok}
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hwaryeok}}
+    username: ${DB_USER:${DB_USERNAME:hwaryeok}}
     password: ${DB_PASSWORD:hwaryeok}
   jpa:
     open-in-view: false
@@ -11,9 +15,13 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
+        default_schema: ${DB_SCHEMA:hwaryeok}
         format_sql: true
   flyway:
     enabled: true
+    create-schemas: true
+    default-schema: ${DB_SCHEMA:hwaryeok}
+    schemas: ${DB_SCHEMA:hwaryeok}
 
 server:
   port: ${SERVER_PORT:8080}

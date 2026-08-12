@@ -42,6 +42,28 @@ class HwaryeokApplicationTests {
     }
 
     @Test
+    void servesProductDetailAndSkinRankingApis() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest detailRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products/birch-cream"))
+                .GET()
+                .build();
+        HttpRequest rankingRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products/ranking?skinType=%EB%AF%BC%EA%B0%90&limit=3"))
+                .GET()
+                .build();
+
+        HttpResponse<String> detailResponse = client.send(detailRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> rankingResponse = client.send(rankingRequest, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(detailResponse.statusCode()).isEqualTo(200);
+        assertThat(detailResponse.body()).contains("birch-cream", "수분 장벽 강화");
+        assertThat(rankingResponse.statusCode()).isEqualTo(200);
+        assertThat(rankingResponse.body()).contains("birch-cream", "heartleaf-toner", "ceramide-serum");
+        assertThat(rankingResponse.body()).doesNotContain("mugwort-ampoule");
+    }
+
+    @Test
     void servesPersonalAnalysisApi() throws Exception {
         String payload = """
                 {

@@ -19,6 +19,17 @@ cd backend
 
 Windows에서는 `gradlew.bat bootRun`을 사용합니다. 기본 주소는 `http://localhost:8080`입니다.
 
+백엔드는 실행 위치에 따라 `backend/.env` 또는 저장소 루트의 `.env`를 자동으로 읽습니다. 처음에는 `backend/.env.example`을 복사하고 접속 정보를 입력합니다.
+
+```text
+DB_URL=jdbc:postgresql://호스트:5432/데이터베이스명
+DB_USER=데이터베이스사용자
+DB_PASSWORD=데이터베이스비밀번호
+DB_SCHEMA=hwaryeok
+```
+
+시작할 때 Flyway가 `DB_SCHEMA`를 생성하고 마이그레이션을 적용하며, Hibernate는 같은 스키마를 검증해 사용합니다.
+
 Docker 없이 화면 연동을 빠르게 확인할 때만 개발용 H2 프로필을 사용할 수 있습니다.
 
 ```bash

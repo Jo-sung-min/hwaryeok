@@ -41,6 +41,8 @@ cd backend
 
 Windows PowerShell에서는 `./gradlew.bat bootRun`을 사용합니다. Docker 없이 빠르게 확인하려면 다음 개발 전용 명령을 사용할 수 있습니다.
 
+백엔드는 `backend/.env`를 자동으로 읽습니다. `DB_SCHEMA`에 사용할 PostgreSQL 스키마 이름을 지정하면 Flyway와 Hibernate가 같은 스키마를 사용합니다. 로컬 PostgreSQL 기본 양식은 `backend/.env.example`에서 확인할 수 있습니다.
+
 ```bash
 ./gradlew.bat bootRun --args="--spring.profiles.active=local"
 ```

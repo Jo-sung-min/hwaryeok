@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Product } from "@/lib/data";
+import type { Analysis, Product } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -21,15 +21,21 @@ type ProductQuery = {
   grade?: number;
 };
 
-export async function getProducts(query: ProductQuery = {}): Promise<Product[]> {
-  const search = new URLSearchParams();
-  if (query.query) search.set("query", query.query);
-  if (query.category && query.category !== "전체") search.set("category", query.category);
-  if (query.grade) search.set("grade", String(query.grade));
+export type AnalysisInput = {
+  productId: string;
+  skinType: string;
+  concerns: string[];
+};
 
-  const response = await fetch(`${API_BASE_URL}/products?${search}`, {
+async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     cache: "no-store",
-    headers: { Accept: "application/json" },
+    ...init,
+    headers: {
+      Accept: "application/json",
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {
@@ -41,5 +47,31 @@ export async function getProducts(query: ProductQuery = {}): Promise<Product[]> 
     );
   }
 
-  return response.json() as Promise<Product[]>;
+  return response.json() as Promise<T>;
+}
+
+export async function getProducts(query: ProductQuery = {}): Promise<Product[]> {
+  const search = new URLSearchParams();
+  if (query.query) search.set("query", query.query);
+  if (query.category && query.category !== "전체") search.set("category", query.category);
+  if (query.grade) search.set("grade", String(query.grade));
+
+  const suffix = search.size > 0 ? `?${search}` : "";
+  return requestJson<Product[]>(`/products${suffix}`);
+}
+
+export function getProduct(id: string): Promise<Product> {
+  return requestJson<Product>(`/products/${encodeURIComponent(id)}`);
+}
+
+export function getRanking(skinType: string, limit = 6): Promise<Product[]> {
+  const search = new URLSearchParams({ skinType, limit: String(limit) });
+  return requestJson<Product[]>(`/products/ranking?${search}`);
+}
+
+export function getAnalysis(input: AnalysisInput): Promise<Analysis> {
+  return requestJson<Analysis>("/analyses/preview", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }

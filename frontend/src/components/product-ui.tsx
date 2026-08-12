@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Heart, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
-import type { Product } from "@/lib/data";
+import type { Product } from "@/lib/types";
 
 const toneMap = {
   peach: "from-[#f2c8b8] to-[#fbefe5]",

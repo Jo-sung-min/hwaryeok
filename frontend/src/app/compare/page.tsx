@@ -1,41 +1,84 @@
-"use client";
-
 import Link from "next/link";
-import { Check, ChevronDown, Plus, Sparkles, X } from "lucide-react";
-import { useState } from "react";
-import { GradeSeal, ProductVisual } from "@/components/product-ui";
-import { products, scoreDetails } from "@/lib/data";
+import { connection } from "next/server";
+import { Check, Plus, Sparkles } from "lucide-react";
+import { GradeSeal } from "@/components/product-ui";
+import { getAnalysis, getProducts } from "@/lib/api";
+import type { Analysis } from "@/lib/types";
+import { CompareSelectors } from "./compare-selectors";
 
-export default function ComparePage() {
-  const [leftId, setLeftId] = useState(products[0].id);
-  const [rightId, setRightId] = useState(products[1].id);
-  const left = products.find(product => product.id === leftId)!;
-  const right = products.find(product => product.id === rightId)!;
-  const rows = [
-    { label: "보습력", a: 96, b: 84, higher: true },
-    { label: "진정력", a: 92, b: 95, higher: true },
-    { label: "피부 장벽", a: 95, b: 79, higher: true },
-    { label: "유분 부담", a: 24, b: 16, higher: false },
-    { label: "트러블 위험", a: 12, b: 20, higher: false },
-  ];
+const defaultProfile = {
+  skinType: "수부지",
+  concerns: ["속건조", "민감", "피부 장벽"],
+};
+
+type CompareSearchParams = Promise<{ left?: string | string[]; right?: string | string[] }>;
+
+function first(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function ComparePage({ searchParams }: { searchParams: CompareSearchParams }) {
+  await connection();
+  const [params, products] = await Promise.all([searchParams, getProducts()]);
+
+  if (products.length < 2) return <CompareEmpty />;
+
+  const requestedLeft = first(params.left);
+  const requestedRight = first(params.right);
+  const left = products.find((product) => product.id === requestedLeft) ?? products[0];
+  let right = products.find((product) => product.id === requestedRight) ?? products.find((product) => product.id !== left.id) ?? products[1];
+  if (right.id === left.id) right = products.find((product) => product.id !== left.id) ?? products[1];
+
+  const [leftAnalysis, rightAnalysis] = await Promise.all([
+    getAnalysis({ productId: left.id, ...defaultProfile }),
+    getAnalysis({ productId: right.id, ...defaultProfile }),
+  ]);
+  const rows = buildRows(leftAnalysis, rightAnalysis);
+  const isTie = leftAnalysis.score === rightAnalysis.score;
+  const leftWins = leftAnalysis.score >= rightAnalysis.score;
+  const recommendation = leftWins ? left : right;
+  const recommendationAnalysis = leftWins ? leftAnalysis : rightAnalysis;
+  const otherAnalysis = leftWins ? rightAnalysis : leftAnalysis;
+  const strengths = recommendationAnalysis.details
+    .filter((detail) => {
+      const other = otherAnalysis.details.find((item) => item.label === detail.label);
+      return other && (detail.positive ? detail.value > other.value : detail.value < other.value);
+    })
+    .slice(0, 2)
+    .map((detail) => detail.label);
+
   return <div className="min-h-screen pb-24">
-    <section className="border-b border-[#74513f16] bg-[#f3e9dc8c] py-14 text-center"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="font-myeongjo text-4xl md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm text-[#786c63]">숫자만 비교하지 않고, 지금 피부에 더 잘 맞는 이유까지 알려드려요.</p></div></section>
+    <section className="border-b border-[#74513f16] bg-[#f3e9dc8c] py-14 text-center"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="font-myeongjo text-4xl md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm text-[#786c63]">수부지 · 속건조 · 민감 · 피부 장벽 프로필로 두 제품을 같은 기준에서 분석해요.</p></div></section>
     <section className="container-page py-10 md:py-16">
       <div className="overflow-hidden rounded-[30px] border border-[#74513f1a] bg-[#fffaf2a8]">
         <div className="grid grid-cols-[78px_1fr_1fr] sm:grid-cols-[170px_1fr_1fr]">
           <div className="border-b border-r border-[#74513f18] bg-[#f0e5d7]" />
-          {[{product:left,set:setLeftId},{product:right,set:setRightId}].map(({product,set},index)=><div key={index} className={`border-b border-[#74513f18] p-3 sm:p-6 ${index===0?"border-r":""}`}><div className="relative mb-4 overflow-hidden rounded-xl"><ProductVisual tone={product.tone} compact/></div><div className="relative"><select aria-label={`${index+1}번째 비교 제품`} value={product.id} onChange={e=>set(e.target.value)} className="h-11 w-full appearance-none rounded-xl border border-[#74513f20] bg-[#fffdf7] pl-3 pr-8 text-xs font-semibold outline-none sm:text-sm">{products.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3 top-3.5" size={14}/></div></div>)}
+          <CompareSelectors products={products} leftId={left.id} rightId={right.id} />
           <CompareLabel label="나의 화력" />
-          {[left,right].map((product,index)=><div key={product.id} className={`flex flex-col items-center justify-center gap-3 border-b border-[#74513f18] p-4 sm:flex-row ${index===0?"border-r":""}`}><GradeSeal grade={product.grade} compact/><span className="text-center text-[11px] text-[#776a61]">{product.grade===1?"매우 잘 맞아요":"잘 맞는 편이에요"}</span></div>)}
+          {[{ product: left, analysis: leftAnalysis }, { product: right, analysis: rightAnalysis }].map(({ product, analysis }, index) => <div key={product.id} className={`flex flex-col items-center justify-center gap-3 border-b border-[#74513f18] p-4 sm:flex-row ${index === 0 ? "border-r" : ""}`}><GradeSeal grade={analysis.grade} compact/><span className="text-center text-[11px] text-[#776a61]">{analysis.verdict}</span></div>)}
           <CompareLabel label="적합도" />
-          {[left,right].map((product,index)=><div key={product.id} className={`border-b border-[#74513f18] p-5 text-center ${index===0?"border-r bg-[#a54f4905]":""}`}><strong className="font-myeongjo text-4xl text-[#9b4a45]">{product.score}</strong><span className="text-xs text-[#897a70]"> / 100</span></div>)}
-          {rows.map(row=><div key={row.label} className="contents"><CompareLabel label={row.label}/>{[{value:row.a,other:row.b},{value:row.b,other:row.a}].map(({value,other},index)=>{const winner=row.higher?value>other:value<other;return <div key={index} className={`relative border-b border-[#74513f18] p-4 text-center sm:p-6 ${index===0?"border-r":""} ${winner?"bg-[#8593790c]":""}`}><strong className="font-myeongjo text-2xl">{value}</strong>{winner&&<Check size={15} className="absolute right-2 top-2 text-[#73806c]"/>}<div className="mx-auto mt-2 h-1.5 max-w-24 overflow-hidden rounded-full bg-[#d6c6b74d]"><div className={`${row.higher?"bg-[#84917b]":"bg-[#c98b75]"} h-full rounded-full`} style={{width:`${value}%`}}/></div></div>})}</div>)}
+          {[leftAnalysis, rightAnalysis].map((analysis, index) => <div key={analysis.productId} className={`border-b border-[#74513f18] p-5 text-center ${index === 0 ? "border-r bg-[#a54f4905]" : ""}`}><strong className="font-myeongjo text-4xl text-[#9b4a45]">{analysis.score}</strong><span className="text-xs text-[#897a70]"> / 100</span></div>)}
+          {rows.map((row) => <div key={row.label} className="contents"><CompareLabel label={row.label}/>{[{ value: row.left, other: row.right }, { value: row.right, other: row.left }].map(({ value, other }, index) => { const winner = row.positive ? value > other : value < other; return <div key={index} className={`relative border-b border-[#74513f18] p-4 text-center sm:p-6 ${index === 0 ? "border-r" : ""} ${winner ? "bg-[#8593790c]" : ""}`}><strong className="font-myeongjo text-2xl">{value}</strong>{winner && <Check size={15} className="absolute right-2 top-2 text-[#73806c]"/>}<div className="mx-auto mt-2 h-1.5 max-w-24 overflow-hidden rounded-full bg-[#d6c6b74d]"><div className={`${row.positive ? "bg-[#84917b]" : "bg-[#c98b75]"} h-full rounded-full`} style={{ width: `${value}%` }}/></div></div>; })}</div>)}
         </div>
       </div>
-      <div className="mt-7 rounded-[26px] border border-[#a54f4922] bg-[#f1e2db73] p-6 md:flex md:items-center md:gap-6 md:p-8"><span className="seal h-12 w-12 shrink-0 font-myeongjo text-xl">解</span><div className="mt-4 md:mt-0"><div className="flex items-center gap-2 text-xs font-bold text-[#994944]"><Sparkles size={14}/> 화력의 결론</div><p className="mt-2 font-myeongjo text-lg leading-8"><strong>{left.name}</strong>을 더 추천해요. 속건조와 피부 장벽 항목에서 지금 피부에 더 높은 적합도를 보여요.</p></div><Link href={`/products/${left.id}`} className="line-btn mt-5 shrink-0 md:ml-auto md:mt-0">상세 분석 보기</Link></div>
-      <button className="line-btn mx-auto mt-8"><Plus size={16}/> 비교 제품 하나 더 담기</button>
+
+      <div className="mt-7 rounded-[26px] border border-[#a54f4922] bg-[#f1e2db73] p-6 md:flex md:items-center md:gap-6 md:p-8"><span className="seal h-12 w-12 shrink-0 font-myeongjo text-xl">解</span><div className="mt-4 md:mt-0"><div className="flex items-center gap-2 text-xs font-bold text-[#994944]"><Sparkles size={14}/> 화력의 결론</div><p className="mt-2 font-myeongjo text-lg leading-8">{isTie ? <><strong>두 제품의 종합 적합도가 같아요.</strong> 사용감과 주효능을 보고 선택해보세요.</> : <><strong>{recommendation.name}</strong>을 더 추천해요. {strengths.length > 0 ? `${strengths.join(" · ")} 항목에서 지금 피부에 더 유리해요.` : "종합 화력 점수가 더 높아요."}</>}</p></div><Link href={`/products/${recommendation.id}`} className="line-btn mt-5 shrink-0 md:ml-auto md:mt-0">상세 분석 보기</Link></div>
+      <Link href="/products" className="line-btn mx-auto mt-8"><Plus size={16}/> 다른 비교 제품 찾기</Link>
     </section>
   </div>;
 }
 
-function CompareLabel({label}:{label:string}) { return <div className="flex items-center border-b border-r border-[#74513f18] bg-[#f5ecdf] p-3 text-[11px] font-semibold text-[#72665e] sm:p-5 sm:text-sm">{label}</div>; }
+function buildRows(left: Analysis, right: Analysis) {
+  return left.details.flatMap((detail) => {
+    const matching = right.details.find((item) => item.label === detail.label);
+    return matching ? [{ label: detail.label, left: detail.value, right: matching.value, positive: detail.positive }] : [];
+  });
+}
+
+function CompareEmpty() {
+  return <div className="container-page grid min-h-[65vh] place-items-center py-16"><div className="paper-card max-w-lg rounded-[30px] px-8 py-14 text-center"><span className="text-4xl text-[#d08f7c]">❀</span><h1 className="mt-5 font-myeongjo text-2xl">비교할 제품이 부족해요.</h1><p className="mt-3 text-sm leading-7 text-[#796c63]">제품이 두 개 이상 등록되면 화력 차이를 나란히 보여드릴게요.</p><Link href="/products" className="ink-btn mt-7">제품 둘러보기</Link></div></div>;
+}
+
+function CompareLabel({ label }: { label: string }) {
+  return <div className="flex items-center border-b border-r border-[#74513f18] bg-[#f5ecdf] p-3 text-[11px] font-semibold text-[#72665e] sm:p-5 sm:text-sm">{label}</div>;
+}

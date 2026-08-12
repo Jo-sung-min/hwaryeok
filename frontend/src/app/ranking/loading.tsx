@@ -1,0 +1,3 @@
+export default function RankingLoading() {
+  return <div className="min-h-screen pb-24" aria-busy="true" aria-label="화력 랭킹을 불러오는 중"><div className="h-80 animate-pulse bg-[#302c28]"/><div className="container-page py-14"><div className="mb-10 h-10 w-56 animate-pulse rounded-xl bg-[#d9cbbd]"/><div className="grid gap-5 md:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <div key={index} className="paper-card overflow-hidden rounded-[26px]"><div className="h-40 animate-pulse bg-[#dfd4c8]"/><div className="space-y-3 p-5"><div className="h-3 w-20 animate-pulse rounded bg-[#d9cbbd]"/><div className="h-6 w-4/5 animate-pulse rounded bg-[#d9cbbd]"/><div className="h-11 animate-pulse rounded-xl bg-[#eadfd2]"/></div></div>)}</div></div></div>;
+}

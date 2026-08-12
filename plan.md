@@ -6,9 +6,9 @@
 
 ## 현재 상태
 
-- **완료:** 수채화 디자인 기반 Next.js 프론트엔드 MVP, Spring Boot API 1차, 제품 탐색 API 연동
-- **현재 작업:** 제품 상세·랭킹·비교 화면의 Spring Boot API 전환
-- **다음 작업:** 성분 데이터 모델과 제품-성분 관계
+- **완료:** 수채화 디자인 기반 Next.js 프론트엔드 MVP, Spring Boot API 1차, 제품 탐색·상세·랭킹·비교 API 연동
+- **현재 작업:** 성분 데이터 모델과 제품-성분 관계
+- **다음 작업:** 성분 목록·상세·필터 API와 성분 사전 화면 연동
 
 ## 완료 기준
 
@@ -39,6 +39,7 @@
 - [x] `backend/` Spring Boot 4 + Java 21 + Gradle 프로젝트
 - [x] PostgreSQL Docker Compose 개발 환경
 - [x] 환경 변수 기반 DB/CORS 설정
+- [x] `.env` 자동 로드 및 `DB_SCHEMA` 기반 Flyway·Hibernate 스키마 연결
 - [x] 공통 API 응답 오류 형식 및 예외 처리
 - [x] Actuator 상태 확인 엔드포인트
 - [x] 테스트용 H2 분리 설정
@@ -72,7 +73,7 @@
 - [x] 제품 탐색 검색·필터 URL 상태 동기화
 - [x] 제품 탐색 Skeleton 로딩 UI
 - [x] 제품 탐색 빈 결과 및 API 오류·재시도 UI
-- [ ] 상세·랭킹·비교 화면 실데이터 연동
+- [x] 상세·랭킹·비교 화면 실데이터 연동
 
 ## 5. 회원 및 인증
 
@@ -144,3 +145,21 @@
 - 분리: 프론트와 백엔드에 각각 독립적인 `.env.example`과 실행 문서 배치
 - Vercel: 프로젝트 Root Directory를 `frontend`로 지정하는 배포 구성 추가
 - 원칙: 프론트는 Spring Boot 공개 API만 호출하며 PostgreSQL에는 직접 연결하지 않음
+
+### 2026-08-12 — 상세·랭킹·비교 API 연동
+
+- 상세: 제품 정보, 개인 화력 판정, 세부 점수, 추천 제품을 Spring Boot 응답으로 전환
+- 랭킹: 피부 타입 탭을 URL 상태와 동기화하고 유형별 랭킹 API로 재계산
+- 비교: 두 제품 선택을 URL에 보존하고 동일 피부 프로필의 분석 응답으로 비교표와 결론 생성
+- 상태 처리: 상세·랭킹·비교 전용 로딩, 빈 결과, 오류·재시도, 제품 없음 화면 추가
+- 정직한 표시: 아직 API가 없는 제품별 전성분과 리뷰는 임시 가짜 데이터 대신 준비 상태로 표시
+- 백엔드 검증: 제품 상세·피부 타입 랭킹 HTTP 통합 테스트 보강
+- 검증: `gradle clean build`, `npm run typecheck`, `npm run build` 통과 및 데스크톱·모바일 브라우저 흐름 확인
+
+### 2026-08-12 — PostgreSQL 스키마 환경 변수 연결
+
+- 환경 파일: `backend/.env`와 루트 `.env` 자동 로드 구성
+- 접속 정보: JDBC URL, 사용자명, 비밀번호를 각각의 환경 변수로 분리
+- 스키마: `DB_SCHEMA`를 Flyway 기본 스키마와 Hibernate 기본 스키마에 동일 적용
+- 초기화: Flyway가 스키마를 생성한 뒤 `db/migration` 변경 이력을 적용
+- 예시: 루트 및 백엔드 `.env.example`에 로컬 PostgreSQL 양식 추가

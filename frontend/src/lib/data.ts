@@ -1,16 +1,6 @@
-export type Product = {
-  id: string;
-  brand: string;
-  name: string;
-  category: string;
-  grade: 1 | 2 | 3 | 4 | 5;
-  score: number;
-  benefit: string;
-  subBenefit: string;
-  price: string;
-  tone: "peach" | "sage" | "sand" | "rose" | "blue";
-  tag?: string;
-};
+import type { Product } from "@/lib/types";
+
+export type { Product } from "@/lib/types";
 
 export const products: Product[] = [
   { id: "birch-cream", brand: "라운드랩", name: "자작나무 수분 크림", category: "크림", grade: 1, score: 94, benefit: "수분 장벽 강화", subBenefit: "속건조 진정", price: "32,000원", tone: "blue", tag: "민감 피부 1위" },
