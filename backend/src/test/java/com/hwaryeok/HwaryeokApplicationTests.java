@@ -1,0 +1,65 @@
+package com.hwaryeok;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+import com.hwaryeok.product.ProductRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class HwaryeokApplicationTests {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Test
+    void loadsApplicationAndSeedsProducts() {
+        assertThat(productRepository.count()).isEqualTo(6);
+    }
+
+    @Test
+    void servesProductSearchApi() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products?query=자작나무&grade=1"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("birch-cream", "자작나무 수분 크림", "\"grade\":1");
+    }
+
+    @Test
+    void servesPersonalAnalysisApi() throws Exception {
+        String payload = """
+                {
+                  "productId": "birch-cream",
+                  "skinType": "수부지",
+                  "concerns": ["속건조", "민감", "피부 장벽"]
+                }
+                """;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/analyses/preview"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"grade\":1", "\"score\":100", "매우 잘 맞아요");
+    }
+}
