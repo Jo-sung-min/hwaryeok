@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, ChevronRight, FlaskConical, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
-import { ApiRequestError, getAnalysis, getProduct, getProducts } from "@/lib/api";
+import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
+import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProducts } from "@/lib/api";
 
 const defaultProfile = {
   skinType: "수부지",
@@ -13,10 +14,11 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
   const { id } = await params;
 
   try {
-    const [product, analysis, products] = await Promise.all([
+    const [product, analysis, products, ingredientData] = await Promise.all([
       getProduct(id),
       getAnalysis({ productId: id, ...defaultProfile }),
       getProducts(),
+      getProductIngredients(id),
     ]);
     const relatedProducts = products.filter((item) => item.id !== product.id).slice(0, 3);
 
@@ -75,10 +77,9 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
           </div>
         </section>
 
-        <section className="container-page grid gap-5 py-20 md:grid-cols-2 md:py-28">
-          <div className="paper-card rounded-[26px] p-7 md:p-9"><FlaskConical className="text-[#8a987f]" /><p className="eyebrow mb-3 mt-6">INGREDIENT NOTE</p><h2 className="font-myeongjo text-2xl font-semibold">제품별 전성분 분석 준비 중</h2><p className="mt-3 text-sm leading-7 text-[#796c63]">다음 단계에서 제품과 성분 데이터를 연결해 실제 함유 성분만 보여드릴게요.</p><Link href="/ingredients" className="line-btn mt-6">성분 사전 보기 <ChevronRight size={16} /></Link></div>
-          <div className="paper-card rounded-[26px] p-7 md:p-9"><MessageCircle className="text-[#c17f69]" /><p className="eyebrow mb-3 mt-6">SKIN REVIEWS</p><h2 className="font-myeongjo text-2xl font-semibold">실사용 리뷰 준비 중</h2><p className="mt-3 text-sm leading-7 text-[#796c63]">회원 기능과 리뷰 API가 연결되면 피부 타입과 사용 기간을 확인할 수 있어요.</p><span className="mt-6 inline-flex rounded-full bg-[#a54f4910] px-4 py-2 text-xs font-semibold text-[#934640]">리뷰 기능 예정</span></div>
-        </section>
+        <ProductIngredientsPanel data={ingredientData}/>
+
+        <section className="container-page pb-20"><div className="paper-card rounded-[26px] p-7 md:p-9"><MessageCircle className="text-[#c17f69]" /><p className="eyebrow mb-3 mt-6">SKIN REVIEWS</p><h2 className="font-myeongjo text-2xl font-semibold">실사용 리뷰 준비 중</h2><p className="mt-3 text-sm leading-7 text-[#796c63]">회원 기능과 리뷰 API가 연결되면 피부 타입과 사용 기간을 확인할 수 있어요.</p><span className="mt-6 inline-flex rounded-full bg-[#a54f4910] px-4 py-2 text-xs font-semibold text-[#934640]">리뷰 기능 예정</span></div></section>
 
         {relatedProducts.length > 0 && <section className="container-page pb-20"><h2 className="mb-8 font-myeongjo text-2xl font-semibold">함께 비교해볼 제품</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{relatedProducts.map((item) => <ProductCard key={item.id} product={item} />)}</div></section>}
       </div>

@@ -2,6 +2,8 @@ package com.hwaryeok.product;
 
 import java.util.List;
 
+import com.hwaryeok.ingredient.IngredientService;
+import com.hwaryeok.ingredient.ProductIngredientsResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final IngredientService ingredientService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, IngredientService ingredientService) {
         this.productService = productService;
+        this.ingredientService = ingredientService;
     }
 
     @GetMapping
@@ -30,6 +34,15 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductResponse findProduct(@PathVariable String id) {
         return productService.findProduct(id);
+    }
+
+    @GetMapping("/{id}/ingredients")
+    public ProductIngredientsResponse findProductIngredients(
+            @PathVariable String id,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String tag
+    ) {
+        return ingredientService.findProductIngredients(id, status, tag);
     }
 
     @GetMapping("/ranking")

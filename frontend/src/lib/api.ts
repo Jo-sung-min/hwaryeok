@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, Product } from "@/lib/types";
+import type { Analysis, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -25,6 +25,16 @@ export type AnalysisInput = {
   productId: string;
   skinType: string;
   concerns: string[];
+};
+
+export type IngredientQuery = {
+  query?: string;
+  status?: IngredientStatus;
+  tag?: string;
+  page?: number;
+  size?: number;
+  sort?: "name" | "englishName" | "role" | "status";
+  direction?: "asc" | "desc";
 };
 
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -74,4 +84,24 @@ export function getAnalysis(input: AnalysisInput): Promise<Analysis> {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export function getIngredients(query: IngredientQuery = {}): Promise<IngredientPage> {
+  const search = new URLSearchParams();
+  if (query.query) search.set("query", query.query);
+  if (query.status) search.set("status", query.status);
+  if (query.tag) search.set("tag", query.tag);
+  search.set("page", String(query.page ?? 0));
+  search.set("size", String(query.size ?? 12));
+  search.set("sort", query.sort ?? "name");
+  search.set("direction", query.direction ?? "asc");
+  return requestJson<IngredientPage>(`/ingredients?${search}`);
+}
+
+export function getIngredient(id: string): Promise<IngredientDetail> {
+  return requestJson<IngredientDetail>(`/ingredients/${encodeURIComponent(id)}`);
+}
+
+export function getProductIngredients(productId: string): Promise<ProductIngredients> {
+  return requestJson<ProductIngredients>(`/products/${encodeURIComponent(productId)}/ingredients`);
 }

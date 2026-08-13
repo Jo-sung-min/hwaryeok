@@ -84,4 +84,40 @@ class HwaryeokApplicationTests {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).contains("\"grade\":1", "\"score\":100", "매우 잘 맞아요");
     }
+
+    @Test
+    void servesIngredientSearchAndDetailApis() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest searchRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/ingredients?query=%ED%8C%90%ED%85%8C%EB%86%80&status=GOOD&page=0&size=5"))
+                .GET()
+                .build();
+        HttpRequest detailRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/ingredients/panthenol"))
+                .GET()
+                .build();
+
+        HttpResponse<String> searchResponse = client.send(searchRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> detailResponse = client.send(detailRequest, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(searchResponse.statusCode()).isEqualTo(200);
+        assertThat(searchResponse.body()).contains("\"totalElements\":1", "판테놀", "\"status\":\"GOOD\"");
+        assertThat(detailResponse.statusCode()).isEqualTo(200);
+        assertThat(detailResponse.body()).contains("Panthenol", "skinTypeFeatures", "concernFeatures", "birch-cream");
+    }
+
+    @Test
+    void servesFilteredProductIngredientsApi() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products/birch-cream/ingredients?tag=%EC%9E%A5%EB%B2%BD"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).contains("\"totalCount\":4", "판테놀", "\"goodCount\":3", "\"cautionCount\":1");
+        assertThat(response.body()).doesNotContain("자작나무 수액", "시어버터");
+    }
 }

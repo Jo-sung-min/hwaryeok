@@ -37,6 +37,11 @@ management:
     health:
       show-details: never
 
+logging:
+  level:
+    # JDBC URL에 민감한 연결 속성이 포함된 환경에서도 시작 로그에 노출하지 않습니다.
+    org.hibernate.orm.connections.pooling: warn
+
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

@@ -6,12 +6,15 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     properties:
       hibernate:
-        default_schema: PUBLIC
+        default_schema: public
   flyway:
-    enabled: false
+    enabled: true
+    create-schemas: true
+    default-schema: public
+    schemas: public
 
 management:
   endpoint:
