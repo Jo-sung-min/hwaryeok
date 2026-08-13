@@ -24,6 +24,16 @@ export type ProductPage = {
   hasNext: boolean;
 };
 
+export type FavoriteProduct = {
+  product: Product;
+  favoritedAt: string;
+};
+
+export type FavoriteList = {
+  content: FavoriteProduct[];
+  totalElements: number;
+};
+
 export type ScoreDetail = {
   label: string;
   value: number;

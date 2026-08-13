@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { getProductPage } from "@/lib/api";
+import { getFavoriteViewState } from "@/lib/auth-session";
 import { CategoryNavigation, DesktopFilters, MobileFilters, ProductSearch, ProductSort, type ProductFilterValues, type ProductSortOrder } from "./product-filters";
 
 type SearchParams = Promise<{
@@ -50,14 +51,19 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     grade: parsedGrade ? `${parsedGrade}등급` : "전체 등급",
     order,
   };
-  const productPage = await getProductPage({
-    query: filters.query || undefined,
-    category: filters.category,
-    grade: parsedGrade,
-    page: requestedPage,
-    size: 6,
-    ...productOrders[order],
-  });
+  const [productPage, favoriteState] = await Promise.all([
+    getProductPage({
+      query: filters.query || undefined,
+      category: filters.category,
+      grade: parsedGrade,
+      page: requestedPage,
+      size: 6,
+      ...productOrders[order],
+    }),
+    getFavoriteViewState(),
+  ]);
+  const favoriteIds = new Set(favoriteState.favoriteIds);
+  const currentHref = productPageHref(filters, productPage.page);
   const visiblePages = Array.from({ length: productPage.totalPages }, (_, index) => index)
     .filter((page) => Math.abs(page - productPage.page) <= 2);
 
@@ -86,7 +92,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
             </div>
             {productPage.content.length > 0 ? (
               <>
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{productPage.content.map(product => <ProductCard key={product.id} product={product} />)}</div>
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{productPage.content.map(product => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={currentHref} />)}</div>
                 {productPage.totalPages > 1 && (
                   <nav aria-label="화장품 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
                     {productPage.page > 0 && <Link href={productPageHref(filters, productPage.page - 1)} className="grid h-10 w-10 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}

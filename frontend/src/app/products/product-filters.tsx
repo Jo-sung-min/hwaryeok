@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-const categories = ["전체", "토너", "세럼", "앰플", "에센스", "크림", "선케어"];
+const categories = ["전체", "토너", "세럼", "앰플", "에센스", "크림", "선케어", "마스크팩", "젤", "클렌저"];
 
 export type ProductFilterValues = {
   query: string;

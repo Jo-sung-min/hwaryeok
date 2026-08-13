@@ -29,7 +29,9 @@ public record ProductResponse(
                 product.getBenefit(),
                 product.getSubBenefit(),
                 product.getPrice(),
-                NumberFormat.getNumberInstance(Locale.KOREA).format(product.getPrice()) + "원",
+                product.getPrice() > 0
+                        ? NumberFormat.getNumberInstance(Locale.KOREA).format(product.getPrice()) + "원"
+                        : "가격 정보 없음",
                 product.getTone(),
                 product.getTag()
         );

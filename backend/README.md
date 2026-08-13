@@ -33,6 +33,30 @@ Spring Boot 4의 Flyway 자동 구성은 `spring-boot-starter-flyway`로 활성�
 
 이미 적용된 `V1__create_products.sql`은 체크섬이 바뀌지 않도록 수정하지 않습니다. 이후 DB 구조 변경은 `V2__...sql`처럼 새 버전 마이그레이션으로 추가합니다.
 
+## 화해 공개 랭킹 샘플 데이터
+
+`V7__seed_hwahae_ranking_samples.sql`은 2026-08-13 화해 공개 급상승 랭킹에서 확인한 기초 화장품 16종을 추가합니다. 공개 랭킹의 제품 ID·브랜드·제품명·정가·용량·평점·리뷰 수만 사용하며, 리뷰 본문이나 회원 정보는 수집하지 않습니다. 베이비·두피·핸드 제품과 중복 제품명은 화력 서비스 범위에서 제외했습니다.
+
+- 원본 스냅샷: `src/main/resources/seed/hwahae-ranking-2026-08-13.json`
+- 재수집 도구: `scripts/crawl-hwahae-ranking.mjs`
+- 출처 기록: `product_source_snapshots`
+- 화력 초기 점수: `round(화해 공개 평점 × 20)`
+- 카테고리·효능: 제품명에 명시된 키워드만 규칙 기반으로 변환
+
+현재 공개 데이터를 화면에 출력해 확인하려면 백엔드 폴더에서 다음 명령을 실행합니다.
+
+```bash
+node scripts/crawl-hwahae-ranking.mjs
+```
+
+스냅샷 파일을 갱신하려면 아래처럼 출력 경로를 지정합니다. 랭킹과 리뷰 수는 바뀔 수 있으므로 갱신 결과를 검토한 뒤 기존에 적용된 마이그레이션을 수정하지 말고 새 마이그레이션으로 반영합니다.
+
+```bash
+node scripts/crawl-hwahae-ranking.mjs --output=src/main/resources/seed/hwahae-ranking-YYYY-MM-DD.json
+```
+
+수집기는 먼저 `robots.txt`를 확인하고 허용된 공개 `/rankings` 페이지만 한 번 요청합니다. 제품 상세처럼 제한되거나 자동화 차단이 걸린 경로는 우회하지 않습니다. 전성분은 이번 공개 랭킹 데이터에 없으므로 임의로 연결하지 않았습니다.
+
 Docker 없이 화면 연동을 빠르게 확인할 때만 개발용 H2 프로필을 사용할 수 있습니다.
 
 ```bash
@@ -54,6 +78,9 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/auth/oauth/providers` | OAuth 공급자 설정 상태 |
 | GET | `/api/v1/users/me/skin-profile` | 내 피부 프로필 조회 |
 | PUT | `/api/v1/users/me/skin-profile` | 내 피부 프로필 생성·수정 |
+| GET | `/api/v1/users/me/favorites` | 내 찜 제품 최신순 목록 |
+| PUT | `/api/v1/users/me/favorites/{productId}` | 제품 찜 추가 |
+| DELETE | `/api/v1/users/me/favorites/{productId}` | 제품 찜 취소 |
 | GET | `/oauth2/authorization/{provider}` | OAuth 로그인 시작 (`google`, `kakao`, `naver`) |
 | GET | `/login/oauth2/code/{provider}` | 공급자 OAuth 콜백 |
 | GET | `/api/v1/auth/me` | Bearer Token 현재 사용자 확인 |
@@ -189,6 +216,23 @@ Content-Type: application/json
 - 피부 고민: `속건조`, `민감`, `모공`, `붉은기`, `피부 장벽`, `각질`, `칙칙함`, `탄력` 중 중복 없이 1~4개
 - 사용자 ID는 요청에서 받지 않고 Access Token의 회원 ID만 사용합니다.
 - 저장한 피부 타입·고민은 제품 상세·비교 분석에 사용되며, 피부 타입은 나의 피부 랭킹의 기본값으로 사용됩니다.
+
+### 찜한 제품
+
+세 API 모두 Access Token이 필요하며 사용자 ID는 요청값이 아니라 토큰에서 확인합니다. 같은 제품을 여러 번 추가해도 하나만 저장됩니다.
+
+```text
+GET /api/v1/users/me/favorites
+Authorization: Bearer <accessToken>
+
+PUT /api/v1/users/me/favorites/birch-cream
+Authorization: Bearer <accessToken>
+
+DELETE /api/v1/users/me/favorites/birch-cream
+Authorization: Bearer <accessToken>
+```
+
+목록 응답은 최신 찜 순서의 `content`와 `totalElements`를 포함하며 각 항목에는 `product`, `favoritedAt`이 들어갑니다. 존재하지 않는 제품을 추가하면 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없거나 유효하지 않으면 `401`을 반환합니다. 찜 취소는 저장된 항목이 없어도 안전하게 완료됩니다.
 
 ### 화력 분석 예시
 

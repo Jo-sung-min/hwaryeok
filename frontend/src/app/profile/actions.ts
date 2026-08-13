@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ApiRequestError, getCurrentUser, refreshAuthTokens, saveUserSkinProfile } from "@/lib/api";
-import { readAuthTokens, setAuthCookies } from "@/lib/auth-session";
+import { ApiRequestError, saveUserSkinProfile } from "@/lib/api";
+import { getActionAccessToken } from "@/lib/auth-session";
 
 const allowedSkinTypes = new Set(["건성", "지성", "복합성", "수부지", "중성", "민감"]);
 const allowedConcerns = new Set(["속건조", "민감", "모공", "붉은기", "피부 장벽", "각질", "칙칙함", "탄력"]);
@@ -30,7 +30,7 @@ export async function saveSkinProfileAction(
     return { success: false, message: "입력한 피부 정보를 다시 확인해 주세요.", fieldErrors };
   }
 
-  const accessToken = await validActionAccessToken();
+  const accessToken = await getActionAccessToken();
   if (!accessToken) {
     return { success: false, message: "로그인이 만료되었어요. 새로고침 후 다시 로그인해 주세요.", fieldErrors: {} };
   }
@@ -46,25 +46,5 @@ export async function saveSkinProfileAction(
       return { success: false, message: error.message, fieldErrors: error.fieldErrors };
     }
     return { success: false, message: "피부 프로필을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.", fieldErrors: {} };
-  }
-}
-
-async function validActionAccessToken() {
-  const { accessToken, refreshToken } = await readAuthTokens();
-  if (accessToken) {
-    try {
-      await getCurrentUser(accessToken);
-      return accessToken;
-    } catch {
-      // Access Token이 만료되면 아래에서 Refresh Token으로 한 번 갱신합니다.
-    }
-  }
-  if (!refreshToken) return null;
-  try {
-    const tokens = await refreshAuthTokens(refreshToken);
-    await setAuthCookies(tokens);
-    return tokens.accessToken;
-  } catch {
-    return null;
   }
 }

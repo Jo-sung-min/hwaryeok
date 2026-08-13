@@ -37,7 +37,7 @@ class HwaryeokApplicationTests {
 
     @Test
     void loadsApplicationAndSeedsProducts() {
-        assertThat(productRepository.count()).isEqualTo(6);
+        assertThat(productRepository.count()).isEqualTo(22);
     }
 
     @Test
@@ -51,7 +51,15 @@ class HwaryeokApplicationTests {
                 .send(request, HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("\"content\"", "birch-cream", "자작나무 수분 크림", "\"grade\":1", "\"totalElements\":1");
+        assertThat(response.body()).contains(
+                "\"content\"",
+                "birch-cream",
+                "hwahae-2079267",
+                "hwahae-1920665",
+                "자작나무 수분 크림",
+                "\"grade\":1",
+                "\"totalElements\":3"
+        );
     }
 
     @Test
@@ -65,9 +73,25 @@ class HwaryeokApplicationTests {
                 .send(request, HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("\"page\":1", "\"size\":2", "\"totalElements\":6", "\"totalPages\":3", "\"hasNext\":true");
-        assertThat(response.body()).contains("birch-cream", "bean-essence").doesNotContain("rice-sunscreen");
-        assertThat(response.body().indexOf("birch-cream")).isLessThan(response.body().indexOf("bean-essence"));
+        assertThat(response.body()).contains("\"page\":1", "\"size\":2", "\"totalElements\":22", "\"totalPages\":11", "\"hasNext\":true");
+        assertThat(response.body()).contains("hwahae-1918760", "hwahae-2015377").doesNotContain("rice-sunscreen");
+        assertThat(response.body().indexOf("hwahae-1918760")).isLessThan(response.body().indexOf("hwahae-2015377"));
+    }
+
+    @Test
+    void labelsUnavailableSourcePriceWithoutDisplayingZeroWon() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products/hwahae-1899998"))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = HttpClient.newHttpClient()
+                .send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("hwahae-1899998", "\"priceValue\":0", "가격 정보 없음")
+                .doesNotContain("\"price\":\"0원\"");
     }
 
     @Test
@@ -88,7 +112,7 @@ class HwaryeokApplicationTests {
         assertThat(detailResponse.statusCode()).isEqualTo(200);
         assertThat(detailResponse.body()).contains("birch-cream", "수분 장벽 강화");
         assertThat(rankingResponse.statusCode()).isEqualTo(200);
-        assertThat(rankingResponse.body()).contains("birch-cream", "heartleaf-toner", "ceramide-serum");
+        assertThat(rankingResponse.body()).contains("hwahae-2015377", "hwahae-1950255", "birch-cream");
         assertThat(rankingResponse.body()).doesNotContain("mugwort-ampoule");
     }
 
@@ -390,6 +414,74 @@ class HwaryeokApplicationTests {
         );
         assertThat(invalidResponse.statusCode()).isEqualTo(400);
         assertThat(invalidResponse.body()).contains("INVALID_REQUEST", "중복해서 선택할 수 없어요");
+    }
+
+    @Test
+    void addsListsAndRemovesAuthenticatedUserFavorites() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("favorite@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                "favorite@example.com",
+                passwordEncoder.encode("Flower!123"),
+                "찜회원",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> unauthorizedResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/users/me/favorites"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unauthorizedResponse.statusCode()).isEqualTo(401);
+
+        HttpResponse<String> loginResponse = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"favorite@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String accessToken = jsonString(loginResponse.body(), "accessToken");
+
+        HttpResponse<String> addResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/favorites/birch-cream", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> duplicateResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/favorites/birch-cream", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> listResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/favorites", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(addResponse.statusCode()).isEqualTo(200);
+        assertThat(addResponse.body()).contains("birch-cream", "favoritedAt");
+        assertThat(duplicateResponse.statusCode()).isEqualTo(200);
+        assertThat(listResponse.statusCode()).isEqualTo(200);
+        assertThat(listResponse.body()).contains("\"totalElements\":1", "자작나무 수분 크림");
+
+        HttpResponse<String> missingProductResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/favorites/not-a-product", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(missingProductResponse.statusCode()).isEqualTo(404);
+        assertThat(missingProductResponse.body()).contains("RESOURCE_NOT_FOUND");
+
+        HttpResponse<String> deleteResponse = client.send(
+                bearerRequest("DELETE", "/api/v1/users/me/favorites/birch-cream", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> emptyResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/favorites", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(deleteResponse.statusCode()).isEqualTo(204);
+        assertThat(emptyResponse.body()).contains("\"content\":[]", "\"totalElements\":0");
     }
 
     private HttpRequest jsonPost(String path, String payload) {

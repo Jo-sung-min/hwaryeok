@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FlaskConical, Leaf, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { ApiRequestError, getIngredient } from "@/lib/api";
+import { getFavoriteViewState } from "@/lib/auth-session";
 
 export default async function IngredientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
-    const ingredient = await getIngredient(id);
+    const [ingredient, favoriteState] = await Promise.all([getIngredient(id), getFavoriteViewState()]);
+    const favoriteIds = new Set(favoriteState.favoriteIds);
     const skinFeatures = Object.entries(ingredient.skinTypeFeatures);
     const concernFeatures = Object.entries(ingredient.concernFeatures);
     const isCaution = ingredient.status === "CAUTION";
@@ -66,7 +68,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <div><p className="eyebrow mb-4">IN PRODUCTS</p><h2 className="section-title font-myeongjo">이 성분이 담긴 화장품</h2></div>
               <FlaskConical className="hidden text-[#b47664] md:block" size={32} strokeWidth={1.5} />
             </div>
-            {ingredient.products.length > 0 ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{ingredient.products.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <div className="paper-card rounded-[26px] p-10 text-center text-sm text-[#74695f]">연결된 제품을 준비 중이에요.</div>}
+            {ingredient.products.length > 0 ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{ingredient.products.map((product) => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />)}</div> : <div className="paper-card rounded-[26px] p-10 text-center text-sm text-[#74695f]">연결된 제품을 준비 중이에요.</div>}
           </div>
         </section>
       </div>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" data-scroll-behavior="smooth">
       <body>
         <Header authSlot={<Suspense fallback={<span className="line-btn !min-h-10 !w-24 opacity-50" aria-hidden="true" />}><HeaderAuth /></Suspense>} />
         <main>{children}</main>

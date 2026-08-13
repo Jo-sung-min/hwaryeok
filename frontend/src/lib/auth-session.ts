@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getCurrentUser, getUserSkinProfile, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
+import { getCurrentUser, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
 
 export const ACCESS_TOKEN_COOKIE = "hwaryeok_access_token";
 export const REFRESH_TOKEN_COOKIE = "hwaryeok_refresh_token";
@@ -77,6 +77,20 @@ export async function getOptionalSkinProfile(): Promise<SkinProfile | null> {
   }
 }
 
+export async function getFavoriteViewState(): Promise<{ isAuthenticated: boolean; favoriteIds: string[] }> {
+  const { accessToken, refreshToken } = await readAuthTokens();
+  if (!accessToken) return { isAuthenticated: Boolean(refreshToken), favoriteIds: [] };
+  try {
+    const favorites = await getUserFavorites(accessToken);
+    return {
+      isAuthenticated: true,
+      favoriteIds: favorites.content.map((item) => item.product.id),
+    };
+  } catch {
+    return { isAuthenticated: Boolean(refreshToken), favoriteIds: [] };
+  }
+}
+
 export async function requireSession(returnTo: string): Promise<AuthUser> {
   const user = await getCurrentSession();
   if (user) return user;
@@ -87,6 +101,26 @@ export async function requireSession(returnTo: string): Promise<AuthUser> {
     redirect(`/api/auth/refresh?returnTo=${encodeURIComponent(safeReturnTo)}`);
   }
   redirect(`/login?returnTo=${encodeURIComponent(safeReturnTo)}`);
+}
+
+export async function getActionAccessToken(): Promise<string | null> {
+  const { accessToken, refreshToken } = await readAuthTokens();
+  if (accessToken) {
+    try {
+      await getCurrentUser(accessToken);
+      return accessToken;
+    } catch {
+      // 만료된 Access Token은 아래에서 Refresh Token으로 한 번 갱신합니다.
+    }
+  }
+  if (!refreshToken) return null;
+  try {
+    const tokens = await refreshAuthTokens(refreshToken);
+    await setAuthCookies(tokens);
+    return tokens.accessToken;
+  } catch {
+    return null;
+  }
 }
 
 export function sanitizeReturnTo(value: string | null | undefined, fallback = "/profile") {

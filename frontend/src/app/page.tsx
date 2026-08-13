@@ -4,8 +4,11 @@ import { ArrowRight, Check, ChevronRight, Droplets, FlaskConical, Leaf, Quote, S
 import { Footer } from "@/components/footer";
 import { GradeSeal, ProductCard, ScoreRing } from "@/components/product-ui";
 import { products } from "@/lib/data";
+import { getFavoriteViewState } from "@/lib/auth-session";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const favoriteState = await getFavoriteViewState();
+  const favoriteIds = new Set(favoriteState.favoriteIds);
   return (
     <>
       <section className="relative min-h-[690px] overflow-hidden border-b border-[#8e6b5515] md:min-h-[760px]">
@@ -91,7 +94,7 @@ export default function HomePage() {
             <div><p className="eyebrow mb-4">FOR YOUR SKIN</p><h2 className="section-title font-myeongjo">민감한 수부지 피부에<br className="sm:hidden" /> 잘 피어나는 제품</h2></div>
             <Link href="/products" className="hidden items-center gap-1 text-sm font-semibold text-[#9b4a45] sm:flex">모두 보기 <ChevronRight size={17} /></Link>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.slice(0,3).map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.slice(0,3).map((product) => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo="/" />)}</div>
           <Link href="/products" className="line-btn mt-7 w-full sm:hidden">추천 제품 모두 보기</Link>
         </div>
       </section>

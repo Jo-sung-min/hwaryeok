@@ -88,3 +88,5 @@ cd ../backend
 ```
 
 백엔드 API 문서는 [backend/README.md](backend/README.md), 전체 진행 상태는 [plan.md](plan.md)를 참고합니다.
+
+샘플 제품에는 화해 공개 급상승 랭킹을 화력 형식으로 변환한 16종이 포함됩니다. 수집 범위, 변환 규칙, 재수집 방법은 [backend/README.md](backend/README.md#화해-공개-랭킹-샘플-데이터)에 기록되어 있습니다.

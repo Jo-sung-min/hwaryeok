@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients, ProductPage } from "@/lib/types";
+import type { Analysis, FavoriteList, FavoriteProduct, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients, ProductPage } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -178,6 +178,26 @@ export function saveUserSkinProfile(
   });
 }
 
+export function getUserFavorites(accessToken: string): Promise<FavoriteList> {
+  return requestJson<FavoriteList>("/users/me/favorites", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function addUserFavorite(accessToken: string, productId: string): Promise<FavoriteProduct> {
+  return requestJson<FavoriteProduct>(`/users/me/favorites/${encodeURIComponent(productId)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export async function removeUserFavorite(accessToken: string, productId: string): Promise<void> {
+  await requestEmpty(`/users/me/favorites/${encodeURIComponent(productId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
 export async function getOAuthProviders(): Promise<OAuthProviderStatus[]> {
   try {
     const providers = await requestJson<OAuthProviderStatus[]>("/auth/oauth/providers");
@@ -239,4 +259,25 @@ export function getIngredient(id: string): Promise<IngredientDetail> {
 
 export function getProductIngredients(productId: string): Promise<ProductIngredients> {
   return requestJson<ProductIngredients>(`/products/${encodeURIComponent(productId)}/ingredients`);
+}
+
+async function requestEmpty(path: string, init?: RequestInit): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: "no-store",
+    ...init,
+    headers: {
+      Accept: "application/json",
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { code?: string; message?: string; fieldErrors?: Record<string, string> } | null;
+    throw new ApiRequestError(
+      body?.message ?? "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      response.status,
+      body?.code,
+      body?.fieldErrors ?? {},
+    );
+  }
 }

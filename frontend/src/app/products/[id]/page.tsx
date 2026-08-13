@@ -4,7 +4,7 @@ import { ArrowLeft, Check, MessageCircle, ShoppingBag, Sparkles, TriangleAlert }
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProducts } from "@/lib/api";
-import { getOptionalSkinProfile } from "@/lib/auth-session";
+import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 
 const defaultProfile = {
   skinType: "수부지",
@@ -13,7 +13,8 @@ const defaultProfile = {
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
-  const savedProfile = await getOptionalSkinProfile();
+  const [savedProfile, favoriteState] = await Promise.all([getOptionalSkinProfile(), getFavoriteViewState()]);
+  const favoriteIds = new Set(favoriteState.favoriteIds);
   const analysisProfile = savedProfile?.skinType
     ? { skinType: savedProfile.skinType, concerns: savedProfile.concerns }
     : defaultProfile;
@@ -37,7 +38,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
           <div className="grid overflow-hidden rounded-[32px] border border-[#74513f1a] bg-[#fffaf2a8] lg:grid-cols-[.86fr_1.14fr]">
             <div className="relative min-h-[390px] lg:min-h-[590px]">
               <div className="absolute inset-0 [&>div]:h-full"><ProductVisual tone={product.tone} /></div>
-              <div className="absolute right-5 top-5"><FavoriteButton /></div>
+              <div className="absolute right-5 top-5"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
             </div>
             <div className="flex flex-col justify-center p-6 md:p-10 lg:p-14">
               <p className="text-xs font-bold uppercase tracking-[.16em] text-[#8e7468]">{product.brand} · {product.category}</p>
@@ -86,7 +87,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 
         <section className="container-page pb-20"><div className="paper-card rounded-[26px] p-7 md:p-9"><MessageCircle className="text-[#c17f69]" /><p className="eyebrow mb-3 mt-6">SKIN REVIEWS</p><h2 className="font-myeongjo text-2xl font-semibold">실사용 리뷰 준비 중</h2><p className="mt-3 text-sm leading-7 text-[#796c63]">회원 기능과 리뷰 API가 연결되면 피부 타입과 사용 기간을 확인할 수 있어요.</p><span className="mt-6 inline-flex rounded-full bg-[#a54f4910] px-4 py-2 text-xs font-semibold text-[#934640]">리뷰 기능 예정</span></div></section>
 
-        {relatedProducts.length > 0 && <section className="container-page pb-20"><h2 className="mb-8 font-myeongjo text-2xl font-semibold">함께 비교해볼 제품</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{relatedProducts.map((item) => <ProductCard key={item.id} product={item} />)}</div></section>}
+        {relatedProducts.length > 0 && <section className="container-page pb-20"><h2 className="mb-8 font-myeongjo text-2xl font-semibold">함께 비교해볼 제품</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{relatedProducts.map((item) => <ProductCard key={item.id} product={item} initialFavorited={favoriteIds.has(item.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} />)}</div></section>}
       </div>
     );
   } catch (error) {

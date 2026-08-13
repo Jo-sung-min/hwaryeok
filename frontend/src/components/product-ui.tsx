@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { Heart, Plus, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { setFavoriteAction } from "@/app/favorites/actions";
 import type { Product } from "@/lib/types";
 
 const toneMap = {
@@ -22,17 +24,62 @@ export function GradeSeal({ grade, compact = false }: { grade: number; compact?:
   );
 }
 
-export function FavoriteButton({ small = false }: { small?: boolean }) {
-  const [active, setActive] = useState(false);
+export function FavoriteButton({
+  productId,
+  initialFavorited = false,
+  isAuthenticated = false,
+  returnTo,
+  small = false,
+}: {
+  productId: string;
+  initialFavorited?: boolean;
+  isAuthenticated?: boolean;
+  returnTo?: string;
+  small?: boolean;
+}) {
+  const router = useRouter();
+  const [active, setActive] = useState(initialFavorited);
+  const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => setActive(initialFavorited), [initialFavorited]);
+
+  function toggleFavorite() {
+    const safeReturnTo = returnTo ?? `/products/${productId}`;
+    if (!isAuthenticated) {
+      router.push(`/login?returnTo=${encodeURIComponent(safeReturnTo)}`);
+      return;
+    }
+
+    const nextFavorited = !active;
+    setActive(nextFavorited);
+    setError("");
+    startTransition(async () => {
+      const result = await setFavoriteAction(productId, nextFavorited);
+      setActive(result.favorited);
+      setStatusMessage(result.message);
+      if (!result.success) setError(result.message);
+      if (result.requiresLogin) router.push(`/login?returnTo=${encodeURIComponent(safeReturnTo)}`);
+    });
+  }
+
   return (
-    <button
-      onClick={(event) => { event.preventDefault(); setActive(!active); }}
-      aria-label={active ? "찜 취소" : "찜하기"}
-      aria-pressed={active}
-      className={`${small ? "h-9 w-9" : "h-11 w-11"} grid place-items-center rounded-full border border-[#4e3e3420] bg-[#fffcf5d9] transition hover:-translate-y-0.5`}
-    >
-      <Heart size={small ? 16 : 19} className={active ? "fill-[#a54f49] text-[#a54f49]" : "text-[#675b52]"} />
-    </button>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={toggleFavorite}
+        disabled={pending}
+        aria-label={pending ? "찜 상태 저장 중" : active ? "찜 취소" : "찜하기"}
+        aria-pressed={active}
+        aria-busy={pending}
+        className={`${small ? "h-9 w-9" : "h-11 w-11"} grid place-items-center rounded-full border border-[#4e3e3420] bg-[#fffcf5e8] shadow-sm transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-65`}
+      >
+        <Heart size={small ? 16 : 19} className={`${active ? "fill-[#a54f49] text-[#a54f49]" : "text-[#675b52]"} ${pending ? "animate-pulse" : ""}`} />
+      </button>
+      <span className="sr-only" role="status" aria-live="polite">{statusMessage}</span>
+      {error && !pending && <span role="alert" className="absolute right-0 top-full z-30 mt-2 w-48 rounded-xl border border-[#a54f4930] bg-[#fffaf3] px-3 py-2 text-left text-[11px] leading-5 text-[#8f433e] shadow-lg">{error}</span>}
+    </div>
   );
 }
 
@@ -52,32 +99,46 @@ export function ProductVisual({ tone, compact = false }: { tone: Product["tone"]
   );
 }
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  initialFavorited = false,
+  isAuthenticated = false,
+  returnTo,
+}: {
+  product: Product;
+  initialFavorited?: boolean;
+  isAuthenticated?: boolean;
+  returnTo?: string;
+}) {
   return (
-    <Link href={`/products/${product.id}`} className="group paper-card relative block overflow-hidden rounded-[26px] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.12)]">
-      <div className="relative">
-        <ProductVisual tone={product.tone} />
-        {product.tag && <span className="absolute left-4 top-4 rounded-full bg-[#fffaf0dc] px-3 py-1.5 text-[11px] font-semibold text-[#875049] backdrop-blur">{product.tag}</span>}
-        <div className="absolute right-4 top-4"><FavoriteButton small /></div>
-      </div>
-      <div className="p-5">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div>
-            <p className="mb-1 text-[11px] font-bold uppercase tracking-[.16em] text-[#8b776a]">{product.brand}</p>
-            <h3 className="font-myeongjo text-[18px] font-semibold leading-snug transition group-hover:text-[#9b4a45]">{product.name}</h3>
+    <article className="group paper-card relative overflow-hidden rounded-[26px] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.12)]">
+      <Link href={`/products/${product.id}`} className="block">
+        <div className="relative">
+          <ProductVisual tone={product.tone} />
+          {product.tag && <span className="absolute left-4 top-4 max-w-[calc(100%-5rem)] truncate rounded-full bg-[#fffaf0dc] px-3 py-1.5 text-[11px] font-semibold text-[#875049] backdrop-blur">{product.tag}</span>}
+        </div>
+        <div className="p-5">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-[.16em] text-[#8b776a]">{product.brand}</p>
+              <h3 className="font-myeongjo text-[18px] font-semibold leading-snug transition group-hover:text-[#9b4a45]">{product.name}</h3>
+            </div>
+            <GradeSeal grade={product.grade} compact />
           </div>
-          <GradeSeal grade={product.grade} compact />
+          <div className="mb-4 flex items-end gap-2">
+            <strong className="font-myeongjo text-3xl text-[#9b4a45]">{product.score}</strong>
+            <span className="mb-1 text-xs text-[#807168]">/ 100 · 나의 적합도</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-[#75564518] pt-4">
+            <div className="flex gap-1.5 overflow-hidden text-[11px] text-[#665b53]"><span className="truncate rounded-full bg-[#aebaa340] px-2.5 py-1">{product.benefit}</span><span className="truncate rounded-full bg-[#e9b3a635] px-2.5 py-1">{product.subBenefit}</span></div>
+            <Plus size={17} className="shrink-0 text-[#9b4a45]" />
+          </div>
         </div>
-        <div className="mb-4 flex items-end gap-2">
-          <strong className="font-myeongjo text-3xl text-[#9b4a45]">{product.score}</strong>
-          <span className="mb-1 text-xs text-[#807168]">/ 100 · 나의 적합도</span>
-        </div>
-        <div className="flex items-center justify-between border-t border-[#75564518] pt-4">
-          <div className="flex gap-1.5 text-[11px] text-[#665b53]"><span className="rounded-full bg-[#aebaa340] px-2.5 py-1">{product.benefit}</span><span className="rounded-full bg-[#e9b3a635] px-2.5 py-1">{product.subBenefit}</span></div>
-          <Plus size={17} className="text-[#9b4a45]" />
-        </div>
+      </Link>
+      <div className="absolute right-4 top-4 z-20">
+        <FavoriteButton productId={product.id} initialFavorited={initialFavorited} isAuthenticated={isAuthenticated} returnTo={returnTo} small />
       </div>
-    </Link>
+    </article>
   );
 }
 
