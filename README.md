@@ -12,7 +12,7 @@ hwaryeok/
 │  ├─ package.json
 │  ├─ .env.example
 │  └─ vercel.json
-├─ backend/              Spring Boot 4.1 · Java 21 · Gradle 9.6
+├─ backend/              Spring Boot 4.1 · Java 21 · Gradle Wrapper 8.14.3
 │  ├─ src/
 │  ├─ build.gradle
 │  ├─ gradlew / gradlew.bat
@@ -67,9 +67,14 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 2. **Framework Preset:** Next.js
 3. **Build Command:** `npm run build` — 자동 감지값 사용 가능
 4. **Environment Variable:** `API_URL=https://<배포한-백엔드-주소>/api/v1`
-5. 브라우저 직접 호출 기능을 사용할 때만 `NEXT_PUBLIC_API_URL`도 같은 공개 API 주소로 설정
+5. **OAuth Environment Variable:** `OAUTH_BACKEND_URL=https://<배포한-백엔드-주소>`
+6. 브라우저 직접 호출 기능을 사용할 때만 `NEXT_PUBLIC_API_URL`도 같은 공개 API 주소로 설정
 
 `API_URL`은 Vercel의 Production, Preview, Development 환경에 각각 등록하는 것을 권장합니다. 브라우저가 백엔드를 직접 호출하는 기능을 배포할 때는 백엔드의 `CORS_ALLOWED_ORIGINS`에 실제 Vercel 도메인을 쉼표로 구분해 추가합니다.
+
+카카오·네이버·구글 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 공급자 개발자 콘솔의 Redirect URI는 `https://<백엔드주소>/login/oauth2/code/{provider}`이며, 백엔드의 `OAUTH_FRONTEND_BASE_URL`에는 실제 Vercel 주소를 설정합니다.
+
+로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 32바이트 이상의 임의 `JWT_SECRET`을 별도로 등록하세요.
 
 ## 검증
 

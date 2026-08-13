@@ -15,6 +15,15 @@ export type Product = {
   tag?: string | null;
 };
 
+export type ProductPage = {
+  content: Product[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
 export type ScoreDetail = {
   label: string;
   value: number;

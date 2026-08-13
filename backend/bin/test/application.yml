@@ -6,14 +6,23 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     properties:
       hibernate:
-        default_schema: PUBLIC
+        default_schema: public
     open-in-view: false
   flyway:
-    enabled: false
+    enabled: true
+    create-schemas: true
+    default-schema: public
+    schemas: public
 
 app:
+  auth:
+    jwt-secret: test-jwt-secret-with-at-least-thirty-two-bytes
+    jwt-issuer: hwaryeok-api
+    access-token-seconds: 900
+    refresh-token-seconds: 2592000
+    oauth-exchange-code-seconds: 120
   cors:
     allowed-origins: http://localhost:3000

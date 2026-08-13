@@ -23,12 +23,16 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponse> findProducts(
+    public ProductPageResponse findProducts(
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) Integer grade
+            @RequestParam(required = false) Integer grade,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "score") String sort,
+            @RequestParam(defaultValue = "desc") String direction
     ) {
-        return productService.findProducts(query, category, grade);
+        return productService.findProducts(query, category, grade, page, size, sort, direction);
     }
 
     @GetMapping("/{id}")

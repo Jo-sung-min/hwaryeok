@@ -7,7 +7,10 @@ export type ProductFilterValues = {
   query: string;
   category: string;
   grade: string;
+  order: ProductSortOrder;
 };
+
+export type ProductSortOrder = "score-desc" | "price-asc" | "price-desc" | "name-asc";
 
 function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues, value: string) {
   const params = new URLSearchParams();
@@ -15,6 +18,7 @@ function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues
   if (next.query) params.set("query", next.query);
   if (next.category && next.category !== "전체") params.set("category", next.category);
   if (next.grade && next.grade !== "전체 등급") params.set("grade", next.grade.replace("등급", ""));
+  if (next.order !== "score-desc") params.set("order", next.order);
   const queryString = params.toString();
   return queryString ? `/products?${queryString}` : "/products";
 }
@@ -26,7 +30,26 @@ export function ProductSearch({ filters }: { filters: ProductFilterValues }) {
       <input name="query" defaultValue={filters.query} placeholder="제품명이나 브랜드를 검색해보세요" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9a8b80]" />
       {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
       {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
+      {filters.order !== "score-desc" && <input type="hidden" name="order" value={filters.order} />}
       <button type="submit" className="rounded-full bg-[#37312c] px-4 py-2 text-xs font-semibold text-white">검색</button>
+    </form>
+  );
+}
+
+export function ProductSort({ filters }: { filters: ProductFilterValues }) {
+  return (
+    <form action="/products" className="flex items-center gap-2">
+      {filters.query && <input type="hidden" name="query" value={filters.query} />}
+      {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
+      {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
+      <label htmlFor="product-order" className="text-xs text-[#766960]">정렬</label>
+      <select id="product-order" name="order" defaultValue={filters.order} className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs outline-none sm:px-4">
+        <option value="score-desc">화력 높은 순</option>
+        <option value="price-asc">가격 낮은 순</option>
+        <option value="price-desc">가격 높은 순</option>
+        <option value="name-asc">이름순</option>
+      </select>
+      <button type="submit" className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs font-semibold sm:px-4">적용</button>
     </form>
   );
 }

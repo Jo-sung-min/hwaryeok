@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { BottomNav, Header } from "@/components/navigation";
+import { HeaderAuth } from "@/components/header-auth";
 
 export const metadata: Metadata = {
   title: "화력 — 화장품의 힘을 읽다",
@@ -11,7 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ko">
       <body>
-        <Header />
+        <Header authSlot={<Suspense fallback={<span className="line-btn !min-h-10 !w-24 opacity-50" aria-hidden="true" />}><HeaderAuth /></Suspense>} />
         <main>{children}</main>
         <BottomNav />
       </body>

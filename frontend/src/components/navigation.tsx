@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { BarChart3, Heart, Home, Search, Sparkles, UserRound } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -11,7 +12,7 @@ const nav = [
   { href: "/compare", label: "비교하기" },
 ];
 
-export function Header() {
+export function Header({ authSlot }: { authSlot?: ReactNode }) {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-50 border-b border-[#76564314] bg-[#fbf7eddf] backdrop-blur-xl">
@@ -34,7 +35,7 @@ export function Header() {
         <div className="hidden items-center gap-2 md:flex">
           <Link href="/products" aria-label="검색" className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-[#815e4d12]"><Search size={18} /></Link>
           <Link href="/my" aria-label="찜" className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-[#815e4d12]"><Heart size={18} /></Link>
-          <Link href="/my" className="line-btn !min-h-10 !px-4 text-sm"><UserRound size={16} /> 마이화력</Link>
+          {authSlot}
         </div>
       </div>
     </header>
@@ -44,7 +45,7 @@ export function Header() {
 const mobileNav = [
   { href: "/", label: "홈", icon: Home },
   { href: "/products", label: "탐색", icon: Search },
-  { href: "/profile", label: "분석", icon: Sparkles },
+  { href: "/signup", label: "시작", icon: Sparkles },
   { href: "/ranking", label: "랭킹", icon: BarChart3 },
   { href: "/my", label: "MY", icon: UserRound },
 ];

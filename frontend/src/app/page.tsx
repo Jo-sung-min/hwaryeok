@@ -23,7 +23,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-6 max-w-[500px] text-[15px] leading-7 text-[#695d55] md:text-base md:leading-8">같은 화장품도 피부에 따라 힘이 달라집니다.<br className="hidden sm:block" /> 화력은 성분과 피부 고민을 섬세하게 읽어, 나만의 적합도를 보여드려요.</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/profile" className="ink-btn group">내 피부 화력 분석하기 <ArrowRight size={17} className="transition group-hover:translate-x-1" /></Link>
+              <Link href="/signup" className="ink-btn group">내 피부 화력 시작하기 <ArrowRight size={17} className="transition group-hover:translate-x-1" /></Link>
               <Link href="/products" className="line-btn"><Search size={17} /> 화장품 찾아보기</Link>
             </div>
             <div className="mt-8 flex items-center gap-4 text-xs text-[#756960]"><span className="flex items-center gap-1.5"><Check size={14} className="text-[#a54f49]" /> 2분 피부 분석</span><span className="h-3 w-px bg-[#75695f35]" /><span>8,420명이 화력을 찾았어요</span></div>
@@ -132,7 +132,7 @@ export default function HomePage() {
           <p className="eyebrow mb-4">BEGIN YOUR RITUAL</p>
           <h2 className="font-myeongjo text-3xl font-medium leading-snug md:text-5xl">오늘, 내 피부의 화력을<br />처음 피워보세요.</h2>
           <p className="mt-5 text-sm leading-7 text-[#74675e]">2분이면 충분해요. 피부 타입과 고민을 알려주면<br className="hidden sm:block" /> 모든 화장품을 나만의 등급으로 다시 보여드릴게요.</p>
-          <Link href="/profile" className="ink-btn mt-8">무료로 피부 분석 시작 <ArrowRight size={17} /></Link>
+          <Link href="/signup" className="ink-btn mt-8">무료로 화력 시작 <ArrowRight size={17} /></Link>
         </div>
       </section>
       <Footer />

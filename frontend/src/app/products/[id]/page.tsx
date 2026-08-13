@@ -4,6 +4,7 @@ import { ArrowLeft, Check, MessageCircle, ShoppingBag, Sparkles, TriangleAlert }
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProducts } from "@/lib/api";
+import { getOptionalSkinProfile } from "@/lib/auth-session";
 
 const defaultProfile = {
   skinType: "수부지",
@@ -12,11 +13,15 @@ const defaultProfile = {
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
+  const savedProfile = await getOptionalSkinProfile();
+  const analysisProfile = savedProfile?.skinType
+    ? { skinType: savedProfile.skinType, concerns: savedProfile.concerns }
+    : defaultProfile;
 
   try {
     const [product, analysis, products, ingredientData] = await Promise.all([
       getProduct(id),
-      getAnalysis({ productId: id, ...defaultProfile }),
+      getAnalysis({ productId: id, ...analysisProfile }),
       getProducts(),
       getProductIngredients(id),
     ]);

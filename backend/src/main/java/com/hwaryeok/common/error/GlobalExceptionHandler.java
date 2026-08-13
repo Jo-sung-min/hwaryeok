@@ -6,6 +6,10 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.hwaryeok.auth.DuplicateEmailException;
+import com.hwaryeok.auth.InvalidCredentialsException;
+import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
+import com.hwaryeok.auth.InvalidRefreshTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -31,6 +35,32 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException exception, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<ApiError> handleDuplicateEmail(DuplicateEmailException exception, HttpServletRequest request) {
+        return build(
+                HttpStatus.CONFLICT,
+                "DUPLICATE_EMAIL",
+                exception.getMessage(),
+                request,
+                Map.of("email", exception.getMessage())
+        );
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ApiError> handleInvalidRefreshToken(InvalidRefreshTokenException exception, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(InvalidOAuthExchangeCodeException.class)
+    public ResponseEntity<ApiError> handleInvalidOAuthCode(InvalidOAuthExchangeCodeException exception, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "INVALID_OAUTH_EXCHANGE_CODE", exception.getMessage(), request, Map.of());
     }
 
     private ResponseEntity<ApiError> build(

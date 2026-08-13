@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Check, Plus, Sparkles } from "lucide-react";
 import { GradeSeal } from "@/components/product-ui";
 import { getAnalysis, getProducts } from "@/lib/api";
+import { getOptionalSkinProfile } from "@/lib/auth-session";
 import type { Analysis } from "@/lib/types";
 import { CompareSelectors } from "./compare-selectors";
 
@@ -19,7 +20,10 @@ function first(value?: string | string[]) {
 
 export default async function ComparePage({ searchParams }: { searchParams: CompareSearchParams }) {
   await connection();
-  const [params, products] = await Promise.all([searchParams, getProducts()]);
+  const [params, products, savedProfile] = await Promise.all([searchParams, getProducts(), getOptionalSkinProfile()]);
+  const analysisProfile = savedProfile?.skinType
+    ? { skinType: savedProfile.skinType, concerns: savedProfile.concerns }
+    : defaultProfile;
 
   if (products.length < 2) return <CompareEmpty />;
 
@@ -30,8 +34,8 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
   if (right.id === left.id) right = products.find((product) => product.id !== left.id) ?? products[1];
 
   const [leftAnalysis, rightAnalysis] = await Promise.all([
-    getAnalysis({ productId: left.id, ...defaultProfile }),
-    getAnalysis({ productId: right.id, ...defaultProfile }),
+    getAnalysis({ productId: left.id, ...analysisProfile }),
+    getAnalysis({ productId: right.id, ...analysisProfile }),
   ]);
   const rows = buildRows(leftAnalysis, rightAnalysis);
   const isTie = leftAnalysis.score === rightAnalysis.score;
@@ -48,7 +52,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
     .map((detail) => detail.label);
 
   return <div className="min-h-screen pb-24">
-    <section className="border-b border-[#74513f16] bg-[#f3e9dc8c] py-14 text-center"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="font-myeongjo text-4xl md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm text-[#786c63]">수부지 · 속건조 · 민감 · 피부 장벽 프로필로 두 제품을 같은 기준에서 분석해요.</p></div></section>
+    <section className="border-b border-[#74513f16] bg-[#f3e9dc8c] py-14 text-center"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="font-myeongjo text-4xl md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm text-[#786c63]">{analysisProfile.skinType} · {analysisProfile.concerns.join(" · ")} 프로필로 두 제품을 같은 기준에서 분석해요.</p>{!savedProfile && <Link href="/profile" className="mt-3 inline-flex text-xs font-semibold text-[#9b4a45]">내 피부 프로필 등록하기</Link>}</div></section>
     <section className="container-page py-10 md:py-16">
       <div className="overflow-hidden rounded-[30px] border border-[#74513f1a] bg-[#fffaf2a8]">
         <div className="grid grid-cols-[78px_1fr_1fr] sm:grid-cols-[170px_1fr_1fr]">

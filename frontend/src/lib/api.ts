@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients } from "@/lib/types";
+import type { Analysis, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients, ProductPage } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -9,6 +9,7 @@ export class ApiRequestError extends Error {
     message: string,
     public readonly status: number,
     public readonly code?: string,
+    public readonly fieldErrors: Record<string, string> = {},
   ) {
     super(message);
     this.name = "ApiRequestError";
@@ -19,6 +20,10 @@ type ProductQuery = {
   query?: string;
   category?: string;
   grade?: number;
+  page?: number;
+  size?: number;
+  sort?: "score" | "price" | "name" | "brand";
+  direction?: "asc" | "desc";
 };
 
 export type AnalysisInput = {
@@ -49,25 +54,155 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as { code?: string; message?: string } | null;
+    const body = await response.json().catch(() => null) as { code?: string; message?: string; fieldErrors?: Record<string, string> } | null;
     throw new ApiRequestError(
-      body?.message ?? "화장품 정보를 불러오지 못했어요.",
+      body?.message ?? "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.",
       response.status,
       body?.code,
+      body?.fieldErrors ?? {},
     );
   }
 
   return response.json() as Promise<T>;
 }
 
-export async function getProducts(query: ProductQuery = {}): Promise<Product[]> {
+export type SignupInput = {
+  nickname: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  termsAccepted: boolean;
+};
+
+export type SignupResult = {
+  userId: string;
+  email: string;
+  nickname: string;
+  nextStep: "SKIN_PROFILE";
+  createdAt: string;
+};
+
+export type OAuthProviderStatus = {
+  id: "google" | "kakao" | "naver";
+  name: string;
+  configured: boolean;
+  authorizationPath: string;
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  nickname: string;
+  role: string;
+  authMethod: string;
+};
+
+export type AuthTokenResult = {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: "Bearer";
+  accessTokenExpiresIn: number;
+  refreshTokenExpiresIn: number;
+  user: AuthUser;
+};
+
+export type SkinProfile = {
+  configured: boolean;
+  skinType: string | null;
+  concerns: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+const oauthProviderFallback: OAuthProviderStatus[] = [
+  { id: "kakao", name: "카카오", configured: false, authorizationPath: "/oauth2/authorization/kakao" },
+  { id: "naver", name: "네이버", configured: false, authorizationPath: "/oauth2/authorization/naver" },
+  { id: "google", name: "구글", configured: false, authorizationPath: "/oauth2/authorization/google" },
+];
+
+export function signupUser(input: SignupInput): Promise<SignupResult> {
+  return requestJson<SignupResult>("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function loginUser(input: { email: string; password: string }): Promise<AuthTokenResult> {
+  return requestJson<AuthTokenResult>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function refreshAuthTokens(refreshToken: string): Promise<AuthTokenResult> {
+  return requestJson<AuthTokenResult>("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export function exchangeOAuthCode(code: string): Promise<AuthTokenResult> {
+  return requestJson<AuthTokenResult>("/auth/oauth/exchange", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+export function logoutSession(refreshToken: string): Promise<{ loggedOut: boolean }> {
+  return requestJson<{ loggedOut: boolean }>("/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export function getCurrentUser(accessToken: string): Promise<AuthUser> {
+  return requestJson<AuthUser>("/auth/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getUserSkinProfile(accessToken: string): Promise<SkinProfile> {
+  return requestJson<SkinProfile>("/users/me/skin-profile", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveUserSkinProfile(
+  accessToken: string,
+  input: { skinType: string; concerns: string[] },
+): Promise<SkinProfile> {
+  return requestJson<SkinProfile>("/users/me/skin-profile", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getOAuthProviders(): Promise<OAuthProviderStatus[]> {
+  try {
+    const providers = await requestJson<OAuthProviderStatus[]>("/auth/oauth/providers");
+    return oauthProviderFallback.map((fallback) => providers.find((provider) => provider.id === fallback.id) ?? fallback);
+  } catch {
+    return oauthProviderFallback;
+  }
+}
+
+export function getProductPage(query: ProductQuery = {}): Promise<ProductPage> {
   const search = new URLSearchParams();
   if (query.query) search.set("query", query.query);
   if (query.category && query.category !== "전체") search.set("category", query.category);
   if (query.grade) search.set("grade", String(query.grade));
+  search.set("page", String(query.page ?? 0));
+  search.set("size", String(query.size ?? 12));
+  search.set("sort", query.sort ?? "score");
+  search.set("direction", query.direction ?? "desc");
 
-  const suffix = search.size > 0 ? `?${search}` : "";
-  return requestJson<Product[]>(`/products${suffix}`);
+  return requestJson<ProductPage>(`/products?${search}`);
+}
+
+export async function getProducts(query: ProductQuery = {}): Promise<Product[]> {
+  const result = await getProductPage({ ...query, page: 0, size: 50 });
+  return result.content;
 }
 
 export function getProduct(id: string): Promise<Product> {
