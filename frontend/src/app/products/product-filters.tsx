@@ -25,40 +25,40 @@ function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues
 
 export function ProductSearch({ filters }: { filters: ProductFilterValues }) {
   return (
-    <form action="/products" className="mx-auto mt-8 flex max-w-2xl items-center gap-3 rounded-full border border-[#74513f24] bg-[#fffdf7d9] px-5 shadow-[0_12px_30px_rgba(74,52,40,.06)] focus-within:border-[#a54f4970]">
-      <Search size={19} className="text-[#8a796d]" />
+    <form action="/products" className="mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-full border border-[#74513f24] bg-[#fffdf7d9] px-4 shadow-[0_12px_30px_rgba(74,52,40,.06)] focus-within:border-[#a54f4970] sm:mt-8 sm:gap-3 sm:px-5">
+      <Search size={18} className="shrink-0 text-[#8a796d]" />
       <input name="query" defaultValue={filters.query} placeholder="제품명이나 브랜드를 검색해보세요" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9a8b80]" />
       {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
       {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
       {filters.order !== "score-desc" && <input type="hidden" name="order" value={filters.order} />}
-      <button type="submit" className="rounded-full bg-[#37312c] px-4 py-2 text-xs font-semibold text-white">검색</button>
+      <button type="submit" className="min-h-10 shrink-0 rounded-full bg-[#37312c] px-4 py-2 text-xs font-semibold text-white">검색</button>
     </form>
   );
 }
 
 export function ProductSort({ filters }: { filters: ProductFilterValues }) {
   return (
-    <form action="/products" className="flex items-center gap-2">
+    <form action="/products" className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:flex-none">
       {filters.query && <input type="hidden" name="query" value={filters.query} />}
       {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
       {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
       <label htmlFor="product-order" className="text-xs text-[#766960]">정렬</label>
-      <select id="product-order" name="order" defaultValue={filters.order} className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs outline-none sm:px-4">
+      <select id="product-order" name="order" defaultValue={filters.order} className="min-w-0 flex-1 rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs outline-none sm:flex-none sm:px-4">
         <option value="score-desc">화력 높은 순</option>
         <option value="price-asc">가격 낮은 순</option>
         <option value="price-desc">가격 높은 순</option>
         <option value="name-asc">이름순</option>
       </select>
-      <button type="submit" className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs font-semibold sm:px-4">적용</button>
+      <button type="submit" className="min-h-11 shrink-0 rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs font-semibold sm:px-4">적용</button>
     </form>
   );
 }
 
 export function CategoryNavigation({ filters }: { filters: ProductFilterValues }) {
   return (
-    <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-3">
+    <div className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-3 gap-2 overflow-x-auto px-3 pb-3 sm:mx-0 sm:px-0">
       {categories.map((item) => (
-        <Link key={item} href={filterHref(filters, "category", item)} scroll={false} className={`shrink-0 rounded-full px-4 py-2.5 text-sm transition ${filters.category === item ? "bg-[#37312c] text-white" : "border border-[#73533f1f] bg-[#fffaf3] text-[#6d625a] hover:border-[#9f6b59]"}`}>
+        <Link key={item} href={filterHref(filters, "category", item)} scroll={false} className={`shrink-0 snap-start rounded-full px-4 py-2.5 text-sm transition ${filters.category === item ? "bg-[#37312c] text-white" : "border border-[#73533f1f] bg-[#fffaf3] text-[#6d625a] hover:border-[#9f6b59]"}`}>
           {item}
         </Link>
       ))}

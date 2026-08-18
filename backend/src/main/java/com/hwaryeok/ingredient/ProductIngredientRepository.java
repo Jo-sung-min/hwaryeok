@@ -25,4 +25,6 @@ public interface ProductIngredientRepository extends JpaRepository<ProductIngred
             order by product.baseScore desc
             """)
     List<ProductIngredient> findByIngredientId(@Param("ingredientId") String ingredientId);
+
+    long countByProductId(String productId);
 }

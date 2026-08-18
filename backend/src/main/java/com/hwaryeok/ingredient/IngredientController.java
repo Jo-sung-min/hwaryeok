@@ -1,5 +1,7 @@
 package com.hwaryeok.ingredient;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,9 +13,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class IngredientController {
 
     private final IngredientService ingredientService;
+    private final IngredientFirepowerService ingredientFirepowerService;
 
-    public IngredientController(IngredientService ingredientService) {
+    public IngredientController(IngredientService ingredientService,
+                                IngredientFirepowerService ingredientFirepowerService) {
         this.ingredientService = ingredientService;
+        this.ingredientFirepowerService = ingredientFirepowerService;
+    }
+
+    @GetMapping("/featured")
+    public List<IngredientResponse> findFeaturedIngredients(
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ingredientService.findFeaturedIngredients(limit);
+    }
+
+    @GetMapping("/{id}/firepower")
+    public IngredientFirepowerResponse findIngredientFirepower(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ingredientFirepowerService.rankProducts(id, limit);
     }
 
     @GetMapping

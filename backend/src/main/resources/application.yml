@@ -22,6 +22,10 @@ spring:
     create-schemas: true
     default-schema: ${DB_SCHEMA:hwaryeok}
     schemas: ${DB_SCHEMA:hwaryeok}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 
 server:
   port: ${SERVER_PORT:8080}

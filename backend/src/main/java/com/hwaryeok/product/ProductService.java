@@ -98,7 +98,7 @@ public class ProductService {
         return new Product(
                 product.getId(), product.getBrand(), product.getName(), product.getCategory(),
                 Math.clamp(product.getBaseScore() + adjustment, 0, 100), product.getBenefit(),
-                product.getSubBenefit(), product.getPrice(), product.getTone(), product.getTag()
+                product.getSubBenefit(), product.getPrice(), product.getTone(), product.getTag(), product.getImageUrl()
         );
     }
 }

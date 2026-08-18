@@ -15,6 +15,9 @@ public record IngredientDetailResponse(
         IngredientStatus status,
         String caution,
         List<String> tags,
+        String evidenceLevel,
+        boolean featured,
+        int displayOrder,
         Map<String, String> skinTypeFeatures,
         Map<String, String> concernFeatures,
         List<ProductResponse> products
@@ -29,6 +32,9 @@ public record IngredientDetailResponse(
                 ingredient.getStatus(),
                 ingredient.getCaution(),
                 ingredient.getTags().stream().sorted().toList(),
+                ingredient.getEvidenceLevel(),
+                ingredient.isFeatured(),
+                ingredient.getDisplayOrder(),
                 new TreeMap<>(ingredient.getSkinTypeFeatures()),
                 new TreeMap<>(ingredient.getConcernFeatures()),
                 relations.stream().map(ProductIngredient::getProduct).map(ProductResponse::from).toList()

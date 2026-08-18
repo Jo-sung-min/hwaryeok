@@ -10,7 +10,10 @@ public record IngredientResponse(
         String description,
         IngredientStatus status,
         String caution,
-        List<String> tags
+        List<String> tags,
+        String evidenceLevel,
+        boolean featured,
+        int displayOrder
 ) {
     public static IngredientResponse from(Ingredient ingredient) {
         return new IngredientResponse(
@@ -21,7 +24,10 @@ public record IngredientResponse(
                 ingredient.getDescription(),
                 ingredient.getStatus(),
                 ingredient.getCaution(),
-                ingredient.getTags().stream().sorted().toList()
+                ingredient.getTags().stream().sorted().toList(),
+                ingredient.getEvidenceLevel(),
+                ingredient.isFeatured(),
+                ingredient.getDisplayOrder()
         );
     }
 }

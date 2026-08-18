@@ -62,7 +62,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
           )}
         </section>
 
-        <section className="border-y border-[#74513f14] bg-[#f3eadc91] py-16 md:py-20">
+        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-16 md:py-20">
           <div className="container-page">
             <div className="mb-9 flex items-end justify-between gap-5">
               <div><p className="eyebrow mb-4">IN PRODUCTS</p><h2 className="section-title font-myeongjo">이 성분이 담긴 화장품</h2></div>

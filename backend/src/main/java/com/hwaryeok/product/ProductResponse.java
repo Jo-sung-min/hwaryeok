@@ -15,7 +15,8 @@ public record ProductResponse(
         int priceValue,
         String price,
         String tone,
-        String tag
+        String tag,
+        String imageUrl
 ) {
     public static ProductResponse from(Product product) {
         int score = product.getBaseScore();
@@ -33,7 +34,8 @@ public record ProductResponse(
                         ? NumberFormat.getNumberInstance(Locale.KOREA).format(product.getPrice()) + "원"
                         : "가격 정보 없음",
                 product.getTone(),
-                product.getTag()
+                product.getTag(),
+                product.getImageUrl()
         );
     }
 

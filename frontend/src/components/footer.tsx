@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="border-t border-[#74513f18] bg-[#f3eadb99] py-14">
+    <footer className="border-t border-[#dfa6b52b] bg-[#fff1f4] py-14">
       <div className="container-page grid gap-10 md:grid-cols-[1.2fr_.8fr_.8fr]">
         <div>
           <div className="mb-4 flex items-center gap-3"><span className="seal h-9 w-9 font-myeongjo text-lg">화</span><strong className="font-myeongjo text-2xl">화력</strong></div>

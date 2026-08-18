@@ -95,7 +95,7 @@ async function crawl() {
       price: Number(entry.product.price) || 0,
       packageInfo: entry.product.package_info ?? null,
       tone: toneFor(category),
-      tag: `화해 급상승 #${index + 1} · 평점 ${rating.toFixed(2)}`,
+      tag: `화력 급상승 #${index + 1} · 평점 ${rating.toFixed(2)}`,
       sourceRank: index + 1,
       sourceRating: rating,
       sourceReviewCount: Number(entry.product.review_count) || 0,

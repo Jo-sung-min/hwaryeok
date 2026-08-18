@@ -79,11 +79,11 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#74513f16] bg-[#f2e8d979] py-14 text-center md:py-20">
+      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-12 text-center md:py-20">
         <div className="container-page">
           <BookOpen className="mx-auto mb-5 text-[#a45a50]" size={30} strokeWidth={1.5} />
           <p className="eyebrow mb-4">INGREDIENT DICTIONARY</p>
-          <h1 className="font-myeongjo text-4xl font-medium md:text-5xl">어려운 성분, 쉬운 우리말로</h1>
+          <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-tight md:text-5xl">어려운 성분, 쉬운 우리말로</h1>
           <p className="mt-4 text-sm leading-7 text-[#786c63]">전문 용어 대신 어떤 일을 하는지, 내 피부에는 어떻게 느껴질지 차분히 알려드려요.</p>
 
           <form className="mx-auto mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row" action="/ingredients">
@@ -94,12 +94,12 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
             </label>
             {values.status && <input type="hidden" name="status" value={values.status} />}
             {values.tag && <input type="hidden" name="tag" value={values.tag} />}
-            <button className="ink-btn px-7" type="submit">검색하기</button>
+            <button className="ink-btn w-full px-7 sm:w-auto" type="submit">검색하기</button>
           </form>
         </div>
       </section>
 
-      <section className="container-page py-10">
+      <section className="container-page py-8 md:py-10">
         <div className="flex flex-col justify-between gap-5 border-b border-[#74513f16] pb-7 lg:flex-row lg:items-end">
           <div>
             <p className="mb-3 text-xs font-bold tracking-[.14em] text-[#8e7468]">상태로 보기</p>
@@ -121,12 +121,12 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
 
         <div className="my-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-sm text-[#7a6c63]"><strong className="text-[#a54f49]">{result.totalElements}</strong>개의 성분을 찾았어요</p>
-          <form action="/ingredients" className="flex items-center gap-2">
+          <form action="/ingredients" className="flex min-w-0 items-center gap-2">
             {values.query && <input type="hidden" name="query" value={values.query} />}
             {values.status && <input type="hidden" name="status" value={values.status} />}
             {values.tag && <input type="hidden" name="tag" value={values.tag} />}
             <label htmlFor="ingredient-sort" className="text-xs text-[#766960]">정렬</label>
-            <select id="ingredient-sort" name="sort" defaultValue={values.sort} className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-4 py-2.5 text-xs outline-none">
+            <select id="ingredient-sort" name="sort" defaultValue={values.sort} className="min-w-0 flex-1 rounded-full border border-[#74513f24] bg-[#fffaf3] px-4 py-2.5 text-xs outline-none sm:flex-none">
               <option value="name">가나다순</option>
               <option value="role">역할순</option>
               <option value="status">상태순</option>
@@ -140,7 +140,7 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
             {result.content.map((ingredient) => {
               const caution = ingredient.status === "CAUTION";
               return (
-                <Link href={`/ingredients/${ingredient.id}`} key={ingredient.id} className="paper-card group rounded-[24px] p-6 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.11)]">
+                <Link href={`/ingredients/${ingredient.id}`} key={ingredient.id} className="paper-card group rounded-[24px] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.11)] sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
@@ -169,9 +169,9 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
 
         {result.totalPages > 1 && (
           <nav aria-label="성분 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
-            {result.page > 0 && <Link href={pageHref(values, { page: result.page - 1 })} className="grid h-10 w-10 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
-            {visiblePages.map((page) => <Link key={page} href={pageHref(values, { page })} aria-current={page === result.page ? "page" : undefined} className={`grid h-10 w-10 place-items-center rounded-full text-xs ${page === result.page ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3]"}`}>{page + 1}</Link>)}
-            {result.hasNext && <Link href={pageHref(values, { page: result.page + 1 })} className="grid h-10 w-10 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
+            {result.page > 0 && <Link href={pageHref(values, { page: result.page - 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
+            {visiblePages.map((page) => <Link key={page} href={pageHref(values, { page })} aria-current={page === result.page ? "page" : undefined} className={`grid h-11 w-11 place-items-center rounded-full text-xs ${page === result.page ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3]"}`}>{page + 1}</Link>)}
+            {result.hasNext && <Link href={pageHref(values, { page: result.page + 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
           </nav>
         )}
       </section>

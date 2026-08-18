@@ -36,14 +36,14 @@ export function SkinProfileForm({ nickname, initialProfile }: { nickname: string
   };
 
   return (
-    <div className="min-h-[calc(100vh-74px)] bg-[#f6eee2] py-8 md:py-14">
+    <div className="min-h-[calc(100vh-72px)] bg-[#fff1f4] py-8 md:min-h-[calc(100vh-74px)] md:py-14">
       <div className="container-page max-w-3xl">
         <Link href="/" className="mb-7 inline-flex items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 홈으로</Link>
         <div className="mb-8 flex items-end justify-between gap-5">
           <div><p className="eyebrow mb-3">SKIN PROFILE</p><h1 className="font-myeongjo text-3xl font-semibold md:text-4xl">{configured ? `${nickname}님의 피부를 다시 맞춰볼까요?` : "나의 피부를 알려주세요"}</h1></div>
           <span className="shrink-0 font-myeongjo text-sm text-[#9a6e60]">{step} / 3</span>
         </div>
-        <div className="mb-8 flex gap-2">{[1, 2, 3].map((item) => <div key={item} className={`h-1.5 flex-1 rounded-full transition ${item <= step ? "bg-[#a8564f]" : "bg-[#d9cbbd]"}`} />)}</div>
+        <div className="mb-8 flex gap-2">{[1, 2, 3].map((item) => <div key={item} className={`h-1.5 flex-1 rounded-full transition ${item <= step ? "bg-[#a54f63]" : "bg-[#efd9df]"}`} />)}</div>
 
         <form action={formAction} className="paper-card rounded-[30px] p-6 md:p-10">
           <input type="hidden" name="skinType" value={skin} />
@@ -63,7 +63,7 @@ export function SkinProfileForm({ nickname, initialProfile }: { nickname: string
 
           {step === 3 && <div>
             <div className="text-center"><span className="seal mx-auto h-14 w-14 font-myeongjo text-2xl">完</span><h2 className="mt-5 font-myeongjo text-2xl font-semibold">피부 화력 준비가 끝났어요</h2><p className="mt-2 text-sm text-[#7e7168]">입력한 내용을 확인하고 저장해 주세요.</p></div>
-            <div className="mt-8 rounded-2xl bg-[#f4eadc] p-6">
+            <div className="mt-8 rounded-2xl bg-[#fff0f3] p-6">
               <div className="flex items-center justify-between border-b border-[#7656431c] pb-5"><span className="text-sm text-[#796c63]">나의 피부 타입</span><strong className="font-myeongjo text-xl text-[#984944]">{skin}</strong></div>
               <div className="pt-5"><span className="text-sm text-[#796c63]">피부 고민</span><div className="mt-3 flex flex-wrap gap-2">{selectedConcerns.map((item) => <span key={item} className="rounded-full bg-[#fffaf1] px-3 py-2 text-xs text-[#62564f]">{item}</span>)}</div></div>
             </div>

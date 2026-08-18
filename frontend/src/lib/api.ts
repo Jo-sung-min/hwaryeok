@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, FavoriteList, FavoriteProduct, IngredientDetail, IngredientPage, IngredientStatus, Product, ProductIngredients, ProductPage } from "@/lib/types";
+import type { Analysis, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -255,6 +255,53 @@ export function getIngredients(query: IngredientQuery = {}): Promise<IngredientP
 
 export function getIngredient(id: string): Promise<IngredientDetail> {
   return requestJson<IngredientDetail>(`/ingredients/${encodeURIComponent(id)}`);
+}
+
+export function getFeaturedIngredients(limit = 10): Promise<Ingredient[]> {
+  return requestJson<Ingredient[]>(`/ingredients/featured?limit=${limit}`);
+}
+
+export function getIngredientFirepower(id: string, limit = 20): Promise<IngredientFirepower> {
+  return requestJson<IngredientFirepower>(`/ingredients/${encodeURIComponent(id)}/firepower?limit=${limit}`);
+}
+
+export function getUserPreferredIngredients(accessToken: string): Promise<PreferredIngredients> {
+  return requestJson<PreferredIngredients>("/users/me/preferred-ingredients", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveUserPreferredIngredients(accessToken: string, ingredientIds: string[]): Promise<PreferredIngredients> {
+  return requestJson<PreferredIngredients>("/users/me/preferred-ingredients", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ ingredientIds }),
+  });
+}
+
+export async function uploadAdminProductImage(accessToken: string, productId: string, file: File): Promise<Product> {
+  const formData = new FormData();
+  formData.set("file", file);
+  const response = await fetch(`${API_BASE_URL}/admin/products/${encodeURIComponent(productId)}/image`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { code?: string; message?: string; fieldErrors?: Record<string, string> } | null;
+    throw new ApiRequestError(
+      body?.message ?? "제품 이미지를 등록하지 못했어요.",
+      response.status,
+      body?.code,
+      body?.fieldErrors ?? {},
+    );
+  }
+  return response.json() as Promise<Product>;
 }
 
 export function getProductIngredients(productId: string): Promise<ProductIngredients> {

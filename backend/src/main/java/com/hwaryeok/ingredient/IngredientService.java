@@ -52,6 +52,14 @@ public class IngredientService {
         return IngredientDetailResponse.from(ingredient, productIngredientRepository.findByIngredientId(id));
     }
 
+    public List<IngredientResponse> findFeaturedIngredients(int limit) {
+        if (limit < 1 || limit > 20) throw new IllegalArgumentException("대표 성분 수는 1~20 사이여야 해요.");
+        return ingredientRepository.findByFeaturedTrueOrderByDisplayOrderAscNameAsc(PageRequest.of(0, limit))
+                .stream()
+                .map(IngredientResponse::from)
+                .toList();
+    }
+
     public ProductIngredientsResponse findProductIngredients(String productId, String status, String tag) {
         productService.getProduct(productId);
         IngredientStatus parsedStatus = parseStatus(status);

@@ -13,6 +13,7 @@ export type Product = {
   price: string;
   tone: ProductTone;
   tag?: string | null;
+  imageUrl?: string | null;
 };
 
 export type ProductPage = {
@@ -64,6 +65,9 @@ export type Ingredient = {
   status: IngredientStatus;
   caution: string | null;
   tags: string[];
+  evidenceLevel: "A" | "B" | "C";
+  featured: boolean;
+  displayOrder: number;
 };
 
 export type IngredientPage = {
@@ -93,4 +97,40 @@ export type ProductIngredients = {
   cautionCount: number;
   neutralCount: number;
   ingredients: ProductIngredient[];
+};
+
+export type PreferredIngredient = {
+  priority: number;
+  ingredient: Ingredient;
+};
+
+export type PreferredIngredients = {
+  content: PreferredIngredient[];
+  totalElements: number;
+};
+
+export type IngredientFirepowerBreakdown = {
+  match: number;
+  concentration: number;
+  evidence: number;
+  productType: number;
+  synergy: number;
+  stability: number;
+  dataConfidence: number;
+};
+
+export type IngredientFirepowerProduct = {
+  product: Product;
+  firepowerScore: number;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  concentrationNote: string | null;
+  breakdown: IngredientFirepowerBreakdown;
+};
+
+export type IngredientFirepower = {
+  ingredientId: string;
+  ingredientName: string;
+  scoreVersion: string;
+  disclaimer: string;
+  products: IngredientFirepowerProduct[];
 };

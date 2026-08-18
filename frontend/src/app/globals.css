@@ -1,30 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #fbf7ed;
-  --paper-deep: #f4ebdc;
+  --paper: #fffdfc;
+  --paper-deep: #fff1f4;
   --ink: #302a25;
   --ink-soft: #75695f;
-  --plum: #a54f49;
-  --plum-dark: #833a37;
-  --blush: #e9a99a;
-  --peach: #f4d7c8;
+  --plum: #a54f63;
+  --plum-dark: #84384d;
+  --blush: #edb4c0;
+  --peach: #f9dfe5;
   --sage: #778474;
-  --line: rgba(117, 86, 69, 0.17);
+  --line: rgba(169, 91, 111, 0.15);
 }
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  max-width: 100%;
+  overflow-x: clip;
+  scroll-behavior: smooth;
+}
 
 body {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
   color: var(--ink);
   background-color: var(--paper);
   background-image:
-    radial-gradient(circle at 18% 6%, rgba(255,255,255,.82), transparent 25%),
-    radial-gradient(circle at 83% 22%, rgba(223,164,145,.07), transparent 24%),
-    repeating-linear-gradient(8deg, rgba(92,70,52,.018) 0, rgba(92,70,52,.018) 1px, transparent 1px, transparent 5px);
+    radial-gradient(circle at 18% 6%, rgba(255,255,255,.94), transparent 25%),
+    radial-gradient(circle at 83% 22%, rgba(239,177,192,.13), transparent 26%),
+    repeating-linear-gradient(8deg, rgba(139,78,94,.014) 0, rgba(139,78,94,.014) 1px, transparent 1px, transparent 5px);
   font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -46,6 +53,7 @@ body::before {
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
 button { cursor: pointer; }
+button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 ::selection { background: #eab9aa; color: #3a2824; }
 
@@ -57,9 +65,9 @@ button { cursor: pointer; }
 .container-page { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
 
 .paper-card {
-  background: rgba(255, 252, 245, .78);
+  background: rgba(255, 255, 255, .84);
   border: 1px solid var(--line);
-  box-shadow: 0 18px 45px rgba(78, 56, 43, .07), inset 0 1px rgba(255,255,255,.9);
+  box-shadow: 0 18px 45px rgba(139, 78, 94, .08), inset 0 1px rgba(255,255,255,.95);
   backdrop-filter: blur(12px);
 }
 
@@ -91,7 +99,7 @@ button { cursor: pointer; }
   border-radius: 999px;
   color: var(--ink);
   border: 1px solid rgba(74,58,47,.23);
-  background: rgba(255,252,245,.62);
+  background: rgba(255,255,255,.82);
   transition: background .2s ease, transform .2s ease, border-color .2s ease;
 }
 
@@ -149,7 +157,10 @@ button { cursor: pointer; }
 
 @media (max-width: 767px) {
   .container-page { width: min(100% - 28px, 1180px); }
-  body { padding-bottom: 76px; }
+  body { padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
+  input, select, textarea { font-size: 16px; }
+  .ink-btn, .line-btn { min-height: 48px; }
+  .mobile-bottom-nav { bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

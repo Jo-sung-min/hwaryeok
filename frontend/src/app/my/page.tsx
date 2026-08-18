@@ -24,22 +24,22 @@ export default async function MyPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#74513f16] bg-[#eee2d2a6] py-12 md:py-16">
+      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 md:py-16">
         <div className="container-page">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <p className="eyebrow mb-4">MY HWA:RYEOK</p>
-              <h1 className="font-myeongjo text-4xl font-medium">{user.nickname}님의 피부가<br className="sm:hidden" /> 피어나는 곳</h1>
+              <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-tight sm:text-4xl">{user.nickname}님의 피부가<br className="sm:hidden" /> 피어나는 곳</h1>
               <p className="mt-4 text-sm text-[#75695f]">저장한 피부 정보와 찜한 제품을 한곳에서 살펴보세요.</p>
             </div>
-            <Link href="/profile" className="line-btn self-start"><PencilLine size={16} /> 피부 정보 수정</Link>
+            <Link href="/profile" className="line-btn w-full self-start sm:w-auto"><PencilLine size={16} /> 피부 정보 수정</Link>
           </div>
         </div>
       </section>
 
       <section className="container-page -mt-1 py-9 md:py-12">
-        <div className="paper-card grid overflow-hidden rounded-[28px] md:grid-cols-[1.15fr_.85fr]">
-          <div className="p-6 md:p-9">
+        <div className="paper-card grid overflow-hidden rounded-[24px] sm:rounded-[28px] md:grid-cols-[1.15fr_.85fr]">
+          <div className="p-5 sm:p-6 md:p-9">
             <span className="rounded-full bg-[#a54f4910] px-3 py-1.5 text-xs font-semibold text-[#984944]">나의 피부 프로필</span>
             <div className="mt-6 flex items-center gap-5">
               <span className="seal h-16 w-16 font-myeongjo text-2xl">{profile.skinType ? skinSeal[profile.skinType] ?? "花" : "花"}</span>
@@ -54,7 +54,7 @@ export default async function MyPage() {
               <Link href="/profile" className="mt-7 inline-flex items-center gap-1 text-xs font-semibold text-[#9b4a45]">피부 프로필 등록하기 <ArrowRight size={14} /></Link>
             )}
           </div>
-          <div className="border-t border-[#74513f16] bg-[#f3e9db] p-6 md:border-l md:border-t-0 md:p-9">
+          <div className="border-t border-[#e3b1bd33] bg-[#fff1f4] p-5 sm:p-6 md:border-l md:border-t-0 md:p-9">
             <div className="flex items-center gap-2 text-xs font-bold text-[#9b4a45]"><Sparkles size={14} /> 나의 화력 기록</div>
             <p className="mt-4 font-myeongjo text-xl leading-8">{favorites.totalElements > 0 ? `${favorites.totalElements}개의 제품을 찜해두었어요.` : "아직 찜한 제품이 없어요."}<br />마음에 드는 화장품을 천천히 모아보세요.</p>
             <Link href="/products" className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-[#8e4842]">맞춤 제품 둘러보기 <ArrowRight size={14} /></Link>
@@ -67,7 +67,7 @@ export default async function MyPage() {
           <StatCard icon={Clock3} label="최근 본 제품" value="준비 중" />
         </div>
 
-        <section className="mt-14">
+        <section className="mt-10 md:mt-14">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div><h2 className="font-myeongjo text-2xl font-semibold">찜한 제품</h2><p className="mt-2 text-xs text-[#82736a]">하트를 눌러 저장한 제품을 최신순으로 보여드려요.</p></div>
             {favorites.totalElements > 0 && <span className="text-xs font-semibold text-[#9b4a45]">총 {favorites.totalElements}개</span>}
@@ -75,16 +75,16 @@ export default async function MyPage() {
           {favorites.content.length > 0 ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{favorites.content.map(({ product }) => <ProductCard key={product.id} product={product} initialFavorited isAuthenticated returnTo="/my" />)}</div>
           ) : (
-            <div className="paper-card rounded-[26px] px-6 py-16 text-center">
+            <div className="paper-card rounded-[24px] px-5 py-12 text-center sm:rounded-[26px] sm:px-6 sm:py-16">
               <Heart className="mx-auto text-[#c58a7c]" size={32} strokeWidth={1.5} />
               <h3 className="mt-5 font-myeongjo text-2xl font-semibold">마음에 담은 제품이 아직 없어요.</h3>
               <p className="mt-3 text-sm text-[#7c6f66]">제품 카드의 하트를 누르면 여기에 안전하게 보관돼요.</p>
-              <Link href="/products" className="ink-btn mt-7">화장품 둘러보기 <ArrowRight size={16} /></Link>
+              <Link href="/products" className="ink-btn mt-7 w-full sm:w-auto">화장품 둘러보기 <ArrowRight size={16} /></Link>
             </div>
           )}
         </section>
 
-        <section className="mt-14">
+        <section className="mt-10 md:mt-14">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div><h2 className="font-myeongjo text-2xl font-semibold">나의 추천 제품</h2><p className="mt-2 text-xs text-[#82736a]">{profile.configured ? `${profile.skinType} 피부 기준 화력 상위 제품이에요.` : "프로필 등록 전에는 수부지 기준으로 보여드려요."}</p></div>
             <Link href="/ranking" className="text-xs font-semibold text-[#9b4a45]">랭킹 보기</Link>
@@ -92,9 +92,9 @@ export default async function MyPage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{ranking.map((product) => <ProductCard key={product.id} product={product} initialFavorited={favorites.content.some((item) => item.product.id === product.id)} isAuthenticated returnTo="/my" />)}</div>
         </section>
 
-        <div className="mt-14 rounded-[26px] border border-[#74513f18] bg-[#f3eadc87] p-6 sm:flex sm:items-center sm:justify-between">
+        <div className="mt-10 rounded-[24px] border border-[#e3b1bd33] bg-[#fff1f4] p-5 sm:mt-14 sm:flex sm:items-center sm:justify-between sm:rounded-[26px] sm:p-6">
           <div><div className="flex items-center gap-2"><Settings size={16} /><h2 className="font-myeongjo text-xl font-semibold">피부 정보가 달라졌나요?</h2></div><p className="mt-2 text-xs leading-6 text-[#7c6f66]">프로필을 바꾸면 모든 화력 점수와 추천 순위가 새롭게 계산돼요.</p></div>
-          <Link href="/profile" className="line-btn mt-5 sm:mt-0">다시 분석하기</Link>
+          <Link href="/profile" className="line-btn mt-5 w-full sm:mt-0 sm:w-auto">다시 분석하기</Link>
         </div>
       </section>
     </div>

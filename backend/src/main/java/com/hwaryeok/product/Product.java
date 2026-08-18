@@ -40,11 +40,19 @@ public class Product {
     @Column(length = 80)
     private String tag;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     protected Product() {
     }
 
     public Product(String id, String brand, String name, String category, int baseScore, String benefit,
                    String subBenefit, int price, String tone, String tag) {
+        this(id, brand, name, category, baseScore, benefit, subBenefit, price, tone, tag, null);
+    }
+
+    public Product(String id, String brand, String name, String category, int baseScore, String benefit,
+                   String subBenefit, int price, String tone, String tag, String imageUrl) {
         this.id = id;
         this.brand = brand;
         this.name = name;
@@ -55,6 +63,7 @@ public class Product {
         this.price = price;
         this.tone = tone;
         this.tag = tag;
+        this.imageUrl = imageUrl;
     }
 
     public String getId() { return id; }
@@ -67,4 +76,9 @@ public class Product {
     public int getPrice() { return price; }
     public String getTone() { return tone; }
     public String getTag() { return tag; }
+    public String getImageUrl() { return imageUrl; }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

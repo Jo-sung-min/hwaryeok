@@ -45,6 +45,15 @@ public class Ingredient {
     @Column(length = 600)
     private String caution;
 
+    @Column(name = "evidence_level", length = 1, nullable = false)
+    private String evidenceLevel;
+
+    @Column(nullable = false)
+    private boolean featured;
+
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "ingredient_tags", joinColumns = @JoinColumn(name = "ingredient_id"))
     @Column(name = "tag", length = 40, nullable = false)
@@ -84,6 +93,9 @@ public class Ingredient {
     public String getDescription() { return description; }
     public IngredientStatus getStatus() { return status; }
     public String getCaution() { return caution; }
+    public String getEvidenceLevel() { return evidenceLevel; }
+    public boolean isFeatured() { return featured; }
+    public int getDisplayOrder() { return displayOrder; }
     public Set<String> getTags() { return tags; }
     public Map<String, String> getSkinTypeFeatures() { return skinTypeFeatures; }
     public Map<String, String> getConcernFeatures() { return concernFeatures; }

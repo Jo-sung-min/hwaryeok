@@ -25,7 +25,7 @@ export default async function OAuthCallbackPage({ searchParams }: { searchParams
   const returnTo = sanitizeReturnTo(typeof params.returnTo === "string" ? params.returnTo : undefined);
 
   return (
-    <div className="grid min-h-[calc(100vh-74px)] place-items-center bg-[#f5ecdf] px-5 py-12">
+    <div className="grid min-h-[calc(100vh-72px)] place-items-center bg-[#fff1f4] px-5 py-12 md:min-h-[calc(100vh-74px)]">
       <section className="paper-card w-full max-w-lg rounded-[30px] p-8 text-center md:p-11" role="status">
         {success ? <CheckCircle2 className="mx-auto text-[#778474]" size={52} strokeWidth={1.5} /> : <AlertCircle className="mx-auto text-[#a54f49]" size={52} strokeWidth={1.5} />}
         <p className="eyebrow mb-3 mt-7">{success ? "LOGIN COMPLETE" : "LOGIN PAUSED"}</p>
