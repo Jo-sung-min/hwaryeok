@@ -22,7 +22,22 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
   await connection();
   const [params, products, savedProfile] = await Promise.all([searchParams, getProducts(), getOptionalSkinProfile()]);
   const analysisProfile = savedProfile?.skinType
-    ? { skinType: savedProfile.skinType, concerns: savedProfile.concerns }
+    ? {
+        skinType: savedProfile.skinType,
+        concerns: savedProfile.concerns,
+        hydrationLevel: savedProfile.hydrationLevel,
+        oilinessLevel: savedProfile.oilinessLevel,
+        sensitivityLevel: savedProfile.sensitivityLevel,
+        breakoutFrequency: savedProfile.breakoutFrequency,
+        cleansingTightness: savedProfile.cleansingTightness,
+        rednessFrequency: savedProfile.rednessFrequency,
+        poreLevel: savedProfile.poreLevel,
+        texturePreference: savedProfile.texturePreference,
+        routineComplexity: savedProfile.routineComplexity,
+        sunscreenUsage: savedProfile.sunscreenUsage,
+        reactionTriggers: savedProfile.reactionTriggers,
+        environments: savedProfile.environments,
+      }
     : defaultProfile;
 
   if (products.length < 2) return <CompareEmpty />;

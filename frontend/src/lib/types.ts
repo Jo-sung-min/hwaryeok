@@ -35,6 +35,16 @@ export type FavoriteList = {
   totalElements: number;
 };
 
+export type RecentProduct = {
+  product: Product;
+  viewedAt: string;
+};
+
+export type RecentProductList = {
+  content: RecentProduct[];
+  totalElements: number;
+};
+
 export type ScoreDetail = {
   label: string;
   value: number;

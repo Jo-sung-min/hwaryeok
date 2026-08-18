@@ -17,7 +17,7 @@ export default async function HomePage() {
         <div className="container-page relative z-10 flex min-h-[610px] items-center pb-20 pt-14 md:min-h-[686px] md:pb-0 md:pt-0">
           <div className="max-w-[610px] fade-up">
             <div className="mb-7 flex items-center gap-3">
-              <span className="seal h-12 w-12 font-myeongjo text-2xl font-bold">花力</span>
+              <span className="seal seal-wordmark h-12 w-12 font-myeongjo text-xl font-bold" aria-label="화력">花力</span>
               <div><p className="text-[10px] font-bold tracking-[.24em] text-[#9c6d5e]">PERSONAL BEAUTY INDEX</p><p className="mt-1 text-xs text-[#766860]">내 피부로 읽는 화장품의 힘</p></div>
             </div>
             <p className="eyebrow mb-5">당신만의 화력 등급</p>

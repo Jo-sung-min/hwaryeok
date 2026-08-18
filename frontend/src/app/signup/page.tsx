@@ -13,7 +13,7 @@ export default async function SignupPage() {
           <aside className="relative hidden overflow-hidden rounded-[32px] border border-[#e3b1bd38] bg-[#f9e2e8] p-10 lg:flex lg:flex-col lg:justify-between">
             <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full bg-white/50 blur-3xl" />
             <div className="relative">
-              <span className="seal grid h-14 w-14 place-items-center font-myeongjo text-xl">花力</span>
+              <span className="seal seal-wordmark h-14 w-14 font-myeongjo text-xl" aria-label="화력">花力</span>
               <p className="eyebrow mb-4 mt-9">YOUR BEAUTY, YOUR POWER</p>
               <h2 className="font-myeongjo text-4xl font-medium leading-snug">같은 화장품도<br />내 피부에는 다르게 피어나요.</h2>
               <p className="mt-5 max-w-sm text-sm leading-7 text-[#72655d]">계정 하나로 피부 프로필, 나의 화력 분석, 찜과 비교 기록을 차곡차곡 이어갈 수 있어요.</p>

@@ -56,13 +56,16 @@ export function ProductSort({ filters }: { filters: ProductFilterValues }) {
 
 export function CategoryNavigation({ filters }: { filters: ProductFilterValues }) {
   return (
-    <div className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-3 gap-2 overflow-x-auto px-3 pb-3 sm:mx-0 sm:px-0">
+    <nav
+      aria-label="제품 카테고리"
+      className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto overscroll-x-contain px-4 py-4 sm:mx-0"
+    >
       {categories.map((item) => (
         <Link key={item} href={filterHref(filters, "category", item)} scroll={false} aria-current={filters.category === item ? "page" : undefined} className="glass-choice shrink-0 snap-start rounded-full px-4 py-2.5 text-sm">
           {item}
         </Link>
       ))}
-    </div>
+    </nav>
   );
 }
 

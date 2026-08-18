@@ -383,32 +383,43 @@ class HwaryeokApplicationTests {
 
         HttpResponse<String> createResponse = client.send(
                 bearerRequest("PUT", "/api/v1/users/me/skin-profile", accessToken,
-                        "{\"skinType\":\"수부지\",\"concerns\":[\"속건조\",\"민감\",\"피부 장벽\"]}"),
+                        "{\"skinType\":\"수부지\",\"hydrationLevel\":\"LOW\",\"oilinessLevel\":\"HIGH\",\"sensitivityLevel\":\"HIGH\",\"breakoutFrequency\":\"OCCASIONAL\",\"cleansingTightness\":\"LONG\",\"rednessFrequency\":\"FREQUENT\",\"poreLevel\":\"MEDIUM\",\"texturePreference\":\"LIGHT\",\"routineComplexity\":\"STANDARD\",\"sunscreenUsage\":\"DAILY\",\"reactionTriggers\":[\"향료\",\"에탄올\"],\"breakoutZones\":[\"턱·입가\"],\"environments\":[\"냉난방 건조\",\"계절 변화\"],\"concerns\":[\"속건조\",\"민감\",\"피부 장벽\"]}"),
                 HttpResponse.BodyHandlers.ofString()
         );
         assertThat(createResponse.statusCode()).isEqualTo(200);
         assertThat(createResponse.body()).contains(
                 "\"configured\":true",
                 "\"skinType\":\"수부지\"",
+                "\"hydrationLevel\":\"LOW\"",
+                "\"oilinessLevel\":\"HIGH\"",
+                "\"sensitivityLevel\":\"HIGH\"",
+                "\"breakoutFrequency\":\"OCCASIONAL\"",
+                "\"profileVersion\":2",
+                "\"cleansingTightness\":\"LONG\"",
+                "\"rednessFrequency\":\"FREQUENT\"",
+                "\"texturePreference\":\"LIGHT\"",
+                "\"reactionTriggers\":[\"향료\",\"에탄올\"]",
+                "\"breakoutZones\":[\"턱·입가\"]",
+                "\"environments\":[\"냉난방 건조\",\"계절 변화\"]",
                 "\"concerns\":[\"속건조\",\"민감\",\"피부 장벽\"]"
         );
 
         HttpResponse<String> updateResponse = client.send(
                 bearerRequest("PUT", "/api/v1/users/me/skin-profile", accessToken,
-                        "{\"skinType\":\"건성\",\"concerns\":[\"각질\",\"탄력\"]}"),
+                        "{\"skinType\":\"건성\",\"hydrationLevel\":\"LOW\",\"oilinessLevel\":\"LOW\",\"sensitivityLevel\":\"MEDIUM\",\"breakoutFrequency\":\"RARE\",\"cleansingTightness\":\"SHORT\",\"rednessFrequency\":\"RARE\",\"poreLevel\":\"LOW\",\"texturePreference\":\"RICH\",\"routineComplexity\":\"MINIMAL\",\"sunscreenUsage\":\"SOMETIMES\",\"reactionTriggers\":[],\"breakoutZones\":[],\"environments\":[\"수면 부족\"],\"concerns\":[\"각질\",\"탄력\"]}"),
                 HttpResponse.BodyHandlers.ofString()
         );
         assertThat(updateResponse.statusCode()).isEqualTo(200);
         assertThat(updateResponse.body())
-                .contains("\"skinType\":\"건성\"", "\"concerns\":[\"각질\",\"탄력\"]")
-                .doesNotContain("속건조", "피부 장벽");
+                .contains("\"skinType\":\"건성\"", "\"hydrationLevel\":\"LOW\"", "\"oilinessLevel\":\"LOW\"", "\"sensitivityLevel\":\"MEDIUM\"", "\"breakoutFrequency\":\"RARE\"", "\"texturePreference\":\"RICH\"", "\"reactionTriggers\":[]", "\"environments\":[\"수면 부족\"]", "\"concerns\":[\"각질\",\"탄력\"]")
+                .doesNotContain("속건조", "피부 장벽", "냉난방 건조");
 
         HttpResponse<String> readResponse = client.send(
                 bearerRequest("GET", "/api/v1/users/me/skin-profile", accessToken, null),
                 HttpResponse.BodyHandlers.ofString()
         );
         assertThat(readResponse.statusCode()).isEqualTo(200);
-        assertThat(readResponse.body()).contains("\"skinType\":\"건성\"", "\"concerns\":[\"각질\",\"탄력\"]");
+        assertThat(readResponse.body()).contains("\"skinType\":\"건성\"", "\"hydrationLevel\":\"LOW\"", "\"oilinessLevel\":\"LOW\"", "\"sensitivityLevel\":\"MEDIUM\"", "\"breakoutFrequency\":\"RARE\"", "\"texturePreference\":\"RICH\"", "\"environments\":[\"수면 부족\"]", "\"concerns\":[\"각질\",\"탄력\"]");
     }
 
     @Test
@@ -446,6 +457,14 @@ class HwaryeokApplicationTests {
         );
         assertThat(invalidResponse.statusCode()).isEqualTo(400);
         assertThat(invalidResponse.body()).contains("INVALID_REQUEST", "중복해서 선택할 수 없어요");
+
+        HttpResponse<String> invalidDetailResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/skin-profile", accessToken,
+                        "{\"skinType\":\"건성\",\"hydrationLevel\":\"UNKNOWN\",\"oilinessLevel\":\"BALANCED\",\"sensitivityLevel\":\"MEDIUM\",\"breakoutFrequency\":\"OCCASIONAL\",\"concerns\":[\"속건조\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(invalidDetailResponse.statusCode()).isEqualTo(400);
+        assertThat(invalidDetailResponse.body()).contains("VALIDATION_FAILED", "수분 상태를 다시 선택해 주세요");
     }
 
     @Test
@@ -514,6 +533,69 @@ class HwaryeokApplicationTests {
         );
         assertThat(deleteResponse.statusCode()).isEqualTo(204);
         assertThat(emptyResponse.body()).contains("\"content\":[]", "\"totalElements\":0");
+    }
+
+    @Test
+    void recordsAndListsAuthenticatedUserRecentProductsWithoutDuplicates() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("recent@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                "recent@example.com",
+                passwordEncoder.encode("Flower!123"),
+                "최근회원",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> unauthorizedResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/users/me/recent-products"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unauthorizedResponse.statusCode()).isEqualTo(401);
+
+        String accessToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"recent@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        ).body(), "accessToken");
+
+        HttpResponse<String> firstResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/recent-products/birch-cream", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> secondResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/recent-products/heartleaf-toner", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> duplicateResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/recent-products/birch-cream", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> listResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/recent-products", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(firstResponse.statusCode()).isEqualTo(200);
+        assertThat(secondResponse.statusCode()).isEqualTo(200);
+        assertThat(duplicateResponse.statusCode()).isEqualTo(200);
+        assertThat(duplicateResponse.body()).contains("birch-cream", "viewedAt");
+        assertThat(listResponse.statusCode()).isEqualTo(200);
+        assertThat(listResponse.body()).contains("\"totalElements\":2", "자작나무 수분 크림", "어성초 77 진정 토너");
+        assertThat(listResponse.body().indexOf("birch-cream"))
+                .isLessThan(listResponse.body().indexOf("heartleaf-toner"));
+
+        HttpResponse<String> missingProductResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/recent-products/not-a-product", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(missingProductResponse.statusCode()).isEqualTo(404);
+        assertThat(missingProductResponse.body()).contains("RESOURCE_NOT_FOUND");
     }
 
     @Test

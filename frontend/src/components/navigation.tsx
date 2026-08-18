@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { BarChart3, Heart, Home, Search, Sparkles, UserRound } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { ArrowRight, BarChart3, Heart, Home, Search, Sparkles, UserRound, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { href: "/products", label: "화장품" },
@@ -70,12 +70,66 @@ const mobileNav = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [pathname]);
+
+  function closeSearch() {
+    setSearchOpen(false);
+    window.setTimeout(() => searchToggleRef.current?.focus(), 0);
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const normalizedQuery = query.trim();
+    const search = normalizedQuery ? `?${new URLSearchParams({ query: normalizedQuery })}` : "";
+    setSearchOpen(false);
+    router.push(`/products${search}`);
+  }
+
   return (
-    <nav className="site-glass mobile-bottom-nav fixed inset-x-3 z-50 grid h-[70px] grid-cols-5 rounded-[28px] px-2 md:hidden" aria-label="모바일 메뉴">
-      {mobileNav.map(({ href, label, icon: Icon }) => {
-        const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-        return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`group flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition ${active ? "font-bold text-white" : "font-semibold text-white/75"}`}><span className={`grid h-9 min-w-11 place-items-center rounded-full transition ${active ? "bg-white/16 shadow-[inset_0_1px_rgba(255,255,255,.18)]" : "group-active:bg-white/10"}`}><Icon size={19} strokeWidth={active ? 2.5 : 1.9} /></span>{label}</Link>;
-      })}
+    <nav className="site-glass mobile-bottom-nav fixed inset-x-3 z-50 h-[70px] overflow-hidden rounded-[28px] px-2 md:hidden" aria-label="모바일 메뉴">
+      {searchOpen ? (
+        <form id="mobile-product-search" role="search" aria-label="화장품 검색" onSubmit={submitSearch} onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }} className="flex h-full w-full items-center gap-1.5 px-1">
+          <button type="submit" aria-label="입력한 화장품 검색" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/16 text-white shadow-[inset_0_1px_rgba(255,255,255,.2)]">
+            <Search size={20} strokeWidth={2.4} />
+          </button>
+          <div className="mobile-bottom-search-field flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-full border border-white/25 bg-white/12 shadow-[inset_0_1px_rgba(255,255,255,.14)]">
+            <label htmlFor="mobile-product-query" className="sr-only">검색할 제품명 또는 브랜드</label>
+            <input ref={searchInputRef} id="mobile-product-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} enterKeyHint="search" autoComplete="off" placeholder="제품명·브랜드" className="h-11 min-w-0 flex-1 bg-transparent px-3 text-base font-medium text-white outline-none placeholder:text-white/55" />
+            <button type="submit" aria-label="검색하기" className="mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ad536d] text-white shadow-[0_6px_18px_rgba(79,30,48,.28)]">
+              <ArrowRight size={17} />
+            </button>
+          </div>
+          <button type="button" onClick={closeSearch} aria-label="검색 닫기" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-white/80 transition active:bg-white/12">
+            <X size={19} />
+          </button>
+        </form>
+      ) : (
+        <div className="grid h-full grid-cols-5">
+          {mobileNav.map(({ href, label, icon: Icon }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            const className = `group flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition ${active ? "font-bold text-white" : "font-semibold text-white/75"}`;
+            const content = <><span className={`grid h-9 min-w-11 place-items-center rounded-full transition ${active ? "bg-white/16 shadow-[inset_0_1px_rgba(255,255,255,.18)]" : "group-active:bg-white/10"}`}><Icon size={19} strokeWidth={active ? 2.5 : 1.9} /></span>{label}</>;
+
+            if (href === "/products") {
+              return <button ref={searchToggleRef} key={href} type="button" aria-current={active ? "page" : undefined} aria-expanded="false" aria-controls="mobile-product-search" onClick={() => setSearchOpen(true)} className={className}>{content}</button>;
+            }
+
+            return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={className}>{content}</Link>;
+          })}
+        </div>
+      )}
     </nav>
   );
 }

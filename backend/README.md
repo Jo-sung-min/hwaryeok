@@ -99,6 +99,8 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/users/me/favorites` | 내 찜 제품 최신순 목록 |
 | PUT | `/api/v1/users/me/favorites/{productId}` | 제품 찜 추가 |
 | DELETE | `/api/v1/users/me/favorites/{productId}` | 제품 찜 취소 |
+| GET | `/api/v1/users/me/recent-products` | 내 최근 본 제품 최신순 목록 |
+| PUT | `/api/v1/users/me/recent-products/{productId}` | 제품 상세 확인 기록·최근 시각 갱신 |
 | GET | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 우선순위 조회 |
 | PUT | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 0~10개 저장 |
 | GET | `/oauth2/authorization/{provider}` | OAuth 로그인 시작 (`google`, `kakao`, `naver`) |
@@ -244,14 +246,39 @@ Content-Type: application/json
 
 {
   "skinType": "수부지",
+  "hydrationLevel": "LOW",
+  "oilinessLevel": "HIGH",
+  "sensitivityLevel": "HIGH",
+  "breakoutFrequency": "OCCASIONAL",
+  "cleansingTightness": "LONG",
+  "rednessFrequency": "FREQUENT",
+  "poreLevel": "MEDIUM",
+  "texturePreference": "LIGHT",
+  "routineComplexity": "STANDARD",
+  "sunscreenUsage": "DAILY",
+  "reactionTriggers": ["향료", "에탄올"],
+  "breakoutZones": ["턱·입가"],
+  "environments": ["냉난방 건조", "계절 변화"],
   "concerns": ["속건조", "민감", "피부 장벽"]
 }
 ```
 
 - 피부 타입: `건성`, `지성`, `복합성`, `수부지`, `중성`, `민감`
+- 수분·유분 상태: `LOW`, `BALANCED`, `HIGH`
+- 피부 민감도: `LOW`, `MEDIUM`, `HIGH`
+- 트러블 빈도: `RARE`, `OCCASIONAL`, `FREQUENT`
+- 세안 후 당김: `NONE`, `SHORT`, `LONG`
+- 붉어짐 빈도: `RARE`, `OCCASIONAL`, `FREQUENT`
+- 모공 체감: `LOW`, `MEDIUM`, `HIGH`
+- 선호 제형: `LIGHT`, `BALANCED`, `RICH`
+- 스킨케어 단계: `MINIMAL`, `STANDARD`, `LAYERED`
+- 자외선 차단 습관: `RARE`, `SOMETIMES`, `DAILY`
+- 반응 유발 요인·트러블 위치·생활 환경은 중복 없이 선택하며 응답에도 입력 순서로 반환됩니다.
 - 피부 고민: `속건조`, `민감`, `모공`, `붉은기`, `피부 장벽`, `각질`, `칙칙함`, `탄력` 중 중복 없이 1~4개
 - 사용자 ID는 요청에서 받지 않고 Access Token의 회원 ID만 사용합니다.
-- 저장한 피부 타입·고민은 제품 상세·비교 분석에 사용되며, 피부 타입은 나의 피부 랭킹의 기본값으로 사용됩니다.
+- 기존 회원의 기본 정보는 유지하고 `profileVersion: 1`로 반환합니다. 새 세부 문항을 저장하면 `profileVersion: 2`가 되어 정밀 프로필과 이전 프로필을 구분할 수 있습니다.
+- 저장한 수분·유분·민감도·세안 후 당김·붉어짐·선호 제형·생활 환경은 제품 상세와 비교 화력에 반영되고, 수분·유분·민감도·선호 제형·피부 고민은 나의 랭킹 정렬에도 사용됩니다.
+- 반응 유발 요인은 제품에 해당 성분이 있다고 단정하는 값이 아니며, 전성분 확인과 작은 부위 시험 안내를 먼저 보여주기 위한 사용자 관찰 이력입니다.
 
 ### 찜한 제품
 
@@ -269,6 +296,20 @@ Authorization: Bearer <accessToken>
 ```
 
 목록 응답은 최신 찜 순서의 `content`와 `totalElements`를 포함하며 각 항목에는 `product`, `favoritedAt`이 들어갑니다. 존재하지 않는 제품을 추가하면 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없거나 유효하지 않으면 `401`을 반환합니다. 찜 취소는 저장된 항목이 없어도 안전하게 완료됩니다.
+
+### 최근 본 제품
+
+두 API 모두 Access Token이 필요하고 사용자 ID는 토큰에서 확인합니다. 제품 상세 화면을 실제로 연 로그인 사용자가 `PUT`을 호출하며, 같은 제품은 중복 저장하지 않고 `viewedAt`만 현재 시각으로 갱신합니다.
+
+```text
+GET /api/v1/users/me/recent-products
+Authorization: Bearer <accessToken>
+
+PUT /api/v1/users/me/recent-products/birch-cream
+Authorization: Bearer <accessToken>
+```
+
+목록은 가장 최근에 본 제품 최대 6개를 최신순으로 반환합니다. `totalElements`는 사용자가 본 고유 제품 전체 개수이며 각 항목은 `product`, `viewedAt`을 포함합니다. 등록되지 않은 제품은 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없거나 유효하지 않으면 `401`을 반환합니다.
 
 ### 관심 성분과 성분 화력
 

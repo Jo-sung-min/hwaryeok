@@ -52,8 +52,13 @@ public class ProductController {
     @GetMapping("/ranking")
     public List<ProductResponse> findRanking(
             @RequestParam(defaultValue = "수부지") String skinType,
+            @RequestParam(required = false) String hydrationLevel,
+            @RequestParam(required = false) String oilinessLevel,
+            @RequestParam(required = false) String sensitivityLevel,
+            @RequestParam(required = false) String texturePreference,
+            @RequestParam(required = false) List<String> concerns,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        return productService.findRanking(skinType, limit);
+        return productService.findRanking(skinType, hydrationLevel, oilinessLevel, sensitivityLevel, texturePreference, concerns, limit);
     }
 }

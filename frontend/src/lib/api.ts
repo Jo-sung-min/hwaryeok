@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage } from "@/lib/types";
+import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, RecentProduct, RecentProductList } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -30,6 +30,18 @@ export type AnalysisInput = {
   productId: string;
   skinType: string;
   concerns: string[];
+  hydrationLevel?: SkinProfile["hydrationLevel"];
+  oilinessLevel?: SkinProfile["oilinessLevel"];
+  sensitivityLevel?: SkinProfile["sensitivityLevel"];
+  breakoutFrequency?: SkinProfile["breakoutFrequency"];
+  cleansingTightness?: SkinProfile["cleansingTightness"];
+  rednessFrequency?: SkinProfile["rednessFrequency"];
+  poreLevel?: SkinProfile["poreLevel"];
+  texturePreference?: SkinProfile["texturePreference"];
+  routineComplexity?: SkinProfile["routineComplexity"];
+  sunscreenUsage?: SkinProfile["sunscreenUsage"];
+  reactionTriggers?: string[];
+  environments?: string[];
 };
 
 export type IngredientQuery = {
@@ -109,6 +121,20 @@ export type AuthTokenResult = {
 export type SkinProfile = {
   configured: boolean;
   skinType: string | null;
+  hydrationLevel: "LOW" | "BALANCED" | "HIGH" | null;
+  oilinessLevel: "LOW" | "BALANCED" | "HIGH" | null;
+  sensitivityLevel: "LOW" | "MEDIUM" | "HIGH" | null;
+  breakoutFrequency: "RARE" | "OCCASIONAL" | "FREQUENT" | null;
+  profileVersion: number;
+  cleansingTightness: "NONE" | "SHORT" | "LONG" | null;
+  rednessFrequency: "RARE" | "OCCASIONAL" | "FREQUENT" | null;
+  poreLevel: "LOW" | "MEDIUM" | "HIGH" | null;
+  texturePreference: "LIGHT" | "BALANCED" | "RICH" | null;
+  routineComplexity: "MINIMAL" | "STANDARD" | "LAYERED" | null;
+  sunscreenUsage: "RARE" | "SOMETIMES" | "DAILY" | null;
+  reactionTriggers: string[];
+  breakoutZones: string[];
+  environments: string[];
   concerns: string[];
   createdAt: string | null;
   updatedAt: string | null;
@@ -169,7 +195,23 @@ export function getUserSkinProfile(accessToken: string): Promise<SkinProfile> {
 
 export function saveUserSkinProfile(
   accessToken: string,
-  input: { skinType: string; concerns: string[] },
+  input: {
+    skinType: string;
+    hydrationLevel: "LOW" | "BALANCED" | "HIGH";
+    oilinessLevel: "LOW" | "BALANCED" | "HIGH";
+    sensitivityLevel: "LOW" | "MEDIUM" | "HIGH";
+    breakoutFrequency: "RARE" | "OCCASIONAL" | "FREQUENT";
+    cleansingTightness: "NONE" | "SHORT" | "LONG";
+    rednessFrequency: "RARE" | "OCCASIONAL" | "FREQUENT";
+    poreLevel: "LOW" | "MEDIUM" | "HIGH";
+    texturePreference: "LIGHT" | "BALANCED" | "RICH";
+    routineComplexity: "MINIMAL" | "STANDARD" | "LAYERED";
+    sunscreenUsage: "RARE" | "SOMETIMES" | "DAILY";
+    reactionTriggers: string[];
+    breakoutZones: string[];
+    environments: string[];
+    concerns: string[];
+  },
 ): Promise<SkinProfile> {
   return requestJson<SkinProfile>("/users/me/skin-profile", {
     method: "PUT",
@@ -194,6 +236,19 @@ export function addUserFavorite(accessToken: string, productId: string): Promise
 export async function removeUserFavorite(accessToken: string, productId: string): Promise<void> {
   await requestEmpty(`/users/me/favorites/${encodeURIComponent(productId)}`, {
     method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getUserRecentProducts(accessToken: string): Promise<RecentProductList> {
+  return requestJson<RecentProductList>("/users/me/recent-products", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function recordUserRecentProduct(accessToken: string, productId: string): Promise<RecentProduct> {
+  return requestJson<RecentProduct>(`/users/me/recent-products/${encodeURIComponent(productId)}`, {
+    method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
@@ -229,8 +284,16 @@ export function getProduct(id: string): Promise<Product> {
   return requestJson<Product>(`/products/${encodeURIComponent(id)}`);
 }
 
-export function getRanking(skinType: string, limit = 6): Promise<Product[]> {
+export function getRanking(profile: string | SkinProfile, limit = 6): Promise<Product[]> {
+  const skinType = typeof profile === "string" ? profile : profile.skinType ?? "수부지";
   const search = new URLSearchParams({ skinType, limit: String(limit) });
+  if (typeof profile !== "string") {
+    if (profile.hydrationLevel) search.set("hydrationLevel", profile.hydrationLevel);
+    if (profile.oilinessLevel) search.set("oilinessLevel", profile.oilinessLevel);
+    if (profile.sensitivityLevel) search.set("sensitivityLevel", profile.sensitivityLevel);
+    if (profile.texturePreference) search.set("texturePreference", profile.texturePreference);
+    profile.concerns.forEach((concern) => search.append("concerns", concern));
+  }
   return requestJson<Product[]>(`/products/ranking?${search}`);
 }
 

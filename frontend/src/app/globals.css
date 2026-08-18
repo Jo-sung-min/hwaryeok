@@ -270,11 +270,19 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 .seal {
   display: inline-grid;
   place-items: center;
+  white-space: nowrap;
+  line-height: 1;
+  text-align: center;
   color: white;
   background: var(--plum);
   border-radius: 13px 11px 14px 10px;
   box-shadow: inset 0 0 0 2px rgba(255,255,255,.32), 0 5px 12px rgba(128,52,47,.18);
   transform: rotate(-2deg);
+}
+
+.seal-wordmark {
+  padding-right: .1em;
+  letter-spacing: -.1em;
 }
 
 .petal-divider { display: flex; align-items: center; justify-content: center; gap: 10px; color: #d88b75; }
@@ -286,8 +294,10 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 @keyframes float-soft { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(1deg); } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes mobile-search-expand { from { opacity: 0; transform: scaleX(.16); } to { opacity: 1; transform: scaleX(1); } }
 .float-soft { animation: float-soft 6s ease-in-out infinite; }
 .fade-up { animation: fade-up .65s ease-out both; }
+.mobile-bottom-search-field { animation: mobile-search-expand .24s cubic-bezier(.2,.75,.25,1) both; transform-origin: left center; }
 .delay-1 { animation-delay: .1s; }
 .delay-2 { animation-delay: .2s; }
 .delay-3 { animation-delay: .3s; }
@@ -297,9 +307,24 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
   body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
   input, select, textarea { font-size: 16px; }
   .ink-btn, .line-btn { min-height: 48px; }
+  .profile-form-actions .ink-btn,
+  .profile-form-actions .line-btn { white-space: nowrap; }
   .mobile-bottom-nav { bottom: max(10px, env(safe-area-inset-bottom)); }
   .paper-card { box-shadow: 0 14px 36px rgba(83,38,55,.12), inset 0 1px rgba(255,255,255,.96); }
   .eyebrow { font-size: .72rem; letter-spacing: .13em; }
+}
+
+@media (max-width: 359px) {
+  .profile-form-actions { gap: .5rem; }
+  .profile-form-actions .ink-btn,
+  .profile-form-actions .line-btn {
+    min-width: 0;
+    padding-inline: .8rem;
+    gap: .35rem;
+    font-size: .8rem;
+  }
+  .profile-form-actions .ink-btn { flex: 1.35; }
+  .profile-form-actions .line-btn { flex: .65; }
 }
 
 @media (prefers-reduced-motion: reduce) {

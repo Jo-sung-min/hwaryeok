@@ -24,7 +24,8 @@ export default async function RankingPage({ searchParams }: { searchParams: Rank
   const selectedSkinType = selectedTab.value === "나의 피부" && savedProfile?.skinType
     ? savedProfile.skinType
     : selectedTab.skinType;
-  const products = await getRanking(selectedSkinType, 6);
+  const rankingProfile = selectedTab.value === "나의 피부" && savedProfile?.skinType ? savedProfile : selectedSkinType;
+  const products = await getRanking(rankingProfile, 6);
 
   return <div className="min-h-screen pb-24">
     <section className="border-b border-[#dfa6b51f] bg-[#fff0f3] py-10 text-[#382b30] md:py-20"><div className="container-page"><div className="grid items-end gap-7 md:grid-cols-[1fr_auto] md:gap-8"><div><p className="text-xs font-bold tracking-[.18em] text-[#ad566d]">HWA:RYEOK RANKING</p><h1 className="mt-4 text-balance font-myeongjo text-[32px] font-medium leading-tight sm:text-4xl md:text-5xl">판매량보다,<br />내 피부에 잘 맞는 순위</h1><p className="mt-5 max-w-lg text-sm leading-7 text-[#7d6870]">선택한 피부 타입에 맞춰 Spring Boot가 화력 점수를 다시 계산해 보여드려요.</p></div><div className="rounded-2xl border border-white/90 bg-white/72 p-4 text-sm shadow-[0_14px_36px_rgba(164,82,104,.09)] backdrop-blur-xl sm:p-5"><div className="flex items-center gap-2 text-[#a54f63]"><Sparkles size={16}/><strong>현재 랭킹 기준</strong></div><p className="mt-2 text-xs leading-6 text-[#7d6870]">피부 타입 · 제품 효능<br />기본 화력 점수</p></div></div></div></section>

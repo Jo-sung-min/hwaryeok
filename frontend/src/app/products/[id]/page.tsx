@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Check, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
+import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProducts } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 
@@ -16,7 +17,22 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
   const [savedProfile, favoriteState] = await Promise.all([getOptionalSkinProfile(), getFavoriteViewState()]);
   const favoriteIds = new Set(favoriteState.favoriteIds);
   const analysisProfile = savedProfile?.skinType
-    ? { skinType: savedProfile.skinType, concerns: savedProfile.concerns }
+    ? {
+        skinType: savedProfile.skinType,
+        concerns: savedProfile.concerns,
+        hydrationLevel: savedProfile.hydrationLevel,
+        oilinessLevel: savedProfile.oilinessLevel,
+        sensitivityLevel: savedProfile.sensitivityLevel,
+        breakoutFrequency: savedProfile.breakoutFrequency,
+        cleansingTightness: savedProfile.cleansingTightness,
+        rednessFrequency: savedProfile.rednessFrequency,
+        poreLevel: savedProfile.poreLevel,
+        texturePreference: savedProfile.texturePreference,
+        routineComplexity: savedProfile.routineComplexity,
+        sunscreenUsage: savedProfile.sunscreenUsage,
+        reactionTriggers: savedProfile.reactionTriggers,
+        environments: savedProfile.environments,
+      }
     : defaultProfile;
 
   try {
@@ -30,6 +46,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 
     return (
       <div className="pb-24">
+        <RecentProductTracker productId={product.id} enabled={favoriteState.isAuthenticated} />
         <div className="container-page py-4 md:py-9">
           <Link href="/products" className="inline-flex items-center gap-2 text-sm text-[#766960]"><ArrowLeft size={16} /> 화장품 목록</Link>
         </div>

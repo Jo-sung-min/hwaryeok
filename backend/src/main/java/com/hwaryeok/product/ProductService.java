@@ -51,8 +51,23 @@ public class ProductService {
     }
 
     public List<ProductResponse> findRanking(String skinType, int limit) {
+        return findRanking(skinType, null, null, null, null, List.of(), limit);
+    }
+
+    public List<ProductResponse> findRanking(
+            String skinType,
+            String hydrationLevel,
+            String oilinessLevel,
+            String sensitivityLevel,
+            String texturePreference,
+            List<String> concerns,
+            int limit
+    ) {
         return productRepository.findAll().stream()
-                .map(product -> ProductResponse.from(productWithAdjustedScore(product, skinType)))
+                .map(product -> ProductResponse.from(productWithAdjustedScore(
+                        product, skinType, hydrationLevel, oilinessLevel, sensitivityLevel, texturePreference,
+                        concerns == null ? List.of() : concerns
+                )))
                 .sorted(Comparator.comparingInt(ProductResponse::score).reversed())
                 .limit(Math.clamp(limit, 1, 20))
                 .toList();
@@ -88,6 +103,18 @@ public class ProductService {
     }
 
     private Product productWithAdjustedScore(Product product, String skinType) {
+        return productWithAdjustedScore(product, skinType, null, null, null, null, List.of());
+    }
+
+    private Product productWithAdjustedScore(
+            Product product,
+            String skinType,
+            String hydrationLevel,
+            String oilinessLevel,
+            String sensitivityLevel,
+            String texturePreference,
+            List<String> concerns
+    ) {
         int adjustment = switch (skinType == null ? "" : skinType) {
             case "건성" -> product.getBenefit().contains("수분") || product.getSubBenefit().contains("보습") ? 3 : 0;
             case "지성" -> "크림".equals(product.getCategory()) ? -4 : 2;
@@ -95,6 +122,15 @@ public class ProductService {
             case "민감" -> product.getBenefit().contains("진정") || product.getSubBenefit().contains("민감") ? 3 : 0;
             default -> 0;
         };
+        String benefits = product.getBenefit() + " " + product.getSubBenefit();
+        if ("LOW".equals(hydrationLevel) && (benefits.contains("수분") || benefits.contains("보습"))) adjustment += 3;
+        if ("HIGH".equals(oilinessLevel) && "크림".equals(product.getCategory())) adjustment -= 2;
+        if ("HIGH".equals(sensitivityLevel) && (benefits.contains("진정") || benefits.contains("장벽") || benefits.contains("민감"))) adjustment += 2;
+        if ("LIGHT".equals(texturePreference) && List.of("토너", "세럼", "젤").contains(product.getCategory())) adjustment += 1;
+        if ("LIGHT".equals(texturePreference) && "크림".equals(product.getCategory())) adjustment -= 1;
+        if ("RICH".equals(texturePreference) && "크림".equals(product.getCategory())) adjustment += 1;
+        if (concerns.contains("피부 장벽") && benefits.contains("장벽")) adjustment += 2;
+        if (concerns.contains("붉은기") && benefits.contains("진정")) adjustment += 2;
         return new Product(
                 product.getId(), product.getBrand(), product.getName(), product.getCategory(),
                 Math.clamp(product.getBaseScore() + adjustment, 0, 100), product.getBenefit(),
