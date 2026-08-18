@@ -134,3 +134,118 @@ export type IngredientFirepower = {
   disclaimer: string;
   products: IngredientFirepowerProduct[];
 };
+
+export type ExpertTopic = {
+  code: "BARRIER" | "ACNE" | "SENSITIVE" | "AGING" | "INGREDIENT";
+  name: string;
+};
+
+export type ExpertWorkplace = {
+  hospitalName: string;
+  region: string;
+  address: string;
+  phone: string | null;
+  homepageUrl: string | null;
+  verified: boolean;
+};
+
+export type ExpertStats = {
+  answerCount: number;
+  helpfulCount: number;
+  saveCount: number;
+  adoptedCount: number;
+};
+
+export type Expert = {
+  id: string;
+  slug: string;
+  realName: string;
+  verificationLabel: string;
+  doctorVerified: boolean;
+  specialistVerified: boolean;
+  specialty: string | null;
+  workplaceVerified: boolean;
+  profileImageUrl: string | null;
+  bio: string;
+  topics: ExpertTopic[];
+  workplace: ExpertWorkplace | null;
+  stats: ExpertStats;
+};
+
+export type ExpertAnswer = {
+  id: string;
+  expert: Expert;
+  content: string;
+  helpfulCount: number;
+  saveCount: number;
+  adopted: boolean;
+  viewerHelpful: boolean;
+  viewerSaved: boolean;
+  createdAt: string;
+};
+
+export type ExpertDetail = {
+  expert: Expert;
+  recentAnswers: ExpertAnswer[];
+};
+
+export type ExpertQuestionListItem = {
+  id: string;
+  authorNickname: string;
+  title: string;
+  skinType: string | null;
+  ingredientId: string | null;
+  ingredientName: string | null;
+  status: "OPEN" | "ANSWERED" | "CLOSED";
+  answerCount: number;
+  createdAt: string;
+};
+
+export type ExpertQuestionDetail = {
+  id: string;
+  authorNickname: string;
+  title: string;
+  content: string;
+  skinType: string | null;
+  ingredientId: string | null;
+  ingredientName: string | null;
+  status: "OPEN" | "ANSWERED" | "CLOSED";
+  viewerIsAuthor: boolean;
+  createdAt: string;
+  answers: ExpertAnswer[];
+};
+
+export type ExpertRankingItem = {
+  rank: number;
+  expert: Expert;
+  activityScore: number;
+  periodStats: ExpertStats;
+};
+
+export type ExpertRanking = {
+  period: "WEEK" | "MONTH" | "YEAR" | "ALL_TIME";
+  topic: ExpertTopic["code"] | null;
+  disclaimer: string;
+  content: ExpertRankingItem[];
+};
+
+export type ExpertApplication = {
+  id: string;
+  realName: string;
+  status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
+  specialistRequested: boolean;
+  specialty: string | null;
+  topics: ExpertTopic[];
+  workplace: ExpertWorkplace | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExpertEngagement = {
+  answerId: string;
+  helpfulCount: number;
+  saveCount: number;
+  viewerHelpful: boolean;
+  viewerSaved: boolean;
+  adopted: boolean;
+};

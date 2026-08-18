@@ -9,6 +9,11 @@ spring:
     url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hwaryeok}}
     username: ${DB_USER:${DB_USERNAME:hwaryeok}}
     password: ${DB_PASSWORD:hwaryeok}
+    hikari:
+      schema: ${DB_SCHEMA:hwaryeok}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
   jpa:
     open-in-view: false
     hibernate:

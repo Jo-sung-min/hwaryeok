@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Clock3, Heart, PencilLine, Scale, Settings, Sparkles } from "lucide-react";
+import { ArrowRight, Clock3, Heart, ImagePlus, PencilLine, Scale, Settings, Sparkles, Stethoscope } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
-import { getRanking, getUserFavorites, getUserSkinProfile } from "@/lib/api";
+import { IngredientPreferencesForm } from "@/app/my/ingredient-preferences-form";
+import { getFeaturedIngredients, getRanking, getUserFavorites, getUserPreferredIngredients, getUserSkinProfile } from "@/lib/api";
 import { readAuthTokens, requireSession } from "@/lib/auth-session";
 
 const skinSeal: Record<string, string> = {
@@ -16,9 +17,14 @@ const skinSeal: Record<string, string> = {
 export default async function MyPage() {
   const user = await requireSession("/my");
   const { accessToken } = await readAuthTokens();
-  const [profile, favorites] = accessToken
-    ? await Promise.all([getUserSkinProfile(accessToken), getUserFavorites(accessToken)])
-    : [{ configured: false, skinType: null, concerns: [], createdAt: null, updatedAt: null }, { content: [], totalElements: 0 }];
+  const featuredIngredients = await getFeaturedIngredients(10);
+  const [profile, favorites, preferredIngredients] = accessToken
+    ? await Promise.all([getUserSkinProfile(accessToken), getUserFavorites(accessToken), getUserPreferredIngredients(accessToken)])
+    : [
+        { configured: false, skinType: null, concerns: [], createdAt: null, updatedAt: null },
+        { content: [], totalElements: 0 },
+        { content: [], totalElements: 0 },
+      ];
   const ranking = await getRanking(profile.skinType ?? "수부지", 3);
   const profileTitle = profile.configured ? `${profile.skinType} 피부` : "피부 프로필을 등록해 주세요";
 
@@ -32,7 +38,10 @@ export default async function MyPage() {
               <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-tight sm:text-4xl">{user.nickname}님의 피부가<br className="sm:hidden" /> 피어나는 곳</h1>
               <p className="mt-4 text-sm text-[#75695f]">저장한 피부 정보와 찜한 제품을 한곳에서 살펴보세요.</p>
             </div>
-            <Link href="/profile" className="line-btn w-full self-start sm:w-auto"><PencilLine size={16} /> 피부 정보 수정</Link>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              {user.role === "ADMIN" && <><Link href="/admin/experts" className="line-btn w-full self-start sm:w-auto"><Stethoscope size={16} /> 전문가 인증 관리</Link><Link href="/admin/products" className="line-btn w-full self-start sm:w-auto"><ImagePlus size={16} /> 제품 이미지 관리</Link></>}
+              <Link href="/profile" className="line-btn w-full self-start sm:w-auto"><PencilLine size={16} /> 피부 정보 수정</Link>
+            </div>
           </div>
         </div>
       </section>
@@ -68,6 +77,13 @@ export default async function MyPage() {
         </div>
 
         <section className="mt-10 md:mt-14">
+          <IngredientPreferencesForm
+            ingredients={featuredIngredients}
+            initialSelected={preferredIngredients.content.map((item) => item.ingredient.id)}
+          />
+        </section>
+
+        <section className="mt-10 md:mt-14">
           <div className="mb-6 flex items-end justify-between gap-4">
             <div><h2 className="font-myeongjo text-2xl font-semibold">찜한 제품</h2><p className="mt-2 text-xs text-[#82736a]">하트를 눌러 저장한 제품을 최신순으로 보여드려요.</p></div>
             {favorites.totalElements > 0 && <span className="text-xs font-semibold text-[#9b4a45]">총 {favorites.totalElements}개</span>}
@@ -95,6 +111,10 @@ export default async function MyPage() {
         <div className="mt-10 rounded-[24px] border border-[#e3b1bd33] bg-[#fff1f4] p-5 sm:mt-14 sm:flex sm:items-center sm:justify-between sm:rounded-[26px] sm:p-6">
           <div><div className="flex items-center gap-2"><Settings size={16} /><h2 className="font-myeongjo text-xl font-semibold">피부 정보가 달라졌나요?</h2></div><p className="mt-2 text-xs leading-6 text-[#7c6f66]">프로필을 바꾸면 모든 화력 점수와 추천 순위가 새롭게 계산돼요.</p></div>
           <Link href="/profile" className="line-btn mt-5 w-full sm:mt-0 sm:w-auto">다시 분석하기</Link>
+        </div>
+        <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-[#e4c5cd] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div><div className="flex items-center gap-2"><Stethoscope size={17} className="text-[#a45166]" /><h2 className="font-myeongjo text-xl font-semibold">의료진으로 활동하시나요?</h2></div><p className="mt-2 text-xs leading-6 text-[#7c6f74]">인증 후 화장품과 성분 질문에 전문가 답변을 남길 수 있어요.</p></div>
+          <Link href="/experts/apply" className="line-btn w-full sm:w-auto">전문가 인증 확인</Link>
         </div>
       </section>
     </div>

@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 const nav = [
   { href: "/products", label: "화장품" },
   { href: "/ranking", label: "화력 랭킹" },
+  { href: "/experts", label: "전문가" },
   { href: "/ingredients", label: "성분 사전" },
   { href: "/compare", label: "비교하기" },
 ];
@@ -15,7 +16,7 @@ const nav = [
 const mobileHeaderNav = [
   { href: "/", label: "홈" },
   { href: "/products", label: "화장품" },
-  { href: "/ranking", label: "화력" },
+  { href: "/experts", label: "전문가" },
   { href: "/ingredients", label: "성분" },
   { href: "/compare", label: "비교" },
 ];

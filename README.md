@@ -76,6 +76,8 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 
 로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 32바이트 이상의 임의 `JWT_SECRET`을 별도로 등록하세요.
 
+관리자 제품 이미지는 백엔드와 PostgreSQL에 저장되므로 Vercel에는 별도 이미지 저장소 환경 변수가 필요하지 않습니다. 운영 관리자 지정과 이미지 API 사용법은 [backend/README.md](backend/README.md#관리자-제품-이미지)를 참고하세요.
+
 ## 검증
 
 ```bash

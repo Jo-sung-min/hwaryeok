@@ -6,7 +6,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -482,6 +485,250 @@ class HwaryeokApplicationTests {
         );
         assertThat(deleteResponse.statusCode()).isEqualTo(204);
         assertThat(emptyResponse.body()).contains("\"content\":[]", "\"totalElements\":0");
+    }
+
+    @Test
+    void ranksProductsByIngredientFirepowerWithBreakdown() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> featuredResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/ingredients/featured?limit=3"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> firepowerResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/ingredients/panthenol/firepower"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(featuredResponse.statusCode()).isEqualTo(200);
+        assertThat(featuredResponse.body()).contains("판테놀", "나이아신아마이드", "세라마이드 NP", "\"evidenceLevel\":\"A\"");
+        assertThat(firepowerResponse.statusCode()).isEqualTo(200);
+        assertThat(firepowerResponse.body()).contains(
+                "ingredient-firepower-v1", "birch-cream", "firepowerScore", "breakdown", "dataConfidence", "의학적 효능을 보장하지 않아요"
+        );
+    }
+
+    @Test
+    void savesAuthenticatedUserPreferredIngredientsInPriorityOrder() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("ingredient@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                "ingredient@example.com",
+                passwordEncoder.encode("Flower!123"),
+                "성분회원",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        )));
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> loginResponse = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"ingredient@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String accessToken = jsonString(loginResponse.body(), "accessToken");
+
+        HttpResponse<String> saveResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/preferred-ingredients", accessToken,
+                        "{\"ingredientIds\":[\"niacinamide\",\"panthenol\",\"ceramide-np\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> readResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/preferred-ingredients", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(saveResponse.statusCode()).isEqualTo(200);
+        assertThat(readResponse.statusCode()).isEqualTo(200);
+        assertThat(readResponse.body()).contains("\"totalElements\":3", "\"priority\":1", "나이아신아마이드");
+        assertThat(readResponse.body().indexOf("niacinamide")).isLessThan(readResponse.body().indexOf("panthenol"));
+        assertThat(readResponse.body().indexOf("panthenol")).isLessThan(readResponse.body().indexOf("ceramide-np"));
+    }
+
+    @Test
+    void onlyAdminCanUploadAndPublicCanReadProductImage() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("image-user@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "image-user@example.com", passwordEncoder.encode("Flower!123"),
+                "일반회원", "USER", "ACTIVE", now, now
+        )));
+        userRepository.findByEmail("image-admin@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "image-admin@example.com", passwordEncoder.encode("Flower!123"),
+                "이미지관리자", "ADMIN", "ACTIVE", now, now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        String userToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"image-user@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+        String adminToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"image-admin@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+
+        HttpResponse<String> forbiddenResponse = client.send(
+                bearerRequest("PUT", "/api/v1/admin/products/birch-cream/image", userToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(forbiddenResponse.statusCode()).isEqualTo(403);
+
+        String boundary = "HwaryeokImageBoundary";
+        byte[] png = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+        ByteArrayOutputStream multipart = new ByteArrayOutputStream();
+        multipart.write(("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"file\"; filename=\"birch.png\"\r\n"
+                + "Content-Type: image/png\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+        multipart.write(png);
+        multipart.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+        HttpRequest uploadRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/api/v1/admin/products/birch-cream/image"))
+                .header("Authorization", "Bearer " + adminToken)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(multipart.toByteArray()))
+                .build();
+
+        HttpResponse<String> uploadResponse = client.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<byte[]> imageResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/media/products/birch-cream"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        assertThat(uploadResponse.statusCode()).isEqualTo(200);
+        assertThat(uploadResponse.body()).contains("\"imageUrl\":\"/api/v1/media/products/birch-cream\"");
+        assertThat(imageResponse.statusCode()).isEqualTo(200);
+        assertThat(imageResponse.headers().firstValue("Content-Type")).contains("image/png");
+        assertThat(imageResponse.body()).isEqualTo(png);
+    }
+
+    @Test
+    void servesVerifiedExpertsQuestionsAndContributionRanking() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> expertsResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/experts")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> detailResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/experts/seo-yuna")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> rankingResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/experts/rankings?period=MONTH&topic=BARRIER")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> questionsResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/questions")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> openQuestionsResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/questions?status=OPEN")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(expertsResponse.statusCode()).isEqualTo(200);
+        assertThat(expertsResponse.body()).contains("서유나", "김도현", "이하린", "doctorVerified", "workplace");
+        assertThat(detailResponse.statusCode()).isEqualTo(200);
+        assertThat(detailResponse.body()).contains("피부과 전문의", "봄결피부과의원", "recentAnswers");
+        assertThat(rankingResponse.statusCode()).isEqualTo(200);
+        assertThat(rankingResponse.body()).contains("\"period\":\"MONTH\"", "\"topic\":\"BARRIER\"", "의학적 실력이나 치료 결과를 평가하지 않습니다");
+        assertThat(questionsResponse.statusCode()).isEqualTo(200);
+        assertThat(questionsResponse.body()).contains("세라마이드 크림은 매일 발라도 괜찮을까요?", "answerCount");
+        assertThat(openQuestionsResponse.statusCode()).isEqualTo(200);
+        assertThat(openQuestionsResponse.body()).contains("판테놀 제품을 고를 때 함량이 가장 중요한가요?").doesNotContain("세라마이드 크림은 매일 발라도 괜찮을까요?");
+    }
+
+    @Test
+    void supportsExpertApplicationApprovalAnswerAndQuestionEngagement() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("expert-flow@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "expert-flow@example.com", passwordEncoder.encode("Flower!123"),
+                "전문가흐름", "USER", "ACTIVE", now, now
+        )));
+        userRepository.findByEmail("expert-admin@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "expert-admin@example.com", passwordEncoder.encode("Flower!123"),
+                "전문가관리자", "ADMIN", "ACTIVE", now, now
+        )));
+        HttpClient client = HttpClient.newHttpClient();
+        String expertToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"expert-flow@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+        String adminToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"expert-admin@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+
+        String applicationPayload = """
+                {
+                  "realName":"윤해봄",
+                  "licenseNumber":"MD-2026-12345",
+                  "specialistRequested":true,
+                  "specialty":"피부과 전문의",
+                  "topics":["BARRIER","INGREDIENT"],
+                  "bio":"피부 장벽과 화장품 성분을 근거 중심으로 설명합니다.",
+                  "workplace":{"hospitalName":"해봄피부과","region":"서울 종로구","address":"서울특별시 종로구 봄길 1","phone":"02-123-4567"}
+                }
+                """;
+        HttpResponse<String> applicationResponse = client.send(
+                bearerRequest("POST", "/api/v1/experts/me/application", expertToken, applicationPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(applicationResponse.statusCode()).isEqualTo(200);
+        assertThat(applicationResponse.body()).contains("윤해봄", "\"status\":\"PENDING\"", "해봄피부과").doesNotContain("MD-2026-12345");
+        String expertId = jsonString(applicationResponse.body(), "id");
+
+        HttpResponse<String> forbiddenAnswerResponse = client.send(
+                bearerRequest("POST", "/api/v1/expert/questions/question-panthenol/answers", expertToken,
+                        "{\"content\":\"인증 전에는 등록될 수 없는 충분히 긴 전문가 답변입니다.\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(forbiddenAnswerResponse.statusCode()).isEqualTo(403);
+
+        HttpResponse<String> approveResponse = client.send(
+                bearerRequest("PUT", "/api/v1/admin/experts/" + expertId + "/verification", adminToken,
+                        "{\"status\":\"VERIFIED\",\"doctorVerified\":true,\"specialistVerified\":true,\"workplaceVerified\":true}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(approveResponse.statusCode()).isEqualTo(200);
+        assertThat(approveResponse.body()).contains("\"status\":\"VERIFIED\"", "\"verified\":true");
+
+        HttpResponse<String> questionResponse = client.send(
+                bearerRequest("POST", "/api/v1/users/me/questions", expertToken,
+                        "{\"title\":\"민감 피부의 판테놀 사용법이 궁금해요\",\"content\":\"판테놀 제품을 처음 사용할 때 빈도와 주의점을 알고 싶습니다.\",\"skinType\":\"민감성\",\"ingredientId\":\"panthenol\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(questionResponse.statusCode()).isEqualTo(200);
+        String questionId = jsonString(questionResponse.body(), "id");
+
+        HttpResponse<String> answerResponse = client.send(
+                bearerRequest("POST", "/api/v1/expert/questions/" + questionId + "/answers", expertToken,
+                        "{\"content\":\"처음에는 좁은 부위에 낮은 빈도로 사용해 반응을 살피고, 붉어짐이나 따가움이 지속되면 사용을 중단하세요.\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(answerResponse.statusCode()).isEqualTo(200);
+        String answerId = jsonString(answerResponse.body(), "id");
+
+        HttpResponse<String> helpfulResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/expert-answers/" + answerId + "/helpful", expertToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> duplicateHelpfulResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/expert-answers/" + answerId + "/helpful", expertToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> adoptResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/questions/" + questionId + "/adopt/" + answerId, expertToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(helpfulResponse.statusCode()).isEqualTo(200);
+        assertThat(helpfulResponse.body()).contains("\"helpfulCount\":1", "\"viewerHelpful\":true");
+        assertThat(duplicateHelpfulResponse.body()).contains("\"helpfulCount\":1");
+        assertThat(adoptResponse.statusCode()).isEqualTo(200);
+        assertThat(adoptResponse.body()).contains("\"adopted\":true");
     }
 
     private HttpRequest jsonPost(String path, String payload) {

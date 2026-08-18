@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage } from "@/lib/types";
+import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -306,6 +306,112 @@ export async function uploadAdminProductImage(accessToken: string, productId: st
 
 export function getProductIngredients(productId: string): Promise<ProductIngredients> {
   return requestJson<ProductIngredients>(`/products/${encodeURIComponent(productId)}/ingredients`);
+}
+
+export function getExperts(topic?: string): Promise<Expert[]> {
+  const search = topic ? `?topic=${encodeURIComponent(topic)}` : "";
+  return requestJson<Expert[]>(`/experts${search}`);
+}
+
+export function getExpert(slug: string): Promise<ExpertDetail> {
+  return requestJson<ExpertDetail>(`/experts/${encodeURIComponent(slug)}`);
+}
+
+export function getExpertRanking(period = "MONTH", topic?: string): Promise<ExpertRanking> {
+  const search = new URLSearchParams({ period });
+  if (topic) search.set("topic", topic);
+  return requestJson<ExpertRanking>(`/experts/rankings?${search}`);
+}
+
+export function getExpertQuestions(status?: string): Promise<ExpertQuestionListItem[]> {
+  const search = status && status !== "ALL" ? `?status=${encodeURIComponent(status)}` : "";
+  return requestJson<ExpertQuestionListItem[]>(`/questions${search}`);
+}
+
+export function getExpertQuestion(questionId: string, accessToken?: string): Promise<ExpertQuestionDetail> {
+  return requestJson<ExpertQuestionDetail>(`/questions/${encodeURIComponent(questionId)}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+}
+
+export function createExpertQuestion(
+  accessToken: string,
+  input: { title: string; content: string; skinType?: string; ingredientId?: string },
+): Promise<ExpertQuestionDetail> {
+  return requestJson<ExpertQuestionDetail>("/users/me/questions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function createExpertAnswer(accessToken: string, questionId: string, content: string): Promise<ExpertAnswer> {
+  return requestJson<ExpertAnswer>(`/expert/questions/${encodeURIComponent(questionId)}/answers`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ content }),
+  });
+}
+
+export function setExpertAnswerReaction(
+  accessToken: string,
+  answerId: string,
+  type: "helpful" | "save",
+  selected: boolean,
+): Promise<ExpertEngagement> {
+  return requestJson<ExpertEngagement>(`/users/me/expert-answers/${encodeURIComponent(answerId)}/${type}`, {
+    method: selected ? "PUT" : "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function adoptExpertAnswer(accessToken: string, questionId: string, answerId: string): Promise<ExpertEngagement> {
+  return requestJson<ExpertEngagement>(`/users/me/questions/${encodeURIComponent(questionId)}/adopt/${encodeURIComponent(answerId)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export type ExpertApplicationInput = {
+  realName: string;
+  licenseNumber: string;
+  specialistRequested: boolean;
+  specialty?: string;
+  topics: string[];
+  bio: string;
+  workplace: { hospitalName: string; region: string; address: string; phone?: string; homepageUrl?: string };
+};
+
+export function getMyExpertApplication(accessToken: string): Promise<ExpertApplication> {
+  return requestJson<ExpertApplication>("/experts/me/application", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function submitExpertApplication(accessToken: string, input: ExpertApplicationInput): Promise<ExpertApplication> {
+  return requestJson<ExpertApplication>("/experts/me/application", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function getAdminExpertApplications(accessToken: string): Promise<ExpertApplication[]> {
+  return requestJson<ExpertApplication[]>("/admin/experts/applications", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function verifyExpertApplication(
+  accessToken: string,
+  expertId: string,
+  input: { status: "VERIFIED" | "REJECTED"; doctorVerified: boolean; specialistVerified: boolean; workplaceVerified: boolean },
+): Promise<ExpertApplication> {
+  return requestJson<ExpertApplication>(`/admin/experts/${encodeURIComponent(expertId)}/verification`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
 }
 
 async function requestEmpty(path: string, init?: RequestInit): Promise<void> {

@@ -81,6 +81,8 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/users/me/favorites` | 내 찜 제품 최신순 목록 |
 | PUT | `/api/v1/users/me/favorites/{productId}` | 제품 찜 추가 |
 | DELETE | `/api/v1/users/me/favorites/{productId}` | 제품 찜 취소 |
+| GET | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 우선순위 조회 |
+| PUT | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 0~10개 저장 |
 | GET | `/oauth2/authorization/{provider}` | OAuth 로그인 시작 (`google`, `kakao`, `naver`) |
 | GET | `/login/oauth2/code/{provider}` | 공급자 OAuth 콜백 |
 | GET | `/api/v1/auth/me` | Bearer Token 현재 사용자 확인 |
@@ -90,7 +92,23 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/products/ranking` | 피부 타입별 랭킹 |
 | GET | `/api/v1/ingredients` | 성분 검색·필터·페이지네이션·정렬 |
 | GET | `/api/v1/ingredients/{id}` | 성분 상세와 포함 제품 |
+| GET | `/api/v1/ingredients/featured` | 대표 관심 성분 목록 |
+| GET | `/api/v1/ingredients/{id}/firepower` | 성분 기준 제품 화력 순위와 세부 점수 |
+| PUT | `/api/v1/admin/products/{id}/image` | 관리자 제품 이미지 등록 |
+| GET | `/api/v1/media/products/{id}` | 등록 제품 이미지 조회 |
 | POST | `/api/v1/analyses/preview` | 피부 프로필 기반 화력 분석 |
+| GET | `/api/v1/experts` | 인증 전문가 목록과 활동 통계 |
+| GET | `/api/v1/experts/{slug}` | 전문가 상세·근무지·최근 답변 |
+| GET | `/api/v1/experts/rankings` | 기간·주제별 플랫폼 기여 활동 랭킹 |
+| GET | `/api/v1/questions` | 공개 질문 목록 |
+| GET | `/api/v1/questions/{id}` | 질문과 전문가 답변 상세 |
+| POST | `/api/v1/users/me/questions` | 로그인 회원 질문 작성 |
+| POST | `/api/v1/expert/questions/{id}/answers` | 인증 전문가 답변 작성 |
+| GET, POST | `/api/v1/experts/me/application` | 내 전문가 인증 신청 조회·접수 |
+| GET | `/api/v1/admin/experts/applications` | 관리자 전문가 신청 목록 |
+| PUT | `/api/v1/admin/experts/{id}/verification` | 관리자 전문가 승인·반려 |
+
+전문가 활동 랭킹은 화력 안의 답변·도움돼요·저장·채택 기여도만 나타내며, 의료진의 의학적 실력이나 치료 결과를 평가하지 않습니다. 면허번호 원문은 저장하지 않고 정규화한 SHA-256 해시만 보관합니다.
 
 ### 제품 검색 예시
 
@@ -233,6 +251,32 @@ Authorization: Bearer <accessToken>
 ```
 
 목록 응답은 최신 찜 순서의 `content`와 `totalElements`를 포함하며 각 항목에는 `product`, `favoritedAt`이 들어갑니다. 존재하지 않는 제품을 추가하면 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없거나 유효하지 않으면 `401`을 반환합니다. 찜 취소는 저장된 항목이 없어도 안전하게 완료됩니다.
+
+### 관심 성분과 성분 화력
+
+관심 성분은 요청 배열의 순서대로 1~10 우선순위를 저장합니다. 빈 배열을 보내면 모두 해제할 수 있으며, 중복되거나 등록되지 않은 성분 ID는 `400 INVALID_REQUEST`를 반환합니다.
+
+```json
+PUT /api/v1/users/me/preferred-ingredients
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "ingredientIds": ["niacinamide", "panthenol", "ceramide-np"]
+}
+```
+
+`GET /api/v1/ingredients/panthenol/firepower`는 제품마다 `firepowerScore`, `confidence`, `concentrationNote`와 `match`, `concentration`, `evidence`, `productType`, `synergy`, `stability`, `dataConfidence` 세부 점수를 반환합니다. 이 점수는 화장품 간 비교 지표이며 의학적 효능을 보장하지 않습니다.
+
+### 관리자 제품 이미지
+
+먼저 관리자 계정의 `users.role`을 `ADMIN`으로 설정한 뒤 다시 로그인해 새 권한이 포함된 Access Token을 발급받습니다.
+
+```sql
+UPDATE hwaryeok.users SET role = 'ADMIN' WHERE email = 'admin@example.com';
+```
+
+`PUT /api/v1/admin/products/{productId}/image`에 `multipart/form-data`의 `file` 필드로 이미지를 보냅니다. PNG·JPG·WEBP 실제 파일만 허용하며 최대 크기는 5MB입니다. 이미지 원본은 PostgreSQL의 `product_images`에 저장되고 제품 응답의 `imageUrl`을 통해 공개 조회합니다. 일반 사용자는 관리자 API 호출 시 `403`을 반환합니다.
 
 ### 화력 분석 예시
 

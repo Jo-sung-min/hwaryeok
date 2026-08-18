@@ -2,14 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FlaskConical, Leaf, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
-import { ApiRequestError, getIngredient } from "@/lib/api";
+import { ApiRequestError, getIngredient, getIngredientFirepower } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
 
 export default async function IngredientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
-    const [ingredient, favoriteState] = await Promise.all([getIngredient(id), getFavoriteViewState()]);
+    const [ingredient, firepower, favoriteState] = await Promise.all([
+      getIngredient(id),
+      getIngredientFirepower(id),
+      getFavoriteViewState(),
+    ]);
     const favoriteIds = new Set(favoriteState.favoriteIds);
     const skinFeatures = Object.entries(ingredient.skinTypeFeatures);
     const concernFeatures = Object.entries(ingredient.concernFeatures);
@@ -65,10 +69,25 @@ export default async function IngredientDetailPage({ params }: { params: Promise
         <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-16 md:py-20">
           <div className="container-page">
             <div className="mb-9 flex items-end justify-between gap-5">
-              <div><p className="eyebrow mb-4">IN PRODUCTS</p><h2 className="section-title font-myeongjo">이 성분이 담긴 화장품</h2></div>
+              <div><p className="eyebrow mb-4">INGREDIENT FIREPOWER</p><h2 className="section-title font-myeongjo">{ingredient.name} 화력 TOP</h2><p className="mt-3 max-w-2xl text-xs leading-6 text-[#826f76]">{firepower.disclaimer}</p></div>
               <FlaskConical className="hidden text-[#b47664] md:block" size={32} strokeWidth={1.5} />
             </div>
-            {ingredient.products.length > 0 ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{ingredient.products.map((product) => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />)}</div> : <div className="paper-card rounded-[26px] p-10 text-center text-sm text-[#74695f]">연결된 제품을 준비 중이에요.</div>}
+            {firepower.products.length > 0 ? (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {firepower.products.map((item, index) => (
+                  <div key={item.product.id} className="relative">
+                    <span className="absolute left-4 top-4 z-20 rounded-full border border-white/80 bg-[#a75269]/92 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm backdrop-blur-xl">#{index + 1} · 화력 {item.firepowerScore}</span>
+                    <ProductCard product={item.product} initialFavorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />
+                    <div className="mx-2 -mt-2 rounded-b-2xl border border-t-0 border-[#dba7b438] bg-white/80 px-4 pb-4 pt-5">
+                      <div className="flex items-center justify-between text-[11px]"><span className="text-[#806e75]">{item.concentrationNote ?? "전성분 순서 기반"}</span><strong className="text-[#9b4a5f]">신뢰도 {confidenceLabel(item.confidence)}</strong></div>
+                      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[10px] text-[#88757c]">
+                        {breakdownItems(item.breakdown).map(([label, value]) => <div key={label} className="flex items-center justify-between gap-2"><span>{label}</span><strong>{value}</strong></div>)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <div className="paper-card rounded-[26px] p-10 text-center text-sm text-[#74695f]">연결된 제품을 준비 중이에요.</div>}
           </div>
         </section>
       </div>
@@ -77,4 +96,28 @@ export default async function IngredientDetailPage({ params }: { params: Promise
     if (error instanceof ApiRequestError && error.status === 404) notFound();
     throw error;
   }
+}
+
+function confidenceLabel(confidence: "HIGH" | "MEDIUM" | "LOW") {
+  return confidence === "HIGH" ? "높음" : confidence === "MEDIUM" ? "보통" : "낮음";
+}
+
+function breakdownItems(breakdown: {
+  match: number;
+  concentration: number;
+  evidence: number;
+  productType: number;
+  synergy: number;
+  stability: number;
+  dataConfidence: number;
+}): [string, number][] {
+  return [
+    ["성분 일치", breakdown.match],
+    ["함량 추정", breakdown.concentration],
+    ["근거 수준", breakdown.evidence],
+    ["제품 유형", breakdown.productType],
+    ["시너지", breakdown.synergy],
+    ["안정성", breakdown.stability],
+    ["데이터 신뢰", breakdown.dataConfidence],
+  ];
 }

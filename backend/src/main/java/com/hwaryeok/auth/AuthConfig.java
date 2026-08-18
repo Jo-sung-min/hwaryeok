@@ -40,7 +40,12 @@ public class AuthConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/auth/me", "/api/v1/users/me/**").authenticated()
+                        .requestMatchers(
+                                "/api/v1/auth/me",
+                                "/api/v1/users/me/**",
+                                "/api/v1/experts/me/**",
+                                "/api/v1/expert/**"
+                        ).authenticated()
                         .anyRequest().permitAll()
                 )
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(jwt ->
