@@ -36,7 +36,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 
         <section className="container-page">
           <div className="grid overflow-hidden rounded-[26px] border border-[#e4afbb36] bg-white/88 sm:rounded-[32px] lg:grid-cols-[.86fr_1.14fr]">
-            <div className="relative min-h-[300px] sm:min-h-[390px] lg:min-h-[590px]">
+            <div className="relative min-h-[270px] sm:min-h-[390px] lg:min-h-[590px]">
               <div className="absolute inset-0 [&>div]:h-full"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} /></div>
               <div className="absolute right-5 top-5"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
             </div>
@@ -62,7 +62,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
           </div>
         </section>
 
-        <section className="container-page py-14 md:py-28">
+        <section className="container-page py-12 md:py-28">
           <div className="mb-9 max-w-2xl"><InsightBadge /><h2 className="mt-4 section-title font-myeongjo">왜 나에게 {analysis.grade}등급일까요?</h2><p className="mt-4 text-sm leading-7 text-[#796c63]">선택한 피부 프로필과 제품 특성을 함께 계산해 좋은 점과 조심할 점을 알려드려요.</p></div>
           <div className="grid gap-5 md:grid-cols-2">
             <div className="rounded-[24px] border border-[#76846d24] bg-[#edf1e84f] p-5 sm:rounded-[26px] sm:p-6 md:p-8">
@@ -76,7 +76,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
           </div>
         </section>
 
-        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-14 md:py-24">
+        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-24">
           <div className="container-page grid gap-12 lg:grid-cols-[.72fr_1.28fr]">
             <div><p className="eyebrow mb-4">FIT DETAILS</p><h2 className="section-title font-myeongjo">피부 궁합을<br />한눈에 봐요</h2><p className="mt-5 text-sm leading-7 text-[#786b62]">좋은 점수는 길게, 부담과 위험 점수는 짧을수록 좋아요.</p></div>
             <div className="grid gap-6">{analysis.details.map((item) => <div key={item.label}><div className="mb-2 flex items-end justify-between gap-3"><div className="min-w-0"><strong className="font-myeongjo text-lg">{item.label}</strong><span className={`ml-2 text-[11px] sm:ml-3 sm:text-xs ${item.positive ? "text-[#71806b]" : "text-[#a06856]"}`}>{item.note}</span></div><strong className="shrink-0 font-myeongjo text-xl">{item.value}</strong></div><div className="h-2.5 overflow-hidden rounded-full bg-[#cfbdaa46]"><div className={`h-full rounded-full ${item.positive ? "bg-gradient-to-r from-[#9eaa92] to-[#70806d]" : "bg-gradient-to-r from-[#dfb29e] to-[#c1826d]"}`} style={{ width: `${item.value}%` }} /></div></div>)}</div>

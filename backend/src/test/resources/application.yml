@@ -5,7 +5,16 @@ spring:
     password:
     driver-class-name: org.h2.Driver
     hikari:
+      pool-name: HwaryeokTestPool
       schema: public
+      maximum-pool-size: 3
+      minimum-idle: 1
+      connection-timeout: 30000
+      validation-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 1500000
+      keepalive-time: 120000
+      leak-detection-threshold: 60000
   jpa:
     hibernate:
       ddl-auto: validate

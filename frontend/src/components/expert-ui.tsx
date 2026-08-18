@@ -21,7 +21,7 @@ export function ExpertAvatar({ expert, large = false }: { expert: Expert; large?
 
 export function ExpertCard({ expert }: { expert: Expert }) {
   return (
-    <Link href={`/experts/${expert.slug}`} className="paper-card group rounded-[26px] p-5 transition hover:-translate-y-1 hover:border-[#ce8da0]">
+    <Link href={`/experts/${expert.slug}`} className="paper-card group rounded-[24px] p-4 transition hover:-translate-y-1 hover:border-[#ce8da0] sm:rounded-[26px] sm:p-5">
       <div className="flex items-start gap-4">
         <ExpertAvatar expert={expert} />
         <div className="min-w-0 flex-1">
@@ -43,7 +43,7 @@ export function ExpertCard({ expert }: { expert: Expert }) {
 
 export function QuestionCard({ question }: { question: ExpertQuestionListItem }) {
   return (
-    <Link href={`/questions/${question.id}`} className="block rounded-[22px] border border-[#e5c4cc] bg-white/80 p-5 transition hover:border-[#c98396] hover:shadow-[0_12px_30px_rgba(160,78,98,.08)]">
+    <Link href={`/questions/${question.id}`} className="block rounded-[22px] border border-[#e5c4cc] bg-white/80 p-4 transition hover:border-[#c98396] hover:shadow-[0_12px_30px_rgba(160,78,98,.08)] sm:p-5">
       <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold">
         <span className={`rounded-full px-2.5 py-1 ${question.status === "OPEN" ? "bg-[#fff0d8] text-[#97661b]" : "bg-[#e9f3ec] text-[#4f795c]"}`}>{question.status === "OPEN" ? "답변 대기" : "답변 완료"}</span>
         {question.skinType && <span className="text-[#927880]">{question.skinType}</span>}

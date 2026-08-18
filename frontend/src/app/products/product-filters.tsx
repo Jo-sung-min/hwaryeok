@@ -25,13 +25,13 @@ function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues
 
 export function ProductSearch({ filters }: { filters: ProductFilterValues }) {
   return (
-    <form action="/products" className="mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-full border border-[#74513f24] bg-[#fffdf7d9] px-4 shadow-[0_12px_30px_rgba(74,52,40,.06)] focus-within:border-[#a54f4970] sm:mt-8 sm:gap-3 sm:px-5">
+    <form action="/products" className="glass-field mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-full px-3 focus-within:border-[#a54f4970] sm:mt-8 sm:gap-3 sm:px-5">
       <Search size={18} className="shrink-0 text-[#8a796d]" />
-      <input name="query" defaultValue={filters.query} placeholder="제품명이나 브랜드를 검색해보세요" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#9a8b80]" />
+      <input name="query" defaultValue={filters.query} placeholder="제품명·브랜드 검색" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8f7d85]" />
       {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
       {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
       {filters.order !== "score-desc" && <input type="hidden" name="order" value={filters.order} />}
-      <button type="submit" className="min-h-10 shrink-0 rounded-full bg-[#37312c] px-4 py-2 text-xs font-semibold text-white">검색</button>
+      <button type="submit" className="ink-btn !min-h-10 shrink-0 !px-4 text-xs">검색</button>
     </form>
   );
 }
@@ -42,14 +42,14 @@ export function ProductSort({ filters }: { filters: ProductFilterValues }) {
       {filters.query && <input type="hidden" name="query" value={filters.query} />}
       {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
       {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
-      <label htmlFor="product-order" className="text-xs text-[#766960]">정렬</label>
-      <select id="product-order" name="order" defaultValue={filters.order} className="min-w-0 flex-1 rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs outline-none sm:flex-none sm:px-4">
+      <label htmlFor="product-order" className="sr-only sm:not-sr-only sm:text-xs sm:text-[#766960]">정렬</label>
+      <select id="product-order" name="order" defaultValue={filters.order} className="glass-select min-w-0 flex-1 rounded-full px-3 py-2.5 text-xs outline-none sm:flex-none sm:px-4">
         <option value="score-desc">화력 높은 순</option>
         <option value="price-asc">가격 낮은 순</option>
         <option value="price-desc">가격 높은 순</option>
         <option value="name-asc">이름순</option>
       </select>
-      <button type="submit" className="min-h-11 shrink-0 rounded-full border border-[#74513f24] bg-[#fffaf3] px-3 py-2.5 text-xs font-semibold sm:px-4">적용</button>
+      <button type="submit" className="line-btn !min-h-11 shrink-0 !px-3 text-xs font-semibold sm:!px-4">적용</button>
     </form>
   );
 }
@@ -58,7 +58,7 @@ export function CategoryNavigation({ filters }: { filters: ProductFilterValues }
   return (
     <div className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-3 gap-2 overflow-x-auto px-3 pb-3 sm:mx-0 sm:px-0">
       {categories.map((item) => (
-        <Link key={item} href={filterHref(filters, "category", item)} scroll={false} className={`shrink-0 snap-start rounded-full px-4 py-2.5 text-sm transition ${filters.category === item ? "bg-[#37312c] text-white" : "border border-[#73533f1f] bg-[#fffaf3] text-[#6d625a] hover:border-[#9f6b59]"}`}>
+        <Link key={item} href={filterHref(filters, "category", item)} scroll={false} aria-current={filters.category === item ? "page" : undefined} className="glass-choice shrink-0 snap-start rounded-full px-4 py-2.5 text-sm">
           {item}
         </Link>
       ))}
@@ -69,7 +69,7 @@ export function CategoryNavigation({ filters }: { filters: ProductFilterValues }
 export function DesktopFilters({ filters }: { filters: ProductFilterValues }) {
   return (
     <aside className="hidden lg:block">
-      <div className="sticky top-28 rounded-2xl border border-[#74513f18] bg-[#fffaf38c] p-5">
+      <div className="glass-panel sticky top-28 rounded-2xl p-5">
         <div className="mb-5 flex items-center justify-between"><strong className="font-myeongjo text-lg">세밀하게 찾기</strong><SlidersHorizontal size={16} /></div>
         <FilterBlock title="화력 등급" options={["전체 등급", "1등급", "2등급", "3등급"]} selected={filters.grade} filters={filters} filterKey="grade" />
         <StaticFilterBlock title="피부 고민" options={["속건조", "민감", "피부 장벽", "붉은기"]} />
@@ -82,8 +82,8 @@ export function DesktopFilters({ filters }: { filters: ProductFilterValues }) {
 export function MobileFilters({ filters, resultCount }: { filters: ProductFilterValues; resultCount: number }) {
   return (
     <details className="relative lg:hidden">
-      <summary className="line-btn !min-h-10 !px-3 text-xs [&::-webkit-details-marker]:hidden"><SlidersHorizontal size={15} /> 필터</summary>
-      <div className="absolute right-0 top-12 z-30 w-[min(330px,calc(100vw-28px))] rounded-2xl border border-[#74513f20] bg-[#fbf7ed] p-5 shadow-[0_18px_42px_rgba(65,45,34,.16)]">
+      <summary className="line-btn !min-h-11 !px-3 text-xs [&::-webkit-details-marker]:hidden"><SlidersHorizontal size={15} /> 필터</summary>
+      <div className="glass-panel absolute left-0 top-12 z-30 w-[min(330px,calc(100dvw-32px))] rounded-2xl p-5">
         <FilterBlock title="화력 등급" options={["전체 등급", "1등급", "2등급", "3등급"]} selected={filters.grade} filters={filters} filterKey="grade" />
         <p className="text-center text-xs text-[#7d6f66]">현재 조건에 {resultCount}개 제품</p>
       </div>
@@ -95,11 +95,11 @@ function FilterBlock({ title, options, selected, filters, filterKey }: { title: 
   return (
     <div className="mb-6 border-b border-[#74513f13] pb-5 last:border-0">
       <p className="mb-3 text-xs font-bold text-[#5f554e]">{title}</p>
-      <div className="flex flex-wrap gap-2">{options.map(option => <Link key={option} href={filterHref(filters, filterKey, option)} scroll={false} className={`rounded-full border px-3 py-2 text-[11px] ${selected === option ? "border-[#a54f49] bg-[#a54f4910] text-[#994943]" : "border-[#74513f20] text-[#7b6e65]"}`}>{option}</Link>)}</div>
+      <div className="flex flex-wrap gap-2">{options.map(option => <Link key={option} href={filterHref(filters, filterKey, option)} scroll={false} aria-current={selected === option ? "page" : undefined} className="glass-choice rounded-full px-3 py-2 text-[11px]">{option}</Link>)}</div>
     </div>
   );
 }
 
 function StaticFilterBlock({ title, options }: { title: string; options: string[] }) {
-  return <div className="mb-6 border-b border-[#74513f13] pb-5 last:border-0"><p className="mb-3 text-xs font-bold text-[#5f554e]">{title}</p><div className="flex flex-wrap gap-2">{options.map(option => <span key={option} className="rounded-full border border-[#74513f16] px-3 py-2 text-[11px] text-[#9a8b80]">{option}</span>)}</div><p className="mt-3 text-[10px] text-[#a17262]">피부 프로필 연동 예정</p></div>;
+  return <div className="mb-6 border-b border-[#74513f13] pb-5 last:border-0"><p className="mb-3 text-xs font-bold text-[#5f554e]">{title}</p><div className="flex flex-wrap gap-2">{options.map(option => <span key={option} className="glass-chip-muted rounded-full px-3 py-2 text-[11px] text-[#8b7880]">{option}</span>)}</div><p className="mt-3 text-[10px] text-[#a17262]">피부 프로필 연동 예정</p></div>;
 }

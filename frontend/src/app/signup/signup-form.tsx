@@ -32,10 +32,10 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
   }
 
   return (
-    <form action={formAction} className="paper-card rounded-[30px] p-6 md:p-9" noValidate>
+    <form action={formAction} className="paper-card rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-9" noValidate>
       <div className="mb-7">
         <p className="eyebrow mb-3">CREATE ACCOUNT</p>
-        <h1 className="font-myeongjo text-3xl font-semibold">나만의 화력을 시작해요</h1>
+        <h1 className="font-myeongjo text-[28px] font-semibold leading-tight sm:text-3xl">나만의 화력을 시작해요</h1>
         <p className="mt-3 text-sm leading-7 text-[#7b6e65]">가입 후 피부 정보를 등록하면 모든 제품을 내 피부 기준으로 다시 볼 수 있어요.</p>
       </div>
 
@@ -63,7 +63,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
         </Field>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-[#7f8c7622] bg-[#eef1e849] p-4">
+      <div className="mt-6 rounded-2xl border border-[#7f8c7622] bg-[#eef1e849] p-3.5 sm:p-4">
         <label className="flex cursor-pointer items-start gap-3 text-xs leading-6 text-[#646359]">
           <input name="termsAccepted" type="checkbox" required className="mt-1 h-4 w-4 accent-[#a54f49]" />
           <span><strong className="font-semibold text-[#514b45]">필수</strong> 서비스 이용약관과 개인정보 처리방침에 동의합니다.</span>

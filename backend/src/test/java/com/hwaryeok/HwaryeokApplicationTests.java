@@ -14,6 +14,9 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sql.DataSource;
+
+import com.zaxxer.hikari.HikariDataSource;
 import com.hwaryeok.product.ProductRepository;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
@@ -21,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.ApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -38,9 +43,33 @@ class HwaryeokApplicationTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Test
     void loadsApplicationAndSeedsProducts() {
         assertThat(productRepository.count()).isEqualTo(22);
+    }
+
+    @Test
+    void usesOneApplicationManagedHikariConnectionPool() {
+        assertThat(applicationContext.getBeansOfType(DataSource.class)).hasSize(1);
+        assertThat(dataSource).isInstanceOf(HikariDataSource.class);
+
+        HikariDataSource hikariDataSource = (HikariDataSource) dataSource;
+        assertThat(hikariDataSource.getPoolName()).isEqualTo("HwaryeokTestPool");
+        assertThat(hikariDataSource.getMaximumPoolSize()).isEqualTo(3);
+        assertThat(hikariDataSource.getMinimumIdle()).isEqualTo(1);
+        assertThat(hikariDataSource.getLeakDetectionThreshold()).isEqualTo(60_000L);
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM products", Long.class)).isEqualTo(22L);
+        assertThat(hikariDataSource.getHikariPoolMXBean().getActiveConnections()).isZero();
     }
 
     @Test

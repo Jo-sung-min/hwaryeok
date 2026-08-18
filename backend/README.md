@@ -31,6 +31,24 @@ DB_SCHEMA=hwaryeok
 시작할 때 Flyway가 `DB_SCHEMA`를 생성하고 마이그레이션을 적용하며, Hibernate는 같은 스키마를 검증해 사용합니다.
 Spring Boot 4의 Flyway 자동 구성은 `spring-boot-starter-flyway`로 활성화되어 Hibernate보다 먼저 실행됩니다.
 
+### 데이터베이스 커넥션 풀
+
+애플리케이션은 Spring이 생성하는 전역 HikariCP `DataSource` 하나를 재사용합니다. JPA와 `JdbcTemplate`은 이 풀에서 연결을 빌리고 작업이 끝나면 자동으로 반환하므로, 서비스 코드에서 `Connection`을 직접 생성하거나 `close()`하지 않습니다.
+
+기본값은 최대 5개·최소 유휴 1개이며, 5분 동안 사용하지 않은 연결은 정리하고 연결 수명은 25분으로 제한합니다. 60초 이상 반환되지 않은 연결은 누수 의심 로그를 남깁니다. Supabase 플랜의 연결 제한이나 배포 인스턴스 수에 따라 아래 `DB_POOL_*` 값을 조정할 수 있습니다.
+
+```text
+DB_POOL_NAME=HwaryeokPool
+DB_POOL_MAX_SIZE=5
+DB_POOL_MIN_IDLE=1
+DB_CONNECTION_TIMEOUT_MS=30000
+DB_POOL_VALIDATION_TIMEOUT_MS=5000
+DB_POOL_IDLE_TIMEOUT_MS=300000
+DB_POOL_MAX_LIFETIME_MS=1500000
+DB_POOL_KEEPALIVE_MS=120000
+DB_POOL_LEAK_DETECTION_MS=60000
+```
+
 이미 적용된 `V1__create_products.sql`은 체크섬이 바뀌지 않도록 수정하지 않습니다. 이후 DB 구조 변경은 `V2__...sql`처럼 새 버전 마이그레이션으로 추가합니다.
 
 ## 화해 공개 랭킹 샘플 데이터

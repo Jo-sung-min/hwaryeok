@@ -25,7 +25,7 @@ export function ProductIngredientsPanel({ data }: { data: ProductIngredients }) 
     </div>
 
     <div className="scrollbar-hide mb-7 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="제품 성분 필터">
-      {filters.map((item) => <button key={item} type="button" onClick={() => setFilter(item)} aria-pressed={filter === item} className={`shrink-0 rounded-full px-4 py-2.5 text-xs transition ${filter === item ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3] text-[#70635b]"}`}>{item}</button>)}
+      {filters.map((item) => <button key={item} type="button" onClick={() => setFilter(item)} aria-pressed={filter === item} className="glass-choice shrink-0 rounded-full px-4 py-2.5 text-xs">{item}</button>)}
     </div>
 
     {items.length > 0 ? <div className="grid gap-3 md:grid-cols-2">{items.map((ingredient) => <IngredientRow key={ingredient.id} ingredient={ingredient}/>)}</div> : <div className="rounded-[24px] border border-dashed border-[#74513f2a] bg-[#fffaf278] py-14 text-center"><span className="text-3xl text-[#d08f7c]">❀</span><p className="mt-4 font-myeongjo text-lg">이 조건에 해당하는 성분이 없어요.</p></div>}

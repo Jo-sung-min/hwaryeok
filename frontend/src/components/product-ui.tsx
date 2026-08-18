@@ -79,9 +79,9 @@ export function FavoriteButton({
         aria-label={pending ? "찜 상태 저장 중" : active ? "찜 취소" : "찜하기"}
         aria-pressed={active}
         aria-busy={pending}
-        className={`${small ? "h-11 w-11 sm:h-10 sm:w-10" : "h-11 w-11"} grid place-items-center rounded-full border border-[#4e3e3420] bg-[#fffcf5e8] shadow-sm transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-65`}
+        className={`${small ? "h-11 w-11 sm:h-10 sm:w-10" : "h-11 w-11"} glass-choice grid place-items-center rounded-full disabled:cursor-wait disabled:opacity-65`}
       >
-        <Heart size={small ? 17 : 19} className={`${active ? "fill-[#a54f49] text-[#a54f49]" : "text-[#675b52]"} ${pending ? "animate-pulse" : ""}`} />
+        <Heart size={small ? 17 : 19} className={`${active ? "fill-white text-white" : "text-white/80"} ${pending ? "animate-pulse" : ""}`} />
       </button>
       <span className="sr-only" role="status" aria-live="polite">{statusMessage}</span>
       {error && !pending && <span role="alert" className="absolute right-0 top-full z-30 mt-2 w-48 rounded-xl border border-[#a54f4930] bg-[#fffaf3] px-3 py-2 text-left text-[11px] leading-5 text-[#8f433e] shadow-lg">{error}</span>}

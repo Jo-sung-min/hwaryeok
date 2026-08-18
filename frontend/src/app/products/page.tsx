@@ -69,10 +69,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-20">
+      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 md:py-20">
         <div className="container-page text-center">
           <p className="eyebrow mb-4">COSMETIC FINDER</p>
-          <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">내 피부에 피어날 화장품</h1>
+          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">내 피부에 피어날 화장품</h1>
           <p className="mt-4 text-sm leading-7 text-[#776b62]">평균 평점이 아닌 수부지 · 민감 · 속건조인 나의 화력 순으로 보여드려요.</p>
           <ProductSearch filters={filters} />
         </div>
@@ -95,9 +95,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
                 <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{productPage.content.map(product => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={currentHref} />)}</div>
                 {productPage.totalPages > 1 && (
                   <nav aria-label="화장품 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
-                    {productPage.page > 0 && <Link href={productPageHref(filters, productPage.page - 1)} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
-                    {visiblePages.map((page) => <Link key={page} href={productPageHref(filters, page)} aria-current={page === productPage.page ? "page" : undefined} className={`grid h-11 w-11 place-items-center rounded-full text-xs ${page === productPage.page ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3]"}`}>{page + 1}</Link>)}
-                    {productPage.hasNext && <Link href={productPageHref(filters, productPage.page + 1)} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
+                    {productPage.page > 0 && <Link href={productPageHref(filters, productPage.page - 1)} className="glass-choice grid h-11 w-11 place-items-center rounded-full" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
+                    {visiblePages.map((page) => <Link key={page} href={productPageHref(filters, page)} aria-current={page === productPage.page ? "page" : undefined} className="glass-choice grid h-11 w-11 place-items-center rounded-full text-xs">{page + 1}</Link>)}
+                    {productPage.hasNext && <Link href={productPageHref(filters, productPage.page + 1)} className="glass-choice grid h-11 w-11 place-items-center rounded-full" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
                   </nav>
                 )}
               </>

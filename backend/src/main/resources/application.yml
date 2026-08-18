@@ -10,10 +10,16 @@ spring:
     username: ${DB_USER:${DB_USERNAME:hwaryeok}}
     password: ${DB_PASSWORD:hwaryeok}
     hikari:
+      pool-name: ${DB_POOL_NAME:HwaryeokPool}
       schema: ${DB_SCHEMA:hwaryeok}
       maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
       minimum-idle: ${DB_POOL_MIN_IDLE:1}
       connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
+      validation-timeout: ${DB_POOL_VALIDATION_TIMEOUT_MS:5000}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT_MS:300000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:1500000}
+      keepalive-time: ${DB_POOL_KEEPALIVE_MS:120000}
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION_MS:60000}
   jpa:
     open-in-view: false
     hibernate:

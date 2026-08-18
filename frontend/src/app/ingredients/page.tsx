@@ -79,15 +79,15 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-12 text-center md:py-20">
+      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 text-center md:py-20">
         <div className="container-page">
           <BookOpen className="mx-auto mb-5 text-[#a45a50]" size={30} strokeWidth={1.5} />
           <p className="eyebrow mb-4">INGREDIENT DICTIONARY</p>
-          <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-tight md:text-5xl">어려운 성분, 쉬운 우리말로</h1>
+          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-tight md:text-5xl">어려운 성분, 쉬운 우리말로</h1>
           <p className="mt-4 text-sm leading-7 text-[#786c63]">전문 용어 대신 어떤 일을 하는지, 내 피부에는 어떻게 느껴질지 차분히 알려드려요.</p>
 
           <form className="mx-auto mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row" action="/ingredients">
-            <label className="flex h-14 flex-1 items-center gap-3 rounded-full border border-[#74513f24] bg-[#fffdf7] px-5 text-left">
+            <label className="glass-field flex h-14 flex-1 items-center gap-3 rounded-full px-5 text-left">
               <Search size={18} aria-hidden="true" />
               <span className="sr-only">성분 검색</span>
               <input name="query" defaultValue={values.query} placeholder="궁금한 성분을 검색해보세요" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
@@ -106,15 +106,15 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
             <div className="flex flex-wrap gap-2">
               {statusFilters.map((filter) => {
                 const active = values.status === filter.value;
-                return <Link key={filter.label} href={pageHref(values, { status: filter.value, page: 0 })} className={`rounded-full px-4 py-2.5 text-xs transition ${active ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3] hover:border-[#74513f45]"}`}>{filter.label}</Link>;
+                return <Link key={filter.label} href={pageHref(values, { status: filter.value, page: 0 })} aria-current={active ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">{filter.label}</Link>;
               })}
             </div>
           </div>
           <div>
             <p className="mb-3 text-xs font-bold tracking-[.14em] text-[#8e7468] lg:text-right">기능으로 보기</p>
             <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Link href={pageHref(values, { tag: "", page: 0 })} className={`rounded-full px-4 py-2.5 text-xs transition ${!values.tag ? "bg-[#9b4a45] text-white" : "border border-[#74513f20] bg-[#fffaf3]"}`}>전체 기능</Link>
-              {tagFilters.map((tag) => <Link key={tag} href={pageHref(values, { tag, page: 0 })} className={`rounded-full px-4 py-2.5 text-xs transition ${values.tag === tag ? "bg-[#9b4a45] text-white" : "border border-[#74513f20] bg-[#fffaf3] hover:border-[#74513f45]"}`}>{tag}</Link>)}
+              <Link href={pageHref(values, { tag: "", page: 0 })} aria-current={!values.tag ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">전체 기능</Link>
+              {tagFilters.map((tag) => <Link key={tag} href={pageHref(values, { tag, page: 0 })} aria-current={values.tag === tag ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">{tag}</Link>)}
             </div>
           </div>
         </div>
@@ -125,13 +125,13 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
             {values.query && <input type="hidden" name="query" value={values.query} />}
             {values.status && <input type="hidden" name="status" value={values.status} />}
             {values.tag && <input type="hidden" name="tag" value={values.tag} />}
-            <label htmlFor="ingredient-sort" className="text-xs text-[#766960]">정렬</label>
-            <select id="ingredient-sort" name="sort" defaultValue={values.sort} className="min-w-0 flex-1 rounded-full border border-[#74513f24] bg-[#fffaf3] px-4 py-2.5 text-xs outline-none sm:flex-none">
+            <label htmlFor="ingredient-sort" className="sr-only sm:not-sr-only sm:text-xs sm:text-[#766960]">정렬</label>
+            <select id="ingredient-sort" name="sort" defaultValue={values.sort} className="glass-select min-w-0 flex-1 rounded-full px-4 py-2.5 text-xs outline-none sm:flex-none">
               <option value="name">가나다순</option>
               <option value="role">역할순</option>
               <option value="status">상태순</option>
             </select>
-            <button type="submit" className="rounded-full border border-[#74513f24] bg-[#fffaf3] px-4 py-2.5 text-xs font-semibold">적용</button>
+            <button type="submit" className="line-btn !min-h-10 !px-4 text-xs font-semibold">적용</button>
           </form>
         </div>
 

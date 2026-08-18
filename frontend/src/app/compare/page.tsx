@@ -52,10 +52,10 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
     .map((detail) => detail.label);
 
   return <div className="min-h-screen pb-24">
-    <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-12 text-center md:py-14"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="text-balance font-myeongjo text-[34px] leading-tight md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm leading-7 text-[#786c63]">{analysisProfile.skinType} · {analysisProfile.concerns.join(" · ")} 프로필로 두 제품을 같은 기준에서 분석해요.</p>{!savedProfile && <Link href="/profile" className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[#9b4a45]">내 피부 프로필 등록하기</Link>}</div></section>
+    <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 text-center md:py-14"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="text-balance font-myeongjo text-[32px] leading-tight md:text-5xl">내 피부 앞에 나란히 놓고 보기</h1><p className="mt-4 text-sm leading-7 text-[#786c63]">{analysisProfile.skinType} · {analysisProfile.concerns.join(" · ")} 프로필로 두 제품을 같은 기준에서 분석해요.</p>{!savedProfile && <Link href="/profile" className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[#9b4a45]">내 피부 프로필 등록하기</Link>}</div></section>
     <section className="container-page py-8 md:py-16">
-      <div className="overflow-hidden rounded-[24px] border border-[#74513f1a] bg-[#fffaf2a8] sm:rounded-[30px]">
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] sm:grid-cols-[170px_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="glass-panel overflow-hidden rounded-[24px] sm:rounded-[30px]">
+        <div className="grid grid-cols-[60px_minmax(0,1fr)_minmax(0,1fr)] sm:grid-cols-[170px_minmax(0,1fr)_minmax(0,1fr)]">
           <div className="border-b border-r border-[#74513f18] bg-[#f0e5d7]" />
           <CompareSelectors products={products} leftId={left.id} rightId={right.id} />
           <CompareLabel label="나의 화력" />
@@ -84,5 +84,5 @@ function CompareEmpty() {
 }
 
 function CompareLabel({ label }: { label: string }) {
-  return <div className="flex items-center border-b border-r border-[#74513f18] bg-[#f5ecdf] p-3 text-[11px] font-semibold text-[#72665e] sm:p-5 sm:text-sm">{label}</div>;
+  return <div className="flex items-center break-keep border-b border-r border-[#74513f18] bg-[#f5ecdf] p-2.5 text-[11px] font-semibold leading-5 text-[#665b54] sm:p-5 sm:text-sm">{label}</div>;
 }

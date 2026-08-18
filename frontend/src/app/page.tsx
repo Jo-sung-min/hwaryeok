@@ -48,14 +48,14 @@ export default async function HomePage() {
             <span className="text-4xl text-[#e7a8b7]" aria-hidden="true">✿</span>
           </div>
 
-          <Link href="/products" className="mt-6 flex min-h-16 items-center gap-3 rounded-[22px] border border-[#e5aebb38] bg-[#fff7f9] px-4 shadow-[0_12px_30px_rgba(164,82,104,.09)]">
+          <Link href="/products" className="glass-field mt-6 flex min-h-16 items-center gap-3 rounded-[22px] px-4">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-[#a54f63] shadow-sm"><Search size={20} /></span>
             <span className="min-w-0 flex-1"><strong className="block text-sm">화장품 바로 검색</strong><small className="mt-1 block truncate text-[11px] text-[#8c737a]">제품명 · 브랜드 · 카테고리로 찾아보세요</small></span>
             <ChevronRight size={18} className="shrink-0 text-[#b56a7d]" />
           </Link>
 
           <div className="mt-4 grid grid-cols-4 gap-2">
-            {[{ label: "토너", href: "/products?category=토너", mark: "💧" }, { label: "세럼", href: "/products?category=세럼", mark: "✨" }, { label: "크림", href: "/products?category=크림", mark: "🌸" }, { label: "선케어", href: "/products?category=선케어", mark: "☀️" }].map((item) => <Link key={item.label} href={item.href} className="grid min-h-[84px] place-items-center rounded-[20px] border border-[#e7b7c22d] bg-[#fff9fa] px-1 py-3 text-center shadow-[0_8px_20px_rgba(164,82,104,.06)]"><span className="text-2xl" aria-hidden="true">{item.mark}</span><span className="mt-1 text-[11px] font-semibold text-[#715e64]">{item.label}</span></Link>)}
+            {[{ label: "토너", href: "/products?category=토너", mark: "💧" }, { label: "세럼", href: "/products?category=세럼", mark: "✨" }, { label: "크림", href: "/products?category=크림", mark: "🌸" }, { label: "선케어", href: "/products?category=선케어", mark: "☀️" }].map((item) => <Link key={item.label} href={item.href} className="glass-choice grid min-h-[84px] place-items-center rounded-[20px] px-1 py-3 text-center"><span className="text-2xl" aria-hidden="true">{item.mark}</span><span className="mt-1 text-[11px] font-semibold text-white/85">{item.label}</span></Link>)}
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -66,8 +66,8 @@ export default async function HomePage() {
               <span className="relative mt-1 block text-[11px] leading-5 text-[#846b72]">내 피부에 잘 맞는<br />인기 제품 순위</span>
             </Link>
             <div className="grid gap-3">
-              <Link href="/profile" className="flex min-h-[68px] items-center gap-2 rounded-[20px] border border-[#e8b9c43a] bg-white p-3 shadow-[0_8px_22px_rgba(164,82,104,.07)] sm:gap-3 sm:p-3.5"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#fff0f3] text-[#a54f63] sm:h-10 sm:w-10"><ScanSearch size={18} /></span><span className="min-w-0"><strong className="block whitespace-nowrap text-[11px] sm:text-xs">피부 화력 분석</strong><small className="mt-1 block text-[9px] text-[#947b82] sm:text-[10px]">2분 맞춤 진단</small></span></Link>
-              <Link href="/ingredients" className="flex min-h-[68px] items-center gap-2 rounded-[20px] border border-[#e8b9c43a] bg-white p-3 shadow-[0_8px_22px_rgba(164,82,104,.07)] sm:gap-3 sm:p-3.5"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#fff0f3] text-[#a54f63] sm:h-10 sm:w-10"><BookOpen size={18} /></span><span className="min-w-0"><strong className="block whitespace-nowrap text-[11px] sm:text-xs">성분 사전</strong><small className="mt-1 block text-[9px] text-[#947b82] sm:text-[10px]">쉽게 성분 확인</small></span></Link>
+              <Link href="/profile" className="glass-choice flex min-h-[68px] items-center gap-2 rounded-[20px] p-3 sm:gap-3 sm:p-3.5"><span className="choice-icon grid h-9 w-9 shrink-0 place-items-center rounded-full sm:h-10 sm:w-10"><ScanSearch size={18} /></span><span className="min-w-0"><strong className="block whitespace-nowrap text-[11px] sm:text-xs">피부 화력 분석</strong><small className="choice-copy mt-1 block text-[9px] sm:text-[10px]">2분 맞춤 진단</small></span></Link>
+              <Link href="/ingredients" className="glass-choice flex min-h-[68px] items-center gap-2 rounded-[20px] p-3 sm:gap-3 sm:p-3.5"><span className="choice-icon grid h-9 w-9 shrink-0 place-items-center rounded-full sm:h-10 sm:w-10"><BookOpen size={18} /></span><span className="min-w-0"><strong className="block whitespace-nowrap text-[11px] sm:text-xs">성분 사전</strong><small className="choice-copy mt-1 block text-[9px] sm:text-[10px]">쉽게 성분 확인</small></span></Link>
             </div>
           </div>
         </div>

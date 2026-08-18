@@ -21,12 +21,12 @@ export default async function IngredientDetailPage({ params }: { params: Promise
 
     return (
       <div className="pb-24">
-        <div className="container-page py-6 md:py-9">
+        <div className="container-page py-4 md:py-9">
           <Link href="/ingredients" className="inline-flex items-center gap-2 text-sm text-[#766960]"><ArrowLeft size={16} /> 성분 사전</Link>
         </div>
 
         <section className="container-page">
-          <div className="relative overflow-hidden rounded-[34px] border border-[#74513f1a] bg-[#fffaf2a8] px-6 py-12 md:px-12 md:py-16">
+          <div className="relative overflow-hidden rounded-[26px] border border-[#74513f1a] bg-[#fffaf2a8] px-5 py-10 sm:rounded-[34px] sm:px-6 sm:py-12 md:px-12 md:py-16">
             <div className="absolute -right-10 -top-16 h-64 w-64 rounded-full bg-[#e9a99a18] blur-3xl" />
             <div className="relative max-w-3xl">
               <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold ${isCaution ? "bg-[#d3957d1c] text-[#9b5945]" : "bg-[#84917a1a] text-[#65715f]"}`}>
@@ -34,7 +34,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
                 {isCaution ? "피부 상태를 살피며 사용해요" : "피부에 도움을 줄 수 있어요"}
               </span>
               <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-[#a06b5d]">{ingredient.role}</p>
-              <h1 className="mt-3 font-myeongjo text-4xl font-semibold md:text-6xl">{ingredient.name}</h1>
+              <h1 className="mt-3 break-keep font-myeongjo text-[34px] font-semibold leading-tight md:text-6xl">{ingredient.name}</h1>
               <p className="mt-3 text-sm text-[#98877b] md:text-base">{ingredient.englishName}</p>
               <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">{ingredient.description}</p>
               <div className="mt-7 flex flex-wrap gap-2">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full border border-[#a45a5025] bg-[#fff9f1] px-3 py-1.5 text-xs text-[#91564d]">#{tag}</span>)}</div>
@@ -42,7 +42,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
           </div>
         </section>
 
-        <section className="container-page py-16 md:py-24">
+        <section className="container-page py-12 md:py-24">
           <div className="mb-9">
             <p className="eyebrow mb-4">PERSONAL FIT</p>
             <h2 className="section-title font-myeongjo">내 피부에는 어떻게 느껴질까요?</h2>
@@ -66,7 +66,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
           )}
         </section>
 
-        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-16 md:py-20">
+        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-20">
           <div className="container-page">
             <div className="mb-9 flex items-end justify-between gap-5">
               <div><p className="eyebrow mb-4">INGREDIENT FIREPOWER</p><h2 className="section-title font-myeongjo">{ingredient.name} 화력 TOP</h2><p className="mt-3 max-w-2xl text-xs leading-6 text-[#826f76]">{firepower.disclaimer}</p></div>

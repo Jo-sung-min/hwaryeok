@@ -27,7 +27,7 @@ export function IngredientPreferencesForm({
   }
 
   return (
-    <form action={formAction} className="rounded-[26px] border border-[#e3b1bd3d] bg-[#fff7f9] p-5 sm:p-7">
+    <form action={formAction} className="paper-card rounded-[26px] p-5 sm:p-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-[#a14e63]"><Sparkles size={15} /> 나의 관심 성분</div>
@@ -42,7 +42,7 @@ export function IngredientPreferencesForm({
           const active = selected.includes(ingredient.id);
           const priority = selected.indexOf(ingredient.id) + 1;
           return (
-            <label key={ingredient.id} className={`relative cursor-pointer rounded-2xl border px-4 py-3 transition ${active ? "border-[#bd7085] bg-[#ad5b72] text-white shadow-[0_10px_24px_rgba(164,82,104,.16)]" : "border-[#e4b8c344] bg-white text-[#695c61] hover:border-[#ce899b]"}`}>
+            <label key={ingredient.id} data-selected={active ? "true" : undefined} className="glass-choice relative cursor-pointer rounded-2xl px-4 py-3">
               <input
                 type="checkbox"
                 name="ingredientIds"
@@ -53,11 +53,11 @@ export function IngredientPreferencesForm({
                 className="sr-only"
               />
               <span className="flex items-center gap-2 text-sm font-semibold">
-                {active && <span className="grid h-5 w-5 place-items-center rounded-full bg-white/20 text-[10px]">{priority}</span>}
+                {active && <span className="choice-icon grid h-5 w-5 place-items-center rounded-full text-[10px]">{priority}</span>}
                 {ingredient.name}
                 {active && <Check size={14} />}
               </span>
-              <span className={`mt-1 block text-[10px] ${active ? "text-white/75" : "text-[#9a858d]"}`}>근거 {ingredient.evidenceLevel} · {ingredient.role}</span>
+              <span className="choice-copy mt-1 block text-[10px]">근거 {ingredient.evidenceLevel} · {ingredient.role}</span>
             </label>
           );
         })}
