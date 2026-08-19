@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
-import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProducts } from "@/lib/api";
+import { ReviewSection } from "./review-section";
+import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductReviewCriteria, getProductReviewSummary, getProducts } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 
 const defaultProfile = {
@@ -36,11 +37,13 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     : defaultProfile;
 
   try {
-    const [product, analysis, products, ingredientData] = await Promise.all([
+    const [product, analysis, products, ingredientData, reviewCriteria, reviewSummary] = await Promise.all([
       getProduct(id),
       getAnalysis({ productId: id, ...analysisProfile }),
       getProducts(),
       getProductIngredients(id),
+      getProductReviewCriteria(id),
+      getProductReviewSummary(id),
     ]);
     const relatedProducts = products.filter((item) => item.id !== product.id).slice(0, 3);
 
@@ -102,7 +105,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 
         <ProductIngredientsPanel data={ingredientData}/>
 
-        <section className="container-page pb-14 md:pb-20"><div className="paper-card rounded-[24px] p-6 sm:rounded-[26px] sm:p-7 md:p-9"><MessageCircle className="text-[#c17f69]" /><p className="eyebrow mb-3 mt-6">SKIN REVIEWS</p><h2 className="font-myeongjo text-2xl font-semibold">실사용 리뷰 준비 중</h2><p className="mt-3 text-sm leading-7 text-[#796c63]">회원 기능과 리뷰 API가 연결되면 피부 타입과 사용 기간을 확인할 수 있어요.</p><span className="mt-6 inline-flex rounded-full bg-[#a54f4910] px-4 py-2 text-xs font-semibold text-[#934640]">리뷰 기능 예정</span></div></section>
+        <ReviewSection productId={product.id} criteria={reviewCriteria} summary={reviewSummary} isAuthenticated={favoriteState.isAuthenticated} savedSkinType={savedProfile?.skinType ?? null} />
 
         {relatedProducts.length > 0 && <section className="container-page pb-14 md:pb-20"><h2 className="mb-6 font-myeongjo text-2xl font-semibold sm:mb-8">함께 비교해볼 제품</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{relatedProducts.map((item) => <ProductCard key={item.id} product={item} initialFavorited={favoriteIds.has(item.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} />)}</div></section>}
       </div>

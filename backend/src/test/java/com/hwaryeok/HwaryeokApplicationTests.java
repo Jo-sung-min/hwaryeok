@@ -536,6 +536,97 @@ class HwaryeokApplicationTests {
     }
 
     @Test
+    void createsCategoryReviewAndReturnsCalculatedSummary() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("review@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                "review@example.com",
+                passwordEncoder.encode("Flower!123"),
+                "리뷰회원",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> criteriaResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/products/birch-cream/review-criteria"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(criteriaResponse.statusCode()).isEqualTo(200);
+        assertThat(criteriaResponse.body()).contains(
+                "\"categoryId\":\"MOISTURIZER\"",
+                "\"categoryName\":\"수분크림\"",
+                "\"templateVersion\":1",
+                "보습력",
+                "가격 만족도"
+        );
+
+        String reviewPayload = """
+                {
+                  "content": "한 달 동안 사용해 보니 촉촉함은 오래가고 마무리감도 편안했어요.",
+                  "skinType": "건성",
+                  "usagePeriod": "ONE_MONTH",
+                  "repurchaseYn": true,
+                  "scores": [
+                    {"criteriaId":"moisture","score":5},
+                    {"criteriaId":"spread","score":4},
+                    {"criteriaId":"absorption","score":4},
+                    {"criteriaId":"lasting","score":4},
+                    {"criteriaId":"freshness","score":4},
+                    {"criteriaId":"low-irritation","score":5},
+                    {"criteriaId":"ingredient","score":4},
+                    {"criteriaId":"price","score":2}
+                  ]
+                }
+                """;
+        HttpResponse<String> unauthorizedResponse = client.send(
+                jsonPost("/api/v1/products/birch-cream/reviews", reviewPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unauthorizedResponse.statusCode()).isEqualTo(401);
+
+        String accessToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"review@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        ).body(), "accessToken");
+        HttpResponse<String> createResponse = client.send(
+                bearerRequest("POST", "/api/v1/products/birch-cream/reviews", accessToken, reviewPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(createResponse.statusCode()).isEqualTo(201);
+        assertThat(createResponse.body()).contains("\"totalScore\":80.00", "리뷰회원", "\"skinType\":\"건성\"");
+
+        HttpResponse<String> summaryResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/products/birch-cream/reviews"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(summaryResponse.statusCode()).isEqualTo(200);
+        assertThat(summaryResponse.body()).contains(
+                "\"reviewScore\":80.0",
+                "\"reviewCount\":1",
+                "\"rankingStatus\":\"COLLECTING\"",
+                "\"minimumOfficialReviewCount\":50",
+                "\"averageScore\":5.0",
+                "한 달 동안 사용해 보니"
+        );
+
+        HttpResponse<String> duplicateResponse = client.send(
+                bearerRequest("POST", "/api/v1/products/birch-cream/reviews", accessToken, reviewPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(duplicateResponse.statusCode()).isEqualTo(409);
+        assertThat(duplicateResponse.body()).contains("REVIEW_ALREADY_EXISTS");
+    }
+
+    @Test
     void recordsAndListsAuthenticatedUserRecentProductsWithoutDuplicates() throws Exception {
         Instant now = Instant.now();
         userRepository.findByEmail("recent@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(

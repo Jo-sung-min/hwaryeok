@@ -10,6 +10,7 @@ import com.hwaryeok.auth.DuplicateEmailException;
 import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
 import com.hwaryeok.auth.InvalidRefreshTokenException;
+import com.hwaryeok.review.ReviewAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException exception, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(ReviewAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleReviewConflict(ReviewAlreadyExistsException exception, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "REVIEW_ALREADY_EXISTS", exception.getMessage(), request, Map.of());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

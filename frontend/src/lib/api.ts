@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, RecentProduct, RecentProductList } from "@/lib/types";
+import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductReviewSummary, RecentProduct, RecentProductList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -282,6 +282,32 @@ export async function getProducts(query: ProductQuery = {}): Promise<Product[]> 
 
 export function getProduct(id: string): Promise<Product> {
   return requestJson<Product>(`/products/${encodeURIComponent(id)}`);
+}
+
+export function getProductReviewCriteria(productId: string): Promise<ReviewCriteria> {
+  return requestJson<ReviewCriteria>(`/products/${encodeURIComponent(productId)}/review-criteria`);
+}
+
+export function getProductReviewSummary(productId: string): Promise<ProductReviewSummary> {
+  return requestJson<ProductReviewSummary>(`/products/${encodeURIComponent(productId)}/reviews`);
+}
+
+export function createProductReview(
+  accessToken: string,
+  productId: string,
+  input: {
+    content: string;
+    skinType: string;
+    usagePeriod: ReviewDetail["usagePeriod"];
+    repurchaseYn: boolean;
+    scores: { criteriaId: string; score: number }[];
+  },
+): Promise<ReviewDetail> {
+  return requestJson<ReviewDetail>(`/products/${encodeURIComponent(productId)}/reviews`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
 }
 
 export function getRanking(profile: string | SkinProfile, limit = 6): Promise<Product[]> {

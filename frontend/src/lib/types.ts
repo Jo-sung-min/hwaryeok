@@ -45,6 +45,52 @@ export type RecentProductList = {
   totalElements: number;
 };
 
+export type ReviewCriterion = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  displayOrder: number;
+};
+
+export type ReviewCriteria = {
+  categoryId: string;
+  categoryName: string;
+  templateId: string;
+  templateVersion: number;
+  criteria: ReviewCriterion[];
+};
+
+export type ReviewDetail = {
+  id: string;
+  authorNickname: string;
+  totalScore: number;
+  content: string;
+  skinType: string;
+  usagePeriod: "ONE_WEEK" | "TWO_WEEKS" | "ONE_MONTH" | "THREE_MONTHS" | "OVER_SIX_MONTHS";
+  repurchaseYn: boolean;
+  createdAt: string;
+};
+
+export type ReviewCriterionAverage = {
+  criteriaId: string;
+  code: string;
+  name: string;
+  description: string;
+  averageScore: number | null;
+  reviewCount: number;
+};
+
+export type ProductReviewSummary = {
+  productId: string;
+  reviewScore: number | null;
+  reviewCount: number;
+  rankingStatus: "COLLECTING" | "REFERENCE" | "OFFICIAL";
+  minimumOfficialReviewCount: number;
+  criteriaAverages: ReviewCriterionAverage[];
+  reviews: ReviewDetail[];
+};
+
 export type ScoreDetail = {
   label: string;
   value: number;
