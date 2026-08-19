@@ -86,6 +86,7 @@ record ReviewCriterionAverageResponse(
         String code,
         String name,
         String description,
+        int displayOrder,
         BigDecimal averageScore,
         long reviewCount
 ) {
@@ -93,6 +94,10 @@ record ReviewCriterionAverageResponse(
 
 record ProductReviewSummaryResponse(
         String productId,
+        String categoryId,
+        String categoryName,
+        String templateId,
+        int templateVersion,
         BigDecimal reviewScore,
         long reviewCount,
         String rankingStatus,

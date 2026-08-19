@@ -53,7 +53,7 @@ public class OAuthExchangeCodeService {
     @Transactional
     public AuthTokenResponse exchange(String rawCode) {
         Instant now = Instant.now();
-        OAuthExchangeCode code = codeRepository.findById(tokenHashService.hash(rawCode))
+        OAuthExchangeCode code = codeRepository.findByCodeHashForUpdate(tokenHashService.hash(rawCode))
                 .orElseThrow(InvalidOAuthExchangeCodeException::new);
         if (code.getUsedAt() != null || !code.getExpiresAt().isAfter(now)) {
             throw new InvalidOAuthExchangeCodeException();

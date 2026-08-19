@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,16 +54,23 @@ public class OAuthAccountService {
                 now,
                 now
         );
-        userRepository.saveAndFlush(user);
-        oauthAccountRepository.saveAndFlush(new OAuthAccount(
-                UUID.randomUUID().toString(),
-                user.getId(),
-                provider,
-                profile.providerUserId(),
-                profile.email(),
-                now,
-                now
-        ));
+        try {
+            userRepository.saveAndFlush(user);
+            oauthAccountRepository.saveAndFlush(new OAuthAccount(
+                    UUID.randomUUID().toString(),
+                    user.getId(),
+                    provider,
+                    profile.providerUserId(),
+                    profile.email(),
+                    now,
+                    now
+            ));
+        } catch (DataIntegrityViolationException exception) {
+            throw new OAuthLoginException(
+                    "concurrent_login",
+                    "동시에 처리된 소셜 로그인이 있어요. 다시 한 번 로그인해 주세요."
+            );
+        }
         return new OAuthLoginResult(user, profile.provider(), true);
     }
 }

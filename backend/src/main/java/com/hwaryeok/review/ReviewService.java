@@ -10,12 +10,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.common.error.ResourceNotFoundException;
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductService;
+import com.hwaryeok.user.ActiveUserService;
 import com.hwaryeok.user.User;
-import com.hwaryeok.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,23 +26,26 @@ public class ReviewService {
     private static final int MINIMUM_OFFICIAL_REVIEW_COUNT = 50;
 
     private final ProductService productService;
-    private final UserRepository userRepository;
+    private final ActiveUserService activeUserService;
     private final ReviewTemplateRepository templateRepository;
     private final ReviewCriterionRepository criterionRepository;
     private final ProductReviewRepository reviewRepository;
+    private final ProductReviewScoreRepository reviewScoreRepository;
 
     public ReviewService(
             ProductService productService,
-            UserRepository userRepository,
+            ActiveUserService activeUserService,
             ReviewTemplateRepository templateRepository,
             ReviewCriterionRepository criterionRepository,
-            ProductReviewRepository reviewRepository
+            ProductReviewRepository reviewRepository,
+            ProductReviewScoreRepository reviewScoreRepository
     ) {
         this.productService = productService;
-        this.userRepository = userRepository;
+        this.activeUserService = activeUserService;
         this.templateRepository = templateRepository;
         this.criterionRepository = criterionRepository;
         this.reviewRepository = reviewRepository;
+        this.reviewScoreRepository = reviewScoreRepository;
     }
 
     @Transactional(readOnly = true)
@@ -57,35 +59,41 @@ public class ReviewService {
     public ProductReviewSummaryResponse summary(String productId) {
         Product product = productService.getProduct(productId);
         TemplateContext context = templateFor(product);
-        List<ProductReview> reviews = reviewRepository.findByProductIdOrderByCreatedAtDesc(productId);
-        BigDecimal reviewScore = reviews.isEmpty() ? null : reviews.stream()
-                .map(ProductReview::getTotalScore)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(reviews.size()), 1, RoundingMode.HALF_UP);
-
-        Map<String, List<ProductReviewScore>> scoresByCriterion = reviews.stream()
-                .flatMap(review -> review.getScores().stream())
-                .collect(Collectors.groupingBy(score -> score.getCriterion().getId()));
+        long reviewCount = reviewRepository.countByProductId(productId);
+        Double averageTotalScore = reviewRepository.averageTotalScoreByProductId(productId);
+        BigDecimal reviewScore = averageTotalScore == null
+                ? null
+                : BigDecimal.valueOf(averageTotalScore).setScale(1, RoundingMode.HALF_UP);
+        Map<String, ProductReviewScoreRepository.CriterionScoreAggregate> scoreAggregates = reviewScoreRepository
+                .aggregateByProductId(productId)
+                .stream()
+                .collect(Collectors.toMap(
+                        ProductReviewScoreRepository.CriterionScoreAggregate::getCriterionId,
+                        aggregate -> aggregate
+                ));
         List<ReviewCriterionAverageResponse> averages = context.criteria().stream()
-                .map(criterion -> average(criterion, scoresByCriterion.getOrDefault(criterion.getId(), List.of())))
+                .map(criterion -> average(criterion, scoreAggregates.get(criterion.getId())))
                 .toList();
+        List<ProductReview> recentReviews = reviewRepository.findTop5ByProductIdOrderByCreatedAtDesc(productId);
 
         return new ProductReviewSummaryResponse(
                 productId,
+                context.template().getCategory().getId(),
+                context.template().getCategory().getName(),
+                context.template().getId(),
+                context.template().getVersion(),
                 reviewScore,
-                reviews.size(),
-                rankingStatus(reviews.size()),
+                reviewCount,
+                rankingStatus(reviewCount),
                 MINIMUM_OFFICIAL_REVIEW_COUNT,
                 averages,
-                reviews.stream().map(ReviewDetailResponse::from).toList()
+                recentReviews.stream().map(ReviewDetailResponse::from).toList()
         );
     }
 
     @Transactional
     public ReviewDetailResponse create(String userId, String productId, CreateReviewRequest request) {
-        User user = userRepository.findById(userId)
-                .filter(candidate -> "ACTIVE".equals(candidate.getStatus()))
-                .orElseThrow(InvalidCredentialsException::new);
+        User user = activeUserService.requireActiveForUpdate(userId);
         Product product = productService.getProduct(productId);
         TemplateContext context = templateFor(product);
         validateMetadata(request);
@@ -174,19 +182,21 @@ public class ReviewService {
         return weightedScore.multiply(BigDecimal.valueOf(100)).divide(maximum, 2, RoundingMode.HALF_UP);
     }
 
-    private ReviewCriterionAverageResponse average(ReviewCriterion criterion, List<ProductReviewScore> scores) {
-        BigDecimal average = scores.isEmpty() ? null : BigDecimal.valueOf(scores.stream()
-                        .mapToInt(ProductReviewScore::getScore)
-                        .average()
-                        .orElse(0))
-                .setScale(1, RoundingMode.HALF_UP);
+    private ReviewCriterionAverageResponse average(
+            ReviewCriterion criterion,
+            ProductReviewScoreRepository.CriterionScoreAggregate aggregate
+    ) {
+        BigDecimal average = aggregate == null || aggregate.getAverageScore() == null
+                ? null
+                : BigDecimal.valueOf(aggregate.getAverageScore()).setScale(1, RoundingMode.HALF_UP);
         return new ReviewCriterionAverageResponse(
                 criterion.getId(),
                 criterion.getCode(),
                 criterion.getName(),
                 criterion.getDescription(),
+                criterion.getDisplayOrder(),
                 average,
-                scores.size()
+                aggregate == null ? 0 : aggregate.getReviewCount()
         );
     }
 

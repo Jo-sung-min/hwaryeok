@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ApiRequestError, saveUserPreferredIngredients, saveUserSkinProfile } from "@/lib/api";
+import { ApiRequestError, saveUserProfile } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
 
 const allowedSkinTypes = new Set(["건성", "지성", "복합성", "수부지", "중성", "민감"]);
@@ -76,8 +76,7 @@ export async function saveSkinProfileAction(
   }
 
   try {
-    await Promise.all([
-      saveUserSkinProfile(accessToken, {
+    await saveUserProfile(accessToken, {
         skinType,
         hydrationLevel: hydrationLevel as "LOW" | "BALANCED" | "HIGH",
         oilinessLevel: oilinessLevel as "LOW" | "BALANCED" | "HIGH",
@@ -93,9 +92,7 @@ export async function saveSkinProfileAction(
         breakoutZones,
         environments,
         concerns,
-      }),
-      saveUserPreferredIngredients(accessToken, ingredientIds),
-    ]);
+      }, ingredientIds);
     revalidatePath("/profile");
     revalidatePath("/my");
     revalidatePath("/ranking");

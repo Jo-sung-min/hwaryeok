@@ -3,6 +3,7 @@ package com.hwaryeok.auth;
 import java.util.Arrays;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import com.hwaryeok.auth.oauth.ConfiguredClientRegistrationRepository;
@@ -37,8 +38,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthTokenResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public AuthTokenResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        return authService.login(request, httpRequest.getRemoteAddr());
     }
 
     @PostMapping("/refresh")

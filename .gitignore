@@ -7,3 +7,5 @@ out/
 .DS_Store
 backend/.gradle/
 backend/build/
+backend/bin/
+frontend/tsconfig.tsbuildinfo

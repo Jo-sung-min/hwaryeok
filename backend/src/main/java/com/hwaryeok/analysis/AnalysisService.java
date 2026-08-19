@@ -34,6 +34,7 @@ public class AnalysisService {
 
         return new AnalysisResponse(
                 product.getId(),
+                ProductResponse.from(product),
                 request.skinType(),
                 List.copyOf(request.concerns()),
                 grade,

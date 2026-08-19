@@ -29,7 +29,8 @@ dependencies {
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
 
-    runtimeOnly 'org.postgresql:postgresql'
+    // 42.7.12 fixes CVE-2026-54291 (channelBinding=require downgrade) ahead of the Boot 4.1.0 BOM.
+    runtimeOnly 'org.postgresql:postgresql:42.7.12'
     developmentOnly 'com.h2database:h2:2.3.232'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

@@ -220,6 +220,18 @@ export function saveUserSkinProfile(
   });
 }
 
+export function saveUserProfile(
+  accessToken: string,
+  skinProfile: Parameters<typeof saveUserSkinProfile>[1],
+  ingredientIds: string[],
+): Promise<{ skinProfile: SkinProfile; preferredIngredients: PreferredIngredients }> {
+  return requestJson<{ skinProfile: SkinProfile; preferredIngredients: PreferredIngredients }>("/users/me/profile", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ skinProfile, ingredientIds }),
+  });
+}
+
 export function getUserFavorites(accessToken: string): Promise<FavoriteList> {
   return requestJson<FavoriteList>("/users/me/favorites", {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -282,6 +294,10 @@ export async function getProducts(query: ProductQuery = {}): Promise<Product[]> 
 
 export function getProduct(id: string): Promise<Product> {
   return requestJson<Product>(`/products/${encodeURIComponent(id)}`);
+}
+
+export function getRelatedProducts(id: string, limit = 3): Promise<Product[]> {
+  return requestJson<Product[]>(`/products/${encodeURIComponent(id)}/related?limit=${limit}`);
 }
 
 export function getProductReviewCriteria(productId: string): Promise<ReviewCriteria> {

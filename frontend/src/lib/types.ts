@@ -77,12 +77,17 @@ export type ReviewCriterionAverage = {
   code: string;
   name: string;
   description: string;
+  displayOrder: number;
   averageScore: number | null;
   reviewCount: number;
 };
 
 export type ProductReviewSummary = {
   productId: string;
+  categoryId: string;
+  categoryName: string;
+  templateId: string;
+  templateVersion: number;
   reviewScore: number | null;
   reviewCount: number;
   rankingStatus: "COLLECTING" | "REFERENCE" | "OFFICIAL";
@@ -100,6 +105,7 @@ export type ScoreDetail = {
 
 export type Analysis = {
   productId: string;
+  product: Product;
   skinType: string;
   concerns: string[];
   grade: 1 | 2 | 3 | 4 | 5;

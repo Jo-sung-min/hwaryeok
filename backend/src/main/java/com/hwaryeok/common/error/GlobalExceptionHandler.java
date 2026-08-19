@@ -10,16 +10,25 @@ import com.hwaryeok.auth.DuplicateEmailException;
 import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
 import com.hwaryeok.auth.InvalidRefreshTokenException;
+import com.hwaryeok.auth.TooManyLoginAttemptsException;
 import com.hwaryeok.review.ReviewAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiError> handleNotFound(ResourceNotFoundException exception, HttpServletRequest request) {
@@ -42,6 +51,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException exception, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestPartException.class
+    })
+    public ResponseEntity<ApiError> handleMalformedRequest(Exception exception, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "MALFORMED_REQUEST", "요청 형식을 다시 확인해 주세요.", request, Map.of());
     }
 
     @ExceptionHandler(ReviewAlreadyExistsException.class)
@@ -80,6 +98,45 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, "INVALID_OAUTH_EXCHANGE_CODE", exception.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(TooManyLoginAttemptsException.class)
+    public ResponseEntity<ApiError> handleTooManyLoginAttempts(
+            TooManyLoginAttemptsException exception,
+            HttpServletRequest request
+    ) {
+        ApiError error = error(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "TOO_MANY_LOGIN_ATTEMPTS",
+                exception.getMessage(),
+                request,
+                Map.of()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", Long.toString(exception.getRetryAfterSeconds()))
+                .body(error);
+    }
+
+    @ExceptionHandler(ErrorResponseException.class)
+    public ResponseEntity<ApiError> handleFrameworkError(ErrorResponseException exception, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.resolve(exception.getStatusCode().value());
+        if (status == null) status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = status.is4xxClientError()
+                ? "요청 경로와 방식을 다시 확인해 주세요."
+                : "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.";
+        return build(status, "REQUEST_REJECTED", message, request, Map.of());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpected(Exception exception, HttpServletRequest request) {
+        log.error("Unhandled API exception for {} {}", request.getMethod(), request.getRequestURI(), exception);
+        return build(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "INTERNAL_SERVER_ERROR",
+                "요청을 처리하지 못했어요. 잠시 후 다시 시도해 주세요.",
+                request,
+                Map.of()
+        );
+    }
+
     private ResponseEntity<ApiError> build(
             HttpStatus status,
             String code,
@@ -87,7 +144,17 @@ public class GlobalExceptionHandler {
             HttpServletRequest request,
             Map<String, String> fieldErrors
     ) {
-        ApiError error = new ApiError(
+        return ResponseEntity.status(status).body(error(status, code, message, request, fieldErrors));
+    }
+
+    private ApiError error(
+            HttpStatus status,
+            String code,
+            String message,
+            HttpServletRequest request,
+            Map<String, String> fieldErrors
+    ) {
+        return new ApiError(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),
@@ -96,6 +163,5 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 fieldErrors
         );
-        return ResponseEntity.status(status).body(error);
     }
 }

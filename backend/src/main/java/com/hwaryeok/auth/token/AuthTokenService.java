@@ -53,7 +53,7 @@ public class AuthTokenService {
     @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
     public AuthTokenResponse rotate(String rawRefreshToken) {
         Instant now = Instant.now();
-        RefreshToken current = refreshTokenRepository.findByTokenHash(tokenHashService.hash(rawRefreshToken))
+        RefreshToken current = refreshTokenRepository.findByTokenHashForUpdate(tokenHashService.hash(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
 
         if (current.getRevokedAt() != null || !current.getExpiresAt().isAfter(now)) {

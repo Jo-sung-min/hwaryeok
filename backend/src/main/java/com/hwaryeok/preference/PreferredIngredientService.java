@@ -8,10 +8,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.ingredient.Ingredient;
 import com.hwaryeok.ingredient.IngredientRepository;
-import com.hwaryeok.user.UserRepository;
+import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,27 +19,27 @@ public class PreferredIngredientService {
 
     private final UserPreferredIngredientRepository preferenceRepository;
     private final IngredientRepository ingredientRepository;
-    private final UserRepository userRepository;
+    private final ActiveUserService activeUserService;
 
     public PreferredIngredientService(
             UserPreferredIngredientRepository preferenceRepository,
             IngredientRepository ingredientRepository,
-            UserRepository userRepository
+            ActiveUserService activeUserService
     ) {
         this.preferenceRepository = preferenceRepository;
         this.ingredientRepository = ingredientRepository;
-        this.userRepository = userRepository;
+        this.activeUserService = activeUserService;
     }
 
     @Transactional(readOnly = true)
     public PreferredIngredientsResponse get(String userId) {
-        requireActiveUser(userId);
+        activeUserService.requireActive(userId);
         return PreferredIngredientsResponse.from(preferenceRepository.findByUserId(userId));
     }
 
     @Transactional
     public PreferredIngredientsResponse save(String userId, PreferredIngredientsRequest request) {
-        requireActiveUser(userId);
+        activeUserService.requireActiveForUpdate(userId);
         List<String> ingredientIds = request.ingredientIds().stream().map(String::strip).toList();
         if (new LinkedHashSet<>(ingredientIds).size() != ingredientIds.size()) {
             throw new IllegalArgumentException("같은 관심 성분을 중복해서 선택할 수 없어요.");
@@ -64,10 +63,4 @@ public class PreferredIngredientService {
         return PreferredIngredientsResponse.from(preferenceRepository.findByUserId(userId));
     }
 
-    private void requireActiveUser(String userId) {
-        boolean active = userRepository.findById(userId)
-                .filter(user -> "ACTIVE".equals(user.getStatus()))
-                .isPresent();
-        if (!active) throw new InvalidCredentialsException();
-    }
 }

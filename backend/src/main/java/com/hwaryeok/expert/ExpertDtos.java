@@ -115,7 +115,9 @@ record ExpertWorkplaceRequest(
         @NotBlank @Size(max = 80) String region,
         @NotBlank @Size(max = 300) String address,
         @Size(max = 30) String phone,
-        @Size(max = 500) String homepageUrl
+        @Size(max = 500)
+        @Pattern(regexp = "https?://[^\\s]+", message = "홈페이지 주소는 http:// 또는 https://로 시작해야 해요.")
+        String homepageUrl
 ) {}
 
 record ExpertApplicationRequest(

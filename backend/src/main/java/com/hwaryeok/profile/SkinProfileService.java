@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import com.hwaryeok.auth.InvalidCredentialsException;
-import com.hwaryeok.user.UserRepository;
+import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,22 +15,23 @@ public class SkinProfileService {
     private final UserSkinProfileRepository profileRepository;
     private final UserSkinConcernRepository concernRepository;
     private final UserSkinSignalRepository signalRepository;
-    private final UserRepository userRepository;
+    private final ActiveUserService activeUserService;
 
     public SkinProfileService(
             UserSkinProfileRepository profileRepository,
             UserSkinConcernRepository concernRepository,
             UserSkinSignalRepository signalRepository,
-            UserRepository userRepository
+            ActiveUserService activeUserService
     ) {
         this.profileRepository = profileRepository;
         this.concernRepository = concernRepository;
         this.signalRepository = signalRepository;
-        this.userRepository = userRepository;
+        this.activeUserService = activeUserService;
     }
 
     @Transactional(readOnly = true)
     public SkinProfileResponse get(String userId) {
+        activeUserService.requireActive(userId);
         UserSkinProfile profile = profileRepository.findById(userId).orElse(null);
         if (profile == null) return SkinProfileResponse.empty();
         return response(profile);
@@ -39,10 +39,7 @@ public class SkinProfileService {
 
     @Transactional
     public SkinProfileResponse save(String userId, SkinProfileRequest request) {
-        boolean activeUser = userRepository.findById(userId)
-                .filter(user -> "ACTIVE".equals(user.getStatus()))
-                .isPresent();
-        if (!activeUser) throw new InvalidCredentialsException();
+        activeUserService.requireActiveForUpdate(userId);
 
         List<String> concerns = request.concerns().stream()
                 .map(String::strip)

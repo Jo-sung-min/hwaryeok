@@ -10,7 +10,10 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -351,6 +354,119 @@ class HwaryeokApplicationTests {
 
         assertThat(response.statusCode()).isEqualTo(401);
         assertThat(response.body()).contains("INVALID_CREDENTIALS", "이메일 또는 비밀번호를 확인해 주세요.");
+    }
+
+    @Test
+    void rateLimitsRepeatedInvalidLogins() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String email = "rate-limit-" + UUID.randomUUID() + "@example.com";
+        for (int attempt = 0; attempt < 8; attempt++) {
+            HttpResponse<String> response = client.send(
+                    jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Wrong!123\"}"),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+            assertThat(response.statusCode()).isEqualTo(401);
+        }
+
+        HttpResponse<String> blocked = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Wrong!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(blocked.statusCode()).isEqualTo(429);
+        assertThat(blocked.body()).contains("TOO_MANY_LOGIN_ATTEMPTS");
+        assertThat(blocked.headers().firstValue("Retry-After")).isPresent();
+    }
+
+    @Test
+    void allowsOnlyOneConcurrentRefreshRotation() throws Exception {
+        Instant now = Instant.now();
+        String email = "concurrent-refresh-" + UUID.randomUUID() + "@example.com";
+        userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                email,
+                passwordEncoder.encode("Flower!123"),
+                "동시성봄",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        ));
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> login = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String refreshToken = jsonString(login.body(), "refreshToken");
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var requests = List.of(1, 2).stream()
+                    .map(ignored -> executor.submit(() -> {
+                        ready.countDown();
+                        start.await();
+                        return client.send(
+                                jsonPost("/api/v1/auth/refresh", "{\"refreshToken\":\"" + refreshToken + "\"}"),
+                                HttpResponse.BodyHandlers.ofString()
+                        );
+                    }))
+                    .toList();
+            ready.await();
+            start.countDown();
+            var first = requests.get(0).get();
+            var second = requests.get(1).get();
+            assertThat(List.of(first.statusCode(), second.statusCode()))
+                    .containsExactlyInAnyOrder(200, 401);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void rollsBackWholeProfileWhenPreferredIngredientSaveFails() throws Exception {
+        Instant now = Instant.now();
+        String email = "atomic-profile-" + UUID.randomUUID() + "@example.com";
+        userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                email,
+                passwordEncoder.encode("Flower!123"),
+                "원자성봄",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        ));
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> login = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String accessToken = jsonString(login.body(), "accessToken");
+        String payload = """
+                {
+                  "skinProfile": {
+                    "skinType":"건성","hydrationLevel":"LOW","oilinessLevel":"LOW",
+                    "sensitivityLevel":"LOW","breakoutFrequency":"RARE","cleansingTightness":"SHORT",
+                    "rednessFrequency":"RARE","poreLevel":"LOW","texturePreference":"RICH",
+                    "routineComplexity":"MINIMAL","sunscreenUsage":"DAILY","reactionTriggers":[],
+                    "breakoutZones":[],"environments":[],"concerns":["속건조"]
+                  },
+                  "ingredientIds":["missing-ingredient"]
+                }
+                """;
+        HttpResponse<String> failed = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/profile", accessToken, payload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(failed.statusCode()).isEqualTo(400);
+        assertThat(failed.body()).contains("등록되지 않은 성분");
+
+        HttpResponse<String> profile = client.send(
+                bearerRequest("GET", "/api/v1/users/me/skin-profile", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(profile.statusCode()).isEqualTo(200);
+        assertThat(profile.body()).contains("\"configured\":false");
     }
 
     @Test

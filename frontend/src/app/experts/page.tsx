@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, Award, MessageCircleQuestion, ShieldCheck, Sparkles } from "lucide-react";
 import { ExpertCard, ExpertDisclaimer, QuestionCard } from "@/components/expert-ui";
-import { getExpertQuestions, getExpertRanking, getExperts } from "@/lib/api";
+import { getExpertQuestions, getExpertRanking } from "@/lib/api";
 
 export default async function ExpertsPage() {
-  const [experts, ranking, questions] = await Promise.all([
-    getExperts(),
+  const [ranking, questions] = await Promise.all([
     getExpertRanking("MONTH"),
     getExpertQuestions(),
   ]);
+  const experts = ranking.content.map((item) => item.expert);
 
   return (
     <div className="min-h-screen pb-24">

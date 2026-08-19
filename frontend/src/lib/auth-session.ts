@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { getCurrentUser, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
 
 export const ACCESS_TOKEN_COOKIE = "hwaryeok_access_token";
@@ -56,7 +57,7 @@ export async function takeOAuthReturnTo() {
   return returnTo;
 }
 
-export async function getCurrentSession(): Promise<AuthUser | null> {
+export const getCurrentSession = cache(async (): Promise<AuthUser | null> => {
   const { accessToken } = await readAuthTokens();
   if (!accessToken) return null;
   try {
@@ -64,7 +65,7 @@ export async function getCurrentSession(): Promise<AuthUser | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function getOptionalSkinProfile(): Promise<SkinProfile | null> {
   const { accessToken } = await readAuthTokens();

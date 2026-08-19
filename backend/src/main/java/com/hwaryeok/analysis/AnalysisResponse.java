@@ -2,8 +2,11 @@ package com.hwaryeok.analysis;
 
 import java.util.List;
 
+import com.hwaryeok.product.ProductResponse;
+
 public record AnalysisResponse(
         String productId,
+        ProductResponse product,
         String skinType,
         List<String> concerns,
         int grade,

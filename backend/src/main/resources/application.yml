@@ -8,7 +8,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hwaryeok}}
     username: ${DB_USER:${DB_USERNAME:hwaryeok}}
-    password: ${DB_PASSWORD:hwaryeok}
+    password: ${DB_PASSWORD:}
     hikari:
       pool-name: ${DB_POOL_NAME:HwaryeokPool}
       schema: ${DB_SCHEMA:hwaryeok}
@@ -27,6 +27,10 @@ spring:
     properties:
       hibernate:
         default_schema: ${DB_SCHEMA:hwaryeok}
+        default_batch_fetch_size: 50
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
         format_sql: true
   flyway:
     enabled: true
@@ -45,7 +49,7 @@ server:
     session:
       cookie:
         http-only: true
-        secure: ${SESSION_COOKIE_SECURE:false}
+        secure: ${SESSION_COOKIE_SECURE:true}
         same-site: ${SESSION_COOKIE_SAME_SITE:lax}
   error:
     include-message: never
@@ -66,11 +70,17 @@ logging:
 
 app:
   auth:
-    jwt-secret: ${JWT_SECRET:local-development-secret-change-before-production-2026}
+    jwt-secret: ${JWT_SECRET:}
+    license-hash-secret: ${LICENSE_HASH_SECRET:}
     jwt-issuer: ${JWT_ISSUER:hwaryeok-api}
     access-token-seconds: ${ACCESS_TOKEN_SECONDS:900}
     refresh-token-seconds: ${REFRESH_TOKEN_SECONDS:2592000}
     oauth-exchange-code-seconds: ${OAUTH_EXCHANGE_CODE_SECONDS:120}
+    login-rate-limit:
+      window-seconds: ${LOGIN_RATE_WINDOW_SECONDS:900}
+      block-seconds: ${LOGIN_RATE_BLOCK_SECONDS:900}
+      identity-attempts: ${LOGIN_RATE_IDENTITY_ATTEMPTS:8}
+      address-attempts: ${LOGIN_RATE_ADDRESS_ATTEMPTS:100}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   oauth:

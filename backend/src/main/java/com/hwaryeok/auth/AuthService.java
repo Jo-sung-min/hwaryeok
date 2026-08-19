@@ -20,18 +20,21 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
     private final OAuthExchangeCodeService oauthExchangeCodeService;
+    private final LoginRateLimitService loginRateLimitService;
     private final String dummyPasswordHash;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthTokenService authTokenService,
-            OAuthExchangeCodeService oauthExchangeCodeService
+            OAuthExchangeCodeService oauthExchangeCodeService,
+            LoginRateLimitService loginRateLimitService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authTokenService = authTokenService;
         this.oauthExchangeCodeService = oauthExchangeCodeService;
+        this.loginRateLimitService = loginRateLimitService;
         this.dummyPasswordHash = passwordEncoder.encode("invalid-password-value");
     }
 
@@ -55,23 +58,27 @@ public class AuthService {
         try {
             return SignupResponse.from(userRepository.saveAndFlush(user));
         } catch (DataIntegrityViolationException exception) {
-            if (userRepository.existsByEmail(email)) throw new DuplicateEmailException();
-            throw exception;
+            // PostgreSQL은 무결성 위반 뒤 같은 트랜잭션의 추가 쿼리를 거부하므로 바로 충돌로 변환합니다.
+            throw new DuplicateEmailException();
         }
     }
 
     @Transactional
-    public AuthTokenResponse login(LoginRequest request) {
+    public AuthTokenResponse login(LoginRequest request, String clientAddress) {
         String email = request.email().strip().toLowerCase(Locale.ROOT);
+        loginRateLimitService.checkAllowed(email, clientAddress);
         User user = userRepository.findByEmail(email).orElse(null);
         String passwordHash = user != null && user.getPasswordHash() != null
                 ? user.getPasswordHash()
                 : dummyPasswordHash;
         boolean passwordMatches = passwordEncoder.matches(request.password(), passwordHash);
         if (user == null || user.getPasswordHash() == null || !passwordMatches || !"ACTIVE".equals(user.getStatus())) {
+            loginRateLimitService.registerFailure(email, clientAddress);
             throw new InvalidCredentialsException();
         }
-        return authTokenService.issue(user, "password");
+        AuthTokenResponse response = authTokenService.issue(user, "password");
+        loginRateLimitService.clearSuccessfulIdentity(email);
+        return response;
     }
 
     public AuthTokenResponse refresh(TokenRefreshRequest request) {

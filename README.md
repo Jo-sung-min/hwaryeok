@@ -29,17 +29,23 @@ hwaryeok/
 ### 1. PostgreSQL
 
 ```bash
+cp .env.example .env
+# .env의 DB_PASSWORD를 임의의 값으로 교체
 docker compose up -d postgres
 ```
+
+Windows PowerShell에서는 `Copy-Item .env.example .env`를 사용합니다.
 
 ### 2. 백엔드
 
 ```bash
 cd backend
+cp .env.example .env
+# backend/.env의 DB_PASSWORD를 PostgreSQL과 같은 값으로 설정
 ./gradlew bootRun
 ```
 
-Windows PowerShell에서는 `./gradlew.bat bootRun`을 사용합니다. Docker 없이 빠르게 확인하려면 다음 개발 전용 명령을 사용할 수 있습니다.
+Windows PowerShell에서는 `Copy-Item .env.example .env`와 `./gradlew.bat bootRun`을 사용합니다. Docker 없이 빠르게 확인하려면 다음 개발 전용 명령을 사용할 수 있습니다.
 
 백엔드는 `backend/.env`를 자동으로 읽습니다. `DB_SCHEMA`에 사용할 PostgreSQL 스키마 이름을 지정하면 Flyway와 Hibernate가 같은 스키마를 사용합니다. 로컬 PostgreSQL 기본 양식은 `backend/.env.example`에서 확인할 수 있습니다.
 
@@ -74,7 +80,7 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 
 카카오·네이버·구글 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 공급자 개발자 콘솔의 Redirect URI는 `https://<백엔드주소>/login/oauth2/code/{provider}`이며, 백엔드의 `OAUTH_FRONTEND_BASE_URL`에는 실제 Vercel 주소를 설정합니다.
 
-로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 32바이트 이상의 임의 `JWT_SECRET`을 별도로 등록하세요.
+로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 서로 다른 32바이트 이상의 임의 `JWT_SECRET`, `LICENSE_HASH_SECRET`을 반드시 등록하세요. 두 값이 없거나 짧으면 백엔드는 시작되지 않습니다.
 
 관리자 제품 이미지는 백엔드와 PostgreSQL에 저장되므로 Vercel에는 별도 이미지 저장소 환경 변수가 필요하지 않습니다. 운영 관리자 지정과 이미지 API 사용법은 [backend/README.md](backend/README.md#관리자-제품-이미지)를 참고하세요.
 

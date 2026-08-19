@@ -5,7 +5,8 @@ import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, Sc
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ReviewSection } from "./review-section";
-import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductReviewCriteria, getProductReviewSummary, getProducts } from "@/lib/api";
+import { ApiRequestError, getAnalysis, getProductIngredients, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
+import type { ReviewCriteria } from "@/lib/types";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 
 const defaultProfile = {
@@ -37,15 +38,26 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     : defaultProfile;
 
   try {
-    const [product, analysis, products, ingredientData, reviewCriteria, reviewSummary] = await Promise.all([
-      getProduct(id),
+    const [analysis, relatedProducts, ingredientData, reviewSummary] = await Promise.all([
       getAnalysis({ productId: id, ...analysisProfile }),
-      getProducts(),
+      getRelatedProducts(id, 3),
       getProductIngredients(id),
-      getProductReviewCriteria(id),
       getProductReviewSummary(id),
     ]);
-    const relatedProducts = products.filter((item) => item.id !== product.id).slice(0, 3);
+    const product = analysis.product;
+    const reviewCriteria: ReviewCriteria = {
+      categoryId: reviewSummary.categoryId,
+      categoryName: reviewSummary.categoryName,
+      templateId: reviewSummary.templateId,
+      templateVersion: reviewSummary.templateVersion,
+      criteria: reviewSummary.criteriaAverages.map(({ criteriaId, code, name, description, displayOrder }) => ({
+        id: criteriaId,
+        code,
+        name,
+        description,
+        displayOrder,
+      })),
+    };
 
     return (
       <div className="pb-24">

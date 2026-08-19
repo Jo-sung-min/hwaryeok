@@ -23,11 +23,18 @@ public class JwtConfig {
 
     public JwtConfig(
             @Value("${app.auth.jwt-secret}") String jwtSecret,
-            @Value("${app.auth.jwt-issuer}") String issuer
+            @Value("${app.auth.jwt-issuer}") String issuer,
+            @Value("${spring.profiles.active:}") String activeProfiles
     ) {
         byte[] secretBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        if (secretBytes.length < 32) {
-            throw new IllegalStateException("JWT_SECRET must be at least 32 bytes");
+        boolean localProfile = activeProfiles.lines()
+                .flatMap(value -> java.util.Arrays.stream(value.split(",")))
+                .map(String::trim)
+                .anyMatch("local"::equalsIgnoreCase);
+        if (secretBytes.length < 32
+                || jwtSecret.startsWith("replace-with-")
+                || (!localProfile && jwtSecret.startsWith("local-development-"))) {
+            throw new IllegalStateException("JWT_SECRET must be a non-default secret of at least 32 bytes");
         }
         this.secretKey = new SecretKeySpec(secretBytes, "HmacSHA256");
         this.issuer = issuer;

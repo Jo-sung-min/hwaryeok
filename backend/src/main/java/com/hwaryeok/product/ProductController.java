@@ -40,6 +40,14 @@ public class ProductController {
         return productService.findProduct(id);
     }
 
+    @GetMapping("/{id}/related")
+    public List<ProductResponse> findRelatedProducts(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "3") int limit
+    ) {
+        return productService.findRelatedProducts(id, limit);
+    }
+
     @GetMapping("/{id}/ingredients")
     public ProductIngredientsResponse findProductIngredients(
             @PathVariable String id,

@@ -18,7 +18,18 @@ spring:
     default-schema: public
     schemas: public
 
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+
 management:
   endpoint:
     health:
       show-details: always
+
+app:
+  auth:
+    jwt-secret: local-development-secret-change-before-production-2026
+    license-hash-secret: local-license-hash-secret-change-before-production-2026

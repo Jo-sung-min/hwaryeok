@@ -2,6 +2,9 @@ package com.hwaryeok.ingredient;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.hwaryeok.common.error.ResourceNotFoundException;
 import com.hwaryeok.product.Product;
@@ -34,9 +37,24 @@ public class IngredientFirepowerService {
         Ingredient ingredient = ingredientRepository.findById(ingredientId)
                 .orElseThrow(() -> new ResourceNotFoundException("성분을 찾을 수 없어요: " + ingredientId));
 
-        List<IngredientFirepowerProductResponse> products = productIngredientRepository.findByIngredientId(ingredientId)
+        List<ProductIngredient> relations = productIngredientRepository.findByIngredientId(ingredientId);
+        Set<String> productIds = relations.stream()
+                .map(relation -> relation.getProduct().getId())
+                .collect(Collectors.toSet());
+        Map<String, Long> ingredientCounts = productIds.isEmpty()
+                ? Map.of()
+                : productIngredientRepository.countByProductIds(productIds).stream()
+                        .collect(Collectors.toMap(
+                                ProductIngredientRepository.ProductIngredientCount::getProductId,
+                                ProductIngredientRepository.ProductIngredientCount::getIngredientCount
+                        ));
+        List<IngredientFirepowerProductResponse> products = relations
                 .stream()
-                .map(relation -> score(ingredient, relation))
+                .map(relation -> score(
+                        ingredient,
+                        relation,
+                        ingredientCounts.getOrDefault(relation.getProduct().getId(), 0L)
+                ))
                 .sorted(Comparator.comparingInt(IngredientFirepowerProductResponse::firepowerScore).reversed()
                         .thenComparing(item -> item.product().name()))
                 .limit(limit)
@@ -47,13 +65,17 @@ public class IngredientFirepowerService {
         );
     }
 
-    private IngredientFirepowerProductResponse score(Ingredient ingredient, ProductIngredient relation) {
+    private IngredientFirepowerProductResponse score(
+            Ingredient ingredient,
+            ProductIngredient relation,
+            long ingredientCount
+    ) {
         Product product = relation.getProduct();
         int match = 20;
         int concentration = concentrationScore(relation.getDisplayOrder());
         int evidence = evidenceScore(ingredient.getEvidenceLevel());
         int productType = productTypeScore(product.getCategory());
-        int synergy = productIngredientRepository.countByProductId(product.getId()) >= 3 ? 8 : 5;
+        int synergy = ingredientCount >= 3 ? 8 : 5;
         int stability = switch (ingredient.getEvidenceLevel()) {
             case "A" -> 9;
             case "B" -> 7;

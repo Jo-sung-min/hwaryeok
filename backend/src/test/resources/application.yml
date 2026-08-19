@@ -28,9 +28,16 @@ spring:
     default-schema: public
     schemas: public
 
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+
 app:
   auth:
     jwt-secret: test-jwt-secret-with-at-least-thirty-two-bytes
+    license-hash-secret: test-license-hash-secret-with-at-least-thirty-two-bytes
     jwt-issuer: hwaryeok-api
     access-token-seconds: 900
     refresh-token-seconds: 2592000

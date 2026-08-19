@@ -9,30 +9,57 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.common.error.ForbiddenOperationException;
 import com.hwaryeok.common.error.ResourceNotFoundException;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class ExpertService {
 
     private static final String RANKING_DISCLAIMER =
             "이 순위는 화력 플랫폼 내 답변 수, 도움돼요, 저장, 채택 활동을 바탕으로 합니다. 의료진의 의학적 실력이나 치료 결과를 평가하지 않습니다.";
 
     private final JdbcTemplate jdbc;
+    private final byte[] licenseHashKey;
 
-    public ExpertService(JdbcTemplate jdbc) {
+    public ExpertService(
+            JdbcTemplate jdbc,
+            @Value("${app.auth.license-hash-secret}") String licenseHashSecret,
+            @Value("${spring.profiles.active:}") String activeProfiles
+    ) {
+        boolean localProfile = java.util.Arrays.stream(activeProfiles.split(","))
+                .map(String::trim)
+                .anyMatch("local"::equalsIgnoreCase);
+        if (licenseHashSecret.getBytes(StandardCharsets.UTF_8).length < 32
+                || licenseHashSecret.startsWith("replace-with-")
+                || (!localProfile && licenseHashSecret.startsWith("local-license-"))) {
+            throw new IllegalStateException("LICENSE_HASH_SECRET must be a non-default secret of at least 32 bytes");
+        }
         this.jdbc = jdbc;
+        this.licenseHashKey = licenseHashSecret.getBytes(StandardCharsets.UTF_8);
     }
 
     public List<ExpertSummaryResponse> findExperts(String topic) {
@@ -52,9 +79,9 @@ public class ExpertService {
                 ORDER BY e.specialist_verified DESC, e.workplace_verified DESC, e.real_name
                 """;
         if (normalizedTopic == null) {
-            return jdbc.query(sql, (rs, rowNum) -> toSummary(readExpert(rs)));
+            return toSummaries(jdbc.query(sql, (rs, rowNum) -> readExpert(rs)));
         }
-        return jdbc.query(sql, (rs, rowNum) -> toSummary(readExpert(rs)), normalizedTopic);
+        return toSummaries(jdbc.query(sql, (rs, rowNum) -> readExpert(rs), normalizedTopic));
     }
 
     public ExpertDetailResponse findExpert(String slug) {
@@ -69,9 +96,14 @@ public class ExpertService {
         String normalizedPeriod = normalizePeriod(period);
         String normalizedTopic = normalizeTopic(topic);
         Instant since = rankingSince(normalizedPeriod);
+        List<ExpertSummaryResponse> experts = findExperts(normalizedTopic);
+        Map<String, ExpertStatsResponse> periodStats = statsByExpert(
+                experts.stream().map(ExpertSummaryResponse::id).toList(),
+                since
+        );
         List<RankingDraft> drafts = new ArrayList<>();
-        for (ExpertSummaryResponse expert : findExperts(normalizedTopic)) {
-            ExpertStatsResponse stats = stats(expert.id(), since);
+        for (ExpertSummaryResponse expert : experts) {
+            ExpertStatsResponse stats = periodStats.getOrDefault(expert.id(), emptyStats());
             int score = stats.answerCount() * 12
                     + stats.helpfulCount() * 3
                     + stats.saveCount() * 2
@@ -100,6 +132,7 @@ public class ExpertService {
                 LEFT JOIN ingredients i ON i.id = q.ingredient_id
                 """ + statusFilter + """
                 ORDER BY q.created_at DESC, q.id
+                LIMIT 100
                 """;
         var rowMapper = (org.springframework.jdbc.core.RowMapper<ExpertQuestionListItemResponse>) (rs, rowNum) -> new ExpertQuestionListItemResponse(
                 rs.getString("id"), rs.getString("author_nickname"), rs.getString("title"),
@@ -123,15 +156,20 @@ public class ExpertService {
                         rs.getString("content"), rs.getString("skin_type"), rs.getString("ingredient_id"),
                         rs.getString("ingredient_name"), rs.getString("status"),
                         viewerUserId != null && viewerUserId.equals(rs.getString("user_id")),
-                        instant(rs, "created_at"), findAnswers(questionId, viewerUserId)
+                        instant(rs, "created_at"), List.of()
                 ), questionId);
         if (results.isEmpty()) throw new ResourceNotFoundException("질문을 찾을 수 없어요.");
-        return results.getFirst();
+        ExpertQuestionDetailResponse question = results.getFirst();
+        return new ExpertQuestionDetailResponse(
+                question.id(), question.authorNickname(), question.title(), question.content(), question.skinType(),
+                question.ingredientId(), question.ingredientName(), question.status(), question.viewerIsAuthor(),
+                question.createdAt(), findAnswers(questionId, viewerUserId)
+        );
     }
 
     @Transactional
     public ExpertQuestionDetailResponse createQuestion(String userId, ExpertQuestionRequest request) {
-        requireUser(userId);
+        requireActiveUserForUpdate(userId);
         String ingredientId = blankToNull(request.ingredientId());
         if (ingredientId != null && count("SELECT COUNT(*) FROM ingredients WHERE id = ?", ingredientId) == 0) {
             throw new IllegalArgumentException("선택한 성분을 찾을 수 없어요.");
@@ -170,47 +208,52 @@ public class ExpertService {
 
     @Transactional
     public ExpertEngagementResponse setHelpful(String userId, String answerId, boolean selected) {
-        requireUser(userId);
+        requireActiveUserForUpdate(userId);
         requireAnswer(answerId);
         boolean exists = reactionExists("expert_answer_helpfuls", userId, answerId);
         if (selected && !exists) {
-            try {
-                jdbc.update("INSERT INTO expert_answer_helpfuls (user_id, answer_id, created_at) VALUES (?, ?, ?)",
-                        userId, answerId, Instant.now());
-                jdbc.update("UPDATE expert_answers SET helpful_count = helpful_count + 1 WHERE id = ?", answerId);
-            } catch (DuplicateKeyException ignored) {
-                // 같은 요청이 동시에 도착해도 한 번만 반영합니다.
-            }
+            jdbc.update("INSERT INTO expert_answer_helpfuls (user_id, answer_id, created_at) VALUES (?, ?, ?)",
+                    userId, answerId, Instant.now());
+            jdbc.update("UPDATE expert_answers SET helpful_count = helpful_count + 1 WHERE id = ?", answerId);
         } else if (!selected && exists) {
-            jdbc.update("DELETE FROM expert_answer_helpfuls WHERE user_id = ? AND answer_id = ?", userId, answerId);
-            jdbc.update("UPDATE expert_answers SET helpful_count = CASE WHEN helpful_count > 0 THEN helpful_count - 1 ELSE 0 END WHERE id = ?", answerId);
+            int deleted = jdbc.update(
+                    "DELETE FROM expert_answer_helpfuls WHERE user_id = ? AND answer_id = ?", userId, answerId
+            );
+            if (deleted == 1) {
+                jdbc.update("UPDATE expert_answers SET helpful_count = CASE WHEN helpful_count > 0 THEN helpful_count - 1 ELSE 0 END WHERE id = ?", answerId);
+            }
         }
         return engagement(answerId, userId);
     }
 
     @Transactional
     public ExpertEngagementResponse setSaved(String userId, String answerId, boolean selected) {
-        requireUser(userId);
+        requireActiveUserForUpdate(userId);
         requireAnswer(answerId);
         boolean exists = reactionExists("expert_answer_saves", userId, answerId);
         if (selected && !exists) {
-            try {
-                jdbc.update("INSERT INTO expert_answer_saves (user_id, answer_id, created_at) VALUES (?, ?, ?)",
-                        userId, answerId, Instant.now());
-                jdbc.update("UPDATE expert_answers SET save_count = save_count + 1 WHERE id = ?", answerId);
-            } catch (DuplicateKeyException ignored) {
-                // 같은 요청이 동시에 도착해도 한 번만 반영합니다.
-            }
+            jdbc.update("INSERT INTO expert_answer_saves (user_id, answer_id, created_at) VALUES (?, ?, ?)",
+                    userId, answerId, Instant.now());
+            jdbc.update("UPDATE expert_answers SET save_count = save_count + 1 WHERE id = ?", answerId);
         } else if (!selected && exists) {
-            jdbc.update("DELETE FROM expert_answer_saves WHERE user_id = ? AND answer_id = ?", userId, answerId);
-            jdbc.update("UPDATE expert_answers SET save_count = CASE WHEN save_count > 0 THEN save_count - 1 ELSE 0 END WHERE id = ?", answerId);
+            int deleted = jdbc.update(
+                    "DELETE FROM expert_answer_saves WHERE user_id = ? AND answer_id = ?", userId, answerId
+            );
+            if (deleted == 1) {
+                jdbc.update("UPDATE expert_answers SET save_count = CASE WHEN save_count > 0 THEN save_count - 1 ELSE 0 END WHERE id = ?", answerId);
+            }
         }
         return engagement(answerId, userId);
     }
 
     @Transactional
     public ExpertEngagementResponse adopt(String userId, String questionId, String answerId) {
-        String ownerId = jdbc.query("SELECT user_id FROM expert_questions WHERE id = ?", rs -> rs.next() ? rs.getString(1) : null, questionId);
+        requireActiveUserForUpdate(userId);
+        String ownerId = jdbc.query(
+                "SELECT user_id FROM expert_questions WHERE id = ? FOR UPDATE",
+                rs -> rs.next() ? rs.getString(1) : null,
+                questionId
+        );
         if (ownerId == null) throw new ResourceNotFoundException("질문을 찾을 수 없거나 샘플 질문은 채택할 수 없어요.");
         if (!ownerId.equals(userId)) throw new ForbiddenOperationException("질문을 작성한 회원만 답변을 채택할 수 있어요.");
         if (count("SELECT COUNT(*) FROM expert_answers WHERE id = ? AND question_id = ? AND status = 'PUBLISHED'", answerId, questionId) == 0) {
@@ -222,6 +265,7 @@ public class ExpertService {
     }
 
     public ExpertApplicationResponse findMyApplication(String userId) {
+        requireActiveUser(userId);
         List<ExpertRow> experts = jdbc.query("SELECT * FROM experts WHERE user_id = ?", (rs, rowNum) -> readExpert(rs), userId);
         if (experts.isEmpty()) throw new ResourceNotFoundException("전문가 인증 신청 내역이 없어요.");
         return toApplication(experts.getFirst());
@@ -229,7 +273,7 @@ public class ExpertService {
 
     @Transactional
     public ExpertApplicationResponse apply(String userId, ExpertApplicationRequest request) {
-        requireUser(userId);
+        requireActiveUserForUpdate(userId);
         if (request.specialistRequested() && blankToNull(request.specialty()) == null) {
             throw new IllegalArgumentException("전문의 인증을 신청하려면 전문 과목을 입력해 주세요.");
         }
@@ -238,31 +282,37 @@ public class ExpertService {
         String id = existingId == null ? UUID.randomUUID().toString() : existingId;
         Instant now = Instant.now();
         String licenseHash = hashLicense(request.licenseNumber());
-        if (count("SELECT COUNT(*) FROM experts WHERE license_number_hash = ? AND id <> ?", licenseHash, id) > 0) {
+        String legacyLicenseHash = legacyHashLicense(request.licenseNumber());
+        if (count("SELECT COUNT(*) FROM experts WHERE license_number_hash IN (?, ?) AND id <> ?",
+                licenseHash, legacyLicenseHash, id) > 0) {
             throw new IllegalArgumentException("이미 다른 계정에서 등록한 면허번호예요.");
         }
-        if (existingId == null) {
-            jdbc.update("""
-                    INSERT INTO experts
-                        (id, slug, user_id, real_name, license_number_hash, doctor_verified, specialist_verified,
-                         specialty, workplace_verified, bio, status, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, FALSE, FALSE, ?, FALSE, ?, 'PENDING', ?, ?)
-                    """, id, "applicant-" + id, userId, request.realName().trim(), licenseHash,
-                    blankToNull(request.specialty()), request.bio().trim(), now, now);
-        } else {
-            ExpertRow existing = findExpertRowById(id);
-            if ("VERIFIED".equals(existing.status()) || "SUSPENDED".equals(existing.status())) {
-                throw new IllegalArgumentException("현재 인증 상태에서는 신청서를 다시 제출할 수 없어요.");
+        try {
+            if (existingId == null) {
+                jdbc.update("""
+                        INSERT INTO experts
+                            (id, slug, user_id, real_name, license_number_hash, doctor_verified, specialist_verified,
+                             specialty, workplace_verified, bio, status, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, FALSE, FALSE, ?, FALSE, ?, 'PENDING', ?, ?)
+                        """, id, "applicant-" + id, userId, request.realName().trim(), licenseHash,
+                        blankToNull(request.specialty()), request.bio().trim(), now, now);
+            } else {
+                ExpertRow existing = findExpertRowById(id);
+                if ("VERIFIED".equals(existing.status()) || "SUSPENDED".equals(existing.status())) {
+                    throw new IllegalArgumentException("현재 인증 상태에서는 신청서를 다시 제출할 수 없어요.");
+                }
+                jdbc.update("""
+                        UPDATE experts SET real_name = ?, license_number_hash = ?, specialty = ?, bio = ?,
+                            status = 'PENDING', doctor_verified = FALSE, doctor_verified_at = NULL,
+                            specialist_verified = FALSE, workplace_verified = FALSE, workplace_verified_at = NULL,
+                            updated_at = ? WHERE id = ?
+                        """, request.realName().trim(), licenseHash, blankToNull(request.specialty()),
+                        request.bio().trim(), now, id);
+                jdbc.update("DELETE FROM expert_topic_maps WHERE expert_id = ?", id);
+                jdbc.update("DELETE FROM expert_workplaces WHERE expert_id = ?", id);
             }
-            jdbc.update("""
-                    UPDATE experts SET real_name = ?, license_number_hash = ?, specialty = ?, bio = ?,
-                        status = 'PENDING', doctor_verified = FALSE, doctor_verified_at = NULL,
-                        specialist_verified = FALSE, workplace_verified = FALSE, workplace_verified_at = NULL,
-                        updated_at = ? WHERE id = ?
-                    """, request.realName().trim(), licenseHash, blankToNull(request.specialty()),
-                    request.bio().trim(), now, id);
-            jdbc.update("DELETE FROM expert_topic_maps WHERE expert_id = ?", id);
-            jdbc.update("DELETE FROM expert_workplaces WHERE expert_id = ?", id);
+        } catch (DataIntegrityViolationException exception) {
+            throw new IllegalArgumentException("이미 다른 계정에서 등록한 면허번호예요.");
         }
         for (String topic : request.topics().stream().distinct().toList()) {
             jdbc.update("""
@@ -281,8 +331,10 @@ public class ExpertService {
     }
 
     public List<ExpertApplicationResponse> findApplications() {
-        return jdbc.query("SELECT * FROM experts WHERE user_id IS NOT NULL ORDER BY created_at DESC",
-                (rs, rowNum) -> toApplication(readExpert(rs)));
+        return toApplications(jdbc.query(
+                "SELECT * FROM experts WHERE user_id IS NOT NULL ORDER BY created_at DESC",
+                (rs, rowNum) -> readExpert(rs)
+        ));
     }
 
     @Transactional
@@ -315,82 +367,174 @@ public class ExpertService {
                 WHERE expert_id = ? AND status = 'PUBLISHED'
                 ORDER BY created_at DESC, id LIMIT ?
                 """;
-        return jdbc.query(sql, (rs, rowNum) -> mapAnswer(rs, null), expertId, limit);
+        return mapAnswers(jdbc.query(sql, (rs, rowNum) -> readAnswer(rs), expertId, limit), null);
     }
 
     private List<ExpertAnswerResponse> findAnswers(String questionId, String viewerUserId) {
-        return jdbc.query("""
+        return mapAnswers(jdbc.query("""
                 SELECT * FROM expert_answers WHERE question_id = ? AND status = 'PUBLISHED'
                 ORDER BY adopted DESC, helpful_count DESC, created_at ASC
-                """, (rs, rowNum) -> mapAnswer(rs, viewerUserId), questionId);
+                """, (rs, rowNum) -> readAnswer(rs), questionId), viewerUserId);
     }
 
     private ExpertAnswerResponse findAnswer(String answerId, String viewerUserId) {
-        List<ExpertAnswerResponse> answers = jdbc.query("SELECT * FROM expert_answers WHERE id = ?",
-                (rs, rowNum) -> mapAnswer(rs, viewerUserId), answerId);
+        List<ExpertAnswerResponse> answers = mapAnswers(
+                jdbc.query("SELECT * FROM expert_answers WHERE id = ?", (rs, rowNum) -> readAnswer(rs), answerId),
+                viewerUserId
+        );
         if (answers.isEmpty()) throw new ResourceNotFoundException("답변을 찾을 수 없어요.");
         return answers.getFirst();
     }
 
-    private ExpertAnswerResponse mapAnswer(ResultSet rs, String viewerUserId) throws SQLException {
-        String id = rs.getString("id");
-        return new ExpertAnswerResponse(
-                id, toSummary(findExpertRowById(rs.getString("expert_id"))), rs.getString("content"),
+    private ExpertSummaryResponse toSummary(ExpertRow expert) {
+        return toSummaries(List.of(expert)).getFirst();
+    }
+
+    private ExpertApplicationResponse toApplication(ExpertRow expert) {
+        return toApplications(List.of(expert)).getFirst();
+    }
+
+    private List<ExpertSummaryResponse> toSummaries(List<ExpertRow> experts) {
+        if (experts.isEmpty()) return List.of();
+        List<String> expertIds = experts.stream().map(ExpertRow::id).distinct().toList();
+        Map<String, List<ExpertTopicResponse>> topics = topicsByExpert(expertIds);
+        Map<String, ExpertWorkplaceResponse> workplaces = workplacesByExpert(expertIds);
+        Map<String, ExpertStatsResponse> stats = statsByExpert(expertIds, null);
+        return experts.stream().map(expert -> new ExpertSummaryResponse(
+                expert.id(), expert.slug(), expert.realName(), verificationLabel(expert),
+                expert.doctorVerified(), expert.specialistVerified(), expert.specialty(),
+                expert.workplaceVerified(), expert.profileImageUrl(), expert.bio(),
+                topics.getOrDefault(expert.id(), List.of()), workplaces.get(expert.id()),
+                stats.getOrDefault(expert.id(), emptyStats())
+        )).toList();
+    }
+
+    private List<ExpertApplicationResponse> toApplications(List<ExpertRow> experts) {
+        if (experts.isEmpty()) return List.of();
+        List<String> expertIds = experts.stream().map(ExpertRow::id).distinct().toList();
+        Map<String, List<ExpertTopicResponse>> topics = topicsByExpert(expertIds);
+        Map<String, ExpertWorkplaceResponse> workplaces = workplacesByExpert(expertIds);
+        return experts.stream().map(expert -> new ExpertApplicationResponse(
+                expert.id(), expert.realName(), expert.status(), expert.specialty() != null,
+                expert.specialty(), topics.getOrDefault(expert.id(), List.of()), workplaces.get(expert.id()),
+                expert.createdAt(), expert.updatedAt()
+        )).toList();
+    }
+
+    private Map<String, List<ExpertTopicResponse>> topicsByExpert(List<String> expertIds) {
+        if (expertIds.isEmpty()) return Map.of();
+        Map<String, List<ExpertTopicResponse>> result = new HashMap<>();
+        jdbc.query("""
+                SELECT m.expert_id, t.code, t.name FROM expert_topic_maps m
+                JOIN expert_topics t ON t.id = m.topic_id
+                WHERE m.expert_id IN (%s)
+                ORDER BY m.expert_id, m.activity_score DESC, t.name
+                """.formatted(placeholders(expertIds.size())), (org.springframework.jdbc.core.RowCallbackHandler) rs -> result
+                .computeIfAbsent(rs.getString("expert_id"), ignored -> new ArrayList<>())
+                .add(new ExpertTopicResponse(rs.getString("code"), rs.getString("name"))), expertIds.toArray());
+        return result;
+    }
+
+    private Map<String, ExpertWorkplaceResponse> workplacesByExpert(List<String> expertIds) {
+        if (expertIds.isEmpty()) return Map.of();
+        Map<String, ExpertWorkplaceResponse> result = new LinkedHashMap<>();
+        jdbc.query("""
+                SELECT * FROM expert_workplaces
+                WHERE expert_id IN (%s) AND is_current = TRUE
+                ORDER BY expert_id, created_at DESC
+                """.formatted(placeholders(expertIds.size())), (org.springframework.jdbc.core.RowCallbackHandler) rs -> result.putIfAbsent(
+                rs.getString("expert_id"),
+                new ExpertWorkplaceResponse(
+                        rs.getString("hospital_name"), rs.getString("region"), rs.getString("address"),
+                        rs.getString("phone"), rs.getString("homepage_url"), rs.getBoolean("verified")
+                )
+        ), expertIds.toArray());
+        return result;
+    }
+
+    private Map<String, ExpertStatsResponse> statsByExpert(List<String> expertIds, Instant since) {
+        if (expertIds.isEmpty()) return Map.of();
+        String timeFilter = since == null ? "" : " AND created_at >= ?";
+        List<Object> args = new ArrayList<>(expertIds);
+        if (since != null) args.add(Timestamp.from(since));
+        return jdbc.query("""
+                SELECT expert_id,
+                       COUNT(*) AS answer_count,
+                       COALESCE(SUM(helpful_count), 0) AS helpful_count,
+                       COALESCE(SUM(save_count), 0) AS save_count,
+                       COALESCE(SUM(CASE WHEN adopted THEN 1 ELSE 0 END), 0) AS adopted_count
+                FROM expert_answers
+                WHERE status = 'PUBLISHED' AND expert_id IN (%s)
+                """.formatted(placeholders(expertIds.size())) + timeFilter + " GROUP BY expert_id",
+                (rs, rowNum) -> Map.entry(
+                        rs.getString("expert_id"),
+                        new ExpertStatsResponse(
+                                rs.getInt("answer_count"), rs.getInt("helpful_count"),
+                                rs.getInt("save_count"), rs.getInt("adopted_count")
+                        )
+                ),
+                args.toArray()
+        ).stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private List<ExpertAnswerResponse> mapAnswers(List<AnswerRow> answers, String viewerUserId) {
+        if (answers.isEmpty()) return List.of();
+        List<String> expertIds = answers.stream().map(AnswerRow::expertId).distinct().toList();
+        List<ExpertRow> expertRows = jdbc.query(
+                "SELECT * FROM experts WHERE id IN (" + placeholders(expertIds.size()) + ")",
+                (rs, rowNum) -> readExpert(rs),
+                expertIds.toArray()
+        );
+        Map<String, ExpertSummaryResponse> experts = toSummaries(expertRows).stream()
+                .collect(Collectors.toMap(ExpertSummaryResponse::id, Function.identity()));
+        List<String> answerIds = answers.stream().map(AnswerRow::id).toList();
+        Set<String> helpfuls = viewerUserId == null
+                ? Set.of()
+                : reactionAnswerIds("expert_answer_helpfuls", viewerUserId, answerIds);
+        Set<String> saves = viewerUserId == null
+                ? Set.of()
+                : reactionAnswerIds("expert_answer_saves", viewerUserId, answerIds);
+        return answers.stream().map(answer -> new ExpertAnswerResponse(
+                answer.id(), experts.get(answer.expertId()), answer.content(),
+                answer.helpfulCount(), answer.saveCount(), answer.adopted(),
+                helpfuls.contains(answer.id()), saves.contains(answer.id()), answer.createdAt()
+        )).toList();
+    }
+
+    private Set<String> reactionAnswerIds(String table, String userId, List<String> answerIds) {
+        if (!List.of("expert_answer_helpfuls", "expert_answer_saves").contains(table)) {
+            throw new IllegalArgumentException("지원하지 않는 반응 유형이에요.");
+        }
+        if (answerIds.isEmpty()) return Set.of();
+        return new HashSet<>(jdbc.query(
+                "SELECT answer_id FROM " + table + " WHERE user_id = ? AND answer_id IN ("
+                        + placeholders(answerIds.size()) + ")",
+                (rs, rowNum) -> rs.getString("answer_id"),
+                prepend(userId, answerIds)
+        ));
+    }
+
+    private AnswerRow readAnswer(ResultSet rs) throws SQLException {
+        return new AnswerRow(
+                rs.getString("id"), rs.getString("expert_id"), rs.getString("content"),
                 rs.getInt("helpful_count"), rs.getInt("save_count"), rs.getBoolean("adopted"),
-                viewerUserId != null && reactionExists("expert_answer_helpfuls", viewerUserId, id),
-                viewerUserId != null && reactionExists("expert_answer_saves", viewerUserId, id),
                 instant(rs, "created_at")
         );
     }
 
-    private ExpertSummaryResponse toSummary(ExpertRow expert) {
-        return new ExpertSummaryResponse(
-                expert.id(), expert.slug(), expert.realName(), verificationLabel(expert),
-                expert.doctorVerified(), expert.specialistVerified(), expert.specialty(),
-                expert.workplaceVerified(), expert.profileImageUrl(), expert.bio(), topics(expert.id()),
-                workplace(expert.id()), stats(expert.id(), null)
-        );
+    private ExpertStatsResponse emptyStats() {
+        return new ExpertStatsResponse(0, 0, 0, 0);
     }
 
-    private ExpertApplicationResponse toApplication(ExpertRow expert) {
-        return new ExpertApplicationResponse(
-                expert.id(), expert.realName(), expert.status(), expert.specialty() != null,
-                expert.specialty(), topics(expert.id()), workplace(expert.id()), expert.createdAt(), expert.updatedAt()
-        );
+    private String placeholders(int size) {
+        return String.join(",", Collections.nCopies(size, "?"));
     }
 
-    private List<ExpertTopicResponse> topics(String expertId) {
-        return jdbc.query("""
-                SELECT t.code, t.name FROM expert_topic_maps m
-                JOIN expert_topics t ON t.id = m.topic_id
-                WHERE m.expert_id = ? ORDER BY m.activity_score DESC, t.name
-                """, (rs, rowNum) -> new ExpertTopicResponse(rs.getString("code"), rs.getString("name")), expertId);
-    }
-
-    private ExpertWorkplaceResponse workplace(String expertId) {
-        List<ExpertWorkplaceResponse> results = jdbc.query("""
-                SELECT * FROM expert_workplaces WHERE expert_id = ? AND is_current = TRUE
-                ORDER BY created_at DESC LIMIT 1
-                """, (rs, rowNum) -> new ExpertWorkplaceResponse(
-                rs.getString("hospital_name"), rs.getString("region"), rs.getString("address"),
-                rs.getString("phone"), rs.getString("homepage_url"), rs.getBoolean("verified")
-        ), expertId);
-        return results.isEmpty() ? null : results.getFirst();
-    }
-
-    private ExpertStatsResponse stats(String expertId, Instant since) {
-        String timeFilter = since == null ? "" : " AND created_at >= ?";
-        Object[] args = since == null ? new Object[]{expertId} : new Object[]{expertId, Timestamp.from(since)};
-        return jdbc.queryForObject("""
-                SELECT COUNT(*) AS answer_count,
-                       COALESCE(SUM(helpful_count), 0) AS helpful_count,
-                       COALESCE(SUM(save_count), 0) AS save_count,
-                       COALESCE(SUM(CASE WHEN adopted THEN 1 ELSE 0 END), 0) AS adopted_count
-                FROM expert_answers WHERE expert_id = ? AND status = 'PUBLISHED'
-                """ + timeFilter, (rs, rowNum) -> new ExpertStatsResponse(
-                rs.getInt("answer_count"), rs.getInt("helpful_count"),
-                rs.getInt("save_count"), rs.getInt("adopted_count")
-        ), args);
+    private Object[] prepend(String first, List<String> rest) {
+        List<Object> args = new ArrayList<>(rest.size() + 1);
+        args.add(first);
+        args.addAll(rest);
+        return args.toArray();
     }
 
     private ExpertEngagementResponse engagement(String answerId, String userId) {
@@ -417,7 +561,10 @@ public class ExpertService {
 
     private ExpertRow findVerifiedExpertByUser(String userId) {
         List<ExpertRow> results = jdbc.query("""
-                SELECT * FROM experts WHERE user_id = ? AND status = 'VERIFIED' AND doctor_verified = TRUE
+                SELECT e.* FROM experts e
+                JOIN users u ON u.id = e.user_id
+                WHERE e.user_id = ? AND e.status = 'VERIFIED' AND e.doctor_verified = TRUE
+                  AND u.status = 'ACTIVE'
                 """, (rs, rowNum) -> readExpert(rs), userId);
         if (results.isEmpty()) throw new ForbiddenOperationException("의사 인증이 완료된 전문가만 답변할 수 있어요.");
         return results.getFirst();
@@ -441,10 +588,19 @@ public class ExpertService {
         if (found == null || found != topics.size()) throw new IllegalArgumentException("지원하지 않는 활동 주제가 포함되어 있어요.");
     }
 
-    private void requireUser(String userId) {
-        if (count("SELECT COUNT(*) FROM users WHERE id = ?", userId) == 0) {
-            throw new ResourceNotFoundException("회원을 찾을 수 없어요.");
+    private void requireActiveUser(String userId) {
+        if (count("SELECT COUNT(*) FROM users WHERE id = ? AND status = 'ACTIVE'", userId) == 0) {
+            throw new InvalidCredentialsException();
         }
+    }
+
+    private void requireActiveUserForUpdate(String userId) {
+        String status = jdbc.query(
+                "SELECT status FROM users WHERE id = ? FOR UPDATE",
+                rs -> rs.next() ? rs.getString(1) : null,
+                userId
+        );
+        if (!"ACTIVE".equals(status)) throw new InvalidCredentialsException();
     }
 
     private void requireAnswer(String answerId) {
@@ -513,12 +669,25 @@ public class ExpertService {
 
     private String hashLicense(String licenseNumber) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            String normalized = licenseNumber.replaceAll("[^0-9A-Za-z]", "").toUpperCase(Locale.ROOT);
-            return HexFormat.of().formatHex(digest.digest(normalized.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException exception) {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(licenseHashKey, "HmacSHA256"));
+            return HexFormat.of().formatHex(mac.doFinal(normalizeLicense(licenseNumber).getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception exception) {
             throw new IllegalStateException("면허번호 보호 처리를 초기화하지 못했어요.", exception);
         }
+    }
+
+    private String legacyHashLicense(String licenseNumber) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(digest.digest(normalizeLicense(licenseNumber).getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("기존 면허번호 보호 처리를 초기화하지 못했어요.", exception);
+        }
+    }
+
+    private String normalizeLicense(String licenseNumber) {
+        return licenseNumber.replaceAll("[^0-9A-Za-z]", "").toUpperCase(Locale.ROOT);
     }
 
     private static Instant instant(ResultSet rs, String column) throws SQLException {
@@ -535,6 +704,11 @@ public class ExpertService {
             String id, String slug, String userId, String realName, boolean doctorVerified,
             boolean specialistVerified, String specialty, boolean workplaceVerified,
             String profileImageUrl, String bio, String status, Instant createdAt, Instant updatedAt
+    ) {}
+
+    private record AnswerRow(
+            String id, String expertId, String content, int helpfulCount, int saveCount,
+            boolean adopted, Instant createdAt
     ) {}
 
     private record RankingDraft(ExpertSummaryResponse expert, int score, ExpertStatsResponse stats) {}

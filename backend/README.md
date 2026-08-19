@@ -128,7 +128,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/admin/experts/applications` | 관리자 전문가 신청 목록 |
 | PUT | `/api/v1/admin/experts/{id}/verification` | 관리자 전문가 승인·반려 |
 
-전문가 활동 랭킹은 화력 안의 답변·도움돼요·저장·채택 기여도만 나타내며, 의료진의 의학적 실력이나 치료 결과를 평가하지 않습니다. 면허번호 원문은 저장하지 않고 정규화한 SHA-256 해시만 보관합니다.
+전문가 활동 랭킹은 화력 안의 답변·도움돼요·저장·채택 기여도만 나타내며, 의료진의 의학적 실력이나 치료 결과를 평가하지 않습니다. 면허번호 원문은 저장하지 않고 별도 비밀키로 만든 정규화 HMAC-SHA-256만 보관합니다.
 
 ### 제품 검색 예시
 

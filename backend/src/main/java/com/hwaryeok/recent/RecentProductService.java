@@ -2,10 +2,9 @@ package com.hwaryeok.recent;
 
 import java.time.Instant;
 
-import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductService;
-import com.hwaryeok.user.UserRepository;
+import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,22 +12,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecentProductService {
 
     private final UserRecentProductRepository recentProductRepository;
-    private final UserRepository userRepository;
+    private final ActiveUserService activeUserService;
     private final ProductService productService;
 
     public RecentProductService(
             UserRecentProductRepository recentProductRepository,
-            UserRepository userRepository,
+            ActiveUserService activeUserService,
             ProductService productService
     ) {
         this.recentProductRepository = recentProductRepository;
-        this.userRepository = userRepository;
+        this.activeUserService = activeUserService;
         this.productService = productService;
     }
 
     @Transactional(readOnly = true)
     public RecentProductListResponse findAll(String userId) {
-        requireActiveUser(userId);
+        activeUserService.requireActive(userId);
         return RecentProductListResponse.from(
                 recentProductRepository.findTop6ByIdUserIdOrderByViewedAtDesc(userId),
                 recentProductRepository.countByIdUserId(userId)
@@ -37,7 +36,7 @@ public class RecentProductService {
 
     @Transactional
     public RecentProductItemResponse record(String userId, String productId) {
-        requireActiveUser(userId);
+        activeUserService.requireActiveForUpdate(userId);
         Product product = productService.getProduct(productId);
         UserRecentProductId id = new UserRecentProductId(userId, productId);
         UserRecentProduct recentProduct = recentProductRepository.findById(id)
@@ -50,10 +49,4 @@ public class RecentProductService {
         return RecentProductItemResponse.from(recentProduct);
     }
 
-    private void requireActiveUser(String userId) {
-        boolean activeUser = userRepository.findById(userId)
-                .filter(user -> "ACTIVE".equals(user.getStatus()))
-                .isPresent();
-        if (!activeUser) throw new InvalidCredentialsException();
-    }
 }

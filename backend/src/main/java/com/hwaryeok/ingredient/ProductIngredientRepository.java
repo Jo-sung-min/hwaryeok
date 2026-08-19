@@ -1,6 +1,7 @@
 package com.hwaryeok.ingredient;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,17 @@ public interface ProductIngredientRepository extends JpaRepository<ProductIngred
     List<ProductIngredient> findByIngredientId(@Param("ingredientId") String ingredientId);
 
     long countByProductId(String productId);
+
+    @Query("""
+            select relation.product.id as productId, count(relation) as ingredientCount
+            from ProductIngredient relation
+            where relation.product.id in :productIds
+            group by relation.product.id
+            """)
+    List<ProductIngredientCount> countByProductIds(@Param("productIds") Set<String> productIds);
+
+    interface ProductIngredientCount {
+        String getProductId();
+        long getIngredientCount();
+    }
 }

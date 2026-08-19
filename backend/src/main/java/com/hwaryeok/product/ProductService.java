@@ -50,6 +50,18 @@ public class ProductService {
         return ProductResponse.from(getProduct(id));
     }
 
+    public List<ProductResponse> findRelatedProducts(String id, int limit) {
+        if (limit < 1 || limit > 10) {
+            throw new IllegalArgumentException("관련 제품 수는 1~10 사이여야 해요.");
+        }
+        Product product = getProduct(id);
+        return productRepository.findRelated(
+                        product.getId(), product.getCategory(), product.getBaseScore(), PageRequest.of(0, limit)
+                ).stream()
+                .map(ProductResponse::from)
+                .toList();
+    }
+
     public List<ProductResponse> findRanking(String skinType, int limit) {
         return findRanking(skinType, null, null, null, null, List.of(), limit);
     }
