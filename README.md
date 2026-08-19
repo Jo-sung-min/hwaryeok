@@ -26,7 +26,7 @@ hwaryeok/
 
 ## 로컬 실행
 
-### 1. PostgreSQL
+### 1. PostgreSQL (PostgreSQL 연동을 확인할 때)
 
 ```bash
 cp .env.example .env
@@ -42,16 +42,14 @@ Windows PowerShell에서는 `Copy-Item .env.example .env`를 사용합니다.
 cd backend
 cp .env.example .env
 # backend/.env의 DB_PASSWORD를 PostgreSQL과 같은 값으로 설정
-./gradlew bootRun
+./gradlew bootRun --args="--spring.profiles.active=postgres"
 ```
 
-Windows PowerShell에서는 `Copy-Item .env.example .env`와 `./gradlew.bat bootRun`을 사용합니다. Docker 없이 빠르게 확인하려면 다음 개발 전용 명령을 사용할 수 있습니다.
+Windows PowerShell에서는 `Copy-Item .env.example .env`와 `./gradlew.bat bootRun --args="--spring.profiles.active=postgres"`를 사용합니다. `.env`의 `DB_PASSWORD`, `JWT_SECRET`, `LICENSE_HASH_SECRET` 예시값은 반드시 임의 값으로 교체해야 합니다.
 
 백엔드는 `backend/.env`를 자동으로 읽습니다. `DB_SCHEMA`에 사용할 PostgreSQL 스키마 이름을 지정하면 Flyway와 Hibernate가 같은 스키마를 사용합니다. 로컬 PostgreSQL 기본 양식은 `backend/.env.example`에서 확인할 수 있습니다.
 
-```bash
-./gradlew.bat bootRun --args="--spring.profiles.active=local"
-```
+PostgreSQL 없이 빠르게 개발 화면만 확인할 때는 환경 파일 없이 `./gradlew bootRun`을 실행하면 됩니다. 별도 프로필이 없을 때만 개발 전용 `local` 프로필(H2, 개발용 키)이 자동 적용되며 운영 JAR에는 이 기본값이 적용되지 않습니다.
 
 ### 3. 프론트엔드
 

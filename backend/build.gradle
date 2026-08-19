@@ -40,3 +40,18 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.named('bootRun') {
+    // 개발 서버는 별도 지정이 없을 때만 H2와 개발 전용 키가 있는 local 프로필을 사용합니다.
+    // 운영 JAR 실행에는 적용되지 않으며, 프로세스 환경 변수와 .env의 명시적 프로필이 우선합니다.
+    def configuredProfile = System.getenv('SPRING_PROFILES_ACTIVE')
+    if (!configuredProfile) {
+        def dotenvFile = [file('.env'), file('../.env')].find { it.exists() }
+        configuredProfile = dotenvFile?.readLines('UTF-8')
+                ?.find { it.trim().startsWith('SPRING_PROFILES_ACTIVE=') }
+                ?.split('=', 2)
+                ?.last()
+                ?.trim()
+    }
+    environment 'SPRING_PROFILES_ACTIVE', configuredProfile ?: 'local'
+}

@@ -4,7 +4,13 @@ Spring Boot 4.1, Java 21, PostgreSQL 기반 REST API입니다.
 
 ## 실행
 
-프로젝트 루트에서 PostgreSQL을 시작합니다.
+PostgreSQL 없이 개발 서버를 빠르게 확인하려면 바로 실행합니다. `bootRun`에만 개발 전용 `local` 프로필과 H2가 자동 적용됩니다.
+
+```bash
+./gradlew bootRun
+```
+
+PostgreSQL 연동을 확인하려면 프로젝트 루트에서 PostgreSQL을 시작합니다.
 
 ```bash
 docker compose up -d postgres
@@ -14,12 +20,12 @@ docker compose up -d postgres
 
 ```bash
 cd backend
-./gradlew bootRun
+./gradlew bootRun --args="--spring.profiles.active=postgres"
 ```
 
-Windows에서는 `gradlew.bat bootRun`을 사용합니다. 기본 주소는 `http://localhost:8080`입니다.
+Windows에서는 `gradlew.bat bootRun` 또는 PostgreSQL용 `gradlew.bat bootRun --args="--spring.profiles.active=postgres"`를 사용합니다. 기본 주소는 `http://localhost:8080`입니다.
 
-백엔드는 실행 위치에 따라 `backend/.env` 또는 저장소 루트의 `.env`를 자동으로 읽습니다. 처음에는 `backend/.env.example`을 복사하고 접속 정보를 입력합니다.
+백엔드는 실행 위치에 따라 `backend/.env` 또는 저장소 루트의 `.env`를 자동으로 읽습니다. PostgreSQL을 사용할 때는 `backend/.env.example`을 복사하고 접속 정보와 임의의 `JWT_SECRET`, `LICENSE_HASH_SECRET`을 입력합니다.
 
 ```text
 DB_URL=jdbc:postgresql://호스트:5432/데이터베이스명
