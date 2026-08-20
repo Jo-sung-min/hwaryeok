@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, ArrowRight, Clock3, Droplets, Flower2, Heart, ImagePlus, PencilLine, Scale, Settings, Shield, Sparkles, Stethoscope, SunMedium, Wind } from "lucide-react";
+import { Activity, ArrowRight, Clock3, Droplets, Flower2, Heart, PencilLine, Scale, Settings, Shield, Sparkles, Stethoscope, SunMedium, Wind } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { IngredientPreferencesForm } from "@/app/my/ingredient-preferences-form";
 import { getFeaturedIngredients, getRanking, getUserFavorites, getUserPreferredIngredients, getUserRecentProducts, getUserSkinProfile } from "@/lib/api";
@@ -48,7 +48,7 @@ export default async function MyPage() {
               <p className="mt-4 text-sm text-[#75695f]">저장한 피부 정보와 찜·최근 본 제품을 한곳에서 살펴보세요.</p>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              {user.role === "ADMIN" && <><Link href="/admin/experts" className="line-btn w-full self-start sm:w-auto"><Stethoscope size={16} /> 전문가 인증 관리</Link><Link href="/admin/products" className="line-btn w-full self-start sm:w-auto"><ImagePlus size={16} /> 제품 이미지 관리</Link></>}
+              {user.role === "ADMIN" && <Link href="/admin" className="line-btn w-full self-start sm:w-auto"><Shield size={16} /> 관리자 센터</Link>}
               <Link href="/profile" className="line-btn w-full self-start sm:w-auto"><PencilLine size={16} /> {profile.configured ? "내 프로필 보기" : "피부 정보 등록"}</Link>
             </div>
           </div>

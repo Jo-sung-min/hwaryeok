@@ -1,4 +1,5 @@
 export type ProductTone = "peach" | "sage" | "sand" | "rose" | "blue";
+export type ProductPublicationStatus = "DRAFT" | "PUBLISHED" | "HIDDEN";
 
 export type Product = {
   id: string;
@@ -14,6 +15,9 @@ export type Product = {
   tone: ProductTone;
   tag?: string | null;
   imageUrl?: string | null;
+  publicationStatus: ProductPublicationStatus;
+  sourceUrl?: string | null;
+  sourceCheckedAt?: string | null;
 };
 
 export type ProductPage = {

@@ -21,6 +21,7 @@ public class AuthService {
     private final AuthTokenService authTokenService;
     private final OAuthExchangeCodeService oauthExchangeCodeService;
     private final LoginRateLimitService loginRateLimitService;
+    private final AdminEmailPolicy adminEmailPolicy;
     private final String dummyPasswordHash;
 
     public AuthService(
@@ -28,13 +29,15 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             AuthTokenService authTokenService,
             OAuthExchangeCodeService oauthExchangeCodeService,
-            LoginRateLimitService loginRateLimitService
+            LoginRateLimitService loginRateLimitService,
+            AdminEmailPolicy adminEmailPolicy
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authTokenService = authTokenService;
         this.oauthExchangeCodeService = oauthExchangeCodeService;
         this.loginRateLimitService = loginRateLimitService;
+        this.adminEmailPolicy = adminEmailPolicy;
         this.dummyPasswordHash = passwordEncoder.encode("invalid-password-value");
     }
 
@@ -49,7 +52,7 @@ public class AuthService {
                 email,
                 passwordEncoder.encode(request.password()),
                 request.nickname().strip(),
-                "USER",
+                adminEmailPolicy.roleFor(email),
                 "ACTIVE",
                 now,
                 now

@@ -131,11 +131,13 @@ export function ProductCard({
   initialFavorited = false,
   isAuthenticated = false,
   returnTo,
+  scoreLabel = "기본 화력점수",
 }: {
   product: Product;
   initialFavorited?: boolean;
   isAuthenticated?: boolean;
   returnTo?: string;
+  scoreLabel?: string;
 }) {
   return (
     <article className="group paper-card relative overflow-hidden rounded-[26px] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.12)]">
@@ -154,7 +156,7 @@ export function ProductCard({
           </div>
           <div className="mb-4 flex items-end gap-2">
             <strong className="font-myeongjo text-3xl text-[#9b4a45]">{product.score}</strong>
-            <span className="mb-1 text-xs text-[#807168]">/ 100 · 나의 적합도</span>
+            <span className="mb-1 text-xs text-[#807168]">/ 100 · {scoreLabel}</span>
           </div>
           <div className="flex items-center justify-between border-t border-[#75564518] pt-4">
             <div className="flex gap-1.5 overflow-hidden text-[11px] text-[#665b53]"><span className="truncate rounded-full bg-[#aebaa340] px-2.5 py-1">{product.benefit}</span><span className="truncate rounded-full bg-[#e9b3a635] px-2.5 py-1">{product.subBenefit}</span></div>

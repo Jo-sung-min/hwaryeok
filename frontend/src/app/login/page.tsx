@@ -14,9 +14,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="min-h-[calc(100vh-72px)] bg-[#fff1f4] px-3 py-7 sm:px-5 sm:py-8 md:min-h-[calc(100vh-74px)] md:py-16">
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto min-w-0 max-w-lg">
         <Link href="/" className="mb-7 inline-flex items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 홈으로</Link>
-        <section className="paper-card relative overflow-hidden rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-10">
+        <section className="paper-card relative min-w-0 overflow-hidden rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-10">
           <Leaf className="absolute -right-5 -top-4 text-[#c9826b20]" size={130} strokeWidth={0.7} />
           <div className="relative text-center">
             <span className="seal mx-auto h-14 w-14 font-myeongjo text-xl">화</span>

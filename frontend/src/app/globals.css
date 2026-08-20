@@ -59,6 +59,36 @@ button, input, select { font: inherit; }
 button { cursor: pointer; }
 button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
+[data-ui-invalid="true"] {
+  border-color: rgba(183, 76, 104, .78) !important;
+  box-shadow: 0 0 0 4px rgba(183, 76, 104, .13), 0 12px 30px rgba(101, 42, 61, .1) !important;
+}
+
+@keyframes ui-alert-rise {
+  from { opacity: 0; transform: translateY(14px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ui-alert-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ui-alert-dialog-in {
+  from { opacity: 0; transform: translateY(12px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ui-alert-enter { animation: ui-alert-rise .24s ease-out both; }
+.ui-alert-backdrop { animation: ui-alert-fade .18s ease-out both; }
+.ui-alert-dialog { animation: ui-alert-dialog-in .24s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-alert-enter,
+  .ui-alert-backdrop,
+  .ui-alert-dialog { animation-duration: .01ms; }
+}
+
 ::selection { background: #eab9aa; color: #3a2824; }
 
 .font-myeongjo {

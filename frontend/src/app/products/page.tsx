@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { getProductPage } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
@@ -71,9 +71,10 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     <div className="min-h-screen pb-24">
       <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 md:py-20">
         <div className="container-page text-center">
-          <p className="eyebrow mb-4">COSMETIC FINDER</p>
-          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">내 피부에 피어날 화장품</h1>
-          <p className="mt-4 text-sm leading-7 text-[#776b62]">평균 평점이 아닌 수부지 · 민감 · 속건조인 나의 화력 순으로 보여드려요.</p>
+          <p className="eyebrow mb-4">PRODUCT REPORTS</p>
+          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">광고 없이 제품 기준부터</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#776b62]">목록은 등록된 기본 화력점수를 기준으로 정렬합니다. 제품 상세에서 성분, 실사용 리뷰, 적용된 피부 조건을 따로 확인하세요.</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><ShieldCheck size={13} /> 광고비로 목록 순서를 바꾸지 않아요</p>
           <ProductSearch filters={filters} />
         </div>
       </section>
@@ -84,7 +85,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
           <DesktopFilters filters={filters} />
           <section>
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개의 화장품이 잘 맞을 수 있어요</p>
+              <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개의 제품 판정서를 확인할 수 있어요</p>
               <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end">
                 <MobileFilters filters={filters} resultCount={productPage.totalElements} />
                 <ProductSort filters={filters} />

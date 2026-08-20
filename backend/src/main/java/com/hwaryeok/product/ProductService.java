@@ -50,6 +50,40 @@ public class ProductService {
         return ProductResponse.from(getProduct(id));
     }
 
+    public List<ProductResponse> findAllProducts() {
+        return productRepository.findAll(Sort.by("brand").ascending().and(Sort.by("name").ascending())).stream()
+                .map(ProductResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public ProductResponse createProduct(AdminProductRequest request) {
+        if (productRepository.existsById(request.id())) {
+            throw new ProductAlreadyExistsException(request.id());
+        }
+        return ProductResponse.from(productRepository.save(request.toProduct()));
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(String id, AdminProductRequest request) {
+        if (!id.equals(request.id())) {
+            throw new IllegalArgumentException("제품 ID는 수정할 수 없어요.");
+        }
+        Product product = getAdminProduct(id);
+        Product updated = request.toProduct();
+        product.updateDetails(
+                updated.getBrand(), updated.getName(), updated.getCategory(), updated.getBaseScore(),
+                updated.getBenefit(), updated.getSubBenefit(), updated.getPrice(), updated.getTone(), updated.getTag(),
+                updated.getPublicationStatus(), updated.getSourceUrl(), updated.getSourceCheckedAt()
+        );
+        return ProductResponse.from(product);
+    }
+
+    @Transactional
+    public void deleteProduct(String id) {
+        productRepository.delete(getAdminProduct(id));
+    }
+
     public List<ProductResponse> findRelatedProducts(String id, int limit) {
         if (limit < 1 || limit > 10) {
             throw new IllegalArgumentException("관련 제품 수는 1~10 사이여야 해요.");
@@ -75,7 +109,10 @@ public class ProductService {
             List<String> concerns,
             int limit
     ) {
-        return productRepository.findAll().stream()
+        return productRepository.findAllByPublicationStatus(
+                        ProductPublicationStatus.PUBLISHED,
+                        Sort.by(Sort.Direction.DESC, "baseScore").and(Sort.by(Sort.Direction.ASC, "id"))
+                ).stream()
                 .map(product -> ProductResponse.from(productWithAdjustedScore(
                         product, skinType, hydrationLevel, oilinessLevel, sensitivityLevel, texturePreference,
                         concerns == null ? List.of() : concerns
@@ -86,6 +123,11 @@ public class ProductService {
     }
 
     public Product getProduct(String id) {
+        return productRepository.findByIdAndPublicationStatus(id, ProductPublicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("제품을 찾을 수 없어요: " + id));
+    }
+
+    public Product getAdminProduct(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("제품을 찾을 수 없어요: " + id));
     }
@@ -146,7 +188,8 @@ public class ProductService {
         return new Product(
                 product.getId(), product.getBrand(), product.getName(), product.getCategory(),
                 Math.clamp(product.getBaseScore() + adjustment, 0, 100), product.getBenefit(),
-                product.getSubBenefit(), product.getPrice(), product.getTone(), product.getTag(), product.getImageUrl()
+                product.getSubBenefit(), product.getPrice(), product.getTone(), product.getTag(), product.getImageUrl(),
+                product.getPublicationStatus(), product.getSourceUrl(), product.getSourceCheckedAt()
         );
     }
 }

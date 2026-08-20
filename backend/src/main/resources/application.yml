@@ -76,6 +76,7 @@ app:
     access-token-seconds: ${ACCESS_TOKEN_SECONDS:900}
     refresh-token-seconds: ${REFRESH_TOKEN_SECONDS:2592000}
     oauth-exchange-code-seconds: ${OAUTH_EXCHANGE_CODE_SECONDS:120}
+    admin-emails: ${ADMIN_EMAILS:wings2530@gmail.com}
     login-rate-limit:
       window-seconds: ${LOGIN_RATE_WINDOW_SECONDS:900}
       block-seconds: ${LOGIN_RATE_BLOCK_SECONDS:900}

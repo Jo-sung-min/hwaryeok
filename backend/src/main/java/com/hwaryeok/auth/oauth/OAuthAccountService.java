@@ -3,6 +3,7 @@ package com.hwaryeok.auth.oauth;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.hwaryeok.auth.AdminEmailPolicy;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,10 +15,16 @@ public class OAuthAccountService {
 
     private final OAuthAccountRepository oauthAccountRepository;
     private final UserRepository userRepository;
+    private final AdminEmailPolicy adminEmailPolicy;
 
-    public OAuthAccountService(OAuthAccountRepository oauthAccountRepository, UserRepository userRepository) {
+    public OAuthAccountService(
+            OAuthAccountRepository oauthAccountRepository,
+            UserRepository userRepository,
+            AdminEmailPolicy adminEmailPolicy
+    ) {
         this.oauthAccountRepository = oauthAccountRepository;
         this.userRepository = userRepository;
+        this.adminEmailPolicy = adminEmailPolicy;
     }
 
     @Transactional
@@ -49,7 +56,7 @@ public class OAuthAccountService {
                 profile.email(),
                 null,
                 profile.nickname(),
-                "USER",
+                adminEmailPolicy.roleFor(profile.email()),
                 "ACTIVE",
                 now,
                 now

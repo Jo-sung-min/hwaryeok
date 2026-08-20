@@ -2,17 +2,24 @@ package com.hwaryeok.product;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProductRepository extends JpaRepository<Product, String> {
 
+    Optional<Product> findByIdAndPublicationStatus(String id, ProductPublicationStatus publicationStatus);
+
+    List<Product> findAllByPublicationStatus(ProductPublicationStatus publicationStatus, Sort sort);
+
     @Query("""
             SELECT product
             FROM Product product
-            WHERE (:query = ''
+            WHERE product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+              AND (:query = ''
                 OR LOWER(product.name) LIKE LOWER(CONCAT('%', :query, '%'))
                 OR LOWER(product.brand) LIKE LOWER(CONCAT('%', :query, '%')))
               AND (:category = '' OR product.category = :category)
@@ -31,6 +38,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             select product
             from Product product
             where product.id <> :productId
+              and product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
             order by case when product.category = :category then 0 else 1 end,
                      abs(product.baseScore - :baseScore),
                      product.id

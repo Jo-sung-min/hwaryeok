@@ -15,9 +15,9 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form action={formAction} className="grid gap-5" noValidate>
+    <form action={formAction} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5" noValidate>
       <input type="hidden" name="returnTo" value={returnTo} />
-      <div>
+      <div className="min-w-0">
         <label htmlFor="email" className="mb-2 block text-xs font-bold text-[#5d534d]">이메일</label>
         <div className={`overflow-hidden rounded-2xl border bg-[#fffdf8] focus-within:border-[#a54f4970] ${state.fieldErrors.email ? "border-[#b35e55]" : "border-[#74513f20]"}`}>
           <input id="email" name="email" type="email" defaultValue={state.values.email} autoComplete="email" required maxLength={254} placeholder="name@example.com" className="h-13 w-full bg-transparent px-4 text-sm outline-none" />
@@ -25,7 +25,7 @@ export function LoginForm({ returnTo }: { returnTo: string }) {
         {state.fieldErrors.email && <p className="mt-2 text-xs text-[#a64e47]" role="alert">{state.fieldErrors.email}</p>}
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor="password" className="mb-2 block text-xs font-bold text-[#5d534d]">비밀번호</label>
         <div className={`flex overflow-hidden rounded-2xl border bg-[#fffdf8] focus-within:border-[#a54f4970] ${state.fieldErrors.password ? "border-[#b35e55]" : "border-[#74513f20]"}`}>
           <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required maxLength={64} className="h-13 min-w-0 flex-1 bg-transparent px-4 text-sm outline-none" />

@@ -1,7 +1,11 @@
 package com.hwaryeok.product;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -43,6 +47,16 @@ public class Product {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "publication_status", length = 20, nullable = false)
+    private ProductPublicationStatus publicationStatus;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
+    @Column(name = "source_checked_at")
+    private LocalDate sourceCheckedAt;
+
     protected Product() {
     }
 
@@ -53,6 +67,13 @@ public class Product {
 
     public Product(String id, String brand, String name, String category, int baseScore, String benefit,
                    String subBenefit, int price, String tone, String tag, String imageUrl) {
+        this(id, brand, name, category, baseScore, benefit, subBenefit, price, tone, tag, imageUrl,
+                ProductPublicationStatus.PUBLISHED, null, null);
+    }
+
+    public Product(String id, String brand, String name, String category, int baseScore, String benefit,
+                   String subBenefit, int price, String tone, String tag, String imageUrl,
+                   ProductPublicationStatus publicationStatus, String sourceUrl, LocalDate sourceCheckedAt) {
         this.id = id;
         this.brand = brand;
         this.name = name;
@@ -64,6 +85,9 @@ public class Product {
         this.tone = tone;
         this.tag = tag;
         this.imageUrl = imageUrl;
+        this.publicationStatus = publicationStatus;
+        this.sourceUrl = sourceUrl;
+        this.sourceCheckedAt = sourceCheckedAt;
     }
 
     public String getId() { return id; }
@@ -77,8 +101,29 @@ public class Product {
     public String getTone() { return tone; }
     public String getTag() { return tag; }
     public String getImageUrl() { return imageUrl; }
+    public ProductPublicationStatus getPublicationStatus() { return publicationStatus; }
+    public String getSourceUrl() { return sourceUrl; }
+    public LocalDate getSourceCheckedAt() { return sourceCheckedAt; }
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void updateDetails(String brand, String name, String category, int baseScore, String benefit,
+                              String subBenefit, int price, String tone, String tag,
+                              ProductPublicationStatus publicationStatus, String sourceUrl,
+                              LocalDate sourceCheckedAt) {
+        this.brand = brand;
+        this.name = name;
+        this.category = category;
+        this.baseScore = baseScore;
+        this.benefit = benefit;
+        this.subBenefit = subBenefit;
+        this.price = price;
+        this.tone = tone;
+        this.tag = tag;
+        this.publicationStatus = publicationStatus;
+        this.sourceUrl = sourceUrl;
+        this.sourceCheckedAt = sourceCheckedAt;
     }
 }

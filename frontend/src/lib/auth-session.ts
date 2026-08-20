@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getCurrentUser, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
+import { ApiRequestError, getCurrentUser, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
 
 export const ACCESS_TOKEN_COOKIE = "hwaryeok_access_token";
 export const REFRESH_TOKEN_COOKIE = "hwaryeok_refresh_token";
@@ -122,6 +122,14 @@ export async function getActionAccessToken(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+export async function recoverAdminPageSession(error: unknown, returnTo: string): Promise<never> {
+  const { refreshToken } = await readAuthTokens();
+  if (refreshToken && error instanceof ApiRequestError && (error.status === 401 || error.status === 403)) {
+    redirect(`/api/auth/refresh?returnTo=${encodeURIComponent(sanitizeReturnTo(returnTo, "/admin"))}`);
+  }
+  throw error;
 }
 
 export function sanitizeReturnTo(value: string | null | undefined, fallback = "/profile") {

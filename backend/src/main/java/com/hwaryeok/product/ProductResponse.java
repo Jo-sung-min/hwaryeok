@@ -1,6 +1,7 @@
 package com.hwaryeok.product;
 
 import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.util.Locale;
 
 public record ProductResponse(
@@ -16,7 +17,10 @@ public record ProductResponse(
         String price,
         String tone,
         String tag,
-        String imageUrl
+        String imageUrl,
+        ProductPublicationStatus publicationStatus,
+        String sourceUrl,
+        LocalDate sourceCheckedAt
 ) {
     public static ProductResponse from(Product product) {
         int score = product.getBaseScore();
@@ -35,7 +39,10 @@ public record ProductResponse(
                         : "가격 정보 없음",
                 product.getTone(),
                 product.getTag(),
-                product.getImageUrl()
+                product.getImageUrl(),
+                product.getPublicationStatus(),
+                product.getSourceUrl(),
+                product.getSourceCheckedAt()
         );
     }
 

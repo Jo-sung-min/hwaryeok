@@ -24,7 +24,7 @@ public class ProductImageService {
 
     @Transactional
     public ProductResponse upload(String productId, MultipartFile file) {
-        Product product = productService.getProduct(productId);
+        Product product = productService.getAdminProduct(productId);
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("등록할 제품 이미지를 선택해 주세요.");
         if (file.getSize() > MAX_IMAGE_BYTES) throw new IllegalArgumentException("제품 이미지는 5MB 이하만 등록할 수 있어요.");
 

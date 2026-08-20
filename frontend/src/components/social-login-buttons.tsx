@@ -9,7 +9,7 @@ const providerStyles = {
 
 export function SocialLoginButtons({ providers, returnTo }: { providers: OAuthProviderStatus[]; returnTo?: string }) {
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
       {providers.map((provider) => {
         const style = providerStyles[provider.id];
         const content = (
@@ -21,11 +21,11 @@ export function SocialLoginButtons({ providers, returnTo }: { providers: OAuthPr
         );
 
         return provider.configured ? (
-          <Link key={provider.id} href={`/api/auth/oauth/${provider.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`} className={`flex min-h-13 items-center gap-2.5 rounded-2xl border px-3 text-[13px] font-semibold transition hover:-translate-y-0.5 hover:shadow-md sm:gap-3 sm:px-4 sm:text-sm ${style.className}`}>
+          <Link key={provider.id} href={`/api/auth/oauth/${provider.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`} className={`flex min-h-13 min-w-0 items-center gap-2.5 rounded-2xl border px-3 text-[13px] font-semibold transition hover:-translate-y-0.5 hover:shadow-md sm:gap-3 sm:px-4 sm:text-sm ${style.className}`}>
             {content}
           </Link>
         ) : (
-          <span key={provider.id} aria-disabled="true" className={`flex min-h-13 cursor-not-allowed items-center gap-2.5 rounded-2xl border px-3 text-[13px] font-semibold opacity-75 sm:gap-3 sm:px-4 sm:text-sm ${style.className}`}>
+          <span key={provider.id} aria-disabled="true" className={`flex min-h-13 min-w-0 cursor-not-allowed items-center gap-2.5 rounded-2xl border px-3 text-[13px] font-semibold opacity-75 sm:gap-3 sm:px-4 sm:text-sm ${style.className}`}>
             {content}
           </span>
         );

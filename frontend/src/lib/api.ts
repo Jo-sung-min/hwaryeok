@@ -118,6 +118,22 @@ export type AuthTokenResult = {
   user: AuthUser;
 };
 
+export type AdminProductInput = {
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  baseScore: number;
+  benefit: string;
+  subBenefit: string;
+  price: number;
+  tone: Product["tone"];
+  tag?: string;
+  publicationStatus: Product["publicationStatus"];
+  sourceUrl?: string;
+  sourceCheckedAt?: string;
+};
+
 export type SkinProfile = {
   configured: boolean;
   skinType: string | null;
@@ -407,6 +423,53 @@ export async function uploadAdminProductImage(accessToken: string, productId: st
     );
   }
   return response.json() as Promise<Product>;
+}
+
+export function getAdminProducts(accessToken: string): Promise<Product[]> {
+  return requestJson<Product[]>("/admin/products", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function createAdminProduct(accessToken: string, input: AdminProductInput): Promise<Product> {
+  return requestJson<Product>("/admin/products", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateAdminProduct(accessToken: string, productId: string, input: AdminProductInput): Promise<Product> {
+  return requestJson<Product>(`/admin/products/${encodeURIComponent(productId)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteAdminProduct(accessToken: string, productId: string): Promise<void> {
+  return requestEmpty(`/admin/products/${encodeURIComponent(productId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getAdminProductIngredients(accessToken: string, productId: string): Promise<ProductIngredients> {
+  return requestJson<ProductIngredients>(`/admin/products/${encodeURIComponent(productId)}/ingredients`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function updateAdminProductIngredients(
+  accessToken: string,
+  productId: string,
+  ingredients: { ingredientId: string; concentrationNote?: string }[],
+): Promise<ProductIngredients> {
+  return requestJson<ProductIngredients>(`/admin/products/${encodeURIComponent(productId)}/ingredients`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ ingredients }),
+  });
 }
 
 export function getProductIngredients(productId: string): Promise<ProductIngredients> {

@@ -32,7 +32,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
   }
 
   return (
-    <form action={formAction} className="paper-card rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-9" noValidate>
+    <form action={formAction} className="paper-card min-w-0 rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-9" noValidate>
       <div className="mb-7">
         <p className="eyebrow mb-3">CREATE ACCOUNT</p>
         <h1 className="font-myeongjo text-[28px] font-semibold leading-tight sm:text-3xl">나만의 화력을 시작해요</h1>
@@ -42,7 +42,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
       <SocialLoginButtons providers={oauthProviders} />
       <div className="my-7 flex items-center gap-4 text-[11px] text-[#96887e]"><span className="h-px flex-1 bg-[#74513f18]" /><span>또는 이메일로 가입</span><span className="h-px flex-1 bg-[#74513f18]" /></div>
 
-      <div className="grid gap-5">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
         <Field label="닉네임" name="nickname" error={state.fieldErrors.nickname} hint="화력에서 불릴 이름이에요.">
           <input id="nickname" name="nickname" defaultValue={state.values.nickname} required minLength={2} maxLength={20} autoComplete="nickname" placeholder="예: 새봄" className="h-13 w-full bg-transparent px-4 text-sm outline-none" />
         </Field>
@@ -83,7 +83,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
 
 function Field({ label, name, error, hint, children }: { label: string; name: string; error?: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className="min-w-0">
       <label htmlFor={name} className="mb-2 block text-xs font-bold text-[#5d534d]">{label}</label>
       <div className={`overflow-hidden rounded-2xl border bg-[#fffdf8] transition focus-within:border-[#a54f4970] ${error ? "border-[#b35e55]" : "border-[#74513f20]"}`}>{children}</div>
       {error ? <p id={`${name}-error`} className="mt-2 text-xs text-[#a64e47]" role="alert">{error}</p> : hint ? <p className="mt-2 text-[11px] text-[#8a7d74]">{hint}</p> : null}

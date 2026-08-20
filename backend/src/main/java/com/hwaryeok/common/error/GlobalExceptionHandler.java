@@ -12,6 +12,7 @@ import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
 import com.hwaryeok.auth.InvalidRefreshTokenException;
 import com.hwaryeok.auth.TooManyLoginAttemptsException;
 import com.hwaryeok.review.ReviewAlreadyExistsException;
+import com.hwaryeok.product.ProductAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
@@ -65,6 +66,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ReviewAlreadyExistsException.class)
     public ResponseEntity<ApiError> handleReviewConflict(ReviewAlreadyExistsException exception, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "REVIEW_ALREADY_EXISTS", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(ProductAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleProductConflict(ProductAlreadyExistsException exception, HttpServletRequest request) {
+        return build(
+                HttpStatus.CONFLICT,
+                "PRODUCT_ALREADY_EXISTS",
+                exception.getMessage(),
+                request,
+                Map.of("id", exception.getMessage())
+        );
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
