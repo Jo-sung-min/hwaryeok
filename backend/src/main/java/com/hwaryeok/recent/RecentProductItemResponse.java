@@ -14,4 +14,8 @@ public record RecentProductItemResponse(
                 recentProduct.getViewedAt()
         );
     }
+
+    public static RecentProductItemResponse from(UserRecentProduct recentProduct, ProductResponse product) {
+        return new RecentProductItemResponse(product, recentProduct.getViewedAt());
+    }
 }

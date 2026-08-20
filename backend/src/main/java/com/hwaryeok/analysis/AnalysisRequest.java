@@ -23,9 +23,22 @@ public record AnalysisRequest(
         String routineComplexity,
         String sunscreenUsage,
         List<String> reactionTriggers,
-        List<String> environments
+        List<String> breakoutZones,
+        List<String> environments,
+        List<String> routineContexts
 ) {
     public AnalysisRequest(String productId, String skinType, List<String> concerns) {
-        this(productId, skinType, concerns, null, null, null, null, null, null, null, null, null, null, List.of(), List.of());
+        this(productId, skinType, concerns, null, null, null, null, null, null, null, null, null, null, List.of(), List.of(), List.of(), List.of());
+    }
+
+    public AnalysisRequest(
+            String productId, String skinType, List<String> concerns,
+            String hydrationLevel, String oilinessLevel, String sensitivityLevel, String breakoutFrequency,
+            String cleansingTightness, String rednessFrequency, String poreLevel, String texturePreference,
+            String routineComplexity, String sunscreenUsage, List<String> reactionTriggers, List<String> environments
+    ) {
+        this(productId, skinType, concerns, hydrationLevel, oilinessLevel, sensitivityLevel, breakoutFrequency,
+                cleansingTightness, rednessFrequency, poreLevel, texturePreference, routineComplexity,
+                sunscreenUsage, reactionTriggers, List.of(), environments, List.of());
     }
 }

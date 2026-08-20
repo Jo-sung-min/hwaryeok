@@ -11,7 +11,7 @@ export const products: Product[] = [
   { id: "bean-essence", brand: "믹순", name: "콩 에센스", category: "에센스", grade: 2, score: 82, benefit: "피부결 개선", subBenefit: "보습", price: "35,000원", tone: "sand", publicationStatus: "PUBLISHED" },
 ];
 
-export const concerns = ["속건조", "민감", "모공", "붉은기", "피부 장벽", "각질", "칙칙함", "탄력"];
+export const concerns = ["속건조·당김", "유분·번들거림", "트러블·여드름", "블랙헤드·모공", "붉은기·민감", "장벽·각질", "잡티·칙칙함", "탄력·잔주름"];
 
 export const scoreDetails = [
   { label: "보습력", value: 96, note: "매우 좋음", positive: true },

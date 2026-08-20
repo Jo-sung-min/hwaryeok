@@ -6,8 +6,6 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.time.LocalDate;
 
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -15,12 +13,26 @@ import org.mockito.Mockito;
 class ProductServiceTest {
 
     private ProductRepository repository;
+    private ProductMatchEngine matchEngine;
     private ProductService service;
 
     @BeforeEach
     void setUp() {
         repository = Mockito.mock(ProductRepository.class);
-        service = new ProductService(repository);
+        matchEngine = Mockito.mock(ProductMatchEngine.class);
+        when(matchEngine.scoreBasis()).thenReturn("성분 55% · 피부 적합 35% · 데이터 신뢰 10%");
+        when(matchEngine.evaluateAll(Mockito.anyList(), Mockito.any(ProductMatchProfile.class))).thenAnswer(invocation -> {
+            List<Product> products = invocation.getArgument(0);
+            java.util.Map<String, ProductMatchResult> results = new java.util.HashMap<>();
+            for (Product product : products) {
+                int score = "cream".equals(product.getId()) ? 91 : 82;
+                results.put(product.getId(), new ProductMatchResult(
+                        score, score, 82, 78, "HIGH", List.of("성분 근거"), List.of(), 4, java.util.Set.of("속건조·당김")
+                ));
+            }
+            return results;
+        });
+        service = new ProductService(repository, matchEngine);
     }
 
     @Test
@@ -29,8 +41,9 @@ class ProductServiceTest {
                 new Product("cream", "화력", "수분 크림", "크림", 94, "수분", "보습", 30000, "blue", null),
                 new Product("toner", "화력", "진정 토너", "토너", 82, "진정", "민감", 20000, "sage", null)
         );
-        when(repository.search(Mockito.eq("수분"), Mockito.eq("크림"), Mockito.eq(90), Mockito.eq(100), Mockito.any(Pageable.class)))
-                .thenAnswer(invocation -> new PageImpl<>(List.of(products.getFirst()), invocation.getArgument(4), 1));
+        when(repository.findAllByPublicationStatus(
+                Mockito.eq(ProductPublicationStatus.PUBLISHED), Mockito.any(org.springframework.data.domain.Sort.class)
+        )).thenReturn(products);
 
         ProductPageResponse result = service.findProducts("수분", "크림", 1, 0, 12, "score", "desc");
 
@@ -51,6 +64,7 @@ class ProductServiceTest {
 
         assertThat(result.getFirst().id()).isEqualTo("cream");
         assertThat(result.getFirst().score()).isEqualTo(91);
+        assertThat(result.getFirst().scoreBasis()).contains("성분 55%");
     }
 
     @Test

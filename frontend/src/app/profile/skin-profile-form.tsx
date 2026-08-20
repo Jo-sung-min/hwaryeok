@@ -24,6 +24,7 @@ import {
 import { useActionState, useEffect, useState } from "react";
 import type { SkinProfile } from "@/lib/api";
 import { concerns } from "@/lib/data";
+import { isQuickSkinProfile, QUICK_PROFILE_STORAGE_KEY } from "@/lib/quick-profile";
 import type { Ingredient } from "@/lib/types";
 import { saveSkinProfileAction, type SkinProfileActionState } from "./actions";
 
@@ -102,7 +103,19 @@ const sunscreenOptions: readonly ChoiceOption<SunscreenUsage>[] = [
 const reactionTriggerOptions = ["향료", "에탄올", "에센셜 오일", "각질 케어 성분", "레티노이드", "고함량 비타민C", "아직 모름"];
 const breakoutZoneOptions = ["이마", "코", "볼", "턱·입가", "얼굴 전체"];
 const environmentOptions = ["냉난방 건조", "마스크 장시간", "야외 활동", "미세먼지", "계절 변화", "수면 부족"];
+const routineContextOptions = ["면도 자주", "면도 후 붉어짐", "메이크업 자주", "메이크업 밀림", "이중 세안", "고기능성 성분 사용"];
 const initialActionState: SkinProfileActionState = { success: false, message: "", fieldErrors: {} };
+
+const legacyConcernLabels: Record<string, string> = {
+  속건조: "속건조·당김",
+  민감: "붉은기·민감",
+  모공: "블랙헤드·모공",
+  붉은기: "붉은기·민감",
+  "피부 장벽": "장벽·각질",
+  각질: "장벽·각질",
+  칙칙함: "잡티·칙칙함",
+  탄력: "탄력·잔주름",
+};
 
 function defaults(profile: SkinProfile | null, ingredientIds: string[]) {
   return {
@@ -120,13 +133,16 @@ function defaults(profile: SkinProfile | null, ingredientIds: string[]) {
     reactionTriggers: profile?.reactionTriggers ?? [],
     breakoutZones: profile?.breakoutZones ?? [],
     environments: profile?.environments ?? [],
-    concerns: profile?.concerns.length ? profile.concerns : ["속건조", "민감", "피부 장벽"],
+    routineContexts: profile?.routineContexts ?? [],
+    concerns: profile?.concerns.length
+      ? [...new Set(profile.concerns.map((value) => legacyConcernLabels[value] ?? value))]
+      : ["속건조·당김", "붉은기·민감", "장벽·각질"],
     ingredientIds,
     profileVersion: profile?.profileVersion ?? 0,
   };
 }
 
-export function SkinProfileForm({ nickname, initialProfile, ingredients, initialPreferredIngredientIds }: { nickname: string; initialProfile: SkinProfile | null; ingredients: Ingredient[]; initialPreferredIngredientIds: string[] }) {
+export function SkinProfileForm({ nickname, initialProfile, ingredients, initialPreferredIngredientIds, importQuickProfile = false }: { nickname: string; initialProfile: SkinProfile | null; ingredients: Ingredient[]; initialPreferredIngredientIds: string[]; importQuickProfile?: boolean }) {
   const initial = defaults(initialProfile, initialPreferredIngredientIds);
   const configured = Boolean(initialProfile?.configured && initialProfile.skinType);
   const [hasProfile, setHasProfile] = useState(configured);
@@ -137,7 +153,39 @@ export function SkinProfileForm({ nickname, initialProfile, ingredients, initial
   const [state, formAction, pending] = useActionState(saveSkinProfileAction, initialActionState);
 
   useEffect(() => {
+    if (!importQuickProfile) return;
+    try {
+      const stored = window.localStorage.getItem(QUICK_PROFILE_STORAGE_KEY);
+      const quickProfile: unknown = stored ? JSON.parse(stored) : null;
+      if (!isQuickSkinProfile(quickProfile)) return;
+      setValues((previous) => ({
+        ...previous,
+        skin: quickProfile.skinType,
+        hydrationLevel: quickProfile.hydrationLevel,
+        oilinessLevel: quickProfile.oilinessLevel,
+        sensitivityLevel: quickProfile.sensitivityLevel,
+        breakoutFrequency: quickProfile.breakoutFrequency,
+        cleansingTightness: quickProfile.cleansingTightness,
+        rednessFrequency: quickProfile.rednessFrequency,
+        poreLevel: quickProfile.poreLevel,
+        texturePreference: quickProfile.texturePreference,
+        routineComplexity: quickProfile.routineComplexity,
+        sunscreenUsage: quickProfile.sunscreenUsage,
+        concerns: quickProfile.concerns,
+        reactionTriggers: quickProfile.reactionTriggers,
+        environments: quickProfile.environments,
+        routineContexts: quickProfile.routineContexts,
+      }));
+      setEditing(true);
+      setStep(TOTAL_STEPS);
+    } catch {
+      window.localStorage.removeItem(QUICK_PROFILE_STORAGE_KEY);
+    }
+  }, [importQuickProfile]);
+
+  useEffect(() => {
     if (state.success) {
+      window.localStorage.removeItem(QUICK_PROFILE_STORAGE_KEY);
       const saved = { ...values, profileVersion: 2 };
       setValues(saved);
       setSavedValues(saved);
@@ -153,14 +201,14 @@ export function SkinProfileForm({ nickname, initialProfile, ingredients, initial
     else if (errors.cleansingTightness || errors.rednessFrequency) setStep(3);
     else if (errors.breakoutFrequency || errors.poreLevel || errors.breakoutZones) setStep(4);
     else if (errors.sensitivityLevel || errors.reactionTriggers) setStep(5);
-    else if (errors.routineComplexity || errors.sunscreenUsage || errors.environments) setStep(6);
+    else if (errors.routineComplexity || errors.sunscreenUsage || errors.environments || errors.routineContexts) setStep(6);
     else if (errors.texturePreference) setStep(7);
     else if (errors.concerns) setStep(8);
     else if (errors.ingredientIds) setStep(9);
   }, [state]);
 
   const setValue = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) => setValues((previous) => ({ ...previous, [key]: value }));
-  const toggleList = (key: "reactionTriggers" | "breakoutZones" | "environments" | "concerns" | "ingredientIds", value: string, max: number) => {
+  const toggleList = (key: "reactionTriggers" | "breakoutZones" | "environments" | "routineContexts" | "concerns" | "ingredientIds", value: string, max: number) => {
     setValues((previous) => {
       const selected = previous[key] as string[];
       let next = selected.includes(value) ? selected.filter((item) => item !== value) : selected.length < max ? [...selected, value] : selected;
@@ -200,7 +248,7 @@ export function SkinProfileForm({ nickname, initialProfile, ingredients, initial
 
           {step === 5 && <div><StepHeading number="05" title="새 제품에 어떤 반응이 있었나요?" description="정확한 원인을 몰라도 괜찮아요. 기억나는 반응 이력을 남겨주세요." usage="전성분 확인과 작은 부위 시험이 필요한 상황을 먼저 알려줘요." /><ChoiceSection title="피부 민감도" icon={Shield}><OptionGrid value={values.sensitivityLevel} options={sensitivityOptions} onChange={(value) => setValue("sensitivityLevel", value)} /></ChoiceSection><ChoiceSection title={`의심되는 반응 요인 · 선택 ${values.reactionTriggers.length}/6`} icon={Sparkles}><MultiChoiceGrid options={reactionTriggerOptions} selected={values.reactionTriggers} onToggle={(value) => toggleList("reactionTriggers", value, 6)} /></ChoiceSection><FieldError message={state.fieldErrors.sensitivityLevel ?? state.fieldErrors.reactionTriggers} /></div>}
 
-          {step === 6 && <div><StepHeading number="06" title="피부가 하루를 보내는 환경은 어떤가요?" description="제품 자체만큼 자주 노출되는 환경과 사용 습관도 중요해요." usage="계절·건조 환경 가중치와 실제 사용 가능한 루틴을 제안해요." /><ChoiceSection title="평소 스킨케어 단계" icon={Layers}><OptionGrid value={values.routineComplexity} options={routineOptions} onChange={(value) => setValue("routineComplexity", value)} /></ChoiceSection><ChoiceSection title="자외선 차단 습관" icon={SunMedium}><OptionGrid value={values.sunscreenUsage} options={sunscreenOptions} onChange={(value) => setValue("sunscreenUsage", value)} /></ChoiceSection><ChoiceSection title={`자주 겪는 환경 · 선택 ${values.environments.length}/6`} icon={Wind}><MultiChoiceGrid options={environmentOptions} selected={values.environments} onToggle={(value) => toggleList("environments", value, 6)} /></ChoiceSection><FieldError message={state.fieldErrors.routineComplexity ?? state.fieldErrors.sunscreenUsage ?? state.fieldErrors.environments} /></div>}
+          {step === 6 && <div><StepHeading number="06" title="피부가 하루를 보내는 환경은 어떤가요?" description="성별 대신 면도·메이크업·세안처럼 실제 피부에 닿는 습관을 물어요." usage="생활 환경과 반복되는 자극을 추천 순서에 반영해요." /><ChoiceSection title="평소 스킨케어 단계" icon={Layers}><OptionGrid value={values.routineComplexity} options={routineOptions} onChange={(value) => setValue("routineComplexity", value)} /></ChoiceSection><ChoiceSection title="자외선 차단 습관" icon={SunMedium}><OptionGrid value={values.sunscreenUsage} options={sunscreenOptions} onChange={(value) => setValue("sunscreenUsage", value)} /></ChoiceSection><ChoiceSection title={`자주 겪는 환경 · 선택 ${values.environments.length}/6`} icon={Wind}><MultiChoiceGrid options={environmentOptions} selected={values.environments} onToggle={(value) => toggleList("environments", value, 6)} /></ChoiceSection><ChoiceSection title={`피부에 영향을 주는 생활 습관 · 선택 ${values.routineContexts.length}/6`} icon={Sparkles}><MultiChoiceGrid options={routineContextOptions} selected={values.routineContexts} onToggle={(value) => toggleList("routineContexts", value, 6)} /></ChoiceSection><FieldError message={state.fieldErrors.routineComplexity ?? state.fieldErrors.sunscreenUsage ?? state.fieldErrors.environments ?? state.fieldErrors.routineContexts} /></div>}
 
           {step === 7 && <div><StepHeading number="07" title="매일 손이 가는 사용감은 어느 쪽인가요?" description="좋은 성분도 손이 가지 않으면 꾸준히 쓰기 어려워요." usage="토너·세럼·젤·크림의 추천 순서를 현실적으로 조정해요." /><OptionGrid value={values.texturePreference} options={textureOptions} onChange={(value) => setValue("texturePreference", value)} /><FieldError message={state.fieldErrors.texturePreference} /></div>}
 
@@ -220,7 +268,7 @@ export function SkinProfileForm({ nickname, initialProfile, ingredients, initial
 }
 
 function HiddenFields({ values }: { values: ReturnType<typeof defaults> }) {
-  return <><input type="hidden" name="skinType" value={values.skin} /><input type="hidden" name="hydrationLevel" value={values.hydrationLevel} /><input type="hidden" name="oilinessLevel" value={values.oilinessLevel} /><input type="hidden" name="sensitivityLevel" value={values.sensitivityLevel} /><input type="hidden" name="breakoutFrequency" value={values.breakoutFrequency} /><input type="hidden" name="cleansingTightness" value={values.cleansingTightness} /><input type="hidden" name="rednessFrequency" value={values.rednessFrequency} /><input type="hidden" name="poreLevel" value={values.poreLevel} /><input type="hidden" name="texturePreference" value={values.texturePreference} /><input type="hidden" name="routineComplexity" value={values.routineComplexity} /><input type="hidden" name="sunscreenUsage" value={values.sunscreenUsage} />{values.reactionTriggers.map((value) => <input key={value} type="hidden" name="reactionTriggers" value={value} />)}{values.breakoutZones.map((value) => <input key={value} type="hidden" name="breakoutZones" value={value} />)}{values.environments.map((value) => <input key={value} type="hidden" name="environments" value={value} />)}{values.concerns.map((value) => <input key={value} type="hidden" name="concerns" value={value} />)}{values.ingredientIds.map((value) => <input key={value} type="hidden" name="ingredientIds" value={value} />)}</>;
+  return <><input type="hidden" name="skinType" value={values.skin} /><input type="hidden" name="hydrationLevel" value={values.hydrationLevel} /><input type="hidden" name="oilinessLevel" value={values.oilinessLevel} /><input type="hidden" name="sensitivityLevel" value={values.sensitivityLevel} /><input type="hidden" name="breakoutFrequency" value={values.breakoutFrequency} /><input type="hidden" name="cleansingTightness" value={values.cleansingTightness} /><input type="hidden" name="rednessFrequency" value={values.rednessFrequency} /><input type="hidden" name="poreLevel" value={values.poreLevel} /><input type="hidden" name="texturePreference" value={values.texturePreference} /><input type="hidden" name="routineComplexity" value={values.routineComplexity} /><input type="hidden" name="sunscreenUsage" value={values.sunscreenUsage} />{values.reactionTriggers.map((value) => <input key={value} type="hidden" name="reactionTriggers" value={value} />)}{values.breakoutZones.map((value) => <input key={value} type="hidden" name="breakoutZones" value={value} />)}{values.environments.map((value) => <input key={value} type="hidden" name="environments" value={value} />)}{values.routineContexts.map((value) => <input key={value} type="hidden" name="routineContexts" value={value} />)}{values.concerns.map((value) => <input key={value} type="hidden" name="concerns" value={value} />)}{values.ingredientIds.map((value) => <input key={value} type="hidden" name="ingredientIds" value={value} />)}</>;
 }
 
 function Review({ values, ingredients, state }: { values: ReturnType<typeof defaults>; ingredients: Ingredient[]; state: SkinProfileActionState }) {
@@ -249,7 +297,7 @@ function ProfileDetails({ values }: { values: ReturnType<typeof defaults> }) {
 }
 
 function SummaryRows({ values, ingredients }: { values: ReturnType<typeof defaults>; ingredients: Ingredient[] }) {
-  return <div className="grid gap-5"><TagRow label="주요 피부 고민" values={values.concerns} /><TagRow label="트러블 위치" values={values.breakoutZones} empty="선택하지 않음" /><TagRow label="반응 유발 요인" values={values.reactionTriggers} empty="선택하지 않음" /><TagRow label="생활 환경" values={values.environments} empty="선택하지 않음" /><div><p className="text-xs font-bold tracking-[.1em] text-[#8e7468]">나와 잘 맞는 성분 · 선택</p><IngredientTags ingredients={ingredients} selectedIngredientIds={values.ingredientIds} /></div></div>;
+  return <div className="grid gap-5"><TagRow label="주요 피부 고민" values={values.concerns} /><TagRow label="트러블 위치" values={values.breakoutZones} empty="선택하지 않음" /><TagRow label="반응 유발 요인" values={values.reactionTriggers} empty="선택하지 않음" /><TagRow label="생활 환경" values={values.environments} empty="선택하지 않음" /><TagRow label="생활 습관" values={values.routineContexts} empty="선택하지 않음" /><div><p className="text-xs font-bold tracking-[.1em] text-[#8e7468]">나와 잘 맞는 성분 · 선택</p><IngredientTags ingredients={ingredients} selectedIngredientIds={values.ingredientIds} /></div></div>;
 }
 
 function UsagePanel() {

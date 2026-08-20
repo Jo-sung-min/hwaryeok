@@ -18,6 +18,14 @@ export type Product = {
   publicationStatus: ProductPublicationStatus;
   sourceUrl?: string | null;
   sourceCheckedAt?: string | null;
+  ingredientScore?: number;
+  compatibilityScore?: number;
+  dataConfidenceScore?: number;
+  confidenceLevel?: "HIGH" | "MEDIUM" | "LOW" | "LEGACY";
+  scoreBasis?: string;
+  matchReasons?: string[];
+  cautions?: string[];
+  ingredientCount?: number;
 };
 
 export type ProductPage = {

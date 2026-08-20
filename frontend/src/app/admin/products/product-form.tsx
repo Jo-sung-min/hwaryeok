@@ -34,7 +34,7 @@ export function ProductForm({ product }: { product?: Product }) {
         <Field label="카테고리" error={fieldError("category")}>
           <input id={`${prefix}-category`} name="category" required maxLength={40} defaultValue={product?.category} list={`${prefix}-product-categories`} placeholder="크림" className={inputClass} />
         </Field>
-        <Field label="기본 화력점수" error={fieldError("baseScore")}>
+        <Field label="기존 점수 · 랭킹 미반영" error={fieldError("baseScore")}>
           <input id={`${prefix}-baseScore`} name="baseScore" type="number" required min={0} max={100} defaultValue={product?.score ?? 70} className={inputClass} />
         </Field>
         <Field label="가격(원)" error={fieldError("price")}>

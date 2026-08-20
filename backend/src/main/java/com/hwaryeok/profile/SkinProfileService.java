@@ -89,6 +89,7 @@ public class SkinProfileService {
         addSignals(signals, userId, "REACTION_TRIGGER", safeList(request.reactionTriggers()));
         addSignals(signals, userId, "BREAKOUT_ZONE", safeList(request.breakoutZones()));
         addSignals(signals, userId, "ENVIRONMENT", safeList(request.environments()));
+        addSignals(signals, userId, "ROUTINE_CONTEXT", safeList(request.routineContexts()));
         signalRepository.saveAllAndFlush(signals);
         return response(profile);
     }
@@ -115,6 +116,7 @@ public class SkinProfileService {
                 signalValues(signals, "REACTION_TRIGGER"),
                 signalValues(signals, "BREAKOUT_ZONE"),
                 signalValues(signals, "ENVIRONMENT"),
+                signalValues(signals, "ROUTINE_CONTEXT"),
                 concerns,
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()

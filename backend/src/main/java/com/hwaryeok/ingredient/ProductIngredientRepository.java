@@ -21,6 +21,15 @@ public interface ProductIngredientRepository extends JpaRepository<ProductIngred
     @Query("""
             select relation
             from ProductIngredient relation
+            join fetch relation.ingredient ingredient
+            where relation.product.id in :productIds
+            order by relation.product.id, relation.displayOrder
+            """)
+    List<ProductIngredient> findByProductIds(@Param("productIds") Set<String> productIds);
+
+    @Query("""
+            select relation
+            from ProductIngredient relation
             join fetch relation.product product
             where relation.ingredient.id = :ingredientId
             order by product.baseScore desc

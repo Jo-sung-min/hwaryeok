@@ -51,11 +51,14 @@ public record SkinProfileRequest(
         @Size(max = 6, message = "생활 환경은 최대 6개까지 선택할 수 있어요.")
         List<@NotBlank @Pattern(regexp = "냉난방 건조|마스크 장시간|야외 활동|미세먼지|계절 변화|수면 부족", message = "지원하지 않는 생활 환경이에요.") String> environments,
 
+        @Size(max = 6, message = "생활 습관은 최대 6개까지 선택할 수 있어요.")
+        List<@NotBlank @Pattern(regexp = "면도 자주|면도 후 붉어짐|메이크업 자주|메이크업 밀림|이중 세안|고기능성 성분 사용", message = "지원하지 않는 생활 습관이에요.") String> routineContexts,
+
         @NotEmpty(message = "피부 고민을 하나 이상 선택해 주세요.")
         @Size(max = 4, message = "피부 고민은 최대 4개까지 선택할 수 있어요.")
         List<
                 @NotBlank(message = "피부 고민 값이 비어 있어요.")
-                @Pattern(regexp = "속건조|민감|모공|붉은기|피부 장벽|각질|칙칙함|탄력", message = "지원하지 않는 피부 고민이에요.")
+                @Pattern(regexp = "속건조|민감|모공|붉은기|피부 장벽|각질|칙칙함|탄력|속건조·당김|유분·번들거림|트러블·여드름|블랙헤드·모공|붉은기·민감|장벽·각질|잡티·칙칙함|탄력·잔주름", message = "지원하지 않는 피부 고민이에요.")
                 String
         > concerns
 ) {

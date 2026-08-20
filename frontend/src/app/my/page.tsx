@@ -21,7 +21,7 @@ export default async function MyPage() {
   const [profile, favorites, preferredIngredients, recentProducts, comparisonProducts] = accessToken
     ? await Promise.all([getUserSkinProfile(accessToken), getUserFavorites(accessToken), getUserPreferredIngredients(accessToken), loadRecentProducts(accessToken), loadComparisonProducts(accessToken)])
     : [
-        { configured: false, skinType: null, hydrationLevel: null, oilinessLevel: null, sensitivityLevel: null, breakoutFrequency: null, profileVersion: 0, cleansingTightness: null, rednessFrequency: null, poreLevel: null, texturePreference: null, routineComplexity: null, sunscreenUsage: null, reactionTriggers: [], breakoutZones: [], environments: [], concerns: [], createdAt: null, updatedAt: null },
+        { configured: false, skinType: null, hydrationLevel: null, oilinessLevel: null, sensitivityLevel: null, breakoutFrequency: null, profileVersion: 0, cleansingTightness: null, rednessFrequency: null, poreLevel: null, texturePreference: null, routineComplexity: null, sunscreenUsage: null, reactionTriggers: [], breakoutZones: [], environments: [], routineContexts: [], concerns: [], createdAt: null, updatedAt: null },
         { content: [], totalElements: 0 },
         { content: [], totalElements: 0 },
         { content: [], totalElements: 0, error: null },

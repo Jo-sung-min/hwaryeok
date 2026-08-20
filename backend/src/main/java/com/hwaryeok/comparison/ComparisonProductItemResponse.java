@@ -16,4 +16,8 @@ public record ComparisonProductItemResponse(
                 comparisonProduct.getSavedAt()
         );
     }
+
+    public static ComparisonProductItemResponse from(UserComparisonProduct comparisonProduct, ProductResponse product) {
+        return new ComparisonProductItemResponse(product, comparisonProduct.getDisplayOrder(), comparisonProduct.getSavedAt());
+    }
 }

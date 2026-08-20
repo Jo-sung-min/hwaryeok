@@ -5,7 +5,7 @@ import { ApiRequestError, saveUserProfile } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
 
 const allowedSkinTypes = new Set(["건성", "지성", "복합성", "수부지", "중성", "민감"]);
-const allowedConcerns = new Set(["속건조", "민감", "모공", "붉은기", "피부 장벽", "각질", "칙칙함", "탄력"]);
+const allowedConcerns = new Set(["속건조", "민감", "모공", "붉은기", "피부 장벽", "각질", "칙칙함", "탄력", "속건조·당김", "유분·번들거림", "트러블·여드름", "블랙헤드·모공", "붉은기·민감", "장벽·각질", "잡티·칙칙함", "탄력·잔주름"]);
 const allowedBalanceLevels = new Set(["LOW", "BALANCED", "HIGH"]);
 const allowedSensitivityLevels = new Set(["LOW", "MEDIUM", "HIGH"]);
 const allowedBreakoutFrequencies = new Set(["RARE", "OCCASIONAL", "FREQUENT"]);
@@ -17,6 +17,7 @@ const allowedSunscreenUsage = new Set(["RARE", "SOMETIMES", "DAILY"]);
 const allowedReactionTriggers = new Set(["향료", "에탄올", "에센셜 오일", "각질 케어 성분", "레티노이드", "고함량 비타민C", "아직 모름"]);
 const allowedBreakoutZones = new Set(["이마", "코", "볼", "턱·입가", "얼굴 전체"]);
 const allowedEnvironments = new Set(["냉난방 건조", "마스크 장시간", "야외 활동", "미세먼지", "계절 변화", "수면 부족"]);
+const allowedRoutineContexts = new Set(["면도 자주", "면도 후 붉어짐", "메이크업 자주", "메이크업 밀림", "이중 세안", "고기능성 성분 사용"]);
 
 export type SkinProfileActionState = {
   success: boolean;
@@ -42,6 +43,7 @@ export async function saveSkinProfileAction(
   const reactionTriggers = formData.getAll("reactionTriggers").map((value) => String(value).trim());
   const breakoutZones = formData.getAll("breakoutZones").map((value) => String(value).trim());
   const environments = formData.getAll("environments").map((value) => String(value).trim());
+  const routineContexts = formData.getAll("routineContexts").map((value) => String(value).trim());
   const concerns = formData.getAll("concerns").map((value) => String(value).trim());
   const ingredientIds = formData.getAll("ingredientIds").map((value) => String(value).trim()).filter(Boolean);
   const fieldErrors: Record<string, string> = {};
@@ -60,6 +62,7 @@ export async function saveSkinProfileAction(
   if (reactionTriggers.length > 6 || reactionTriggers.some((value) => !allowedReactionTriggers.has(value)) || new Set(reactionTriggers).size !== reactionTriggers.length) fieldErrors.reactionTriggers = "반응 유발 요인을 다시 확인해 주세요.";
   if (breakoutZones.length > 5 || breakoutZones.some((value) => !allowedBreakoutZones.has(value)) || new Set(breakoutZones).size !== breakoutZones.length) fieldErrors.breakoutZones = "트러블 위치를 다시 확인해 주세요.";
   if (environments.length > 6 || environments.some((value) => !allowedEnvironments.has(value)) || new Set(environments).size !== environments.length) fieldErrors.environments = "생활 환경을 다시 확인해 주세요.";
+  if (routineContexts.length > 6 || routineContexts.some((value) => !allowedRoutineContexts.has(value)) || new Set(routineContexts).size !== routineContexts.length) fieldErrors.routineContexts = "생활 습관을 다시 확인해 주세요.";
   if (concerns.length < 1 || concerns.length > 4 || concerns.some((concern) => !allowedConcerns.has(concern))) {
     fieldErrors.concerns = "피부 고민을 1~4개 선택해 주세요.";
   }
@@ -91,6 +94,7 @@ export async function saveSkinProfileAction(
         reactionTriggers,
         breakoutZones,
         environments,
+        routineContexts,
         concerns,
       }, ingredientIds);
     revalidatePath("/profile");

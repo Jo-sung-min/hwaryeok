@@ -1,9 +1,12 @@
 package com.hwaryeok.recent;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductService;
+import com.hwaryeok.product.ProductResponse;
 import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +31,14 @@ public class RecentProductService {
     @Transactional(readOnly = true)
     public RecentProductListResponse findAll(String userId) {
         activeUserService.requireActive(userId);
-        return RecentProductListResponse.from(
-                recentProductRepository.findTop6ByIdUserIdOrderByViewedAtDesc(userId),
+        List<UserRecentProduct> recentProducts = recentProductRepository.findTop6ByIdUserIdOrderByViewedAtDesc(userId);
+        Map<String, ProductResponse> products = productService.toNeutralResponses(
+                recentProducts.stream().map(UserRecentProduct::getProduct).toList()
+        );
+        return new RecentProductListResponse(
+                recentProducts.stream()
+                        .map(item -> RecentProductItemResponse.from(item, products.get(item.getProduct().getId())))
+                        .toList(),
                 recentProductRepository.countByIdUserId(userId)
         );
     }
@@ -46,7 +55,7 @@ public class RecentProductService {
                 })
                 .orElseGet(() -> recentProductRepository.save(new UserRecentProduct(userId, product, Instant.now())));
         recentProductRepository.flush();
-        return RecentProductItemResponse.from(recentProduct);
+        return RecentProductItemResponse.from(recentProduct, productService.toNeutralResponse(product));
     }
 
 }

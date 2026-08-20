@@ -4,10 +4,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductPublicationStatus;
 import com.hwaryeok.product.ProductService;
+import com.hwaryeok.product.ProductResponse;
 import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +34,12 @@ public class ComparisonProductService {
     @Transactional(readOnly = true)
     public ComparisonProductListResponse findAll(String userId) {
         activeUserService.requireActive(userId);
-        return ComparisonProductListResponse.from(
-                comparisonProductRepository
+        List<UserComparisonProduct> comparisonProducts = comparisonProductRepository
                         .findByIdUserIdAndProductPublicationStatusOrderByDisplayOrderAsc(
                                 userId,
                                 ProductPublicationStatus.PUBLISHED
-                        )
-        );
+                        );
+        return response(comparisonProducts);
     }
 
     @Transactional
@@ -61,12 +62,22 @@ public class ComparisonProductService {
         for (int index = 0; index < products.size(); index++) {
             comparisonProducts.add(new UserComparisonProduct(userId, products.get(index), index + 1, savedAt));
         }
-        return ComparisonProductListResponse.from(comparisonProductRepository.saveAllAndFlush(comparisonProducts));
+        return response(comparisonProductRepository.saveAllAndFlush(comparisonProducts));
     }
 
     @Transactional
     public void clear(String userId) {
         activeUserService.requireActiveForUpdate(userId);
         comparisonProductRepository.deleteByIdUserId(userId);
+    }
+
+    private ComparisonProductListResponse response(List<UserComparisonProduct> comparisonProducts) {
+        Map<String, ProductResponse> products = productService.toNeutralResponses(
+                comparisonProducts.stream().map(UserComparisonProduct::getProduct).toList()
+        );
+        List<ComparisonProductItemResponse> content = comparisonProducts.stream()
+                .map(item -> ComparisonProductItemResponse.from(item, products.get(item.getProduct().getId())))
+                .toList();
+        return new ComparisonProductListResponse(content, content.size());
     }
 }

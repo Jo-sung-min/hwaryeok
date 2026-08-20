@@ -16,13 +16,36 @@ export class ApiRequestError extends Error {
   }
 }
 
+export type ProductMatchInput = {
+  skinType?: string | null;
+  hydrationLevel?: SkinProfile["hydrationLevel"];
+  oilinessLevel?: SkinProfile["oilinessLevel"];
+  sensitivityLevel?: SkinProfile["sensitivityLevel"];
+  breakoutFrequency?: SkinProfile["breakoutFrequency"];
+  cleansingTightness?: SkinProfile["cleansingTightness"];
+  rednessFrequency?: SkinProfile["rednessFrequency"];
+  poreLevel?: SkinProfile["poreLevel"];
+  texturePreference?: SkinProfile["texturePreference"];
+  routineComplexity?: SkinProfile["routineComplexity"];
+  sunscreenUsage?: SkinProfile["sunscreenUsage"];
+  concerns?: string[];
+  reactionTriggers?: string[];
+  breakoutZones?: string[];
+  environments?: string[];
+  routineContexts?: string[];
+};
+
 type ProductQuery = {
   query?: string;
   category?: string;
   grade?: number;
+  concern?: string;
+  maxPrice?: number;
+  confidence?: "HIGH" | "MEDIUM" | "LOW";
+  profile?: ProductMatchInput;
   page?: number;
   size?: number;
-  sort?: "score" | "price" | "name" | "brand";
+  sort?: "score" | "price" | "name" | "brand" | "ingredient";
   direction?: "asc" | "desc";
 };
 
@@ -41,7 +64,9 @@ export type AnalysisInput = {
   routineComplexity?: SkinProfile["routineComplexity"];
   sunscreenUsage?: SkinProfile["sunscreenUsage"];
   reactionTriggers?: string[];
+  breakoutZones?: string[];
   environments?: string[];
+  routineContexts?: string[];
 };
 
 export type IngredientQuery = {
@@ -151,6 +176,7 @@ export type SkinProfile = {
   reactionTriggers: string[];
   breakoutZones: string[];
   environments: string[];
+  routineContexts: string[];
   concerns: string[];
   createdAt: string | null;
   updatedAt: string | null;
@@ -226,6 +252,7 @@ export function saveUserSkinProfile(
     reactionTriggers: string[];
     breakoutZones: string[];
     environments: string[];
+    routineContexts: string[];
     concerns: string[];
   },
 ): Promise<SkinProfile> {
@@ -316,6 +343,10 @@ export function getProductPage(query: ProductQuery = {}): Promise<ProductPage> {
   if (query.query) search.set("query", query.query);
   if (query.category && query.category !== "전체") search.set("category", query.category);
   if (query.grade) search.set("grade", String(query.grade));
+  if (query.concern) search.set("concern", query.concern);
+  if (query.maxPrice) search.set("maxPrice", String(query.maxPrice));
+  if (query.confidence) search.set("confidence", query.confidence);
+  if (query.profile) appendMatchProfile(search, query.profile);
   search.set("page", String(query.page ?? 0));
   search.set("size", String(query.size ?? 12));
   search.set("sort", query.sort ?? "score");
@@ -363,17 +394,29 @@ export function createProductReview(
   });
 }
 
-export function getRanking(profile: string | SkinProfile, limit = 6): Promise<Product[]> {
+export function getRanking(profile: string | ProductMatchInput, limit = 6, category?: string): Promise<Product[]> {
   const skinType = typeof profile === "string" ? profile : profile.skinType ?? "수부지";
   const search = new URLSearchParams({ skinType, limit: String(limit) });
   if (typeof profile !== "string") {
-    if (profile.hydrationLevel) search.set("hydrationLevel", profile.hydrationLevel);
-    if (profile.oilinessLevel) search.set("oilinessLevel", profile.oilinessLevel);
-    if (profile.sensitivityLevel) search.set("sensitivityLevel", profile.sensitivityLevel);
-    if (profile.texturePreference) search.set("texturePreference", profile.texturePreference);
-    profile.concerns.forEach((concern) => search.append("concerns", concern));
+    appendMatchProfile(search, profile);
   }
+  if (category && category !== "전체") search.set("category", category);
   return requestJson<Product[]>(`/products/ranking?${search}`);
+}
+
+function appendMatchProfile(search: URLSearchParams, profile: ProductMatchInput) {
+  const scalarKeys = [
+    "skinType", "hydrationLevel", "oilinessLevel", "sensitivityLevel", "breakoutFrequency",
+    "cleansingTightness", "rednessFrequency", "poreLevel", "texturePreference",
+    "routineComplexity", "sunscreenUsage",
+  ] as const;
+  scalarKeys.forEach((key) => {
+    const value = profile[key];
+    if (value) search.set(key, value);
+  });
+  (["concerns", "reactionTriggers", "breakoutZones", "environments", "routineContexts"] as const).forEach((key) => {
+    profile[key]?.forEach((value) => search.append(key, value));
+  });
 }
 
 export function getAnalysis(input: AnalysisInput): Promise<Analysis> {

@@ -7,8 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { href: "/products", label: "화장품" },
-  { href: "/ranking", label: "화력 랭킹" },
-  { href: "/experts", label: "전문가" },
+  { href: "/skin-check", label: "피부 체크" },
+  { href: "/ranking", label: "맞춤 랭킹" },
   { href: "/ingredients", label: "성분 사전" },
   { href: "/compare", label: "비교하기" },
 ];
@@ -16,7 +16,7 @@ const nav = [
 const mobileHeaderNav = [
   { href: "/", label: "홈" },
   { href: "/products", label: "화장품" },
-  { href: "/experts", label: "전문가" },
+  { href: "/skin-check", label: "피부체크" },
   { href: "/ingredients", label: "성분" },
   { href: "/compare", label: "비교" },
 ];
@@ -63,7 +63,7 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
 const mobileNav = [
   { href: "/", label: "홈", icon: Home },
   { href: "/products", label: "탐색", icon: Search },
-  { href: "/profile", label: "분석", icon: Sparkles },
+  { href: "/skin-check", label: "피부체크", icon: Sparkles },
   { href: "/ranking", label: "랭킹", icon: BarChart3 },
   { href: "/my", label: "MY", icon: UserRound },
 ];

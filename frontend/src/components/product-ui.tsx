@@ -17,13 +17,9 @@ const toneMap = {
   blue: "from-[#b7ccd0] to-[#ecf1ed]",
 };
 
-function displayTag(tag: string) {
-  return tag.replace(/^화해 급상승/, "화력 급상승");
-}
-
 export function GradeSeal({ grade, compact = false }: { grade: number; compact?: boolean }) {
   return (
-    <div className={`seal shrink-0 ${compact ? "h-11 w-11" : "h-16 w-16"}`} aria-label={`화력 ${grade}등급`}>
+    <div className={`seal shrink-0 ${compact ? "h-11 w-11" : "h-16 w-16"}`} aria-label={`성분·적합 ${grade}등급`}>
       <span className={`${compact ? "text-lg" : "text-2xl"} font-myeongjo font-bold leading-none`}>{grade}</span>
       <span className={`${compact ? "text-[8px]" : "text-[10px]"} tracking-[.1em]`}>등급</span>
     </div>
@@ -131,7 +127,7 @@ export function ProductCard({
   initialFavorited = false,
   isAuthenticated = false,
   returnTo,
-  scoreLabel = "기본 화력점수",
+  scoreLabel = "성분 기준 점수",
 }: {
   product: Product;
   initialFavorited?: boolean;
@@ -144,7 +140,7 @@ export function ProductCard({
       <Link href={`/products/${product.id}`} className="block">
         <div className="relative">
           <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} />
-          {product.tag && <span className="absolute left-4 top-4 max-w-[calc(100%-5rem)] truncate rounded-full border border-white/80 bg-white/78 px-3 py-1.5 text-[11px] font-semibold text-[#9b4d62] shadow-sm backdrop-blur-xl">{displayTag(product.tag)}</span>}
+          <span className="absolute left-4 top-4 max-w-[calc(100%-5rem)] truncate rounded-full border border-white/80 bg-white/82 px-3 py-1.5 text-[10px] font-semibold text-[#7a655e] shadow-sm backdrop-blur-xl">성분 근거 {confidenceLabel(product.confidenceLevel)}</span>
         </div>
         <div className="p-4 sm:p-5">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -158,6 +154,7 @@ export function ProductCard({
             <strong className="font-myeongjo text-3xl text-[#9b4a45]">{product.score}</strong>
             <span className="mb-1 text-xs text-[#807168]">/ 100 · {scoreLabel}</span>
           </div>
+          {product.matchReasons?.[0] && <p className="mb-4 line-clamp-2 min-h-10 rounded-xl bg-[#fff1f4] px-3 py-2 text-[11px] leading-5 text-[#745d65]">{product.matchReasons[0]}</p>}
           <div className="flex items-center justify-between border-t border-[#75564518] pt-4">
             <div className="flex gap-1.5 overflow-hidden text-[11px] text-[#665b53]"><span className="truncate rounded-full bg-[#aebaa340] px-2.5 py-1">{product.benefit}</span><span className="truncate rounded-full bg-[#e9b3a635] px-2.5 py-1">{product.subBenefit}</span></div>
             <Plus size={17} className="shrink-0 text-[#9b4a45]" />
@@ -169,6 +166,12 @@ export function ProductCard({
       </div>
     </article>
   );
+}
+
+function confidenceLabel(value?: Product["confidenceLevel"]) {
+  if (value === "HIGH") return "높음";
+  if (value === "MEDIUM") return "보통";
+  return "확인 중";
 }
 
 export function ScoreRing({ score, size = "large" }: { score: number; size?: "small" | "large" }) {

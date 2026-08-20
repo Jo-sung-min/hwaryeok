@@ -16,8 +16,8 @@ const currentPromises = [
   },
   {
     icon: Scale,
-    title: "점수마다 분명한 의미",
-    description: "화력점수, 리뷰점수, 개인 적합도를 나눠 각 숫자가 들려주는 이야기를 선명하게 보여줍니다.",
+    title: "브랜드보다 성분을 먼저",
+    description: "브랜드 인지도, 광고비, 판매량을 추천 점수에서 제외해 신생 브랜드도 같은 기준으로 평가합니다.",
   },
   {
     icon: Database,
@@ -32,10 +32,10 @@ const currentPromises = [
 ];
 
 const scoreRules = [
-  ["성분 화력점수", "전성분 구성과 조합을 바탕으로 제품이 어떤 기능을 목표로 하는지 보여줍니다."],
-  ["사용자 리뷰점수", "카테고리별 동일한 질문으로 실제 사용 경험을 모아 표시합니다."],
-  ["나의 적합도", "피부 타입과 고민을 적용한 참고 정보이며 의료적 진단이나 효과 보장이 아닙니다."],
-  ["정보 신뢰도", "리뷰 수, 근거 수준, 데이터 최신성을 바탕으로 현재 결과를 얼마나 참고할 수 있는지 알려줍니다."],
+  ["성분 구성 · 55%", "연결된 주요 성분의 안전성, 근거 A·B·C 수준, 전성분 순서를 함께 봅니다."],
+  ["내 피부 적합 · 35%", "피부 타입뿐 아니라 당김, 유분, 민감도, 고민, 면도·메이크업 같은 생활 신호를 반영합니다."],
+  ["데이터 신뢰 · 10%", "연결된 성분 수, 성분별 근거 수준, 출처 확인 상태를 바탕으로 결과의 확실성을 표시합니다."],
+  ["사용자 리뷰 · 별도 표시", "사용 경험은 참고 정보로 보여주되 브랜드가 이미 유명하다는 이유로 성분 추천 순위를 올리지는 않습니다."],
 ];
 
 export default function PrinciplesPage() {
@@ -47,8 +47,8 @@ export default function PrinciplesPage() {
             <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-white/75 text-[#a65368] shadow-sm"><ShieldCheck size={26} /></span>
             <p className="eyebrow mt-6">HWA:RYEOK GUIDE</p>
             <h1 className="mx-auto mt-4 max-w-3xl text-balance font-myeongjo text-[36px] font-semibold leading-tight sm:text-5xl md:text-6xl">내 피부에 맞는 선택을 더 선명하게</h1>
-            <p className="mx-auto mt-6 max-w-2xl text-sm leading-8 text-[#75675f]">화력은 복잡한 화장품 정보를 성분, 실사용 경험, 피부 궁합의 흐름으로 차분히 풀어냅니다.</p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/products" className="ink-btn">화장품 둘러보기 <ArrowRight size={17} /></Link><Link href="/ingredients" className="line-btn">성분 이야기 보기</Link></div>
+            <p className="mx-auto mt-6 max-w-2xl text-sm leading-8 text-[#75675f]">무엇이 많이 팔리는지보다 내 피부에 왜 맞는지, 어떤 성분을 확인해야 하는지부터 차분히 보여드립니다.</p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/skin-check" className="ink-btn">1분 피부 체크 <ArrowRight size={17} /></Link><Link href="/ingredients" className="line-btn">성분 이야기 보기</Link></div>
           </div>
         </section>
 
@@ -67,7 +67,7 @@ export default function PrinciplesPage() {
 
         <section id="score-policy" className="scroll-mt-24 border-y border-[#dfa6b51f] bg-white py-14 md:py-24">
           <div className="container-page grid gap-10 lg:grid-cols-[.75fr_1.25fr] lg:gap-16">
-            <div><p className="eyebrow mb-4">UNDERSTAND THE SCORE</p><h2 className="section-title font-myeongjo">서로 다른 점수는<br />저마다의 이야기로</h2><p className="mt-5 text-sm leading-7 text-[#756860]">성분, 사용 경험, 피부 궁합을 나눠 보면 각 숫자가 의미하는 바를 더 쉽게 이해할 수 있어요.</p></div>
+            <div><p className="eyebrow mb-4">UNDERSTAND THE SCORE</p><h2 className="section-title font-myeongjo">제품 순서를 정하는<br />세 가지 기준</h2><p className="mt-5 text-sm leading-7 text-[#756860]">같은 피부 조건이면 모든 브랜드를 같은 식으로 계산하고, 자료가 적은 제품은 낮은 신뢰도로 보수적으로 보여줘요.</p></div>
             <div className="grid gap-3">
               {scoreRules.map(([title, description], index) => (
                 <div key={title} className="flex gap-4 rounded-[22px] border border-[#75564516] bg-[#fffafa] p-5">
@@ -88,6 +88,7 @@ export default function PrinciplesPage() {
                 <li>• 데이터가 부족하면 그 사실을 결과보다 먼저 알립니다.</li>
                 <li>• 제품의 장점과 주의점을 한 화면에서 함께 보여줍니다.</li>
                 <li>• 사용자 리뷰와 성분 기반 분석을 구분합니다.</li>
+                <li>• 신생 브랜드도 성분 근거가 좋으면 같은 순위 기회를 가집니다.</li>
               </ul>
             </div>
             <div className="rounded-[28px] border border-[#c78e7635] bg-[#f7e9e4] p-6 sm:p-8">
@@ -97,6 +98,7 @@ export default function PrinciplesPage() {
                 <li>• 피부 궁합은 컨디션과 사용 환경에 따라 달라질 수 있어요.</li>
                 <li>• 적합도는 의료적 진단이나 효과 보장을 뜻하지 않아요.</li>
                 <li>• 성분과 사용감은 함께 살펴볼 때 더 선명해집니다.</li>
+                <li>• 광고비, 판매량, 브랜드 인지도는 맞춤 점수에 넣지 않습니다.</li>
               </ul>
             </div>
           </div>
@@ -117,7 +119,7 @@ export default function PrinciplesPage() {
 
         <section className="container-page py-14 text-center md:py-20">
           <p className="text-sm leading-7 text-[#756860]">화력의 정보는 화장품 선택을 돕기 위한 참고 자료이며 의료적 진단이나 치료를 대신하지 않습니다.</p>
-          <Link href="/products" className="ink-btn mt-7">내 화장품 이야기 시작하기 <ArrowRight size={17} /></Link>
+          <Link href="/skin-check" className="ink-btn mt-7">내 피부 기준부터 확인하기 <ArrowRight size={17} /></Link>
         </section>
       </div>
       <Footer />

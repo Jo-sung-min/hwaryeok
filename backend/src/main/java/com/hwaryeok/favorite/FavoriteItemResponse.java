@@ -14,4 +14,8 @@ public record FavoriteItemResponse(
                 favorite.getCreatedAt()
         );
     }
+
+    public static FavoriteItemResponse from(UserFavorite favorite, ProductResponse product) {
+        return new FavoriteItemResponse(product, favorite.getCreatedAt());
+    }
 }

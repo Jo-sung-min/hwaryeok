@@ -10,11 +10,11 @@ export function Footer() {
         </div>
         <div>
           <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">EXPLORE</p>
-          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/products">화장품 탐색</Link><Link href="/ranking">화력 랭킹</Link><Link href="/compare">제품 비교</Link></div>
+          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/products">화장품 탐색</Link><Link href="/ranking">맞춤 랭킹</Link><Link href="/compare">제품 비교</Link></div>
         </div>
         <div>
           <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">MY HWA:RYEOK</p>
-          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/profile">피부 분석</Link><Link href="/my">마이화력</Link><Link href="/ingredients">성분 사전</Link></div>
+          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/skin-check">1분 피부 체크</Link><Link href="/profile">내 피부 기준</Link><Link href="/ingredients">성분 사전</Link></div>
         </div>
         <div>
           <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">GUIDE</p>

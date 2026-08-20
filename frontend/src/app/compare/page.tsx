@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 const defaultProfile = {
   skinType: "수부지",
-  concerns: ["속건조", "민감", "피부 장벽"],
+  concerns: ["속건조·당김", "붉은기·민감", "장벽·각질"],
 };
 
 type CompareSearchParams = Promise<{
@@ -53,7 +53,9 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
         routineComplexity: savedProfile.routineComplexity,
         sunscreenUsage: savedProfile.sunscreenUsage,
         reactionTriggers: savedProfile.reactionTriggers,
+        breakoutZones: savedProfile.breakoutZones,
         environments: savedProfile.environments,
+        routineContexts: savedProfile.routineContexts,
       }
     : defaultProfile;
 
@@ -93,7 +95,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
   };
 
   return <div className="min-h-screen pb-24">
-    <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 text-center md:py-14"><div className="container-page"><p className="eyebrow mb-4">COMPARE POWER</p><h1 className="text-balance font-myeongjo text-[32px] leading-tight md:text-5xl">같은 조건에서 나란히 보기</h1><p className="mt-4 text-sm leading-7 text-[#786c63]">{analysisProfile.skinType} · {analysisProfile.concerns.join(" · ")} {savedProfile ? "내 프로필" : "예시 프로필"}로 {selectedProducts.length}개 제품을 같은 기준에서 분석해요.</p><p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><Sparkles size={13} /> 내 피부 조건으로 보는 제품별 궁합</p>{!savedProfile && <div><Link href="/profile" className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[#9b4a45]">내 피부 프로필로 다시 비교하기</Link></div>}</div></section>
+    <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 text-center md:py-14"><div className="container-page"><p className="eyebrow mb-4">SAME SKIN, SAME STANDARD</p><h1 className="text-balance font-myeongjo text-[32px] leading-tight md:text-5xl">같은 피부 조건에서 나란히 보기</h1><p className="mt-4 text-sm leading-7 text-[#786c63]">{analysisProfile.skinType} · {analysisProfile.concerns.join(" · ")} {savedProfile ? "내 프로필" : "예시 프로필"}로 {selectedProducts.length}개 제품을 같은 성분 기준에서 분석해요.</p><p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><Sparkles size={13} /> 브랜드와 판매량을 제외한 제품별 궁합</p>{!savedProfile && <div><Link href="/skin-check" className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[#9b4a45]">1분 피부 체크 후 다시 비교하기</Link></div>}</div></section>
     <section className="container-page py-8 md:py-16">
       <ComparisonToolbar
         products={products}

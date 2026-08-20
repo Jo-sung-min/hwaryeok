@@ -78,7 +78,7 @@ class HwaryeokApplicationTests {
     @Test
     void servesProductSearchApi() throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:" + port + "/api/v1/products?query=자작나무&grade=1"))
+                .uri(URI.create("http://localhost:" + port + "/api/v1/products?query=자작나무"))
                 .GET()
                 .build();
 
@@ -92,7 +92,7 @@ class HwaryeokApplicationTests {
                 "hwahae-2079267",
                 "hwahae-1920665",
                 "자작나무 수분 크림",
-                "\"grade\":1",
+                "\"scoreBasis\":\"성분 55% · 피부 적합 35% · 데이터 신뢰 10%\"",
                 "\"totalElements\":3"
         );
     }
@@ -147,8 +147,8 @@ class HwaryeokApplicationTests {
         assertThat(detailResponse.statusCode()).isEqualTo(200);
         assertThat(detailResponse.body()).contains("birch-cream", "수분 장벽 강화");
         assertThat(rankingResponse.statusCode()).isEqualTo(200);
-        assertThat(rankingResponse.body()).contains("hwahae-2015377", "hwahae-1950255", "birch-cream");
-        assertThat(rankingResponse.body()).doesNotContain("mugwort-ampoule");
+        assertThat(rankingResponse.body()).contains("heartleaf-toner", "mugwort-ampoule", "bean-essence");
+        assertThat(rankingResponse.body()).doesNotContain("hwahae-2015377");
     }
 
     @Test
@@ -170,7 +170,11 @@ class HwaryeokApplicationTests {
                 .send(request, HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).contains("\"grade\":1", "\"score\":100", "매우 잘 맞아요");
+        assertThat(response.body()).contains(
+                "\"ingredientScore\"", "\"compatibilityScore\"", "\"dataConfidenceScore\"",
+                "\"scoreBasis\":\"성분 55% · 피부 적합 35% · 데이터 신뢰 10%\"",
+                "잘 맞는 편이에요"
+        );
     }
 
     @Test

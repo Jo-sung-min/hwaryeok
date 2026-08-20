@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  FileSearch,
   FlaskConical,
   GitCompareArrows,
   HeartHandshake,
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-ui";
-import { products } from "@/lib/data";
+import { getRanking } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
 
 const reportPillars = [
@@ -39,8 +38,8 @@ const reportPillars = [
     icon: UserRoundCheck,
     title: "나의 적합도",
     description: "피부 타입과 고민을 더해 지금의 나와 잘 맞는 이유를 섬세하게 보여드려요.",
-    href: "/profile",
-    linkLabel: "피부 프로필 만들기",
+    href: "/skin-check",
+    linkLabel: "1분 피부 체크",
   },
   {
     icon: ShieldCheck,
@@ -52,7 +51,10 @@ const reportPillars = [
 ];
 
 export default async function HomePage() {
-  const favoriteState = await getFavoriteViewState();
+  const [favoriteState, featuredProducts] = await Promise.all([
+    getFavoriteViewState(),
+    getRanking("수부지", 3),
+  ]);
   const favoriteIds = new Set(favoriteState.favoriteIds);
 
   return (
@@ -71,7 +73,7 @@ export default async function HomePage() {
             <h1 className="font-myeongjo text-[42px] font-medium leading-[1.22] tracking-[-.065em] text-[#332b26] max-[359px]:text-[36px] sm:text-[54px] md:text-[64px]">
               내 피부에 맞는<br /><span className="relative text-[#98495d]">화장품 이야기</span>
             </h1>
-            <p className="mt-6 max-w-[560px] text-[15px] leading-7 text-[#695d55] md:text-base md:leading-8">제품 하나를 검색하면 성분, 사용감, 피부 궁합을 한눈에 정리해 나에게 맞는 선택을 도와드려요.</p>
+            <p className="mt-6 max-w-[560px] text-[15px] leading-7 text-[#695d55] md:text-base md:leading-8">브랜드 인지도보다 성분과 내 피부 신호를 먼저 보고, 고르기 쉬운 이유와 주의점을 함께 보여드려요.</p>
 
             <form action="/products" role="search" aria-label="내 피부 맞춤 화장품 검색" className="glass-field mt-8 flex min-h-[62px] max-w-[590px] items-center gap-2 rounded-[22px] p-2 pl-4">
               <Search size={20} className="shrink-0 text-[#9f5364]" aria-hidden="true" />
@@ -81,14 +83,15 @@ export default async function HomePage() {
             </form>
 
             <div className="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap">
-              <Link href="/profile" className="line-btn w-full sm:w-auto"><Sparkles size={17} /> 내 피부 프로필 만들기</Link>
+              <Link href="/skin-check" className="ink-btn w-full sm:w-auto"><Sparkles size={17} /> 1분 피부 체크</Link>
+              <Link href="/profile" className="line-btn w-full sm:w-auto">내 피부 기준 저장</Link>
               <Link href="/principles" className="line-btn w-full sm:w-auto"><Info size={17} /> 화력 리포트 읽는 법</Link>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#756960]">
               <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#a54f63]" /> 성분과 사용감을 한눈에</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#a54f63]" /> 내 피부 프로필로 더 섬세하게</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#a54f63]" /> 리뷰 수와 정보 상태까지 투명하게</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 size={14} className="text-[#a54f63]" /> 광고비·판매량을 점수에서 제외</span>
             </div>
           </div>
         </div>
@@ -104,7 +107,7 @@ export default async function HomePage() {
           <p className="text-[11px] font-bold tracking-[.16em] text-[#b45f75]">QUICK START</p>
           <h2 className="mt-2 font-myeongjo text-[27px] font-semibold leading-tight">지금 필요한 정보부터<br />바로 확인하세요.</h2>
           <div className="mt-6 grid gap-3">
-            <Link href="/products" className="glass-choice flex min-h-[76px] items-center gap-3 rounded-[20px] p-4"><span className="choice-icon grid h-11 w-11 shrink-0 place-items-center rounded-full"><FileSearch size={19} /></span><span className="min-w-0 flex-1"><strong className="block text-sm">화력 리포트 찾기</strong><small className="choice-copy mt-1 block text-[10px]">성분·사용감·피부 궁합을 한눈에</small></span><ArrowRight size={17} /></Link>
+            <Link href="/skin-check" className="glass-choice flex min-h-[76px] items-center gap-3 rounded-[20px] p-4"><span className="choice-icon grid h-11 w-11 shrink-0 place-items-center rounded-full"><Sparkles size={19} /></span><span className="min-w-0 flex-1"><strong className="block text-sm">1분 피부 체크</strong><small className="choice-copy mt-1 block text-[10px]">로그인 없이 맞는 성분과 제품 확인</small></span><ArrowRight size={17} /></Link>
             <div className="grid grid-cols-2 gap-3">
               <Link href="/ingredients" className="glass-choice flex min-h-[72px] items-center gap-2 rounded-[20px] p-3"><span className="choice-icon grid h-10 w-10 shrink-0 place-items-center rounded-full"><BookOpen size={18} /></span><span><strong className="block text-xs">성분 사전</strong><small className="choice-copy mt-1 block text-[9px]">근거와 주의점</small></span></Link>
               <Link href="/compare" className="glass-choice flex min-h-[72px] items-center gap-2 rounded-[20px] p-3"><span className="choice-icon grid h-10 w-10 shrink-0 place-items-center rounded-full"><GitCompareArrows size={18} /></span><span><strong className="block text-xs">제품 비교</strong><small className="choice-copy mt-1 block text-[9px]">같은 조건으로</small></span></Link>
@@ -174,7 +177,7 @@ export default async function HomePage() {
             <div><p className="eyebrow mb-4">START WITH ONE PRODUCT</p><h2 className="section-title font-myeongjo">마음에 닿는 제품부터<br className="sm:hidden" /> 만나보세요</h2><p className="mt-4 max-w-xl text-sm leading-7 text-[#786b63]">제품 카드는 핵심 화력을, 상세 리포트는 성분과 사용감, 피부 궁합을 더 깊게 보여드려요.</p></div>
             <Link href="/products" className="hidden items-center gap-1 text-sm font-semibold text-[#9b4a5d] sm:flex">모든 제품 <ArrowRight size={16} /></Link>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{products.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo="/" />)}</div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{featuredProducts.map((product) => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo="/" scoreLabel="성분 기준 점수" />)}</div>
           <Link href="/products" className="line-btn mt-7 w-full sm:hidden">모든 제품 보기</Link>
         </div>
       </section>
@@ -214,8 +217,8 @@ export default async function HomePage() {
           <div className="absolute left-[8%] top-8 text-5xl text-[#d58b7860]" aria-hidden="true">❀</div><div className="absolute bottom-8 right-[10%] text-4xl text-[#d58b7845]" aria-hidden="true">✿</div>
           <p className="eyebrow mb-4">BEGIN YOUR BEAUTY STORY</p>
           <h2 className="font-myeongjo text-3xl font-medium leading-snug md:text-5xl">내 피부에 맞는 이야기를<br />시작해 보세요.</h2>
-          <p className="mt-5 text-sm leading-7 text-[#74675e]">궁금한 제품부터 살펴보고, 더 섬세한 추천이 필요할 때 피부 프로필을 완성해 보세요.</p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/products" className="ink-btn w-full sm:w-auto">내 화장품 찾기 <ArrowRight size={17} /></Link><Link href="/profile" className="line-btn w-full sm:w-auto">피부 프로필 만들기</Link></div>
+          <p className="mt-5 text-sm leading-7 text-[#74675e]">최근 피부 상태를 먼저 체크하면, 이름이 낯선 브랜드도 성분이 잘 맞는 이유를 확인하며 고를 수 있어요.</p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/skin-check" className="ink-btn w-full sm:w-auto">1분 피부 체크 <ArrowRight size={17} /></Link><Link href="/products" className="line-btn w-full sm:w-auto">제품부터 둘러보기</Link></div>
         </div>
       </section>
       <Footer />

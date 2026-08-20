@@ -1,9 +1,12 @@
 package com.hwaryeok.favorite;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductService;
+import com.hwaryeok.product.ProductResponse;
 import com.hwaryeok.user.ActiveUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +31,14 @@ public class FavoriteService {
     @Transactional(readOnly = true)
     public FavoriteListResponse findAll(String userId) {
         activeUserService.requireActive(userId);
-        return FavoriteListResponse.from(favoriteRepository.findByIdUserIdOrderByCreatedAtDesc(userId));
+        List<UserFavorite> favorites = favoriteRepository.findByIdUserIdOrderByCreatedAtDesc(userId);
+        Map<String, ProductResponse> products = productService.toNeutralResponses(
+                favorites.stream().map(UserFavorite::getProduct).toList()
+        );
+        List<FavoriteItemResponse> content = favorites.stream()
+                .map(item -> FavoriteItemResponse.from(item, products.get(item.getProduct().getId())))
+                .toList();
+        return new FavoriteListResponse(content, content.size());
     }
 
     @Transactional
@@ -38,7 +48,7 @@ public class FavoriteService {
         UserFavoriteId id = new UserFavoriteId(userId, productId);
         UserFavorite favorite = favoriteRepository.findById(id)
                 .orElseGet(() -> favoriteRepository.saveAndFlush(new UserFavorite(userId, product, Instant.now())));
-        return FavoriteItemResponse.from(favorite);
+        return FavoriteItemResponse.from(favorite, productService.toNeutralResponse(product));
     }
 
     @Transactional
