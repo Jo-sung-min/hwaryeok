@@ -4,6 +4,7 @@ import "./globals.css";
 import { BottomNav, Header } from "@/components/navigation";
 import { HeaderAuth } from "@/components/header-auth";
 import { UiAlertProvider } from "@/components/ui-alert-provider";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <UiAlertProvider>
           <Header authSlot={<Suspense fallback={<span className="line-btn !min-h-10 !w-24 opacity-50" aria-hidden="true" />}><HeaderAuth /></Suspense>} />
           <main>{children}</main>
+          <Footer />
           <BottomNav />
         </UiAlertProvider>
       </body>

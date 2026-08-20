@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeInfo, CheckCircle2, Database, HeartHandshake, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
-import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "화력을 읽는 방법",
@@ -122,7 +121,6 @@ export default function PrinciplesPage() {
           <Link href="/skin-check" className="ink-btn mt-7">내 피부 기준부터 확인하기 <ArrowRight size={17} /></Link>
         </section>
       </div>
-      <Footer />
     </>
   );
 }

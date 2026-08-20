@@ -14,7 +14,6 @@ import {
   Sparkles,
   UserRoundCheck,
 } from "lucide-react";
-import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-ui";
 import { getRanking } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
@@ -221,7 +220,6 @@ export default async function HomePage() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/skin-check" className="ink-btn w-full sm:w-auto">1분 피부 체크 <ArrowRight size={17} /></Link><Link href="/products" className="line-btn w-full sm:w-auto">제품부터 둘러보기</Link></div>
         </div>
       </section>
-      <Footer />
     </>
   );
 }

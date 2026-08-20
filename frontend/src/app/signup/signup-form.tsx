@@ -66,7 +66,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
       <div className="mt-6 rounded-2xl border border-[#7f8c7622] bg-[#eef1e849] p-3.5 sm:p-4">
         <label className="flex cursor-pointer items-start gap-3 text-xs leading-6 text-[#646359]">
           <input name="termsAccepted" type="checkbox" required className="mt-1 h-4 w-4 accent-[#a54f49]" />
-          <span><strong className="font-semibold text-[#514b45]">필수</strong> 서비스 이용약관과 개인정보 처리방침에 동의합니다.</span>
+          <span><strong className="font-semibold text-[#514b45]">필수</strong> <Link href="/terms" className="font-semibold underline underline-offset-2">서비스 이용약관</Link>과 <Link href="/privacy" className="font-semibold underline underline-offset-2">개인정보처리방침</Link>에 동의합니다.</span>
         </label>
         {state.fieldErrors.termsAccepted && <p className="mt-2 text-xs text-[#a64e47]" role="alert">{state.fieldErrors.termsAccepted}</p>}
       </div>

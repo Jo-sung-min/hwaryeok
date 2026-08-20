@@ -367,7 +367,7 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 767px) {
   .container-page { width: min(100% - 24px, 1180px); }
-  body { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  body { padding-bottom: 0; }
   input, select, textarea { font-size: 16px; }
   .ink-btn, .line-btn { min-height: 48px; }
   .ranking-tabs-scroll {
