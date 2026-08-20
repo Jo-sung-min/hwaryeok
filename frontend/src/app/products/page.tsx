@@ -1,10 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { connection } from "next/server";
-import { ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { getProductPage } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
 import { CategoryNavigation, DesktopFilters, MobileFilters, ProductSearch, ProductSort, type ProductFilterValues, type ProductSortOrder } from "./product-filters";
+
+export const metadata: Metadata = {
+  title: "화장품 탐색",
+  description: "제품명과 브랜드를 검색하고 카테고리·화력 등급별로 성분, 리뷰, 피부 적합도를 확인하세요.",
+  alternates: { canonical: "/products" },
+};
 
 type SearchParams = Promise<{
   query?: string | string[];
@@ -72,9 +79,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
       <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 md:py-20">
         <div className="container-page text-center">
           <p className="eyebrow mb-4">PRODUCT REPORTS</p>
-          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">광고 없이 제품 기준부터</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#776b62]">목록은 등록된 기본 화력점수를 기준으로 정렬합니다. 제품 상세에서 성분, 실사용 리뷰, 적용된 피부 조건을 따로 확인하세요.</p>
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><ShieldCheck size={13} /> 광고비로 목록 순서를 바꾸지 않아요</p>
+          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">내 피부에 맞는 화장품을 찾아보세요</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#776b62]">카테고리와 화력 등급으로 가볍게 둘러보고, 제품 리포트에서 성분과 사용감, 피부 궁합을 더 깊게 살펴보세요.</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><Sparkles size={13} /> 성분 · 사용감 · 피부 궁합을 한곳에서</p>
           <ProductSearch filters={filters} />
         </div>
       </section>
@@ -85,7 +92,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
           <DesktopFilters filters={filters} />
           <section>
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개의 제품 판정서를 확인할 수 있어요</p>
+              <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개의 화장품 이야기를 살펴볼 수 있어요</p>
               <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end">
                 <MobileFilters filters={filters} resultCount={productPage.totalElements} />
                 <ProductSort filters={filters} />

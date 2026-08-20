@@ -3,7 +3,7 @@ import type { Product } from "@/lib/types";
 export type { Product } from "@/lib/types";
 
 export const products: Product[] = [
-  { id: "birch-cream", brand: "라운드랩", name: "자작나무 수분 크림", category: "크림", grade: 1, score: 94, benefit: "수분 장벽 강화", subBenefit: "속건조 진정", price: "32,000원", tone: "blue", tag: "판정서 예시", publicationStatus: "PUBLISHED" },
+  { id: "birch-cream", brand: "라운드랩", name: "자작나무 수분 크림", category: "크림", grade: 1, score: 94, benefit: "수분 장벽 강화", subBenefit: "속건조 진정", price: "32,000원", tone: "blue", tag: "리포트 예시", publicationStatus: "PUBLISHED" },
   { id: "heartleaf-toner", brand: "아누아", name: "어성초 77 진정 토너", category: "토너", grade: 1, score: 91, benefit: "붉은기 진정", subBenefit: "유수분 균형", price: "25,000원", tone: "sage", tag: "성분 정보 확인", publicationStatus: "PUBLISHED" },
   { id: "ceramide-serum", brand: "아뜰리에 온", name: "세라마이드 결 세럼", category: "세럼", grade: 1, score: 90, benefit: "장벽 케어", subBenefit: "결 정돈", price: "38,000원", tone: "peach", tag: "신규 등록", publicationStatus: "PUBLISHED" },
   { id: "rice-sunscreen", brand: "조선미녀", name: "맑은 쌀 선크림", category: "선케어", grade: 2, score: 86, benefit: "순한 자외선 차단", subBenefit: "촉촉한 마무리", price: "18,000원", tone: "sand", publicationStatus: "PUBLISHED" },

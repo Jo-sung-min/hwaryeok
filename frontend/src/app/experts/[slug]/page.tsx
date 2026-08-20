@@ -1,7 +1,27 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, Bookmark, Building2, Heart, MapPin, MessageCircle } from "lucide-react";
 import { ExpertAvatar, ExpertDisclaimer, VerificationBadges } from "@/components/expert-ui";
 import { getExpert } from "@/lib/api";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const { expert } = await getExpert(slug);
+    return {
+      title: `${expert.realName} ${expert.specialty ?? "의사"}`,
+      description: `${expert.verificationLabel}. ${expert.bio}`,
+      alternates: { canonical: `/experts/${expert.slug}` },
+      openGraph: {
+        title: `${expert.realName} ${expert.specialty ?? "의사"}`,
+        description: expert.bio,
+        url: `/experts/${expert.slug}`,
+      },
+    };
+  } catch {
+    return { title: "전문가를 찾을 수 없어요", robots: { index: false, follow: false } };
+  }
+}
 
 export default async function ExpertDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

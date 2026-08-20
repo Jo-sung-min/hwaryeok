@@ -43,7 +43,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
               <div className="flex items-center gap-2 text-[#a5545e]"><MessageCircle size={18} /><p className="eyebrow">HWA:RYEOK REVIEW</p></div>
               <h2 className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">사용자 리뷰점수</h2>
               <p className="mt-3 max-w-md text-sm leading-7 text-[#796c63]">{criteria.categoryName}에 꼭 맞는 {criteria.criteria.length}개 기준을 같은 방식으로 평가해 제품의 사용 경험을 비교해요.</p>
-              <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/75 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><ShieldCheck size={13} /> 현재 브랜드 제공·협찬 리뷰를 운영하지 않아요</p>
+              <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/75 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><ShieldCheck size={13} /> 피부 타입 · 사용 기간까지 함께 보는 리뷰</p>
             </div>
             <div className="mt-8 flex items-end gap-4">
               {summary.rankingStatus === "COLLECTING" ? (

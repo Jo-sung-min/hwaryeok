@@ -60,7 +60,7 @@ export function ProductForm({ product }: { product?: Product }) {
         </Field>
       </div>
 
-      <Field label="표시 문구(선택)" error={fieldError("tag")} hint="광고성 표현 대신 확인 가능한 정보만 적어 주세요.">
+      <Field label="표시 문구(선택)" error={fieldError("tag")} hint="사용자가 이해하기 쉬운, 확인 가능한 표현으로 적어 주세요.">
         <input id={`${prefix}-tag`} name="tag" maxLength={80} defaultValue={product?.tag ?? ""} placeholder="예: 성분 정보 확인" className={inputClass} />
       </Field>
 

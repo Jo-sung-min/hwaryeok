@@ -6,7 +6,7 @@ export function Footer() {
       <div className="container-page grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_.75fr_.75fr_.9fr]">
         <div>
           <div className="mb-4 flex items-center gap-3"><span className="seal h-9 w-9 font-myeongjo text-lg">화</span><strong className="font-myeongjo text-2xl">화력</strong></div>
-          <p className="max-w-sm text-sm leading-7 text-[#74685f]">광고보다 판단 기준을 먼저 봅니다.<br />초기에는 광고·협찬 없이 정보 제공에 집중해요.</p>
+          <p className="max-w-sm text-sm leading-7 text-[#74685f]">내 피부를 더 잘 이해하는 순간,<br />화장품 선택도 한결 선명해집니다.</p>
         </div>
         <div>
           <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">EXPLORE</p>
@@ -17,8 +17,8 @@ export function Footer() {
           <div className="grid gap-3 text-sm text-[#625850]"><Link href="/profile">피부 분석</Link><Link href="/my">마이화력</Link><Link href="/ingredients">성분 사전</Link></div>
         </div>
         <div>
-          <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">TRUST</p>
-          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/principles">운영 원칙</Link><Link href="/principles#score-policy">점수 기준</Link><Link href="/questions">전문가 Q&amp;A</Link></div>
+          <p className="mb-4 text-xs font-bold tracking-[.14em] text-[#9b6a5c]">GUIDE</p>
+          <div className="grid gap-3 text-sm text-[#625850]"><Link href="/principles">화력 읽는 법</Link><Link href="/principles#score-policy">점수 이해하기</Link><Link href="/questions">전문가 Q&amp;A</Link></div>
         </div>
       </div>
       <div className="container-page mt-12 border-t border-[#74513f16] pt-6 text-[11px] leading-5 text-[#897a6f]">© 2026 HWA:RYEOK. 화장품 선택을 돕는 정보 서비스이며 의료적 진단이나 치료를 대신하지 않습니다.</div>

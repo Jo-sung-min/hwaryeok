@@ -27,7 +27,7 @@ export default async function AdminPage() {
           <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#c7819540] bg-white/75 px-4 py-2 text-xs font-semibold text-[#9b4a5f]"><ShieldCheck size={15} className="shrink-0" /><span className="truncate">{user.email}</span></div>
           <p className="eyebrow mb-3 mt-6">ADMIN CENTER</p>
           <h1 className="font-myeongjo text-4xl font-semibold md:text-5xl">화력 관리자 센터</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#78666d]">광고 운영이 아닌 정보 신뢰 관리가 우선이에요. 공개 상태와 누락된 근거를 확인하고, 검토가 끝난 정보만 사용자에게 보여 주세요.</p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-[#78666d]">공개 상태와 누락된 근거를 살피고, 확인을 마친 정보만 사용자에게 보여 주세요.</p>
         </div>
       </section>
 

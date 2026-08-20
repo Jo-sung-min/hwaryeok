@@ -17,7 +17,8 @@ hwaryeok/
 │  ├─ build.gradle
 │  ├─ gradlew / gradlew.bat
 │  └─ .env.example
-├─ docker-compose.yml    PostgreSQL 개발 환경
+├─ docker-compose.yml    프론트·백엔드·PostgreSQL 컨테이너 구성
+├─ DEPLOYMENT.md         운영 환경 변수·Docker·배포·롤백 가이드
 ├─ .env.example          PostgreSQL 컨테이너 환경 변수 예시
 └─ plan.md               구현 체크리스트와 작업 기록
 ```
@@ -94,5 +95,7 @@ cd ../backend
 ```
 
 백엔드 API 문서는 [backend/README.md](backend/README.md), 전체 진행 상태는 [plan.md](plan.md)를 참고합니다.
+
+프론트·백엔드·PostgreSQL 전체를 컨테이너로 검증하거나 운영 배포를 준비할 때는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고하세요.
 
 샘플 제품에는 화해 공개 급상승 랭킹을 화력 형식으로 변환한 16종이 포함됩니다. 수집 범위, 변환 규칙, 재수집 방법은 [backend/README.md](backend/README.md#화해-공개-랭킹-샘플-데이터)에 기록되어 있습니다.

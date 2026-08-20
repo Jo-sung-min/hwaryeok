@@ -1,8 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { BookOpen, Check, ChevronLeft, ChevronRight, Search, TriangleAlert } from "lucide-react";
 import { getIngredients, type IngredientQuery } from "@/lib/api";
 import type { IngredientStatus } from "@/lib/types";
+
+export const metadata: Metadata = {
+  title: "성분 사전",
+  description: "화장품 성분의 역할, 근거 수준, 피부 타입별 특징과 주의점을 확인하세요.",
+  alternates: { canonical: "/ingredients" },
+};
 
 type SearchParams = Promise<{
   query?: string | string[];

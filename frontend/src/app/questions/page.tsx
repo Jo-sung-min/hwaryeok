@@ -1,7 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft, MessageCircleQuestion, PenLine } from "lucide-react";
 import { QuestionCard } from "@/components/expert-ui";
 import { getExpertQuestions } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "화장품 고민 상담소",
+  description: "화장품과 성분에 관한 사용자 질문과 인증 전문가의 공개 답변을 살펴보세요.",
+  alternates: { canonical: "/questions" },
+};
 
 const filters = [{ code: "ALL", name: "전체" }, { code: "OPEN", name: "답변 대기" }, { code: "ANSWERED", name: "답변 완료" }];
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Activity, ArrowRight, Clock3, Droplets, Flower2, Heart, PencilLine, Scale, Settings, Shield, Sparkles, Stethoscope, SunMedium, Wind } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { IngredientPreferencesForm } from "@/app/my/ingredient-preferences-form";
-import { getFeaturedIngredients, getRanking, getUserFavorites, getUserPreferredIngredients, getUserRecentProducts, getUserSkinProfile } from "@/lib/api";
+import { getFeaturedIngredients, getRanking, getUserComparisonProducts, getUserFavorites, getUserPreferredIngredients, getUserRecentProducts, getUserSkinProfile } from "@/lib/api";
 import { readAuthTokens, requireSession } from "@/lib/auth-session";
 
 const skinSeal: Record<string, string> = {
@@ -18,12 +18,13 @@ export default async function MyPage() {
   const user = await requireSession("/my");
   const { accessToken } = await readAuthTokens();
   const featuredIngredients = await getFeaturedIngredients(10);
-  const [profile, favorites, preferredIngredients, recentProducts] = accessToken
-    ? await Promise.all([getUserSkinProfile(accessToken), getUserFavorites(accessToken), getUserPreferredIngredients(accessToken), loadRecentProducts(accessToken)])
+  const [profile, favorites, preferredIngredients, recentProducts, comparisonProducts] = accessToken
+    ? await Promise.all([getUserSkinProfile(accessToken), getUserFavorites(accessToken), getUserPreferredIngredients(accessToken), loadRecentProducts(accessToken), loadComparisonProducts(accessToken)])
     : [
         { configured: false, skinType: null, hydrationLevel: null, oilinessLevel: null, sensitivityLevel: null, breakoutFrequency: null, profileVersion: 0, cleansingTightness: null, rednessFrequency: null, poreLevel: null, texturePreference: null, routineComplexity: null, sunscreenUsage: null, reactionTriggers: [], breakoutZones: [], environments: [], concerns: [], createdAt: null, updatedAt: null },
         { content: [], totalElements: 0 },
         { content: [], totalElements: 0 },
+        { content: [], totalElements: 0, error: null },
         { content: [], totalElements: 0, error: null },
       ];
   const ranking = await getRanking(profile.configured ? profile : "수부지", 3);
@@ -45,7 +46,7 @@ export default async function MyPage() {
             <div>
               <p className="eyebrow mb-4">MY HWA:RYEOK</p>
               <h1 className="text-balance font-myeongjo text-[34px] font-medium leading-tight sm:text-4xl">{user.nickname}님의 피부가<br className="sm:hidden" /> 피어나는 곳</h1>
-              <p className="mt-4 text-sm text-[#75695f]">저장한 피부 정보와 찜·최근 본 제품을 한곳에서 살펴보세요.</p>
+              <p className="mt-4 text-sm text-[#75695f]">저장한 피부 정보와 찜·비교·최근 본 제품을 한곳에서 살펴보세요.</p>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               {user.role === "ADMIN" && <Link href="/admin" className="line-btn w-full self-start sm:w-auto"><Shield size={16} /> 관리자 센터</Link>}
@@ -82,7 +83,7 @@ export default async function MyPage() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           <StatCard icon={Heart} label="찜한 제품" value={String(favorites.totalElements)} ready />
-          <StatCard icon={Scale} label="비교한 제품" value="준비 중" />
+          <StatCard icon={Scale} label="비교 저장 제품" value={comparisonProducts.error ? "확인 필요" : String(comparisonProducts.totalElements)} ready={!comparisonProducts.error} />
           <StatCard icon={Clock3} label="최근 본 제품" value={recentProducts.error ? "확인 필요" : String(recentProducts.totalElements)} ready={!recentProducts.error} />
         </div>
 
@@ -91,6 +92,32 @@ export default async function MyPage() {
             ingredients={featuredIngredients}
             initialSelected={preferredIngredients.content.map((item) => item.ingredient.id)}
           />
+        </section>
+
+        <section className="mt-10 md:mt-14">
+          <div className="mb-6 flex items-end justify-between gap-4">
+            <div><h2 className="font-myeongjo text-2xl font-semibold">저장한 제품 비교</h2><p className="mt-2 text-xs text-[#82736a]">비교 화면에서 고른 2~3개 제품과 순서를 그대로 보관해요.</p></div>
+            {comparisonProducts.totalElements >= 2 && <Link href={comparisonHref(comparisonProducts.content)} className="shrink-0 text-xs font-semibold text-[#9b4a45]">비교 이어보기</Link>}
+          </div>
+          {comparisonProducts.error ? (
+            <div className="rounded-[24px] border border-[#c78e762a] bg-[#fff8ee] px-5 py-10 text-center sm:px-6 sm:py-12">
+              <Scale className="mx-auto text-[#b77762]" size={30} strokeWidth={1.5} />
+              <h3 className="mt-4 font-myeongjo text-xl font-semibold">저장한 비교를 잠시 불러오지 못했어요.</h3>
+              <p className="mt-2 text-sm text-[#7c6f66]">찜과 최근 본 기록은 그대로 이용할 수 있어요. 잠시 후 다시 확인해 주세요.</p>
+              <Link href="/my" className="line-btn mt-6 w-full sm:w-auto">다시 불러오기</Link>
+            </div>
+          ) : comparisonProducts.content.length >= 2 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {comparisonProducts.content.map(({ product }) => <ProductCard key={product.id} product={product} initialFavorited={favorites.content.some((item) => item.product.id === product.id)} isAuthenticated returnTo="/my" />)}
+            </div>
+          ) : (
+            <div className="paper-card rounded-[24px] px-5 py-12 text-center sm:rounded-[26px] sm:px-6 sm:py-14">
+              <Scale className="mx-auto text-[#c58a7c]" size={32} strokeWidth={1.5} />
+              <h3 className="mt-5 font-myeongjo text-2xl font-semibold">저장한 비교가 아직 없어요.</h3>
+              <p className="mt-3 text-sm text-[#7c6f66]">비교 화면에서 제품 2~3개를 고른 뒤 내 계정에 저장해 보세요.</p>
+              <Link href="/compare" className="ink-btn mt-7 w-full sm:w-auto">제품 비교 시작 <ArrowRight size={16} /></Link>
+            </div>
+          )}
         </section>
 
         <section className="mt-10 md:mt-14">
@@ -176,6 +203,23 @@ async function loadRecentProducts(accessToken: string) {
   } catch {
     return { content: [], totalElements: 0, error: "RECENT_PRODUCTS_UNAVAILABLE" };
   }
+}
+
+async function loadComparisonProducts(accessToken: string) {
+  try {
+    const result = await getUserComparisonProducts(accessToken);
+    return { ...result, error: null as string | null };
+  } catch {
+    return { content: [], totalElements: 0, error: "COMPARISON_PRODUCTS_UNAVAILABLE" };
+  }
+}
+
+function comparisonHref(content: { product: { id: string } }[]) {
+  const search = new URLSearchParams();
+  if (content[0]) search.set("left", content[0].product.id);
+  if (content[1]) search.set("right", content[1].product.id);
+  if (content[2]) search.set("third", content[2].product.id);
+  return `/compare?${search}`;
 }
 
 function balanceLabel(level: "LOW" | "BALANCED" | "HIGH" | null, kind: "수분" | "유분") {

@@ -3,7 +3,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { ApiRequestError, getCurrentUser, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
+import { ApiRequestError, getCurrentUser, getUserComparisonProducts, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
+import type { ComparisonProductList } from "@/lib/types";
 
 export const ACCESS_TOKEN_COOKIE = "hwaryeok_access_token";
 export const REFRESH_TOKEN_COOKIE = "hwaryeok_refresh_token";
@@ -89,6 +90,20 @@ export async function getFavoriteViewState(): Promise<{ isAuthenticated: boolean
     };
   } catch {
     return { isAuthenticated: Boolean(refreshToken), favoriteIds: [] };
+  }
+}
+
+export async function getComparisonViewState(): Promise<{
+  isAuthenticated: boolean;
+  comparison: ComparisonProductList;
+}> {
+  const { accessToken, refreshToken } = await readAuthTokens();
+  const empty = { content: [], totalElements: 0 };
+  if (!accessToken) return { isAuthenticated: Boolean(refreshToken), comparison: empty };
+  try {
+    return { isAuthenticated: true, comparison: await getUserComparisonProducts(accessToken) };
+  } catch {
+    return { isAuthenticated: Boolean(refreshToken), comparison: empty };
   }
 }
 

@@ -49,6 +49,17 @@ export type RecentProductList = {
   totalElements: number;
 };
 
+export type ComparisonProduct = {
+  product: Product;
+  displayOrder: number;
+  savedAt: string;
+};
+
+export type ComparisonProductList = {
+  content: ComparisonProduct[];
+  totalElements: number;
+};
+
 export type ReviewCriterion = {
   id: string;
   code: string;

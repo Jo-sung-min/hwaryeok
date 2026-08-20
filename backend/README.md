@@ -107,6 +107,9 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | DELETE | `/api/v1/users/me/favorites/{productId}` | 제품 찜 취소 |
 | GET | `/api/v1/users/me/recent-products` | 내 최근 본 제품 최신순 목록 |
 | PUT | `/api/v1/users/me/recent-products/{productId}` | 제품 상세 확인 기록·최근 시각 갱신 |
+| GET | `/api/v1/users/me/comparison-products` | 저장한 비교 제품 2~3개 조회 |
+| PUT | `/api/v1/users/me/comparison-products` | 비교 제품 2~3개 순서대로 저장·교체 |
+| DELETE | `/api/v1/users/me/comparison-products` | 저장한 비교 제품 모두 해제 |
 | GET | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 우선순위 조회 |
 | PUT | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 0~10개 저장 |
 | GET | `/oauth2/authorization/{provider}` | OAuth 로그인 시작 (`google`, `kakao`, `naver`) |
@@ -316,6 +319,22 @@ Authorization: Bearer <accessToken>
 ```
 
 목록은 가장 최근에 본 제품 최대 6개를 최신순으로 반환합니다. `totalElements`는 사용자가 본 고유 제품 전체 개수이며 각 항목은 `product`, `viewedAt`을 포함합니다. 등록되지 않은 제품은 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없거나 유효하지 않으면 `401`을 반환합니다.
+
+### 비교 제품 저장
+
+비교 제품은 로그인 사용자별로 2개 또는 3개를 요청 배열 순서대로 저장합니다. 새 목록을 저장하면 이전 목록 전체를 교체하며 같은 제품을 중복해서 넣을 수 없습니다.
+
+```json
+PUT /api/v1/users/me/comparison-products
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "productIds": ["birch-cream", "heartleaf-toner", "rice-sunscreen"]
+}
+```
+
+성공 응답은 `content`, `totalElements`를 포함하고 각 항목에는 `product`, 1부터 시작하는 `displayOrder`, `savedAt`이 들어갑니다. `GET`은 저장 순서로 목록을 조회하고 `DELETE`는 전체 비교 목록을 비웁니다. 2개 미만·3개 초과는 `400 VALIDATION_FAILED`, 중복 제품은 `400 INVALID_REQUEST`, 존재하지 않거나 비공개인 제품은 `404 RESOURCE_NOT_FOUND`, 로그인 정보가 없으면 `401`을 반환합니다.
 
 ### 관심 성분과 성분 화력
 

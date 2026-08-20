@@ -806,6 +806,89 @@ class HwaryeokApplicationTests {
     }
 
     @Test
+    void savesTwoOrThreeComparisonProductsInUserOrder() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("comparison@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                "comparison@example.com",
+                passwordEncoder.encode("Flower!123"),
+                "비교회원",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> unauthorizedResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/users/me/comparison-products"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unauthorizedResponse.statusCode()).isEqualTo(401);
+
+        String accessToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"comparison@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        ).body(), "accessToken");
+
+        HttpResponse<String> saveResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/comparison-products", accessToken,
+                        "{\"productIds\":[\"birch-cream\",\"heartleaf-toner\",\"rice-sunscreen\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(saveResponse.statusCode()).isEqualTo(200);
+        assertThat(saveResponse.body()).contains("\"totalElements\":3", "\"displayOrder\":1", "\"displayOrder\":3");
+        assertThat(saveResponse.body().indexOf("birch-cream"))
+                .isLessThan(saveResponse.body().indexOf("heartleaf-toner"));
+        assertThat(saveResponse.body().indexOf("heartleaf-toner"))
+                .isLessThan(saveResponse.body().indexOf("rice-sunscreen"));
+
+        HttpResponse<String> replaceResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/comparison-products", accessToken,
+                        "{\"productIds\":[\"rice-sunscreen\",\"birch-cream\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> listResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/comparison-products", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(replaceResponse.statusCode()).isEqualTo(200);
+        assertThat(listResponse.body()).contains("\"totalElements\":2", "rice-sunscreen", "birch-cream")
+                .doesNotContain("heartleaf-toner");
+        assertThat(listResponse.body().indexOf("rice-sunscreen"))
+                .isLessThan(listResponse.body().indexOf("birch-cream"));
+
+        HttpResponse<String> duplicateResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/comparison-products", accessToken,
+                        "{\"productIds\":[\"birch-cream\",\"birch-cream\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> tooFewResponse = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/comparison-products", accessToken,
+                        "{\"productIds\":[\"birch-cream\"]}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(duplicateResponse.statusCode()).isEqualTo(400);
+        assertThat(duplicateResponse.body()).contains("INVALID_REQUEST", "중복해서 비교할 수 없어요");
+        assertThat(tooFewResponse.statusCode()).isEqualTo(400);
+        assertThat(tooFewResponse.body()).contains("VALIDATION_FAILED", "2개 또는 3개");
+
+        HttpResponse<String> clearResponse = client.send(
+                bearerRequest("DELETE", "/api/v1/users/me/comparison-products", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> emptyResponse = client.send(
+                bearerRequest("GET", "/api/v1/users/me/comparison-products", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(clearResponse.statusCode()).isEqualTo(204);
+        assertThat(emptyResponse.body()).contains("\"content\":[]", "\"totalElements\":0");
+    }
+
+    @Test
     void ranksProductsByIngredientFirepowerWithBreakdown() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> featuredResponse = client.send(

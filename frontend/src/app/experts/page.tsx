@@ -1,7 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Award, MessageCircleQuestion, ShieldCheck, Sparkles } from "lucide-react";
 import { ExpertCard, ExpertDisclaimer, QuestionCard } from "@/components/expert-ui";
 import { getExpertQuestions, getExpertRanking } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "전문가 활동",
+  description: "인증 정보를 분리해 공개하는 의료진의 화장품·성분 답변과 플랫폼 활동을 확인하세요.",
+  alternates: { canonical: "/experts" },
+};
 
 export default async function ExpertsPage() {
   const [ranking, questions] = await Promise.all([

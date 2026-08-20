@@ -20,11 +20,11 @@ export function FirepowerReport({ analysis, ingredientData, reviewSummary, perso
         <div className="grid gap-8 border-b border-[#75564516] bg-gradient-to-br from-[#fff6f8] via-white to-[#f4efe9] p-6 sm:p-8 lg:grid-cols-[1.1fr_.9fr] lg:p-10">
           <div>
             <div className="flex items-center gap-2 text-[#a55468]"><CircleGauge size={18} /><p className="eyebrow">HWA:RYEOK REPORT</p></div>
-            <h2 id="report-title" className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">한 장으로 보는 화력 판정서</h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#71645d]">성분의 구성, 실제 사용자의 평가, 현재 적용한 피부 조건을 섞지 않고 따로 보여드려요. 숫자보다 판단 이유를 먼저 확인해 보세요.</p>
+            <h2 id="report-title" className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">한 장으로 보는 화력 리포트</h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#71645d]">성분의 구성, 실제 사용자의 평가, 현재 적용한 피부 조건을 차례로 보여드려요. 숫자와 함께 나에게 맞는 이유를 살펴보세요.</p>
           </div>
           <div className="rounded-[22px] border border-[#bd8d8233] bg-white/72 p-5">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#91475b]"><Info size={15} /> 한 줄 판정</div>
+            <div className="flex items-center gap-2 text-xs font-bold text-[#91475b]"><Info size={15} /> 한 줄 화력</div>
             <p className="mt-3 font-myeongjo text-lg leading-8 text-[#463b36]">{primaryHighlight}</p>
             <p className="mt-2 text-xs leading-6 text-[#8b6d67]">확인할 점: {primaryCaution}</p>
           </div>
@@ -51,9 +51,9 @@ export function FirepowerReport({ analysis, ingredientData, reviewSummary, perso
           />
           <ReportMetric
             icon={ShieldCheck}
-            label="광고 영향"
-            value="없음"
-            description="현재 광고·협찬비로 점수나 노출 순서를 바꾸지 않아요."
+            label="정보 상태"
+            value="선명하게 표시"
+            description="리뷰 수와 근거 수준, 최근 확인 정보를 함께 보여드려요."
           />
         </div>
 

@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ArrowRight, Crown, Medal, Sparkles } from "lucide-react";
 import { GradeSeal, ProductVisual } from "@/components/product-ui";
 import { getRanking } from "@/lib/api";
 import { getOptionalSkinProfile } from "@/lib/auth-session";
+
+export const metadata: Metadata = {
+  title: "피부별 화력 랭킹",
+  description: "피부 타입과 고민을 바탕으로 계산한 나만의 화장품 적합도 순위를 확인하세요.",
+  alternates: { canonical: "/ranking" },
+};
 
 const tabs = [
   { label: "나의 피부", value: "나의 피부", skinType: "수부지" },
@@ -28,7 +35,7 @@ export default async function RankingPage({ searchParams }: { searchParams: Rank
   const products = await getRanking(rankingProfile, 6);
 
   return <div className="min-h-screen pb-24">
-    <section className="border-b border-[#dfa6b51f] bg-[#fff0f3] py-10 text-[#382b30] md:py-20"><div className="container-page"><div className="grid items-end gap-7 md:grid-cols-[1fr_auto] md:gap-8"><div><p className="text-xs font-bold tracking-[.18em] text-[#ad566d]">HWA:RYEOK RANKING</p><h1 className="mt-4 text-balance font-myeongjo text-[32px] font-medium leading-tight sm:text-4xl md:text-5xl">판매량보다,<br />내 피부에 잘 맞는 순위</h1><p className="mt-5 max-w-lg text-sm leading-7 text-[#7d6870]">선택한 피부 타입에 맞춰 Spring Boot가 화력 점수를 다시 계산해 보여드려요.</p></div><div className="rounded-2xl border border-white/90 bg-white/72 p-4 text-sm shadow-[0_14px_36px_rgba(164,82,104,.09)] backdrop-blur-xl sm:p-5"><div className="flex items-center gap-2 text-[#a54f63]"><Sparkles size={16}/><strong>현재 랭킹 기준</strong></div><p className="mt-2 text-xs leading-6 text-[#7d6870]">피부 타입 · 제품 효능<br />기본 화력 점수</p></div></div></div></section>
+    <section className="border-b border-[#dfa6b51f] bg-[#fff0f3] py-10 text-[#382b30] md:py-20"><div className="container-page"><div className="grid items-end gap-7 md:grid-cols-[1fr_auto] md:gap-8"><div><p className="text-xs font-bold tracking-[.18em] text-[#ad566d]">HWA:RYEOK RANKING</p><h1 className="mt-4 text-balance font-myeongjo text-[32px] font-medium leading-tight sm:text-4xl md:text-5xl">내 피부와 잘 맞는<br />오늘의 화력 순위</h1><p className="mt-5 max-w-lg text-sm leading-7 text-[#7d6870]">피부 타입과 고민을 바탕으로 제품별 화력을 섬세하게 다시 계산해 보여드려요.</p></div><div className="rounded-2xl border border-white/90 bg-white/72 p-4 text-sm shadow-[0_14px_36px_rgba(164,82,104,.09)] backdrop-blur-xl sm:p-5"><div className="flex items-center gap-2 text-[#a54f63]"><Sparkles size={16}/><strong>현재 랭킹 기준</strong></div><p className="mt-2 text-xs leading-6 text-[#7d6870]">피부 타입 · 제품 효능<br />기본 화력 점수</p></div></div></div></section>
 
     <nav aria-label="피부 타입별 랭킹" className="ranking-tabs sticky top-[72px] z-30 max-w-full md:top-[84px]"><div className="container-page"><div className="ranking-tabs-scroll scrollbar-hide flex max-w-full snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain py-4"><span className="w-px shrink-0" aria-hidden="true" />{tabs.map((item) => <Link key={item.value} href={item.value === "나의 피부" ? "/ranking" : `/ranking?tab=${encodeURIComponent(item.value)}`} aria-current={selectedTab.value === item.value ? "page" : undefined} className="ranking-tab glass-choice shrink-0 snap-start rounded-full px-4 text-xs font-medium">{item.label}</Link>)}<span className="w-px shrink-0" aria-hidden="true" /></div></div></nav>
 

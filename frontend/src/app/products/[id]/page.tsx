@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FileSearch, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
@@ -6,7 +7,7 @@ import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ReviewSection } from "./review-section";
-import { ApiRequestError, getAnalysis, getProductIngredients, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
+import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { ReviewCriteria } from "@/lib/types";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 
@@ -14,6 +15,26 @@ const defaultProfile = {
   skinType: "수부지",
   concerns: ["속건조", "민감", "피부 장벽"],
 };
+
+export async function generateMetadata({ params }: PageProps<"/products/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const product = await getProduct(id);
+    return {
+      title: `${product.brand} ${product.name}`,
+      description: `${product.benefit} · ${product.subBenefit}. 성분, 사용자 리뷰점수, 피부 궁합을 화력 리포트에서 확인하세요.`,
+      alternates: { canonical: `/products/${product.id}` },
+      openGraph: {
+        type: "website",
+        title: `${product.brand} ${product.name}`,
+        description: `${product.benefit} · ${product.subBenefit} 화력 리포트`,
+        url: `/products/${product.id}`,
+      },
+    };
+  } catch {
+    return { title: "제품을 찾을 수 없어요", robots: { index: false, follow: false } };
+  }
+}
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
@@ -74,7 +95,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
               <div className="absolute right-5 top-5"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
             </div>
             <div className="flex flex-col justify-center p-5 sm:p-6 md:p-10 lg:p-14">
-              <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-[#a54f4910] px-3 py-1.5 text-[11px] font-bold text-[#944b5e]"><FileSearch size={14} /> 화력 판정서</p>
+              <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-[#a54f4910] px-3 py-1.5 text-[11px] font-bold text-[#944b5e]"><FileSearch size={14} /> 화력 리포트</p>
               <p className="text-xs font-bold uppercase tracking-[.16em] text-[#8e7468]">{product.brand} · {product.category}</p>
               <h1 className="mt-3 text-balance font-myeongjo text-[28px] font-semibold leading-snug sm:text-3xl md:text-4xl">{product.name}</h1>
               <p className="mt-3 text-sm text-[#786a61]">{product.price}</p>
@@ -91,8 +112,8 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
                 <ScoreRing score={analysis.score} size="small" />
               </div>
               <div className="mt-6 rounded-2xl border border-[#e4afbb36] bg-[#fff1f4] p-4 text-sm leading-7 text-[#675a52] sm:mt-8"><Sparkles size={16} className="mr-2 inline text-[#a54f49]" />{analysis.highlights[0]}</div>
-              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 판정 근거</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href={`/compare?left=${product.id}`} className="line-btn col-span-2 px-4 sm:col-span-1">제품 비교</Link></div>
-              <p className="mt-4 text-[11px] leading-5 text-[#8b7a71]">구매를 유도하는 광고나 제휴 링크 없이, 현재 확인 가능한 정보만 보여드려요.</p>
+              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 리포트 보기</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href={`/compare?left=${product.id}`} className="line-btn col-span-2 px-4 sm:col-span-1">제품 비교</Link></div>
+              <p className="mt-4 text-[11px] leading-5 text-[#8b7a71]">성분, 사용감, 피부 궁합을 차근차근 살펴보세요.</p>
             </div>
           </div>
         </section>

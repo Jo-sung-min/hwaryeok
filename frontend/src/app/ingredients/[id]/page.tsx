@@ -1,9 +1,29 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FlaskConical, Leaf, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { ApiRequestError, getIngredient, getIngredientFirepower } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const ingredient = await getIngredient(id);
+    return {
+      title: `${ingredient.name} 성분`,
+      description: `${ingredient.name}(${ingredient.englishName})의 역할, 근거 수준, 피부별 특징과 포함 제품을 확인하세요.`,
+      alternates: { canonical: `/ingredients/${ingredient.id}` },
+      openGraph: {
+        title: `${ingredient.name} 성분 사전`,
+        description: ingredient.description,
+        url: `/ingredients/${ingredient.id}`,
+      },
+    };
+  } catch {
+    return { title: "성분을 찾을 수 없어요", robots: { index: false, follow: false } };
+  }
+}
 
 export default async function IngredientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

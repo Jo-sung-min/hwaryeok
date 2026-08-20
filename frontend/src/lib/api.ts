@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductReviewSummary, RecentProduct, RecentProductList, ReviewCriteria, ReviewDetail } from "@/lib/types";
+import type { Analysis, ComparisonProductList, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductReviewSummary, RecentProduct, RecentProductList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -277,6 +277,27 @@ export function getUserRecentProducts(accessToken: string): Promise<RecentProduc
 export function recordUserRecentProduct(accessToken: string, productId: string): Promise<RecentProduct> {
   return requestJson<RecentProduct>(`/users/me/recent-products/${encodeURIComponent(productId)}`, {
     method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getUserComparisonProducts(accessToken: string): Promise<ComparisonProductList> {
+  return requestJson<ComparisonProductList>("/users/me/comparison-products", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveUserComparisonProducts(accessToken: string, productIds: string[]): Promise<ComparisonProductList> {
+  return requestJson<ComparisonProductList>("/users/me/comparison-products", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ productIds }),
+  });
+}
+
+export async function clearUserComparisonProducts(accessToken: string): Promise<void> {
+  await requestEmpty("/users/me/comparison-products", {
+    method: "DELETE",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
