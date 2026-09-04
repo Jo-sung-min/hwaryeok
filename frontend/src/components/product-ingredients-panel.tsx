@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, TriangleAlert } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, ShieldCheck, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import type { ProductIngredient, ProductIngredients } from "@/lib/types";
 
@@ -13,7 +13,7 @@ export function ProductIngredientsPanel({ data }: { data: ProductIngredients }) 
 
   return <section className="container-page py-20 md:py-28">
     <div className="mb-9 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-      <div><p className="eyebrow mb-4">INGREDIENT NOTE</p><h2 className="section-title font-myeongjo">전성분을 피부의 언어로</h2><p className="mt-4 text-sm leading-7 text-[#796c63]">제품에 실제로 연결된 핵심 성분과 지금 피부가 주의해서 볼 지점을 확인해보세요.</p></div>
+      <div><p className="eyebrow mb-4">INGREDIENT NOTE</p><h2 className="section-title font-myeongjo">전성분을 피부의 언어로</h2><p className="mt-4 text-sm leading-7 text-[#796c63]">제품에 실제로 연결된 성분과 지금 피부가 주의해서 볼 지점을 확인해보세요.</p>{data.source && <a href={data.source.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="mt-3 inline-flex flex-wrap items-center gap-1.5 rounded-full border border-[#dbaab74d] bg-white px-3 py-1.5 text-[11px] font-semibold text-[#935066]"><ShieldCheck size={13} /> 브랜드 공식 전성분 {data.source.ingredientCount}개 · {data.source.checkedAt.replaceAll("-", ".")} 확인 <ExternalLink size={12} /></a>}</div>
       <Link href="/ingredients" className="line-btn self-start md:self-auto">성분 사전 <ChevronRight size={16}/></Link>
     </div>
 

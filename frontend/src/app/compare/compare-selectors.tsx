@@ -23,7 +23,7 @@ export function CompareSelectors({ products, selectedIds }: { products: Product[
     {selectedIds.map((productId, index) => {
       const product = products.find((item) => item.id === productId) ?? products[index];
       return <div key={productId} aria-busy={isPending} className={`min-w-0 border-b border-[#74513f18] p-2.5 transition sm:p-5 ${index < selectedIds.length - 1 ? "border-r" : ""} ${isPending ? "opacity-60" : ""}`}>
-        <div className="relative mb-3 overflow-hidden rounded-xl sm:mb-4"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} compact /></div>
+        <div className="relative mb-3 aspect-square overflow-hidden rounded-xl border border-[#f1dfe4] sm:mb-4"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="comparison" /></div>
         <div className="relative">
           <select aria-label={`${index + 1}번째 비교 제품`} value={product.id} disabled={isPending} onChange={(event) => select(index, event.target.value)} className="glass-select h-12 w-full min-w-0 appearance-none rounded-xl pl-2.5 pr-7 text-xs font-semibold outline-none focus:border-[#9b4a45] sm:pl-3 sm:pr-8 sm:text-sm">
             {products.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}

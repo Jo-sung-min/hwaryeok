@@ -20,13 +20,16 @@ public class IngredientService {
     private final IngredientRepository ingredientRepository;
     private final ProductIngredientRepository productIngredientRepository;
     private final ProductService productService;
+    private final ProductIngredientSourceService productIngredientSourceService;
 
     public IngredientService(IngredientRepository ingredientRepository,
                              ProductIngredientRepository productIngredientRepository,
-                             ProductService productService) {
+                             ProductService productService,
+                             ProductIngredientSourceService productIngredientSourceService) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
         this.productService = productService;
+        this.productIngredientSourceService = productIngredientSourceService;
     }
 
     public IngredientPageResponse findIngredients(String query, String status, String tag, int page, int size,
@@ -69,7 +72,9 @@ public class IngredientService {
                 .filter(relation -> parsedStatus == null || relation.getIngredient().getStatus() == parsedStatus)
                 .filter(relation -> normalizedTag.isBlank() || relation.getIngredient().getTags().contains(normalizedTag))
                 .toList();
-        return ProductIngredientsResponse.from(productId, allRelations, filtered);
+        return ProductIngredientsResponse.from(
+                productId, allRelations, filtered, productIngredientSourceService.findPublished(productId)
+        );
     }
 
     private IngredientStatus parseStatus(String status) {

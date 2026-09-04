@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [new URL("/api/v1/media/products/**", publicApiUrl)],
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "15mb",
+    },
+  },
 };
 
 export default nextConfig;

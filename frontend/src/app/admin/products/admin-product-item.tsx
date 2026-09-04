@@ -1,23 +1,28 @@
 "use client";
 
-import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Link2, PencilLine } from "lucide-react";
+import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Link2, ListChecks, PencilLine } from "lucide-react";
 import { useState } from "react";
 import { ProductDeleteForm } from "@/app/admin/products/product-delete-form";
 import { CoupangPartnersForm } from "@/app/admin/products/coupang-partners-form";
 import { ProductForm } from "@/app/admin/products/product-form";
 import { ProductImageForm } from "@/app/admin/products/product-image-form";
 import { ProductIngredientsForm } from "@/app/admin/products/product-ingredients-form";
+import { OfficialIngredientForm } from "@/app/admin/products/official-ingredient-form";
 import { ProductVisual } from "@/components/product-ui";
-import type { Ingredient, Product, ProductIngredients, ProductPublicationStatus } from "@/lib/types";
+import type { Ingredient, OfficialIngredientList, Product, ProductIngredients, ProductPublicationStatus } from "@/lib/types";
 
 export function AdminProductItem({
   product,
   availableIngredients,
   initialIngredients,
+  officialIngredientSource,
+  defaultCheckedAt,
 }: {
   product: Product;
   availableIngredients: Ingredient[];
   initialIngredients: ProductIngredients;
+  officialIngredientSource?: OfficialIngredientList;
+  defaultCheckedAt: string;
 }) {
   const [open, setOpen] = useState(false);
   const ingredientCount = initialIngredients.totalCount;
@@ -31,7 +36,7 @@ export function AdminProductItem({
         onClick={() => setOpen((current) => !current)}
         className="flex min-h-24 w-full items-center gap-4 p-4 text-left sm:gap-5 sm:p-5"
       >
-        <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl sm:h-24 sm:w-24"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} compact /></span>
+        <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-[#f1dfe4] sm:h-24 sm:w-24"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="thumbnail" /></span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[10px] font-bold uppercase tracking-[.12em] text-[#9a7d86]">{product.brand} · {product.category}</span>
           <span className="mt-1 line-clamp-2 block font-myeongjo text-lg font-semibold sm:text-xl">{product.name}</span>
@@ -56,6 +61,13 @@ export function AdminProductItem({
               <div><div className="text-xs font-bold text-[#6c665b]">제품 성분 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">확인된 성분만 연결하고 표시 순서와 역할 메모를 저장해 주세요.</p></div>
             </div>
             <ProductIngredientsForm productId={product.id} availableIngredients={availableIngredients} initialIngredients={initialIngredients} />
+          </div>
+          <div className="mt-7 border-t border-[#74513f18] pt-6">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff0f4] text-[#a65066]"><ListChecks size={17} /></span>
+              <div><div className="text-xs font-bold text-[#8f5262]">브랜드 공식 전성분</div><p className="mt-1 text-[11px] leading-5 text-[#89747c]">공식 페이지 원문을 표준 성분사전과 대조하며, 전부 일치할 때만 사용자 화면에 반영해요.</p></div>
+            </div>
+            <OfficialIngredientForm productId={product.id} initialSource={officialIngredientSource} defaultCheckedAt={defaultCheckedAt} />
           </div>
           <div className="mt-7 border-t border-[#74513f18] pt-6">
             <div className="flex items-start gap-3">

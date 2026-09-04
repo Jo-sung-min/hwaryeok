@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Boxes, CircleOff, FileWarning, Megaphone, PackagePlus, Send, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
+import { ArrowRight, Boxes, CircleOff, DatabaseZap, FileWarning, Megaphone, PackagePlus, Send, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
 import { getAdminExpertApplications, getAdminProducts, getAdminPromotions } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 
@@ -43,7 +43,7 @@ export default async function AdminPage() {
           <AdminStat icon={UsersRound} label="인증 검토 대기" value={`${pendingApplications}건`} />
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           <Link href="/admin/products" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f8e1e7] text-[#a44f65]"><PackagePlus size={22} /></span>
             <p className="eyebrow mb-2 mt-6">PRODUCTS</p><h2 className="font-myeongjo text-2xl font-semibold">상품 등록·관리</h2>
@@ -61,6 +61,12 @@ export default async function AdminPage() {
             <p className="eyebrow mb-2 mt-6">EXPERTS</p><h2 className="font-myeongjo text-2xl font-semibold">전문가 인증 관리</h2>
             <p className="mt-3 text-sm leading-7 text-[#7d6b72]">의사 면허, 전문의 자격, 근무지 확인 결과를 검토하고 신청 상태를 처리합니다.</p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">인증 관리 열기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
+          </Link>
+          <Link href="/admin/data-sources" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f7e4e9] text-[#a44f65]"><DatabaseZap size={22} /></span>
+            <p className="eyebrow mb-2 mt-6">DATA SOURCES</p><h2 className="font-myeongjo text-2xl font-semibold">원천 데이터 관리</h2>
+            <p className="mt-3 text-sm leading-7 text-[#7d6b72]">식약처 API, 협회 표준 성분명, 브랜드 공식 전성분의 적재와 검수 상태를 관리합니다.</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">데이터 관리 열기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
           </Link>
         </div>
       </main>

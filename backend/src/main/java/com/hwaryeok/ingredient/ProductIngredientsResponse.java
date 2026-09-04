@@ -8,17 +8,25 @@ public record ProductIngredientsResponse(
         long goodCount,
         long cautionCount,
         long neutralCount,
-        List<ProductIngredientItemResponse> ingredients
+        List<ProductIngredientItemResponse> ingredients,
+        ProductIngredientSourceResponse source
 ) {
     public static ProductIngredientsResponse from(String productId, List<ProductIngredient> allRelations,
                                                   List<ProductIngredient> filteredRelations) {
+        return from(productId, allRelations, filteredRelations, null);
+    }
+
+    public static ProductIngredientsResponse from(String productId, List<ProductIngredient> allRelations,
+                                                  List<ProductIngredient> filteredRelations,
+                                                  ProductIngredientSourceResponse source) {
         return new ProductIngredientsResponse(
                 productId,
                 allRelations.size(),
                 count(allRelations, IngredientStatus.GOOD),
                 count(allRelations, IngredientStatus.CAUTION),
                 count(allRelations, IngredientStatus.NEUTRAL),
-                filteredRelations.stream().map(ProductIngredientItemResponse::from).toList()
+                filteredRelations.stream().map(ProductIngredientItemResponse::from).toList(),
+                source
         );
     }
 

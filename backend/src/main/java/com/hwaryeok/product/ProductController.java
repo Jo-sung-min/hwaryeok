@@ -17,10 +17,16 @@ public class ProductController {
 
     private final ProductService productService;
     private final IngredientService ingredientService;
+    private final ProductRetailSnapshotService productRetailSnapshotService;
 
-    public ProductController(ProductService productService, IngredientService ingredientService) {
+    public ProductController(
+            ProductService productService,
+            IngredientService ingredientService,
+            ProductRetailSnapshotService productRetailSnapshotService
+    ) {
         this.productService = productService;
         this.ingredientService = ingredientService;
+        this.productRetailSnapshotService = productRetailSnapshotService;
     }
 
     @GetMapping
@@ -65,6 +71,11 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductResponse findProduct(@PathVariable String id) {
         return productService.findProduct(id);
+    }
+
+    @GetMapping("/{id}/retail-snapshot")
+    public ProductRetailSnapshotResponse findRetailSnapshot(@PathVariable String id) {
+        return productRetailSnapshotService.findSnapshot(id);
     }
 
     @GetMapping("/{id}/related")

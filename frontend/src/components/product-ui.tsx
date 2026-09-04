@@ -87,36 +87,52 @@ export function FavoriteButton({
 
 export function ProductVisual({
   tone,
-  compact = false,
+  variant = "card",
   imageUrl,
   alt = "화장품 제품 이미지",
 }: {
   tone: Product["tone"];
-  compact?: boolean;
+  variant?: "card" | "compact" | "thumbnail" | "comparison" | "fill" | "panel";
   imageUrl?: string | null;
   alt?: string;
 }) {
   const resolvedImageUrl = resolveProductImageUrl(imageUrl);
+  const visualSize = {
+    card: "h-64",
+    compact: "h-44 sm:h-48",
+    thumbnail: "h-full w-full",
+    comparison: "h-full w-full",
+    fill: "h-full w-full",
+    panel: "h-64 sm:h-full",
+  }[variant];
+  const responsiveSizes = {
+    card: "(max-width: 768px) calc(100vw - 48px), (max-width: 1280px) 50vw, 380px",
+    compact: "(max-width: 768px) 82vw, 360px",
+    thumbnail: "96px",
+    comparison: "(max-width: 640px) 50vw, 520px",
+    fill: "(max-width: 1024px) 100vw, 46vw",
+    panel: "(max-width: 640px) 100vw, 220px",
+  }[variant];
+
   return (
-    <div className={`relative overflow-hidden ${toneMap[tone]} ${compact ? "h-36 sm:h-40" : "h-52 sm:h-56"}`}>
-      <div className="absolute bottom-0 left-1/2 h-3 w-32 -translate-x-1/2 rounded-[50%] bg-[#6e514028] blur-sm" />
+    <div className={`relative overflow-hidden ${visualSize} ${resolvedImageUrl ? "bg-white" : toneMap[tone]}`}>
       {resolvedImageUrl ? (
         <Image
           src={resolvedImageUrl}
           alt={alt}
           fill
-          sizes={compact ? "(max-width: 768px) 45vw, 320px" : "(max-width: 768px) 92vw, 420px"}
-          className="z-10 object-contain p-4 drop-shadow-[0_16px_18px_rgba(70,48,38,.18)] sm:p-5"
+          sizes={responsiveSizes}
+          loading={variant === "fill" ? "eager" : "lazy"}
+          className="z-10 object-contain object-center transition-transform duration-500 group-hover:scale-[1.025]"
         />
       ) : (
-        <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 ${compact ? "scale-75" : "scale-100"}`}>
+        <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 ${variant === "thumbnail" || variant === "compact" ? "scale-75" : "scale-100"}`}>
           <div className="relative h-32 w-24 rounded-[42%_42%_18%_18%] border border-[#ead9dc] bg-white shadow-[0_14px_26px_rgba(70,48,38,.1)]">
             <div className="absolute -top-6 left-1/2 h-8 w-12 -translate-x-1/2 rounded-t-lg bg-[#d8ad91]" />
             <div className="absolute left-1/2 top-11 w-16 -translate-x-1/2 border-y border-[#7e5b4930] py-2 text-center font-myeongjo text-[9px] tracking-[.12em] text-[#6c5043]">花力<br /><span className="text-[7px]">SKIN RITUAL</span></div>
           </div>
         </div>
       )}
-      <span className="absolute left-4 top-4 text-sm text-[#d48aa0]">✿</span>
     </div>
   );
 }
@@ -137,11 +153,12 @@ export function ProductCard({
   return (
     <article className="group paper-card relative overflow-hidden rounded-[26px] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.12)]">
       <Link href={`/products/${product.id}`} className="block">
-        <div className="relative">
-          <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} />
-          <span className="absolute left-4 top-4 max-w-[calc(100%-5rem)] truncate rounded-full border border-[#efd8df] bg-white px-3 py-1.5 text-[10px] font-semibold text-[#7a655e] shadow-sm">성분 근거 {confidenceLabel(product.confidenceLevel)}</span>
-        </div>
-        <div className="p-4 sm:p-5">
+        <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} />
+        <div className="border-t border-[#f2dfe5] p-4 sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold">
+            <span className="rounded-full bg-[#fff0f4] px-2.5 py-1 text-[#a44762]">성분 근거 {confidenceLabel(product.confidenceLevel)}</span>
+            <span className="truncate text-[#9a858c]">{product.category}</span>
+          </div>
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="mb-1 text-[11px] font-bold uppercase tracking-[.16em] text-[#8b776a]">{product.brand}</p>

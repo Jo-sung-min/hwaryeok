@@ -57,6 +57,23 @@ DB_POOL_LEAK_DETECTION_MS=60000
 
 이미 적용된 `V1__create_products.sql`은 체크섬이 바뀌지 않도록 수정하지 않습니다. 이후 DB 구조 변경은 `V2__...sql`처럼 새 버전 마이그레이션으로 추가합니다.
 
+## 공식 화장품 데이터 파이프라인
+
+관리자 화면의 `/admin/data-sources`에서 다음 순서로 관리합니다.
+
+1. 공공데이터포털에서 식약처 **기능성화장품 보고품목정보**와 **화장품 사용제한 원료정보** 활용을 신청합니다.
+2. 발급받은 일반 인증키와 각 API의 요청주소를 환경 변수에 등록한 뒤 `식약처 데이터 동기화`를 실행합니다.
+3. 대한화장품협회의 이용조건과 별도 사용권을 확인한 공식 CSV/XLSX 성분 목록을 `협회 성분사전 적재`에서 업로드합니다.
+4. `/admin/products`에서 제품별 브랜드 공식 HTTPS 주소, 확인일, 전성분 원문을 등록합니다. 모든 성분이 표준사전에 연결된 경우에만 공개 제품 성분표를 교체합니다.
+
+```text
+MFDS_API_SERVICE_KEY=공공데이터포털_일반_인증키
+MFDS_FUNCTIONAL_COSMETICS_API_URL=활용신청한_기능성화장품_API_요청주소
+MFDS_RESTRICTED_INGREDIENTS_API_URL=활용신청한_사용제한원료_API_요청주소
+```
+
+`V24__create_cosmetic_data_pipeline.sql`은 원천 메타데이터, 수집 이력, 표준 성분·별칭, 식약처 제품·제한 원료, 제품 매칭, 브랜드 공식 전성분 출처를 PostgreSQL에 생성합니다. 대한화장품협회 성분사전은 상업적 사용권을 확인하지 않은 자동 수집을 하지 않으며, 관리자가 권한을 확인한 원본 파일만 적재합니다. 브랜드 페이지도 임의 크롤링하지 않고 관리자가 공식 페이지와 전성분 원문을 함께 검수해 등록합니다.
+
 ## 화해 공개 랭킹 샘플 데이터
 
 `V7__seed_hwahae_ranking_samples.sql`은 2026-08-13 화해 공개 급상승 랭킹에서 확인한 기초 화장품 16종을 추가합니다. 공개 랭킹의 제품 ID·브랜드·제품명·정가·용량·평점·리뷰 수만 사용하며, 리뷰 본문이나 회원 정보는 수집하지 않습니다. 베이비·두피·핸드 제품과 중복 제품명은 화력 서비스 범위에서 제외했습니다.
@@ -124,6 +141,10 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/ingredients/featured` | 대표 관심 성분 목록 |
 | GET | `/api/v1/ingredients/{id}/firepower` | 성분 기준 제품 화력 순위와 세부 점수 |
 | PUT | `/api/v1/admin/products/{id}/image` | 관리자 제품 이미지 등록 |
+| GET | `/api/v1/admin/data-sources` | 관리자 공식 데이터 원천·적재 상태 조회 |
+| POST | `/api/v1/admin/data-sources/mfds/sync` | 식약처 기능성 제품·사용제한 원료 동기화 |
+| POST | `/api/v1/admin/data-sources/kcia/import` | 사용권 확인된 협회 성분사전 파일 적재 |
+| PUT | `/api/v1/admin/data-sources/products/{id}/official-ingredients` | 브랜드 공식 전성분 검수·등록 |
 | GET | `/api/v1/media/products/{id}` | 등록 제품 이미지 조회 |
 | POST | `/api/v1/analyses/preview` | 피부 프로필 기반 화력 분석 |
 | GET | `/api/v1/experts` | 인증 전문가 목록과 활동 통계 |

@@ -39,8 +39,8 @@ spring:
     schemas: ${DB_SCHEMA:hwaryeok}
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 6MB
+      max-file-size: 15MB
+      max-request-size: 16MB
 
 server:
   port: ${SERVER_PORT:8080}
@@ -69,6 +69,11 @@ logging:
     org.hibernate.orm.connections.pooling: warn
 
 app:
+  data-sources:
+    mfds:
+      service-key: ${MFDS_API_SERVICE_KEY:}
+      functional-products-url: ${MFDS_FUNCTIONAL_COSMETICS_API_URL:}
+      restricted-ingredients-url: ${MFDS_RESTRICTED_INGREDIENTS_API_URL:}
   auth:
     jwt-secret: ${JWT_SECRET:}
     license-hash-secret: ${LICENSE_HASH_SECRET:}

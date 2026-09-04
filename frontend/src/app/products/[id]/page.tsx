@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, ExternalLink, FileSearch, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, FileSearch, MessageCircle, ShoppingBag, Sparkles, Store, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReviewSection } from "./review-section";
-import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
+import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { ReviewCriteria } from "@/lib/types";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
 
@@ -68,11 +68,12 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     : defaultProfile;
 
   try {
-    const [analysis, relatedProducts, ingredientData, reviewSummary] = await Promise.all([
+    const [analysis, relatedProducts, ingredientData, reviewSummary, retailSnapshot] = await Promise.all([
       getAnalysis({ productId: id, ...analysisProfile }),
       getRelatedProducts(id, 3),
       getProductIngredients(id),
       getProductReviewSummary(id, currentUser ? authTokens.accessToken : undefined),
+      getProductRetailSnapshot(id),
     ]);
     const product = analysis.product;
     const hasCoupangPartnersLink = Boolean(product.coupangPartnersUrl);
@@ -102,7 +103,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
         <section className="container-page">
           <div className="grid overflow-hidden rounded-[26px] border border-[#e4afbb36] bg-white/88 sm:rounded-[32px] lg:grid-cols-[.86fr_1.14fr]">
             <div className="relative min-h-[270px] sm:min-h-[390px] lg:min-h-[590px]">
-              <div className="absolute inset-0 [&>div]:h-full"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} /></div>
+              <div className="absolute inset-0"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="fill" /></div>
               <div className="absolute right-5 top-5"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
             </div>
             <div className="flex flex-col justify-center p-5 sm:p-6 md:p-10 lg:p-14">
@@ -132,6 +133,33 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
             </div>
           </div>
         </section>
+
+        {retailSnapshot.matched && retailSnapshot.retailerUrl && (
+          <section className="container-page mt-5 sm:mt-6">
+            <div className="grid gap-5 rounded-[24px] border border-[#e4afbb52] bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-8 sm:rounded-[28px] sm:p-7">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1f4] px-3 py-1.5 text-[11px] font-bold text-[#a54f64]"><Store size={13} /> 올리브영 확인 정보</span>
+                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${retailSnapshot.availability === "AVAILABLE" ? "bg-[#edf3e9] text-[#67765f]" : "bg-[#f5efed] text-[#89766d]"}`}>{retailSnapshot.availability === "AVAILABLE" ? "판매 중" : "일시품절"}</span>
+                </div>
+                <h2 className="mt-3 text-sm font-bold leading-6 text-[#514842] sm:text-base">{retailSnapshot.retailerProductName}</h2>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs leading-5 text-[#807168]">
+                  <span>구성 {retailSnapshot.packageInfo}</span>
+                  {retailSnapshot.checkedAt && <span>{formatCheckedAt(retailSnapshot.checkedAt)} 확인</span>}
+                </div>
+                {retailSnapshot.notes && <p className="mt-2 text-[11px] leading-5 text-[#97857b]">{retailSnapshot.notes}</p>}
+              </div>
+              <div className="flex items-end justify-between gap-5 border-t border-[#ead8dc] pt-4 sm:min-w-[210px] sm:flex-col sm:items-end sm:border-l sm:border-t-0 sm:pl-7 sm:pt-0">
+                <div className="text-left sm:text-right">
+                  {retailSnapshot.salePrice !== null && retailSnapshot.salePrice !== retailSnapshot.regularPrice && <p className="text-xs text-[#9a8980] line-through">정가 {formatWon(retailSnapshot.regularPrice)}</p>}
+                  <p className="mt-0.5 font-myeongjo text-xl font-semibold text-[#a64360]">{formatWon(retailSnapshot.salePrice ?? retailSnapshot.regularPrice)}</p>
+                </div>
+                <a href={retailSnapshot.retailerUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#9d4d62] underline decoration-[#d9a4b1] underline-offset-4">원문 보기 <ExternalLink size={13} /></a>
+              </div>
+            </div>
+            <p className="px-2 pt-2 text-[10px] leading-5 text-[#97877e]">공개 판매 정보는 행사와 재고에 따라 달라질 수 있어요. 구매 버튼은 위 쿠팡 링크로 연결됩니다.</p>
+          </section>
+        )}
 
         <FirepowerReport analysis={analysis} ingredientData={ingredientData} reviewSummary={reviewSummary} personalized={Boolean(savedProfile?.skinType)} />
 
@@ -172,4 +200,12 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 function buildCoupangOfficialSellerSearchUrl(brand: string, productName: string) {
   const query = encodeURIComponent(`${brand} ${productName} 공식 판매자`);
   return `https://www.coupang.com/np/search?q=${query}`;
+}
+
+function formatWon(value: number | null) {
+  return value === null ? "가격 확인 중" : `${value.toLocaleString("ko-KR")}원`;
+}
+
+function formatCheckedAt(value: string) {
+  return value.replaceAll("-", ".");
 }

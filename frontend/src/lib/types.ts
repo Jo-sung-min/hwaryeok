@@ -29,6 +29,21 @@ export type Product = {
   ingredientCount?: number;
 };
 
+export type ProductRetailSnapshot = {
+  matched: boolean;
+  productId: string;
+  retailer: "OLIVE_YOUNG" | null;
+  retailerProductId: string | null;
+  retailerProductName: string | null;
+  retailerUrl: string | null;
+  packageInfo: string | null;
+  regularPrice: number | null;
+  salePrice: number | null;
+  availability: "AVAILABLE" | "SOLD_OUT" | null;
+  checkedAt: string | null;
+  notes: string | null;
+};
+
 export type ProductPage = {
   content: Product[];
   page: number;
@@ -240,6 +255,65 @@ export type ProductIngredients = {
   cautionCount: number;
   neutralCount: number;
   ingredients: ProductIngredient[];
+  source: ProductIngredientSource | null;
+};
+
+export type ProductIngredientSource = {
+  sourceType: "BRAND_OFFICIAL";
+  sourceUrl: string;
+  pageTitle: string;
+  checkedAt: string;
+  ingredientCount: number;
+  verificationStatus: "VERIFIED";
+};
+
+export type DataSourceStatus = {
+  id: "MFDS_FUNCTIONAL" | "MFDS_RESTRICTED" | "KCIA_DICTIONARY" | "BRAND_OFFICIAL" | "LEGACY_CURATED";
+  displayName: string;
+  sourceUrl: string;
+  termsUrl: string | null;
+  ingestionMode: "API" | "LICENSED_FILE" | "ADMIN_VERIFIED_URL" | "INTERNAL_SEED";
+  usageNote: string;
+  configured: boolean;
+  recordCount: number;
+  lastRunStatus: "RUNNING" | "SUCCEEDED" | "FAILED" | null;
+  lastRunAt: string | null;
+};
+
+export type DataPipelineStatus = {
+  sources: DataSourceStatus[];
+  ingredientReferenceCount: number;
+  mfdsProductCount: number;
+  mfdsRegulationCount: number;
+  officialIngredientListCount: number;
+  verifiedOfficialIngredientListCount: number;
+};
+
+export type DataImportResult = {
+  sourceId: string;
+  status: "SUCCEEDED" | "CONFIGURATION_REQUIRED";
+  recordsRead: number;
+  recordsUpserted: number;
+  recordsSkipped: number;
+  message: string;
+};
+
+export type MfdsSyncResult = {
+  results: DataImportResult[];
+};
+
+export type OfficialIngredientList = {
+  productId: string;
+  sourceUrl: string;
+  sourceDomain: string;
+  pageTitle: string;
+  ingredientText: string;
+  checkedAt: string;
+  totalIngredientCount: number;
+  matchedIngredientCount: number;
+  unmatchedIngredients: string[];
+  verificationStatus: "VERIFIED" | "PARTIAL" | "UNMATCHED";
+  published: boolean;
 };
 
 export type PreferredIngredient = {

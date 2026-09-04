@@ -130,6 +130,38 @@ class HwaryeokApplicationTests {
     }
 
     @Test
+    void servesOliveYoungRetailSnapshotsAndKeepsUnmatchedProductsExplicit() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> matchedResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/products/rice-sunscreen/retail-snapshot"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> unmatchedResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/products/mugwort-ampoule/retail-snapshot"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(matchedResponse.statusCode()).isEqualTo(200);
+        assertThat(matchedResponse.body()).contains(
+                "\"matched\":true",
+                "\"retailer\":\"OLIVE_YOUNG\"",
+                "A000000224657",
+                "\"regularPrice\":20000",
+                "\"salePrice\":13500",
+                "\"availability\":\"AVAILABLE\"",
+                "\"checkedAt\":\"2026-09-04\""
+        );
+        assertThat(unmatchedResponse.statusCode()).isEqualTo(200);
+        assertThat(unmatchedResponse.body()).contains("\"matched\":false", "\"productId\":\"mugwort-ampoule\"");
+    }
+
+    @Test
     void servesProductDetailAndSkinRankingApis() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest detailRequest = HttpRequest.newBuilder()

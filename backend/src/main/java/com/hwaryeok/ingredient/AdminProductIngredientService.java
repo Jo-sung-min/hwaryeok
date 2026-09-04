@@ -19,15 +19,18 @@ public class AdminProductIngredientService {
     private final IngredientRepository ingredientRepository;
     private final ProductIngredientRepository productIngredientRepository;
     private final ProductService productService;
+    private final ProductIngredientSourceService productIngredientSourceService;
 
     public AdminProductIngredientService(
             IngredientRepository ingredientRepository,
             ProductIngredientRepository productIngredientRepository,
-            ProductService productService
+            ProductService productService,
+            ProductIngredientSourceService productIngredientSourceService
     ) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
         this.productService = productService;
+        this.productIngredientSourceService = productIngredientSourceService;
     }
 
     public ProductIngredientsResponse find(String productId) {
@@ -69,6 +72,7 @@ public class AdminProductIngredientService {
                 })
                 .toList();
         productIngredientRepository.saveAll(relations);
+        productIngredientSourceService.markUnpublished(productId);
         return ProductIngredientsResponse.from(productId, relations, relations);
     }
 

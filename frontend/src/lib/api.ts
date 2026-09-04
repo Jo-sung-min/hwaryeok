@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, ComparisonProductList, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
+import type { Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -376,6 +376,10 @@ export function getProduct(id: string): Promise<Product> {
   return requestJson<Product>(`/products/${encodeURIComponent(id)}`);
 }
 
+export function getProductRetailSnapshot(id: string): Promise<ProductRetailSnapshot> {
+  return requestJson<ProductRetailSnapshot>(`/products/${encodeURIComponent(id)}/retail-snapshot`);
+}
+
 export function getRelatedProducts(id: string, limit = 3): Promise<Product[]> {
   return requestJson<Product[]>(`/products/${encodeURIComponent(id)}/related?limit=${limit}`);
 }
@@ -511,6 +515,64 @@ export async function uploadAdminProductImage(accessToken: string, productId: st
 export function getAdminProducts(accessToken: string): Promise<Product[]> {
   return requestJson<Product[]>("/admin/products", {
     headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getAdminDataPipelineStatus(accessToken: string): Promise<DataPipelineStatus> {
+  return requestJson<DataPipelineStatus>("/admin/data-sources", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getAdminOfficialIngredientSources(accessToken: string): Promise<OfficialIngredientList[]> {
+  return requestJson<OfficialIngredientList[]>("/admin/data-sources/product-ingredient-sources", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function syncAdminMfdsData(accessToken: string): Promise<MfdsSyncResult> {
+  return requestJson<MfdsSyncResult>("/admin/data-sources/mfds/sync", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export async function importAdminKciaDictionary(
+  accessToken: string,
+  file: File,
+  rightsConfirmed: boolean,
+): Promise<DataImportResult> {
+  const formData = new FormData();
+  formData.set("file", file);
+  formData.set("rightsConfirmed", String(rightsConfirmed));
+  const response = await fetch(`${API_BASE_URL}/admin/data-sources/kcia/import`, {
+    method: "POST",
+    cache: "no-store",
+    headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+    body: formData,
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { code?: string; message?: string; fieldErrors?: Record<string, string> } | null;
+    throw new ApiRequestError(body?.message ?? "성분사전 파일을 적재하지 못했어요.", response.status, body?.code, body?.fieldErrors ?? {});
+  }
+  return response.json() as Promise<DataImportResult>;
+}
+
+export function saveAdminOfficialIngredientList(
+  accessToken: string,
+  productId: string,
+  input: {
+    sourceUrl: string;
+    pageTitle: string;
+    checkedAt: string;
+    ingredientText: string;
+    officialSourceConfirmed: boolean;
+  },
+): Promise<OfficialIngredientList> {
+  return requestJson<OfficialIngredientList>(`/admin/data-sources/products/${encodeURIComponent(productId)}/official-ingredients`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
   });
 }
 
