@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, ExternalLink, FileSearch, MessageCircle, ShoppingBag, Sparkles, Store, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, FileSearch, Landmark, MessageCircle, ShieldCheck, ShoppingBag, Sparkles, Store, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReviewSection } from "./review-section";
-import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
+import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRegulatorySource, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { ReviewCriteria } from "@/lib/types";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
 
@@ -68,12 +68,13 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     : defaultProfile;
 
   try {
-    const [analysis, relatedProducts, ingredientData, reviewSummary, retailSnapshot] = await Promise.all([
+    const [analysis, relatedProducts, ingredientData, reviewSummary, retailSnapshot, regulatorySource] = await Promise.all([
       getAnalysis({ productId: id, ...analysisProfile }),
       getRelatedProducts(id, 3),
       getProductIngredients(id),
       getProductReviewSummary(id, currentUser ? authTokens.accessToken : undefined),
       getProductRetailSnapshot(id),
+      getProductRegulatorySource(id),
     ]);
     const product = analysis.product;
     const hasCoupangPartnersLink = Boolean(product.coupangPartnersUrl);
@@ -133,6 +134,28 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
             </div>
           </div>
         </section>
+
+        {regulatorySource.matched && (
+          <section className="container-page mt-5 sm:mt-6">
+            <div className="rounded-[24px] border border-[#b9cfbd] bg-white p-5 sm:rounded-[28px] sm:p-7">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                <div className="min-w-0">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#edf5ee] px-3 py-1.5 text-[11px] font-bold text-[#55735e]"><ShieldCheck size={14} /> {regulatorySource.label}</span>
+                  <h2 className="mt-4 font-myeongjo text-xl font-semibold leading-7 sm:text-2xl">식약처 공개 보고품목에서 확인했어요</h2>
+                  <p className="mt-2 text-sm leading-7 text-[#756b67]">화력 관리자가 제품명과 업체 정보를 직접 대조해 연결한 정보입니다.</p>
+                </div>
+                {regulatorySource.sourceUrl && <a href={regulatorySource.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="line-btn shrink-0"><Landmark size={15} /> 공식 데이터 안내 <ExternalLink size={13} /></a>}
+              </div>
+              <dl className="mt-5 grid gap-3 rounded-2xl bg-[#f7faf7] p-4 text-xs sm:grid-cols-2 sm:p-5">
+                <SourceItem label="식약처 품목명" value={regulatorySource.productName} />
+                <SourceItem label="책임판매업체" value={regulatorySource.companyName} />
+                <SourceItem label="보고일" value={regulatorySource.reportDate ? formatCheckedAt(regulatorySource.reportDate) : null} />
+                <SourceItem label="공개데이터 확인일" value={regulatorySource.checkedAt ? formatCheckedAt(regulatorySource.checkedAt) : null} />
+              </dl>
+              {regulatorySource.disclaimer && <p className="mt-4 text-[10px] leading-5 text-[#8a7d78]">{regulatorySource.disclaimer}</p>}
+            </div>
+          </section>
+        )}
 
         {retailSnapshot.matched && retailSnapshot.retailerUrl && (
           <section className="container-page mt-5 sm:mt-6">
@@ -207,5 +230,9 @@ function formatWon(value: number | null) {
 }
 
 function formatCheckedAt(value: string) {
-  return value.replaceAll("-", ".");
+  return value.slice(0, 10).replaceAll("-", ".");
+}
+
+function SourceItem({ label, value }: { label: string; value: string | null }) {
+  return <div><dt className="text-[10px] font-bold text-[#849087]">{label}</dt><dd className="mt-1 font-semibold leading-5 text-[#4f5d52]">{value || "정보 없음"}</dd></div>;
 }

@@ -1,27 +1,30 @@
 "use client";
 
-import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Link2, ListChecks, PencilLine } from "lucide-react";
+import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Landmark, Link2, ListChecks, PencilLine, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { ProductDeleteForm } from "@/app/admin/products/product-delete-form";
 import { CoupangPartnersForm } from "@/app/admin/products/coupang-partners-form";
 import { ProductForm } from "@/app/admin/products/product-form";
 import { ProductImageForm } from "@/app/admin/products/product-image-form";
 import { ProductIngredientsForm } from "@/app/admin/products/product-ingredients-form";
+import { MfdsProductMatchForm } from "@/app/admin/products/mfds-product-match-form";
 import { OfficialIngredientForm } from "@/app/admin/products/official-ingredient-form";
 import { ProductVisual } from "@/components/product-ui";
-import type { Ingredient, OfficialIngredientList, Product, ProductIngredients, ProductPublicationStatus } from "@/lib/types";
+import type { AdminMfdsProductMatch, Ingredient, OfficialIngredientList, Product, ProductIngredients, ProductPublicationStatus } from "@/lib/types";
 
 export function AdminProductItem({
   product,
   availableIngredients,
   initialIngredients,
   officialIngredientSource,
+  mfdsMatch,
   defaultCheckedAt,
 }: {
   product: Product;
   availableIngredients: Ingredient[];
   initialIngredients: ProductIngredients;
   officialIngredientSource?: OfficialIngredientList;
+  mfdsMatch?: AdminMfdsProductMatch;
   defaultCheckedAt: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -45,6 +48,7 @@ export function AdminProductItem({
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">{product.score}점</span>
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">성분 {ingredientCount}개</span>
             {product.coupangPartnersUrl && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f4] px-2 py-1 font-bold text-[#a34d65]"><BadgeDollarSign size={11} /> 파트너스 연결</span>}
+            {mfdsMatch && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 식약처 연결</span>}
             {!isReady(product, ingredientCount) && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1df] px-2 py-1 text-[#936626]"><CircleAlert size={11} /> 정보 보완 필요</span>}
           </span>
         </span>
@@ -55,6 +59,13 @@ export function AdminProductItem({
         <div id={`admin-product-${product.id}`} className="border-t border-[#dca9b62f] bg-white/55 p-4 sm:p-6 md:p-7">
           <div className="mb-5 flex items-center gap-2 text-xs font-bold text-[#8f5262]"><PencilLine size={15} /> 기본 정보 수정</div>
           <ProductForm product={product} />
+          <div className="mt-7 border-t border-[#74513f18] pt-6">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf2e9] text-[#60755c]"><Landmark size={17} /></span>
+              <div><div className="text-xs font-bold text-[#5d6d5d]">식약처 보고품목 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">품목명과 업체를 직접 확인한 연결만 사용자 제품 상세에 공개돼요.</p></div>
+            </div>
+            <MfdsProductMatchForm productId={product.id} productName={product.name} initialMatch={mfdsMatch} />
+          </div>
           <div className="mt-7 border-t border-[#74513f18] pt-6">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf2e9] text-[#60755c]"><FlaskConical size={17} /></span>

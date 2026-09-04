@@ -302,6 +302,48 @@ export type MfdsSyncResult = {
   results: DataImportResult[];
 };
 
+export type MfdsProductCandidate = {
+  reportId: string;
+  productName: string;
+  companyName: string | null;
+  manufacturerName: string | null;
+  reportBasis: string | null;
+  reportDate: string | null;
+  confidence: number;
+  matchReasons: string[];
+  currentlyMatched: boolean;
+};
+
+export type AdminMfdsProductMatch = {
+  productId: string;
+  matchStatus: "ADMIN_VERIFIED";
+  reportId: string;
+  productName: string;
+  companyName: string | null;
+  manufacturerName: string | null;
+  reportBasis: string | null;
+  reportDate: string | null;
+  confidence: number;
+  reviewerNickname: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+};
+
+export type ProductRegulatorySource = {
+  matched: boolean;
+  productId: string;
+  label: string | null;
+  reportId: string | null;
+  productName: string | null;
+  companyName: string | null;
+  manufacturerName: string | null;
+  reportBasis: string | null;
+  reportDate: string | null;
+  checkedAt: string | null;
+  sourceUrl: string | null;
+  disclaimer: string | null;
+};
+
 export type OfficialIngredientList = {
   productId: string;
   sourceUrl: string;

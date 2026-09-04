@@ -3,9 +3,11 @@ package com.hwaryeok.datasource;
 import java.util.List;
 
 import com.hwaryeok.user.ActiveUserService;
+import com.hwaryeok.user.User;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,15 +26,18 @@ public class AdminDataSourceController {
     private final ActiveUserService activeUserService;
     private final CosmeticDataPipelineService dataPipelineService;
     private final MfdsApiSyncService mfdsApiSyncService;
+    private final MfdsProductMatchService mfdsProductMatchService;
 
     public AdminDataSourceController(
             ActiveUserService activeUserService,
             CosmeticDataPipelineService dataPipelineService,
-            MfdsApiSyncService mfdsApiSyncService
+            MfdsApiSyncService mfdsApiSyncService,
+            MfdsProductMatchService mfdsProductMatchService
     ) {
         this.activeUserService = activeUserService;
         this.dataPipelineService = dataPipelineService;
         this.mfdsApiSyncService = mfdsApiSyncService;
+        this.mfdsProductMatchService = mfdsProductMatchService;
     }
 
     @GetMapping
@@ -51,6 +56,44 @@ public class AdminDataSourceController {
     MfdsSyncResponse syncMfds(@AuthenticationPrincipal Jwt jwt) {
         activeUserService.requireAdmin(jwt.getSubject());
         return mfdsApiSyncService.sync();
+    }
+
+    @GetMapping("/mfds/product-matches")
+    List<AdminMfdsProductMatchResponse> findProductMatches(@AuthenticationPrincipal Jwt jwt) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        return mfdsProductMatchService.findAllVerifiedMatches();
+    }
+
+    @GetMapping("/products/{productId}/mfds-candidates")
+    List<MfdsProductCandidateResponse> findMfdsCandidates(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        return mfdsProductMatchService.findCandidates(productId, query, limit);
+    }
+
+    @PutMapping("/products/{productId}/mfds-match")
+    AdminMfdsProductMatchResponse saveMfdsMatch(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @RequestBody MfdsProductMatchRequest request
+    ) {
+        User reviewer = activeUserService.requireAdmin(jwt.getSubject());
+        return mfdsProductMatchService.saveVerifiedMatch(
+                productId,
+                request.reportId(),
+                reviewer.getId(),
+                request.reviewNote()
+        );
+    }
+
+    @DeleteMapping("/products/{productId}/mfds-match")
+    void removeMfdsMatch(@AuthenticationPrincipal Jwt jwt, @PathVariable String productId) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        mfdsProductMatchService.removeVerifiedMatch(productId);
     }
 
     @PostMapping(path = "/kcia/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

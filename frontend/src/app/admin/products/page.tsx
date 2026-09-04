@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, PackagePlus, ShieldCheck } from "lucide-react";
 import { AdminProductItem } from "@/app/admin/products/admin-product-item";
 import { ProductForm } from "@/app/admin/products/product-form";
-import { getAdminOfficialIngredientSources, getAdminProductIngredients, getAdminProducts, getIngredients } from "@/lib/api";
+import { getAdminMfdsProductMatches, getAdminOfficialIngredientSources, getAdminProductIngredients, getAdminProducts, getIngredients } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 
 export default async function AdminProductsPage() {
@@ -11,10 +11,11 @@ export default async function AdminProductsPage() {
   if (user.role !== "ADMIN") notFound();
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
-  const [products, ingredientPage, officialSources] = await Promise.all([
+  const [products, ingredientPage, officialSources, mfdsMatches] = await Promise.all([
     getAdminProducts(accessToken),
     getIngredients({ page: 0, size: 50, sort: "name", direction: "asc" }),
     getAdminOfficialIngredientSources(accessToken),
+    getAdminMfdsProductMatches(accessToken),
   ]).catch((error) => recoverAdminPageSession(error, "/admin/products"));
   const ingredientEntries = await Promise.all(products.map(async (product) => [
     product.id,
@@ -22,6 +23,7 @@ export default async function AdminProductsPage() {
   ] as const)).catch((error) => recoverAdminPageSession(error, "/admin/products"));
   const ingredientsByProduct = new Map(ingredientEntries);
   const officialSourceByProduct = new Map(officialSources.map((source) => [source.productId, source]));
+  const mfdsMatchByProduct = new Map(mfdsMatches.map((match) => [match.productId, match]));
   const defaultCheckedAt = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul" }).format(new Date());
 
   return (
@@ -51,7 +53,7 @@ export default async function AdminProductsPage() {
             <p className="text-xs leading-5 text-[#89747c]">각 상품을 열어 정보·이미지·성분을 함께 관리할 수 있어요.</p>
           </div>
           <div className="space-y-4">
-            {products.map((product) => <AdminProductItem key={product.id} product={product} availableIngredients={ingredientPage.content} initialIngredients={ingredientsByProduct.get(product.id)!} officialIngredientSource={officialSourceByProduct.get(product.id)} defaultCheckedAt={defaultCheckedAt} />)}
+            {products.map((product) => <AdminProductItem key={product.id} product={product} availableIngredients={ingredientPage.content} initialIngredients={ingredientsByProduct.get(product.id)!} officialIngredientSource={officialSourceByProduct.get(product.id)} mfdsMatch={mfdsMatchByProduct.get(product.id)} defaultCheckedAt={defaultCheckedAt} />)}
           </div>
         </section>
       </main>

@@ -6,6 +6,9 @@ import {
   createAdminProduct,
   deleteAdminProduct,
   getCurrentUser,
+  removeAdminMfdsProductMatch,
+  saveAdminMfdsProductMatch,
+  searchAdminMfdsProductCandidates,
   updateAdminProduct,
   updateAdminProductCoupangPartnersLink,
   updateAdminProductIngredients,
@@ -13,6 +16,7 @@ import {
   type AdminProductInput,
 } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
+import type { AdminMfdsProductMatch, MfdsProductCandidate } from "@/lib/types";
 
 export type ProductActionState = {
   success: boolean;
@@ -28,6 +32,13 @@ export type ProductImageActionState = {
 export type ProductIngredientsActionState = {
   success: boolean;
   message: string;
+};
+
+export type MfdsProductMatchActionState = {
+  success: boolean;
+  message: string;
+  candidates?: MfdsProductCandidate[];
+  match?: AdminMfdsProductMatch;
 };
 
 export async function createProductAction(
@@ -164,6 +175,68 @@ export async function saveProductIngredientsAction(
   }
 }
 
+export async function searchMfdsProductCandidatesAction(
+  productId: string,
+  _previousState: MfdsProductMatchActionState,
+  formData: FormData,
+): Promise<MfdsProductMatchActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  const query = String(formData.get("query") ?? "").trim();
+  if (query.length < 2) return { success: false, message: "두 글자 이상의 제품명을 입력해 주세요." };
+
+  try {
+    const candidates = await searchAdminMfdsProductCandidates(authorization.accessToken, productId, query, 5);
+    return {
+      success: true,
+      message: candidates.length > 0 ? `식약처 품목 후보 ${candidates.length}건을 찾았어요.` : "일치하는 후보를 찾지 못했어요. 검색어를 줄여 다시 찾아보세요.",
+      candidates,
+    };
+  } catch (error) {
+    return mfdsMatchError(error, "식약처 품목 후보를 찾지 못했어요.");
+  }
+}
+
+export async function saveMfdsProductMatchAction(
+  productId: string,
+  _previousState: MfdsProductMatchActionState,
+  formData: FormData,
+): Promise<MfdsProductMatchActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  const reportId = String(formData.get("reportId") ?? "").trim();
+  const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+  if (!reportId) return { success: false, message: "연결할 식약처 품목을 선택해 주세요." };
+  if (reviewNote.length > 500) return { success: false, message: "검수 메모는 500자 이하로 입력해 주세요." };
+
+  try {
+    const match = await saveAdminMfdsProductMatch(authorization.accessToken, productId, reportId, reviewNote);
+    revalidateProductPages(productId);
+    return { success: true, message: "관리자 확인을 마치고 식약처 보고정보를 연결했어요.", match };
+  } catch (error) {
+    return mfdsMatchError(error, "식약처 보고정보를 연결하지 못했어요.");
+  }
+}
+
+export async function removeMfdsProductMatchAction(
+  productId: string,
+  _previousState: MfdsProductMatchActionState,
+  formData: FormData,
+): Promise<MfdsProductMatchActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  if (formData.get("confirmation") !== productId) {
+    return { success: false, message: "연결을 해제할 제품을 다시 확인해 주세요." };
+  }
+  try {
+    await removeAdminMfdsProductMatch(authorization.accessToken, productId);
+    revalidateProductPages(productId);
+    return { success: true, message: "식약처 보고정보 연결을 해제했어요." };
+  } catch (error) {
+    return mfdsMatchError(error, "식약처 보고정보 연결을 해제하지 못했어요.");
+  }
+}
+
 function productInput(formData: FormData): AdminProductInput {
   const tone = String(formData.get("tone") ?? "");
   if (!["peach", "sage", "sand", "rose", "blue"].includes(tone)) {
@@ -204,6 +277,11 @@ function productError(error: unknown, fallback: string): ProductActionState {
   if (error instanceof ApiRequestError) {
     return { success: false, message: error.message, fieldErrors: error.fieldErrors };
   }
+  return { success: false, message: error instanceof Error ? error.message : fallback };
+}
+
+function mfdsMatchError(error: unknown, fallback: string): MfdsProductMatchActionState {
+  if (error instanceof ApiRequestError) return { success: false, message: error.message };
   return { success: false, message: error instanceof Error ? error.message : fallback };
 }
 

@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
+import type { AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -530,6 +530,44 @@ export function getAdminOfficialIngredientSources(accessToken: string): Promise<
   });
 }
 
+export function getAdminMfdsProductMatches(accessToken: string): Promise<AdminMfdsProductMatch[]> {
+  return requestJson<AdminMfdsProductMatch[]>("/admin/data-sources/mfds/product-matches", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function searchAdminMfdsProductCandidates(
+  accessToken: string,
+  productId: string,
+  query: string,
+  limit = 5,
+): Promise<MfdsProductCandidate[]> {
+  const search = new URLSearchParams({ query, limit: String(limit) });
+  return requestJson<MfdsProductCandidate[]>(`/admin/data-sources/products/${encodeURIComponent(productId)}/mfds-candidates?${search}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveAdminMfdsProductMatch(
+  accessToken: string,
+  productId: string,
+  reportId: string,
+  reviewNote?: string,
+): Promise<AdminMfdsProductMatch> {
+  return requestJson<AdminMfdsProductMatch>(`/admin/data-sources/products/${encodeURIComponent(productId)}/mfds-match`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ reportId, reviewNote: reviewNote || null }),
+  });
+}
+
+export function removeAdminMfdsProductMatch(accessToken: string, productId: string): Promise<void> {
+  return requestEmpty(`/admin/data-sources/products/${encodeURIComponent(productId)}/mfds-match`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
 export function syncAdminMfdsData(accessToken: string): Promise<MfdsSyncResult> {
   return requestJson<MfdsSyncResult>("/admin/data-sources/mfds/sync", {
     method: "POST",
@@ -664,6 +702,10 @@ export function updateAdminProductIngredients(
 
 export function getProductIngredients(productId: string): Promise<ProductIngredients> {
   return requestJson<ProductIngredients>(`/products/${encodeURIComponent(productId)}/ingredients`);
+}
+
+export function getProductRegulatorySource(productId: string): Promise<ProductRegulatorySource> {
+  return requestJson<ProductRegulatorySource>(`/products/${encodeURIComponent(productId)}/regulatory-source`);
 }
 
 export function getExperts(topic?: string): Promise<Expert[]> {
