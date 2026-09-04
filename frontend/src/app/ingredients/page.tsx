@@ -177,7 +177,7 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
         {result.totalPages > 1 && (
           <nav aria-label="성분 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
             {result.page > 0 && <Link href={pageHref(values, { page: result.page - 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
-            {visiblePages.map((page) => <Link key={page} href={pageHref(values, { page })} aria-current={page === result.page ? "page" : undefined} className={`grid h-11 w-11 place-items-center rounded-full text-xs ${page === result.page ? "bg-[#37312c] text-white" : "border border-[#74513f20] bg-[#fffaf3]"}`}>{page + 1}</Link>)}
+            {visiblePages.map((page) => <Link key={page} href={pageHref(values, { page })} aria-current={page === result.page ? "page" : undefined} className={`grid h-11 w-11 place-items-center rounded-full text-xs ${page === result.page ? "bg-[#cf5b7d] text-white" : "border border-[#edced7] bg-white"}`}>{page + 1}</Link>)}
             {result.hasNext && <Link href={pageHref(values, { page: result.page + 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
           </nav>
         )}

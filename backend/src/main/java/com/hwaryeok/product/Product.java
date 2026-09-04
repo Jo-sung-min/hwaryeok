@@ -57,6 +57,9 @@ public class Product {
     @Column(name = "source_checked_at")
     private LocalDate sourceCheckedAt;
 
+    @Column(name = "coupang_partners_url", length = 1000)
+    private String coupangPartnersUrl;
+
     protected Product() {
     }
 
@@ -88,6 +91,7 @@ public class Product {
         this.publicationStatus = publicationStatus;
         this.sourceUrl = sourceUrl;
         this.sourceCheckedAt = sourceCheckedAt;
+        this.coupangPartnersUrl = null;
     }
 
     public String getId() { return id; }
@@ -104,9 +108,14 @@ public class Product {
     public ProductPublicationStatus getPublicationStatus() { return publicationStatus; }
     public String getSourceUrl() { return sourceUrl; }
     public LocalDate getSourceCheckedAt() { return sourceCheckedAt; }
+    public String getCoupangPartnersUrl() { return coupangPartnersUrl; }
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void updateCoupangPartnersUrl(String coupangPartnersUrl) {
+        this.coupangPartnersUrl = coupangPartnersUrl;
     }
 
     public void updateDetails(String brand, String name, String category, int baseScore, String benefit,

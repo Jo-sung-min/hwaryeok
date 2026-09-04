@@ -1,0 +1,22 @@
+UPDATE products SET image_url = '/products/birch-cream.jpg' WHERE id = 'birch-cream';
+UPDATE products SET image_url = '/products/heartleaf-toner.jpg' WHERE id = 'heartleaf-toner';
+UPDATE products SET image_url = '/products/rice-sunscreen.jpg' WHERE id = 'rice-sunscreen';
+UPDATE products SET image_url = '/products/mugwort-ampoule.jpg' WHERE id = 'mugwort-ampoule';
+UPDATE products SET image_url = '/products/bean-essence.png' WHERE id = 'bean-essence';
+
+UPDATE products SET image_url = '/products/hwahae-2079267.jpg' WHERE id = 'hwahae-2079267';
+UPDATE products SET image_url = '/products/hwahae-2170851.jpg' WHERE id = 'hwahae-2170851';
+UPDATE products SET image_url = '/products/hwahae-2133830.jpg' WHERE id = 'hwahae-2133830';
+UPDATE products SET image_url = '/products/hwahae-1984011.png' WHERE id = 'hwahae-1984011';
+UPDATE products SET image_url = '/products/hwahae-1899998.jpg' WHERE id = 'hwahae-1899998';
+UPDATE products SET image_url = '/products/hwahae-1918760.jpg' WHERE id = 'hwahae-1918760';
+UPDATE products SET image_url = '/products/hwahae-1950255.jpg' WHERE id = 'hwahae-1950255';
+UPDATE products SET image_url = '/products/hwahae-2078467.jpg' WHERE id = 'hwahae-2078467';
+UPDATE products SET image_url = '/products/hwahae-1889139.jpg' WHERE id = 'hwahae-1889139';
+UPDATE products SET image_url = '/products/hwahae-1847019.jpg' WHERE id = 'hwahae-1847019';
+UPDATE products SET image_url = '/products/hwahae-1890897.jpg' WHERE id = 'hwahae-1890897';
+UPDATE products SET image_url = '/products/hwahae-1920665.jpg' WHERE id = 'hwahae-1920665';
+UPDATE products SET image_url = '/products/hwahae-2015377.jpg' WHERE id = 'hwahae-2015377';
+UPDATE products SET image_url = '/products/hwahae-1841507.webp' WHERE id = 'hwahae-1841507';
+UPDATE products SET image_url = '/products/hwahae-2097676.jpg' WHERE id = 'hwahae-2097676';
+UPDATE products SET image_url = '/products/hwahae-2153055.jpg' WHERE id = 'hwahae-2153055';

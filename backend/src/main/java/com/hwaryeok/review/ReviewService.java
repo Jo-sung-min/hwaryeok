@@ -15,6 +15,10 @@ import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductService;
 import com.hwaryeok.user.ActiveUserService;
 import com.hwaryeok.user.User;
+import com.hwaryeok.user.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +35,7 @@ public class ReviewService {
     private final ReviewCriterionRepository criterionRepository;
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewScoreRepository reviewScoreRepository;
+    private final UserRepository userRepository;
 
     public ReviewService(
             ProductService productService,
@@ -38,7 +43,8 @@ public class ReviewService {
             ReviewTemplateRepository templateRepository,
             ReviewCriterionRepository criterionRepository,
             ProductReviewRepository reviewRepository,
-            ProductReviewScoreRepository reviewScoreRepository
+            ProductReviewScoreRepository reviewScoreRepository,
+            UserRepository userRepository
     ) {
         this.productService = productService;
         this.activeUserService = activeUserService;
@@ -46,6 +52,7 @@ public class ReviewService {
         this.criterionRepository = criterionRepository;
         this.reviewRepository = reviewRepository;
         this.reviewScoreRepository = reviewScoreRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +63,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    public ProductReviewSummaryResponse summary(String productId) {
+    public ProductReviewSummaryResponse summary(String productId, String viewerId) {
         Product product = productService.getProduct(productId);
         TemplateContext context = templateFor(product);
         long reviewCount = reviewRepository.countByProductId(productId);
@@ -84,11 +91,50 @@ public class ReviewService {
                 context.template().getVersion(),
                 reviewScore,
                 reviewCount,
+                viewerId != null && reviewRepository.existsByProductIdAndUserId(productId, viewerId),
                 rankingStatus(reviewCount),
                 MINIMUM_OFFICIAL_REVIEW_COUNT,
                 averages,
                 recentReviews.stream().map(ReviewDetailResponse::from).toList()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewerReviewListResponse reviewsByUser(String userId, int page, int size) {
+        if (page < 0) throw new IllegalArgumentException("페이지 번호를 다시 확인해 주세요.");
+        if (size < 1 || size > 50) throw new IllegalArgumentException("페이지 크기는 1개 이상 50개 이하여야 해요.");
+
+        User reviewer = userRepository.findByIdAndStatus(userId, "ACTIVE")
+                .orElseThrow(() -> new ResourceNotFoundException("리뷰 사용자를 찾을 수 없어요."));
+        Page<ProductReview> reviews = reviewRepository.findByUserIdOrderByCreatedAtDesc(
+                userId,
+                PageRequest.of(page, size)
+        );
+        Double average = reviewRepository.averageTotalScoreByUserId(userId);
+        BigDecimal averageReviewScore = average == null
+                ? null
+                : BigDecimal.valueOf(average).setScale(1, RoundingMode.HALF_UP);
+
+        return new ReviewerReviewListResponse(
+                ReviewerResponse.from(reviewer),
+                averageReviewScore,
+                reviews.getTotalElements(),
+                reviews.getContent().stream().map(ReviewerReviewResponse::from).toList(),
+                reviews.getNumber(),
+                reviews.getSize(),
+                reviews.getTotalPages(),
+                reviews.hasNext()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ProductReviewMetrics metrics(String productId) {
+        long reviewCount = reviewRepository.countByProductId(productId);
+        Double average = reviewRepository.averageTotalScoreByProductId(productId);
+        BigDecimal averageScore = average == null
+                ? null
+                : BigDecimal.valueOf(average).setScale(1, RoundingMode.HALF_UP);
+        return new ProductReviewMetrics(averageScore, reviewCount);
     }
 
     @Transactional
@@ -123,7 +169,11 @@ public class ReviewService {
                 submittedScores.get(criterion.getId()),
                 now
         )));
-        return ReviewDetailResponse.from(reviewRepository.saveAndFlush(review));
+        try {
+            return ReviewDetailResponse.from(reviewRepository.saveAndFlush(review));
+        } catch (DataIntegrityViolationException exception) {
+            throw new ReviewAlreadyExistsException();
+        }
     }
 
     private TemplateContext templateFor(Product product) {

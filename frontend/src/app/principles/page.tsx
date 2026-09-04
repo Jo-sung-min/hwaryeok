@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BadgeInfo, CheckCircle2, Database, HeartHandshake, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowRight, BadgeInfo, CheckCircle2, Database, HeartHandshake, Megaphone, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "화력을 읽는 방법",
@@ -48,6 +48,13 @@ export default function PrinciplesPage() {
             <h1 className="mx-auto mt-4 max-w-3xl text-balance font-myeongjo text-[36px] font-semibold leading-tight sm:text-5xl md:text-6xl">내 피부에 맞는 선택을 더 선명하게</h1>
             <p className="mx-auto mt-6 max-w-2xl text-sm leading-8 text-[#75675f]">무엇이 많이 팔리는지보다 내 피부에 왜 맞는지, 어떤 성분을 확인해야 하는지부터 차분히 보여드립니다.</p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/skin-check" className="ink-btn">1분 피부 체크 <ArrowRight size={17} /></Link><Link href="/ingredients" className="line-btn">성분 이야기 보기</Link></div>
+          </div>
+        </section>
+
+        <section className="container-page py-14 md:py-20">
+          <div className="rounded-[28px] border border-[#e7c8d0] bg-[#fff6f8] p-6 sm:p-8 md:flex md:items-center md:justify-between md:gap-10">
+            <div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#c94f70] text-white"><Megaphone size={19} /></span><div><div className="flex items-center gap-2"><span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-[#b54867]">광고</span><h2 className="font-myeongjo text-2xl font-semibold">광고는 별도의 화력 추천 탭에서</h2></div><p className="mt-3 max-w-2xl text-sm leading-7 text-[#75636a]">광고 제품은 관리자 추천점수로 광고 탭 안에서만 정렬합니다. 광고 계약이나 관리자 점수는 일반 사용자 리뷰점수와 피부 맞춤 랭킹에 반영하지 않습니다.</p></div></div>
+            <Link href="/promotions" className="line-btn mt-6 w-full shrink-0 md:mt-0 md:w-auto">광고 추천 보기 <ArrowRight size={16} /></Link>
           </div>
         </section>
 

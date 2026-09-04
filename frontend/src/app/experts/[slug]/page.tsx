@@ -28,7 +28,7 @@ export default async function ExpertDetailPage({ params }: { params: Promise<{ s
   const { expert, recentAnswers } = await getExpert(slug);
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#eccfd6] bg-gradient-to-br from-white via-[#fff8fa] to-[#fbe5ea] py-10 md:py-16">
+      <section className="border-b border-[#eccfd6] bg-[#fff8fa] py-10 md:py-16">
         <div className="container-page"><Link href="/experts" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#7a686e]"><ArrowLeft size={16} /> 전문가 홈</Link><div className="mt-6 flex flex-col gap-6 md:flex-row md:items-center"><ExpertAvatar expert={expert} large /><div className="flex-1"><p className="text-xs font-bold tracking-[.14em] text-[#a25569]">VERIFIED EXPERT</p><h1 className="mt-2 font-myeongjo text-4xl font-bold">{expert.realName} <span className="text-xl font-normal text-[#77656b]">{expert.specialty ?? "의사"}</span></h1><p className="mt-3 max-w-2xl text-sm leading-7 text-[#75666b]">{expert.bio}</p><div className="mt-4"><VerificationBadges expert={expert} /></div></div></div></div>
       </section>
       <section className="container-page grid gap-8 py-10 lg:grid-cols-[.7fr_1.3fr]">

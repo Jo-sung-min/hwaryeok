@@ -1,8 +1,9 @@
 "use client";
 
-import { ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, PencilLine } from "lucide-react";
+import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Link2, PencilLine } from "lucide-react";
 import { useState } from "react";
 import { ProductDeleteForm } from "@/app/admin/products/product-delete-form";
+import { CoupangPartnersForm } from "@/app/admin/products/coupang-partners-form";
 import { ProductForm } from "@/app/admin/products/product-form";
 import { ProductImageForm } from "@/app/admin/products/product-image-form";
 import { ProductIngredientsForm } from "@/app/admin/products/product-ingredients-form";
@@ -38,6 +39,7 @@ export function AdminProductItem({
             <StatusBadge status={product.publicationStatus} />
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">{product.score}점</span>
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">성분 {ingredientCount}개</span>
+            {product.coupangPartnersUrl && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f4] px-2 py-1 font-bold text-[#a34d65]"><BadgeDollarSign size={11} /> 파트너스 연결</span>}
             {!isReady(product, ingredientCount) && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1df] px-2 py-1 text-[#936626]"><CircleAlert size={11} /> 정보 보완 필요</span>}
           </span>
         </span>
@@ -54,6 +56,13 @@ export function AdminProductItem({
               <div><div className="text-xs font-bold text-[#6c665b]">제품 성분 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">확인된 성분만 연결하고 표시 순서와 역할 메모를 저장해 주세요.</p></div>
             </div>
             <ProductIngredientsForm productId={product.id} availableIngredients={availableIngredients} initialIngredients={initialIngredients} />
+          </div>
+          <div className="mt-7 border-t border-[#74513f18] pt-6">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff0f4] text-[#a65066]"><Link2 size={17} /></span>
+              <div><div className="text-xs font-bold text-[#8f5262]">쿠팡 파트너스 연결</div><p className="mt-1 text-[11px] leading-5 text-[#89747c]">저장된 링크는 이 제품의 구매 버튼에 우선 연결되고 사용자 화면에는 광고 고지가 표시돼요.</p></div>
+            </div>
+            <CoupangPartnersForm productId={product.id} initialUrl={product.coupangPartnersUrl} />
           </div>
           <div className="mt-7 grid gap-5 border-t border-[#74513f18] pt-6 lg:grid-cols-[1fr_auto] lg:items-start">
             <div><div className="flex items-center gap-2 text-xs font-bold text-[#8f5262]"><ImagePlus size={15} /> 제품 이미지</div><ProductImageForm productId={product.id} /></div>

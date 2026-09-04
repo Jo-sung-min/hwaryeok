@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,6 +8,7 @@ import {
   HeartHandshake,
   Info,
   MessageCircle,
+  Megaphone,
   Search,
   ShieldCheck,
   Sparkles,
@@ -58,17 +58,15 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative min-h-[720px] overflow-hidden border-b border-[#8e6b5515] md:min-h-[790px]">
-        <Image src="/hero-watercolor.png" alt="한지 위에 수채화로 그린 분홍 매화와 화장품" fill priority className="object-cover object-[61%_center] md:object-center" sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/78 via-[#fff7f8]/38 to-transparent md:from-white/62" />
-        <div className="container-page relative z-10 flex min-h-[650px] items-center pb-16 pt-12 md:min-h-[710px] md:pb-0 md:pt-0">
+      <section className="relative min-h-[650px] overflow-hidden border-b border-[#f0dce2] bg-white md:min-h-[710px]">
+        <div className="container-page relative z-10 flex min-h-[580px] items-center pb-16 pt-12 md:min-h-[630px] md:pb-0 md:pt-0">
           <div className="min-w-0 w-full max-w-[650px] fade-up">
             <div className="mb-6 flex items-center gap-3">
               <span className="seal seal-wordmark h-12 w-12 font-myeongjo text-xl font-bold" aria-label="화력">花力</span>
               <div><p className="text-[10px] font-bold tracking-[.24em] text-[#9c6d5e]">MY SKIN, MY BEAUTY STORY</p><p className="mt-1 text-xs text-[#766860]">성분부터 사용감까지, 나답게 발견해요</p></div>
             </div>
 
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#b86d8030] bg-white/70 px-3 py-1.5 text-[11px] font-bold text-[#934b60] backdrop-blur"><Sparkles size={14} /> 내 피부 맞춤 뷰티 가이드</p>
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#efcbd5] bg-[#fff4f7] px-3 py-1.5 text-[11px] font-bold text-[#934b60]"><Sparkles size={14} /> 내 피부 맞춤 뷰티 가이드</p>
             <h1 className="font-myeongjo text-[42px] font-medium leading-[1.22] tracking-[-.065em] text-[#332b26] max-[359px]:text-[36px] sm:text-[54px] md:text-[64px]">
               내 피부에 맞는<br /><span className="relative text-[#98495d]">화장품 이야기</span>
             </h1>
@@ -95,10 +93,16 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="absolute bottom-7 right-[7%] hidden items-center gap-3 rounded-2xl border border-white/70 bg-white/78 p-4 pr-5 shadow-[0_15px_35px_rgba(146,77,94,.13)] backdrop-blur-md lg:flex float-soft">
+        <div className="absolute bottom-7 right-[7%] hidden items-center gap-3 rounded-2xl border border-[#efd7de] bg-[#fff7f9] p-4 pr-5 shadow-[0_10px_28px_rgba(146,77,94,.09)] lg:flex float-soft">
           <span className="grid h-11 w-11 place-items-center rounded-full bg-[#a6536814] text-[#a65368]"><HeartHandshake size={20} /></span>
           <div><p className="text-[10px] font-bold tracking-wider text-[#9b6b6b]">오늘의 뷰티 가이드</p><p className="mt-1 text-sm font-semibold">내 피부에 맞는 화장품을 천천히 발견해요</p></div>
         </div>
+      </section>
+
+      <section className="border-b border-[#edd4db] bg-[#fff7f9] py-5">
+        <Link href="/promotions" className="container-page group flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <span className="flex min-w-0 items-center gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#c94f70] text-white"><Megaphone size={19} /></span><span className="min-w-0"><span className="flex items-center gap-2"><span className="rounded-full border border-[#e9bcc8] bg-white px-2 py-0.5 text-[9px] font-bold text-[#b54665]">광고</span><strong className="font-myeongjo text-lg">신생 화장품을 먼저 만나는 화력 추천</strong></span><small className="mt-1 block text-[11px] leading-5 text-[#806d74]">관리자 추천점수와 사용자 리뷰점수를 분리해 투명하게 보여드려요.</small></span></span><span className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-bold text-[#a24762]">추천 탭 보기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
+        </Link>
       </section>
 
       <section className="border-b border-[#dfa6b51f] bg-white py-10 md:hidden">
@@ -131,7 +135,6 @@ export default async function HomePage() {
           </div>
 
           <div className="watercolor-edge paper-card relative overflow-hidden rounded-[30px] p-6 md:p-9">
-            <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-[#e6a59118] blur-3xl" />
             <div className="relative flex items-start justify-between gap-5">
               <div><p className="text-[10px] font-bold tracking-[.16em] text-[#a65368]">화력 리포트 미리보기</p><h3 className="mt-2 font-myeongjo text-2xl font-semibold">나에게 맞는 이유를 한눈에</h3></div>
               <span className="seal h-11 w-11 font-myeongjo text-base">解</span>
@@ -154,7 +157,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-[#dfa6b51f] bg-[#fff2f5] py-14 md:py-24">
+      <section className="border-y border-[#f0dce2] bg-[#fff8fa] py-14 md:py-24">
         <div className="container-page">
           <div className="text-center"><p className="eyebrow mb-4">HOW TO READ</p><h2 className="section-title font-myeongjo">화력은 네 가지 이야기로 읽어요</h2><p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#786c63]">성분, 사용감, 피부 궁합, 정보 상태를 함께 보면 나에게 맞는 이유가 더 선명해져요.</p></div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -190,12 +193,12 @@ export default async function HomePage() {
               <p className="mt-5 text-sm leading-7 text-[#765f67]">메이크업 궁합, 보습 지속력, 자극 부담처럼 지금 내게 중요한 항목을 골라 두 제품의 차이를 섬세하게 비교해 보세요.</p>
               <Link href="/compare" className="ink-btn mt-8">제품 비교 시작 <ArrowRight size={16} /></Link>
             </div>
-            <div className="grid gap-3 bg-white/78 p-5 md:p-8">
+            <div className="grid gap-3 bg-white p-5 md:p-8">
               {[
                 ["01", "같은 피부 조건", "두 제품 모두 동일한 프로필로 계산"],
                 ["02", "항목별 차이", "강점과 주의점이 갈리는 지점을 표시"],
                 ["03", "나에게 맞는 결론", "지금 중요한 포인트를 중심으로 해석"],
-              ].map(([number, title, description]) => <div key={number} className="flex items-center gap-4 rounded-2xl border border-[#75564516] bg-white/72 p-4"><span className="font-myeongjo text-xl text-[#a65368]">{number}</span><div><strong className="font-myeongjo text-base">{title}</strong><p className="mt-1 text-xs leading-5 text-[#817168]">{description}</p></div></div>)}
+              ].map(([number, title, description]) => <div key={number} className="flex items-center gap-4 rounded-2xl border border-[#efd9df] bg-white p-4"><span className="font-myeongjo text-xl text-[#a65368]">{number}</span><div><strong className="font-myeongjo text-base">{title}</strong><p className="mt-1 text-xs leading-5 text-[#817168]">{description}</p></div></div>)}
             </div>
           </div>
         </div>

@@ -12,7 +12,7 @@ export const expertTopics = [
 
 export function ExpertAvatar({ expert, large = false }: { expert: Expert; large?: boolean }) {
   return (
-    <div className={`${large ? "h-24 w-24 text-3xl" : "h-14 w-14 text-xl"} relative grid shrink-0 place-items-center overflow-hidden rounded-[34%] border border-white bg-gradient-to-br from-[#fde8ec] via-white to-[#f5cbd5] font-myeongjo font-bold text-[#9d5264] shadow-[0_10px_24px_rgba(159,79,98,.12)]`}>
+    <div className={`${large ? "h-24 w-24 text-3xl" : "h-14 w-14 text-xl"} relative grid shrink-0 place-items-center overflow-hidden rounded-[34%] border border-[#f0d5dd] bg-[#fff1f5] font-myeongjo font-bold text-[#9d5264] shadow-[0_8px_20px_rgba(159,79,98,.09)]`}>
       {expert.profileImageUrl ? <img src={expert.profileImageUrl} alt="" className="h-full w-full object-cover" /> : expert.realName.slice(0, 1)}
       <span className="absolute bottom-0.5 right-0.5 grid h-5 w-5 place-items-center rounded-full bg-[#a75368] text-white"><BadgeCheck size={13} /></span>
     </div>

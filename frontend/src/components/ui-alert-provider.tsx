@@ -114,10 +114,10 @@ export function useUiAlert() {
 
 function NoticeCard({ notice, onClose }: { notice: Notice; onClose: () => void }) {
   const style = notice.tone === "warning"
-    ? { icon: AlertTriangle, shell: "border-[#e5b66e8c] bg-[linear-gradient(145deg,rgba(255,252,244,.96),rgba(255,241,218,.93))]", iconBox: "bg-[#f4c775] text-[#714d18]", title: "text-[#654717]" }
+    ? { icon: AlertTriangle, shell: "border-[#e5b66e8c] bg-[#fff9ee]", iconBox: "bg-[#f4c775] text-[#714d18]", title: "text-[#654717]" }
     : notice.tone === "success"
-      ? { icon: Check, shell: "border-[#94b99b78] bg-[linear-gradient(145deg,rgba(248,255,249,.96),rgba(230,244,234,.94))]", iconBox: "bg-[#9fc2a6] text-[#294f32]", title: "text-[#365b3e]" }
-      : { icon: Info, shell: "border-[#d7a8b67a] bg-[linear-gradient(145deg,rgba(255,250,252,.97),rgba(250,229,236,.94))]", iconBox: "bg-[#d98ca2] text-white", title: "text-[#744355]" };
+      ? { icon: Check, shell: "border-[#94b99b78] bg-[#f1f8f3]", iconBox: "bg-[#9fc2a6] text-[#294f32]", title: "text-[#365b3e]" }
+      : { icon: Info, shell: "border-[#d7a8b67a] bg-[#fff2f6]", iconBox: "bg-[#d98ca2] text-white", title: "text-[#744355]" };
   const Icon = style.icon;
 
   return (
@@ -162,7 +162,7 @@ function ConfirmationDialog({ options, onClose }: { options: ConfirmOptions; onC
         </div>
         <div className="mt-7 grid grid-cols-2 gap-3">
           <button ref={cancelRef} type="button" onClick={() => onClose(false)} className="line-btn w-full">{options.cancelLabel ?? "취소"}</button>
-          <button type="button" onClick={() => onClose(true)} className={options.tone === "danger" ? "inline-flex min-h-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,#9d3f56,#6f3043)] px-5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(118,48,67,.24)]" : "ink-btn w-full"}>{options.confirmLabel ?? "확인"}</button>
+          <button type="button" onClick={() => onClose(true)} className={options.tone === "danger" ? "inline-flex min-h-12 items-center justify-center rounded-full bg-[#a84360] px-5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(118,48,67,.18)]" : "ink-btn w-full"}>{options.confirmLabel ?? "확인"}</button>
         </div>
       </section>
     </div>

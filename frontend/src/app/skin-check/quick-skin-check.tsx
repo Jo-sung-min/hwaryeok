@@ -106,7 +106,7 @@ export function QuickSkinCheck({ isAuthenticated }: { isAuthenticated: boolean }
     const continueHref = isAuthenticated
       ? "/profile?from=quick"
       : `/login?returnTo=${encodeURIComponent("/profile?from=quick")}`;
-    return <main className="min-h-[calc(100vh-72px)] bg-[radial-gradient(circle_at_85%_8%,rgba(225,132,158,.2),transparent_28%),linear-gradient(145deg,#fffafd,#fae8ed)] py-8 md:py-14">
+    return <main className="min-h-[calc(100vh-72px)] bg-white py-8 md:py-14">
       <div className="container-page max-w-5xl">
         <button type="button" onClick={() => { setResult(null); setStep(1); }} className="mb-7 inline-flex min-h-11 items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 다시 체크하기</button>
         <div className="text-center"><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1f4] px-4 py-2 text-xs font-bold text-[#9b4b60]"><Sparkles size={14} /> 내 피부 기준 계산 완료</span><h1 className="mt-5 font-myeongjo text-3xl font-semibold sm:text-4xl">지금 살펴볼 제품 세 가지</h1><p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#74675f]">브랜드 크기나 인기보다 연결된 성분, 근거 수준, 선택한 피부 신호를 먼저 봤어요.</p></div>
@@ -117,7 +117,7 @@ export function QuickSkinCheck({ isAuthenticated }: { isAuthenticated: boolean }
     </main>;
   }
 
-  return <main className="min-h-[calc(100vh-72px)] bg-[radial-gradient(circle_at_85%_8%,rgba(225,132,158,.2),transparent_28%),linear-gradient(145deg,#fffafd,#fae8ed)] py-8 md:py-14">
+  return <main className="min-h-[calc(100vh-72px)] bg-white py-8 md:py-14">
     <div className="container-page max-w-3xl">
       <Link href="/" className="mb-7 inline-flex min-h-11 items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 홈으로</Link>
       <div className="mb-7 flex items-end justify-between gap-4"><div><p className="eyebrow mb-3">1 MINUTE SKIN CHECK</p><h1 className="font-myeongjo text-3xl font-semibold sm:text-4xl">내 피부에 뭐가 맞을까?</h1><p className="mt-3 text-sm leading-6 text-[#786b63]">로그인 없이 최근 피부 상태만 골라보세요. 성별보다 실제 피부 신호와 생활 습관을 봐요.</p></div><span className="shrink-0 font-myeongjo text-sm text-[#9a6e60]">{step} / {TOTAL_STEPS}</span></div>

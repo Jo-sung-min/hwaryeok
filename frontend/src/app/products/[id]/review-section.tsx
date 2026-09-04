@@ -37,7 +37,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
   return (
     <section className="container-page pb-14 md:pb-20" id="reviews">
       <div className="overflow-hidden rounded-[26px] border border-[#e4afbb42] bg-white/82 shadow-[0_24px_80px_rgba(116,72,64,.08)] sm:rounded-[32px]">
-        <div className="grid border-b border-[#75564516] bg-gradient-to-br from-[#fff6f7] via-[#fffaf6] to-[#f2eee7] lg:grid-cols-[.78fr_1.22fr]">
+        <div className="grid border-b border-[#efd9df] bg-[#fff8fa] lg:grid-cols-[.78fr_1.22fr]">
           <div className="flex min-h-64 flex-col justify-between p-6 sm:p-8 md:p-10">
             <div>
               <div className="flex items-center gap-2 text-[#a5545e]"><MessageCircle size={18} /><p className="eyebrow">HWA:RYEOK REVIEW</p></div>
@@ -59,7 +59,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
               {summary.criteriaAverages.map((item) => (
                 <div key={item.criteriaId}>
                   <div className="mb-1.5 flex items-center justify-between text-sm"><span className="font-semibold text-[#594d47]">{item.name}</span><strong className="font-myeongjo text-base text-[#9b4a45]">{item.averageScore === null ? "—" : item.averageScore.toFixed(1)}</strong></div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#cdbeb24d]"><div className="h-full rounded-full bg-gradient-to-r from-[#dda8b4] to-[#a65362]" style={{ width: `${item.averageScore === null ? 0 : item.averageScore * 20}%` }} /></div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#f0e1e5]"><div className="h-full rounded-full bg-[#cf6682]" style={{ width: `${item.averageScore === null ? 0 : item.averageScore * 20}%` }} /></div>
                 </div>
               ))}
             </div>
@@ -73,10 +73,13 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
 
             {!isAuthenticated ? (
               <div className="mt-8 rounded-[22px] border border-dashed border-[#bd8d8266] bg-[#fff8f7] p-6 text-center"><Sparkles className="mx-auto text-[#b96872]" size={22} /><p className="mt-3 text-sm leading-7 text-[#6e6159]">로그인하면 내 피부 타입과 함께 항목별 리뷰를 남길 수 있어요.</p><Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="ink-btn mt-5">로그인하고 리뷰 쓰기</Link></div>
+            ) : summary.viewerHasReviewed ? (
+              <div className="mt-8 rounded-[22px] border border-[#efcbd5] bg-[#fff3f6] p-7 text-center text-[#87475b]"><Check className="mx-auto" size={24} /><p className="mt-3 font-semibold">이미 이 제품에 리뷰를 남겼어요.</p><p className="mt-2 text-xs leading-6 text-[#856f76]">화력은 한 사용자가 한 제품에 하나의 리뷰만 남길 수 있도록 운영해요.</p></div>
             ) : state.success ? (
               <div className="mt-8 rounded-[22px] bg-[#edf5ef] p-7 text-center text-[#4d7157]"><Check className="mx-auto" size={24} /><p className="mt-3 font-semibold">{state.message}</p></div>
             ) : (
               <form action={action} className="mt-8 space-y-7">
+                <p className="rounded-2xl border border-[#efd9df] bg-[#fff8fa] px-4 py-3 text-xs leading-6 text-[#78666c]"><ShieldCheck size={15} className="mr-1.5 inline text-[#b14b69]" />사용자 한 명당 이 제품에는 하나의 리뷰만 등록할 수 있어요.</p>
                 <div className="grid gap-5">
                   {criteria.criteria.map((item) => (
                     <fieldset key={item.id} className="rounded-[20px] border border-[#75564518] bg-[#fffdf9] p-4 sm:p-5">
@@ -114,7 +117,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
               <div className="mt-7 grid gap-4">
                 {summary.reviews.slice(0, 5).map((review) => (
                   <article key={review.id} className="rounded-[20px] border border-[#75564516] bg-white/82 p-5">
-                    <div className="flex items-start justify-between gap-4"><div><strong className="text-sm">{review.authorNickname}</strong><p className="mt-1 text-[11px] text-[#8a7c72]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-2xl text-[#9b4a45]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d73]">리뷰점수</p></div></div>
+                    <div className="flex items-start justify-between gap-4"><div><Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link><p className="mt-1 text-[11px] text-[#8a7c72]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-2xl text-[#9b4a45]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d73]">리뷰점수</p></div></div>
                     <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#655a53]">{review.content}</p>
                     <div className="mt-4 flex items-center justify-between text-[10px] text-[#93857b]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
                   </article>

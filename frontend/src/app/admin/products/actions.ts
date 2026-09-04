@@ -7,6 +7,7 @@ import {
   deleteAdminProduct,
   getCurrentUser,
   updateAdminProduct,
+  updateAdminProductCoupangPartnersLink,
   updateAdminProductIngredients,
   uploadAdminProductImage,
   type AdminProductInput,
@@ -61,6 +62,28 @@ export async function updateProductAction(
     return { success: true, message: "제품 정보를 저장했어요." };
   } catch (error) {
     return productError(error, "제품 정보를 저장하지 못했어요.");
+  }
+}
+
+export async function saveCoupangPartnersLinkAction(
+  productId: string,
+  _previousState: ProductActionState,
+  formData: FormData,
+): Promise<ProductActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return authorization.error;
+
+  try {
+    const clear = formData.get("intent") === "clear";
+    const url = clear ? undefined : String(formData.get("coupangPartnersUrl") ?? "").trim() || undefined;
+    await updateAdminProductCoupangPartnersLink(authorization.accessToken, productId, url);
+    revalidateProductPages(productId);
+    return {
+      success: true,
+      message: url ? "쿠팡 파트너스 링크를 연결했어요." : "쿠팡 파트너스 링크를 해제했어요.",
+    };
+  } catch (error) {
+    return productError(error, "쿠팡 파트너스 링크를 저장하지 못했어요.");
   }
 }
 

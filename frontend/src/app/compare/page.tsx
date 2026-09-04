@@ -106,7 +106,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Comp
 
       <div className="glass-panel overflow-x-auto rounded-[24px] sm:rounded-[30px]">
         <div className="grid" style={gridStyle}>
-          <div className="border-b border-r border-[#74513f18] bg-[#f0e5d7]" />
+          <div className="border-b border-r border-[#efd9df] bg-[#fff2f5]" />
           <CompareSelectors products={products} selectedIds={selectedIds} />
           <CompareLabel label="나의 화력" />
           {analyses.map((analysis, index) => <div key={analysis.productId} className={`flex flex-col items-center justify-center gap-3 border-b border-[#74513f18] p-4 sm:flex-row ${index < analyses.length - 1 ? "border-r" : ""}`}><GradeSeal grade={analysis.grade} compact /><span className="text-center text-[11px] text-[#776a61]">{analysis.verdict}</span></div>)}
@@ -153,5 +153,5 @@ function CompareEmpty() {
 }
 
 function CompareLabel({ label }: { label: string }) {
-  return <div className="flex items-center break-keep border-b border-r border-[#74513f18] bg-[#f5ecdf] p-2.5 text-[11px] font-semibold leading-5 text-[#665b54] sm:p-5 sm:text-sm">{label}</div>;
+  return <div className="flex items-center break-keep border-b border-r border-[#efd9df] bg-[#fff7f9] p-2.5 text-[11px] font-semibold leading-5 text-[#665b60] sm:p-5 sm:text-sm">{label}</div>;
 }

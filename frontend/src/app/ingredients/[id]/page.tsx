@@ -47,7 +47,6 @@ export default async function IngredientDetailPage({ params }: { params: Promise
 
         <section className="container-page">
           <div className="relative overflow-hidden rounded-[26px] border border-[#74513f1a] bg-[#fffaf2a8] px-5 py-10 sm:rounded-[34px] sm:px-6 sm:py-12 md:px-12 md:py-16">
-            <div className="absolute -right-10 -top-16 h-64 w-64 rounded-full bg-[#e9a99a18] blur-3xl" />
             <div className="relative max-w-3xl">
               <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold ${isCaution ? "bg-[#d3957d1c] text-[#9b5945]" : "bg-[#84917a1a] text-[#65715f]"}`}>
                 {isCaution ? <TriangleAlert size={15} /> : <Check size={15} />}
@@ -96,7 +95,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {firepower.products.map((item, index) => (
                   <div key={item.product.id} className="relative">
-                    <span className="absolute left-4 top-4 z-20 rounded-full border border-white/80 bg-[#a75269]/92 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm backdrop-blur-xl">#{index + 1} · 화력 {item.firepowerScore}</span>
+                    <span className="absolute left-4 top-4 z-20 rounded-full border border-[#c94f73] bg-[#c94f73] px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">#{index + 1} · 화력 {item.firepowerScore}</span>
                     <ProductCard product={item.product} initialFavorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />
                     <div className="mx-2 -mt-2 rounded-b-2xl border border-t-0 border-[#dba7b438] bg-white/80 px-4 pb-4 pt-5">
                       <div className="flex items-center justify-between text-[11px]"><span className="text-[#806e75]">{item.concentrationNote ?? "전성분 순서 기반"}</span><strong className="text-[#9b4a5f]">신뢰도 {confidenceLabel(item.confidence)}</strong></div>

@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
+import com.hwaryeok.product.Product;
+import com.hwaryeok.user.User;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -59,6 +62,7 @@ record CreateReviewRequest(
 
 record ReviewDetailResponse(
         String id,
+        String authorId,
         String authorNickname,
         BigDecimal totalScore,
         String content,
@@ -70,6 +74,7 @@ record ReviewDetailResponse(
     static ReviewDetailResponse from(ProductReview review) {
         return new ReviewDetailResponse(
                 review.getId(),
+                review.getUser().getId(),
                 review.getUser().getNickname(),
                 review.getTotalScore(),
                 review.getContent(),
@@ -92,6 +97,71 @@ record ReviewCriterionAverageResponse(
 ) {
 }
 
+record ReviewerResponse(
+        String id,
+        String nickname
+) {
+    static ReviewerResponse from(User user) {
+        return new ReviewerResponse(user.getId(), user.getNickname());
+    }
+}
+
+record ReviewedProductResponse(
+        String id,
+        String brand,
+        String name,
+        String category,
+        String tone,
+        String imageUrl
+) {
+    static ReviewedProductResponse from(Product product) {
+        return new ReviewedProductResponse(
+                product.getId(),
+                product.getBrand(),
+                product.getName(),
+                product.getCategory(),
+                product.getTone(),
+                product.getImageUrl()
+        );
+    }
+}
+
+record ReviewerReviewResponse(
+        String id,
+        ReviewedProductResponse product,
+        BigDecimal totalScore,
+        String content,
+        String skinType,
+        String usagePeriod,
+        boolean repurchaseYn,
+        Instant createdAt
+) {
+    static ReviewerReviewResponse from(ProductReview review) {
+        return new ReviewerReviewResponse(
+                review.getId(),
+                ReviewedProductResponse.from(review.getProduct()),
+                review.getTotalScore(),
+                review.getContent(),
+                review.getSkinType(),
+                review.getUsagePeriod(),
+                review.isRepurchase(),
+                review.getCreatedAt()
+        );
+    }
+}
+
+record ReviewerReviewListResponse(
+        ReviewerResponse reviewer,
+        BigDecimal averageReviewScore,
+        long reviewCount,
+        List<ReviewerReviewResponse> content,
+        int page,
+        int size,
+        int totalPages,
+        boolean hasNext
+) {
+}
+
 record ProductReviewSummaryResponse(
         String productId,
         String categoryId,
@@ -100,6 +170,7 @@ record ProductReviewSummaryResponse(
         int templateVersion,
         BigDecimal reviewScore,
         long reviewCount,
+        boolean viewerHasReviewed,
         String rankingStatus,
         int minimumOfficialReviewCount,
         List<ReviewCriterionAverageResponse> criteriaAverages,

@@ -123,6 +123,13 @@ public class ProductService {
     }
 
     @Transactional
+    public ProductResponse updateCoupangPartnersLink(String id, CoupangPartnersLinkRequest request) {
+        Product product = getAdminProduct(id);
+        product.updateCoupangPartnersUrl(normalizeOptional(request.url()));
+        return ProductResponse.from(product);
+    }
+
+    @Transactional
     public void deleteProduct(String id) {
         productRepository.delete(getAdminProduct(id));
     }
@@ -219,6 +226,11 @@ public class ProductService {
 
     private String normalize(String value) {
         return value == null ? "" : value.strip();
+    }
+
+    private String normalizeOptional(String value) {
+        String normalized = normalize(value);
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private String normalizeCategory(String category) {

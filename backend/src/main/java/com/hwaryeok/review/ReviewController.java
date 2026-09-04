@@ -29,8 +29,11 @@ public class ReviewController {
     }
 
     @GetMapping("/reviews")
-    public ProductReviewSummaryResponse summary(@PathVariable String productId) {
-        return reviewService.summary(productId);
+    public ProductReviewSummaryResponse summary(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId
+    ) {
+        return reviewService.summary(productId, jwt == null ? null : jwt.getSubject());
     }
 
     @PostMapping("/reviews")

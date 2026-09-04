@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, FileSearch, MessageCircle, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, FileSearch, MessageCircle, ShoppingBag, Sparkles, TriangleAlert } from "lucide-react";
 import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
 import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
@@ -10,7 +10,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReviewSection } from "./review-section";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { ReviewCriteria } from "@/lib/types";
-import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
+import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
 
 const defaultProfile = {
   skinType: "수부지",
@@ -39,7 +39,12 @@ export async function generateMetadata({ params }: PageProps<"/products/[id]">):
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
   const { id } = await params;
-  const [savedProfile, favoriteState] = await Promise.all([getOptionalSkinProfile(), getFavoriteViewState()]);
+  const [savedProfile, favoriteState, currentUser, authTokens] = await Promise.all([
+    getOptionalSkinProfile(),
+    getFavoriteViewState(),
+    getCurrentSession(),
+    readAuthTokens(),
+  ]);
   const favoriteIds = new Set(favoriteState.favoriteIds);
   const analysisProfile = savedProfile?.skinType
     ? {
@@ -67,9 +72,11 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
       getAnalysis({ productId: id, ...analysisProfile }),
       getRelatedProducts(id, 3),
       getProductIngredients(id),
-      getProductReviewSummary(id),
+      getProductReviewSummary(id, currentUser ? authTokens.accessToken : undefined),
     ]);
     const product = analysis.product;
+    const hasCoupangPartnersLink = Boolean(product.coupangPartnersUrl);
+    const coupangPurchaseUrl = product.coupangPartnersUrl ?? buildCoupangOfficialSellerSearchUrl(product.brand, product.name);
     const reviewCriteria: ReviewCriteria = {
       categoryId: reviewSummary.categoryId,
       categoryName: reviewSummary.categoryName,
@@ -116,6 +123,10 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
                 <ScoreRing score={analysis.score} size="small" />
               </div>
               <div className="mt-6 rounded-2xl border border-[#e4afbb36] bg-[#fff1f4] p-4 text-sm leading-7 text-[#675a52] sm:mt-8"><Sparkles size={16} className="mr-2 inline text-[#a54f49]" />{analysis.highlights[0]}</div>
+              <a href={coupangPurchaseUrl} target="_blank" rel="noopener noreferrer sponsored nofollow" className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#c94f70] px-5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(151,56,84,.18)] transition hover:bg-[#b84363] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b84363]" aria-label={`${product.brand} ${product.name} ${hasCoupangPartnersLink ? "쿠팡 파트너스 구매 페이지" : "쿠팡 공식판매처 검색"}, 새 창 열림`}><ShoppingBag size={18} /> 제품 구매 <span className="text-white/75">· 쿠팡{hasCoupangPartnersLink ? " 파트너스" : " 공식판매처"}</span><ExternalLink size={15} /></a>
+              {hasCoupangPartnersLink
+                ? <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
+                : <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">쿠팡의 공식 브랜드·판매자 검색 결과로 이동해요. 주문 전 판매자 표시를 확인해 주세요.</p>}
               <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 리포트 보기</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href={`/compare?left=${product.id}`} className="line-btn col-span-2 px-4 sm:col-span-1">제품 비교</Link></div>
               <p className="mt-4 text-[11px] leading-5 text-[#8b7a71]">{product.scoreBasis} · 브랜드 인지도와 판매량은 점수에서 제외</p>
             </div>
@@ -141,7 +152,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
         <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-24">
           <div className="container-page grid gap-12 lg:grid-cols-[.72fr_1.28fr]">
             <div><p className="eyebrow mb-4">FIT DETAILS</p><h2 className="section-title font-myeongjo">피부 궁합을<br />한눈에 봐요</h2><p className="mt-5 text-sm leading-7 text-[#786b62]">좋은 점수는 길게, 부담과 위험 점수는 짧을수록 좋아요.</p></div>
-            <div className="grid gap-6">{analysis.details.map((item) => <div key={item.label}><div className="mb-2 flex items-end justify-between gap-3"><div className="min-w-0"><strong className="font-myeongjo text-lg">{item.label}</strong><span className={`ml-2 text-[11px] sm:ml-3 sm:text-xs ${item.positive ? "text-[#71806b]" : "text-[#a06856]"}`}>{item.note}</span></div><strong className="shrink-0 font-myeongjo text-xl">{item.value}</strong></div><div className="h-2.5 overflow-hidden rounded-full bg-[#cfbdaa46]"><div className={`h-full rounded-full ${item.positive ? "bg-gradient-to-r from-[#9eaa92] to-[#70806d]" : "bg-gradient-to-r from-[#dfb29e] to-[#c1826d]"}`} style={{ width: `${item.value}%` }} /></div></div>)}</div>
+            <div className="grid gap-6">{analysis.details.map((item) => <div key={item.label}><div className="mb-2 flex items-end justify-between gap-3"><div className="min-w-0"><strong className="font-myeongjo text-lg">{item.label}</strong><span className={`ml-2 text-[11px] sm:ml-3 sm:text-xs ${item.positive ? "text-[#71806b]" : "text-[#a06856]"}`}>{item.note}</span></div><strong className="shrink-0 font-myeongjo text-xl">{item.value}</strong></div><div className="h-2.5 overflow-hidden rounded-full bg-[#f1e5e8]"><div className={`h-full rounded-full ${item.positive ? "bg-[#88967f]" : "bg-[#cf8f78]"}`} style={{ width: `${item.value}%` }} /></div></div>)}</div>
           </div>
         </section>
 
@@ -156,4 +167,9 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     if (error instanceof ApiRequestError && error.status === 404) notFound();
     throw error;
   }
+}
+
+function buildCoupangOfficialSellerSearchUrl(brand: string, productName: string) {
+  const query = encodeURIComponent(`${brand} ${productName} 공식 판매자`);
+  return `https://www.coupang.com/np/search?q=${query}`;
 }

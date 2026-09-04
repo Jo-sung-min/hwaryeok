@@ -17,7 +17,7 @@ export function FirepowerReport({ analysis, ingredientData, reviewSummary, perso
   return (
     <section id="report" className="container-page py-10 md:py-16" aria-labelledby="report-title">
       <div className="overflow-hidden rounded-[28px] border border-[#e4afbb42] bg-white/82 shadow-[0_24px_80px_rgba(116,72,64,.08)] sm:rounded-[34px]">
-        <div className="grid gap-8 border-b border-[#75564516] bg-gradient-to-br from-[#fff6f8] via-white to-[#f4efe9] p-6 sm:p-8 lg:grid-cols-[1.1fr_.9fr] lg:p-10">
+        <div className="grid gap-8 border-b border-[#efd9df] bg-[#fff8fa] p-6 sm:p-8 lg:grid-cols-[1.1fr_.9fr] lg:p-10">
           <div>
             <div className="flex items-center gap-2 text-[#a55468]"><CircleGauge size={18} /><p className="eyebrow">HWA:RYEOK REPORT</p></div>
             <h2 id="report-title" className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">한 장으로 보는 제품 리포트</h2>

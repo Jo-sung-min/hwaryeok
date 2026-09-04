@@ -15,6 +15,7 @@ export type Product = {
   tone: ProductTone;
   tag?: string | null;
   imageUrl?: string | null;
+  coupangPartnersUrl?: string | null;
   publicationStatus: ProductPublicationStatus;
   sourceUrl?: string | null;
   sourceCheckedAt?: string | null;
@@ -35,6 +36,27 @@ export type ProductPage = {
   totalElements: number;
   totalPages: number;
   hasNext: boolean;
+};
+
+export type PromotionStatus = "DRAFT" | "ACTIVE" | "PAUSED";
+
+export type ProductPromotion = {
+  id: string;
+  product: Product;
+  recommendationScore: number;
+  headline: string;
+  recommendationReason: string;
+  destinationUrl: string;
+  emergingBrand: boolean;
+  status: PromotionStatus;
+  startsOn: string | null;
+  endsOn: string | null;
+  currentlyVisible: boolean;
+  userReviewScore: number | null;
+  userReviewCount: number;
+  disclosure: "광고 · 관리자 추천점수";
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type FavoriteProduct = {
@@ -86,6 +108,7 @@ export type ReviewCriteria = {
 
 export type ReviewDetail = {
   id: string;
+  authorId: string;
   authorNickname: string;
   totalScore: number;
   content: string;
@@ -113,10 +136,45 @@ export type ProductReviewSummary = {
   templateVersion: number;
   reviewScore: number | null;
   reviewCount: number;
+  viewerHasReviewed: boolean;
   rankingStatus: "COLLECTING" | "REFERENCE" | "OFFICIAL";
   minimumOfficialReviewCount: number;
   criteriaAverages: ReviewCriterionAverage[];
   reviews: ReviewDetail[];
+};
+
+export type ReviewedProduct = {
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  tone: ProductTone;
+  imageUrl: string | null;
+};
+
+export type ReviewerReview = {
+  id: string;
+  product: ReviewedProduct;
+  totalScore: number;
+  content: string;
+  skinType: string;
+  usagePeriod: ReviewDetail["usagePeriod"];
+  repurchaseYn: boolean;
+  createdAt: string;
+};
+
+export type ReviewerReviewList = {
+  reviewer: {
+    id: string;
+    nickname: string;
+  };
+  averageReviewScore: number | null;
+  reviewCount: number;
+  content: ReviewerReview[];
+  page: number;
+  size: number;
+  totalPages: number;
+  hasNext: boolean;
 };
 
 export type ScoreDetail = {

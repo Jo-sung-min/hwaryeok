@@ -19,7 +19,7 @@ export default async function ExpertsPage() {
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="relative overflow-hidden border-b border-[#edcbd3] bg-[radial-gradient(circle_at_78%_20%,rgba(246,193,205,.42),transparent_28%),linear-gradient(145deg,#fff_0%,#fff4f6_62%,#fde8ed_100%)] py-10 md:py-24">
+      <section className="relative overflow-hidden border-b border-[#edcbd3] bg-white py-10 md:py-24">
         <div className="container-page relative grid gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
           <div>
             <p className="eyebrow mb-5">HWA:RYEOK EXPERT</p>
@@ -36,7 +36,7 @@ export default async function ExpertsPage() {
 
       <section className="container-page py-10 md:py-18">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow mb-2">THIS MONTH</p><h2 className="font-myeongjo text-3xl font-semibold">이번 달 활동 전문가</h2></div><Link href="/experts/ranking" className="inline-flex items-center gap-1 text-sm font-bold text-[#9e4e62]">전체 랭킹 <ArrowRight size={16} /></Link></div>
-        <div className="grid gap-5 md:grid-cols-3">{ranking.content.slice(0, 3).map((item) => <div key={item.expert.id} className="relative"><span className="absolute -left-2 -top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-[#3b3033] font-myeongjo text-sm font-bold text-white shadow-lg">{item.rank}</span><ExpertCard expert={item.expert} /></div>)}</div>
+        <div className="grid gap-5 md:grid-cols-3">{ranking.content.slice(0, 3).map((item) => <div key={item.expert.id} className="relative"><span className="absolute -left-2 -top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-[#cf5b7d] font-myeongjo text-sm font-bold text-white shadow-sm">{item.rank}</span><ExpertCard expert={item.expert} /></div>)}</div>
         <div className="mt-6"><ExpertDisclaimer /></div>
       </section>
 
@@ -47,7 +47,7 @@ export default async function ExpertsPage() {
       <section className="container-page py-10 md:py-18">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow mb-2">Q&amp;A</p><h2 className="font-myeongjo text-3xl font-semibold">요즘 많이 묻는 고민</h2></div><Link href="/questions" className="line-btn !min-h-11">질문 모두 보기 <ArrowRight size={16} /></Link></div>
         <div className="grid gap-4 md:grid-cols-2">{questions.slice(0, 4).map((question) => <QuestionCard key={question.id} question={question} />)}</div>
-        <div className="site-glass mt-10 flex flex-col items-center rounded-[28px] px-6 py-8 text-center text-white md:flex-row md:justify-between md:text-left"><div><p className="flex items-center justify-center gap-2 text-xs font-bold tracking-[.14em] text-[#efb9c5] md:justify-start"><Sparkles size={15} /> EXPERT JOIN</p><h3 className="mt-2 font-myeongjo text-2xl font-bold">화력의 신뢰를 함께 만들어주세요</h3><p className="mt-2 text-sm text-white/65">의료진 인증 후 전문 답변 활동을 시작할 수 있어요.</p></div><Link href="/experts/apply" className="line-btn mt-5 md:mt-0">전문가 인증 신청</Link></div>
+        <div className="site-glass mt-10 flex flex-col items-center rounded-[28px] px-6 py-8 text-center md:flex-row md:justify-between md:text-left"><div><p className="flex items-center justify-center gap-2 text-xs font-bold tracking-[.14em] text-[#b95371] md:justify-start"><Sparkles size={15} /> EXPERT JOIN</p><h3 className="mt-2 font-myeongjo text-2xl font-bold">화력의 신뢰를 함께 만들어주세요</h3><p className="mt-2 text-sm text-[#7f6e74]">의료진 인증 후 전문 답변 활동을 시작할 수 있어요.</p></div><Link href="/experts/apply" className="line-btn mt-5 md:mt-0">전문가 인증 신청</Link></div>
       </section>
     </div>
   );

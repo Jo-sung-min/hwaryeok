@@ -21,7 +21,7 @@ export function LegalPage({ eyebrow, title, description, effectiveDate, sections
           <ArrowLeft size={16} /> 홈으로 돌아가기
         </Link>
 
-        <header className="mt-7 rounded-[30px] border border-white/75 bg-white/65 px-6 py-9 shadow-[0_18px_50px_rgba(83,38,55,.09)] backdrop-blur-xl sm:px-9 md:py-12">
+        <header className="mt-7 rounded-[30px] border border-[#efd8df] bg-white px-6 py-9 shadow-[0_10px_30px_rgba(83,38,55,.06)] sm:px-9 md:py-12">
           <p className="eyebrow">{eyebrow}</p>
           <h1 className="mt-4 font-myeongjo text-3xl font-semibold md:text-5xl">{title}</h1>
           <p className="mt-5 max-w-2xl text-sm leading-7 text-[#746970]">{description}</p>

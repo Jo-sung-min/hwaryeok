@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Analysis, ComparisonProductList, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductReviewSummary, RecentProduct, RecentProductList, ReviewCriteria, ReviewDetail } from "@/lib/types";
+import type { Analysis, ComparisonProductList, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientStatus, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -157,6 +157,18 @@ export type AdminProductInput = {
   publicationStatus: Product["publicationStatus"];
   sourceUrl?: string;
   sourceCheckedAt?: string;
+};
+
+export type PromotionInput = {
+  productId: string;
+  recommendationScore: number;
+  headline: string;
+  recommendationReason: string;
+  destinationUrl: string;
+  emergingBrand: boolean;
+  status: ProductPromotion["status"];
+  startsOn?: string;
+  endsOn?: string;
 };
 
 export type SkinProfile = {
@@ -372,8 +384,15 @@ export function getProductReviewCriteria(productId: string): Promise<ReviewCrite
   return requestJson<ReviewCriteria>(`/products/${encodeURIComponent(productId)}/review-criteria`);
 }
 
-export function getProductReviewSummary(productId: string): Promise<ProductReviewSummary> {
-  return requestJson<ProductReviewSummary>(`/products/${encodeURIComponent(productId)}/reviews`);
+export function getProductReviewSummary(productId: string, accessToken?: string): Promise<ProductReviewSummary> {
+  return requestJson<ProductReviewSummary>(`/products/${encodeURIComponent(productId)}/reviews`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+}
+
+export function getReviewerReviews(userId: string, page = 0, size = 12): Promise<ReviewerReviewList> {
+  const search = new URLSearchParams({ page: String(page), size: String(size) });
+  return requestJson<ReviewerReviewList>(`/reviewers/${encodeURIComponent(userId)}/reviews?${search}`);
 }
 
 export function createProductReview(
@@ -495,6 +514,39 @@ export function getAdminProducts(accessToken: string): Promise<Product[]> {
   });
 }
 
+export function getPromotions(limit = 12): Promise<ProductPromotion[]> {
+  return requestJson<ProductPromotion[]>(`/promotions?limit=${limit}`);
+}
+
+export function getAdminPromotions(accessToken: string): Promise<ProductPromotion[]> {
+  return requestJson<ProductPromotion[]>("/admin/promotions", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function createAdminPromotion(accessToken: string, input: PromotionInput): Promise<ProductPromotion> {
+  return requestJson<ProductPromotion>("/admin/promotions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateAdminPromotion(accessToken: string, promotionId: string, input: PromotionInput): Promise<ProductPromotion> {
+  return requestJson<ProductPromotion>(`/admin/promotions/${encodeURIComponent(promotionId)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteAdminPromotion(accessToken: string, promotionId: string): Promise<void> {
+  return requestEmpty(`/admin/promotions/${encodeURIComponent(promotionId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
 export function createAdminProduct(accessToken: string, input: AdminProductInput): Promise<Product> {
   return requestJson<Product>("/admin/products", {
     method: "POST",
@@ -508,6 +560,18 @@ export function updateAdminProduct(accessToken: string, productId: string, input
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify(input),
+  });
+}
+
+export function updateAdminProductCoupangPartnersLink(
+  accessToken: string,
+  productId: string,
+  url?: string,
+): Promise<Product> {
+  return requestJson<Product>(`/admin/products/${encodeURIComponent(productId)}/coupang-partners-link`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ url: url || null }),
   });
 }
 

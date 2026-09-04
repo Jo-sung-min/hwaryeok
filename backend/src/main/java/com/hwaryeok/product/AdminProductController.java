@@ -69,6 +69,16 @@ public class AdminProductController {
         return productService.updateProduct(productId, request);
     }
 
+    @PutMapping("/{productId}/coupang-partners-link")
+    public ProductResponse updateCoupangPartnersLink(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @Valid @RequestBody CoupangPartnersLinkRequest request
+    ) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        return productService.updateCoupangPartnersLink(productId, request);
+    }
+
     @DeleteMapping("/{productId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable String productId) {

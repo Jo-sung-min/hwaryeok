@@ -11,7 +11,6 @@ export default async function SignupPage() {
         <Link href="/" className="mb-7 inline-flex items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 홈으로</Link>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-7 lg:grid-cols-[.86fr_1.14fr] lg:items-stretch">
           <aside className="relative hidden overflow-hidden rounded-[32px] border border-[#e3b1bd38] bg-[#f9e2e8] p-10 lg:flex lg:flex-col lg:justify-between">
-            <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full bg-white/50 blur-3xl" />
             <div className="relative">
               <span className="seal seal-wordmark h-14 w-14 font-myeongjo text-xl" aria-label="화력">花力</span>
               <p className="eyebrow mb-4 mt-9">YOUR BEAUTY, YOUR POWER</p>

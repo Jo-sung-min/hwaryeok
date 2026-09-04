@@ -19,7 +19,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#ead0d7] bg-gradient-to-r from-white to-[#fff0f3] py-9 md:py-16">
+      <section className="border-b border-[#ead0d7] bg-[#fff8fa] py-9 md:py-16">
         <div className="container-page">
           <Link href="/experts" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#68575d]"><ArrowLeft size={16} /> 전문가 홈</Link>
           <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">

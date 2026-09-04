@@ -4,6 +4,7 @@ import { getExperts, getIngredients, getProducts } from "@/lib/api";
 const staticPaths = [
   "",
   "/products",
+  "/promotions",
   "/ranking",
   "/compare",
   "/ingredients",

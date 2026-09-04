@@ -658,7 +658,7 @@ class HwaryeokApplicationTests {
     @Test
     void createsCategoryReviewAndReturnsCalculatedSummary() throws Exception {
         Instant now = Instant.now();
-        userRepository.findByEmail("review@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+        User reviewUser = userRepository.findByEmail("review@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
                 UUID.randomUUID().toString(),
                 "review@example.com",
                 passwordEncoder.encode("Flower!123"),
@@ -719,7 +719,12 @@ class HwaryeokApplicationTests {
                 HttpResponse.BodyHandlers.ofString()
         );
         assertThat(createResponse.statusCode()).isEqualTo(201);
-        assertThat(createResponse.body()).contains("\"totalScore\":80.00", "리뷰회원", "\"skinType\":\"건성\"");
+        assertThat(createResponse.body()).contains(
+                "\"authorId\":\"" + reviewUser.getId() + "\"",
+                "\"totalScore\":80.00",
+                "리뷰회원",
+                "\"skinType\":\"건성\""
+        );
 
         HttpResponse<String> summaryResponse = client.send(
                 HttpRequest.newBuilder()
@@ -732,11 +737,46 @@ class HwaryeokApplicationTests {
         assertThat(summaryResponse.body()).contains(
                 "\"reviewScore\":80.0",
                 "\"reviewCount\":1",
+                "\"viewerHasReviewed\":false",
                 "\"rankingStatus\":\"COLLECTING\"",
                 "\"minimumOfficialReviewCount\":50",
                 "\"averageScore\":5.0",
                 "한 달 동안 사용해 보니"
         );
+
+        HttpResponse<String> authenticatedSummaryResponse = client.send(
+                bearerRequest("GET", "/api/v1/products/birch-cream/reviews", accessToken, null),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(authenticatedSummaryResponse.statusCode()).isEqualTo(200);
+        assertThat(authenticatedSummaryResponse.body()).contains("\"viewerHasReviewed\":true");
+
+        HttpResponse<String> reviewerResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/reviewers/" + reviewUser.getId() + "/reviews"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(reviewerResponse.statusCode()).isEqualTo(200);
+        assertThat(reviewerResponse.body()).contains(
+                "\"id\":\"" + reviewUser.getId() + "\"",
+                "\"nickname\":\"리뷰회원\"",
+                "\"averageReviewScore\":80.0",
+                "\"reviewCount\":1",
+                "\"brand\":\"라운드랩\"",
+                "\"name\":\"자작나무 수분 크림\"",
+                "한 달 동안 사용해 보니"
+        );
+
+        HttpResponse<String> missingReviewerResponse = client.send(
+                HttpRequest.newBuilder()
+                        .uri(URI.create("http://localhost:" + port + "/api/v1/reviewers/not-a-user/reviews"))
+                        .GET()
+                        .build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(missingReviewerResponse.statusCode()).isEqualTo(404);
 
         HttpResponse<String> duplicateResponse = client.send(
                 bearerRequest("POST", "/api/v1/products/birch-cream/reviews", accessToken, reviewPayload),
@@ -1010,6 +1050,142 @@ class HwaryeokApplicationTests {
         assertThat(imageResponse.statusCode()).isEqualTo(200);
         assertThat(imageResponse.headers().firstValue("Content-Type")).contains("image/png");
         assertThat(imageResponse.body()).isEqualTo(png);
+    }
+
+    @Test
+    void onlyAdminCanConnectAndClearProductCoupangPartnersLink() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("partners-user@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "partners-user@example.com", passwordEncoder.encode("Flower!123"),
+                "파트너스일반회원", "USER", "ACTIVE", now, now
+        )));
+        userRepository.findByEmail("partners-admin@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "partners-admin@example.com", passwordEncoder.encode("Flower!123"),
+                "파트너스관리자", "ADMIN", "ACTIVE", now, now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        String userToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"partners-user@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+        String adminToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"partners-admin@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+        String path = "/api/v1/admin/products/bean-essence/coupang-partners-link";
+        String partnersUrl = "https://link.coupang.com/a/hwaryeok-test";
+
+        HttpResponse<String> forbiddenResponse = client.send(
+                bearerRequest("PUT", path, userToken, "{\"url\":\"" + partnersUrl + "\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> invalidResponse = client.send(
+                bearerRequest("PUT", path, adminToken, "{\"url\":\"https://example.com/product\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> saveResponse = client.send(
+                bearerRequest("PUT", path, adminToken, "{\"url\":\"" + partnersUrl + "\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> publicResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/products/bean-essence")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> clearResponse = client.send(
+                bearerRequest("PUT", path, adminToken, "{\"url\":null}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(forbiddenResponse.statusCode()).isEqualTo(403);
+        assertThat(invalidResponse.statusCode()).isEqualTo(400);
+        assertThat(invalidResponse.body()).contains("쿠팡에서 발급한 https 링크");
+        assertThat(saveResponse.statusCode()).isEqualTo(200);
+        assertThat(saveResponse.body()).contains("\"coupangPartnersUrl\":\"" + partnersUrl + "\"");
+        assertThat(publicResponse.body()).contains("\"coupangPartnersUrl\":\"" + partnersUrl + "\"");
+        assertThat(clearResponse.statusCode()).isEqualTo(200);
+        assertThat(clearResponse.body()).contains("\"coupangPartnersUrl\":null");
+    }
+
+    @Test
+    void managesSponsoredRecommendationsAndKeepsAdminScoresSeparate() throws Exception {
+        Instant now = Instant.now();
+        userRepository.findByEmail("promotion-user@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "promotion-user@example.com", passwordEncoder.encode("Flower!123"),
+                "광고확인회원", "USER", "ACTIVE", now, now
+        )));
+        userRepository.findByEmail("promotion-admin@example.com").orElseGet(() -> userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(), "promotion-admin@example.com", passwordEncoder.encode("Flower!123"),
+                "광고관리자", "ADMIN", "ACTIVE", now, now
+        )));
+
+        HttpClient client = HttpClient.newHttpClient();
+        String userToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"promotion-user@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+        String adminToken = jsonString(client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"promotion-admin@example.com\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()).body(), "accessToken");
+
+        String emergingPayload = """
+                {
+                  "productId": "ceramide-serum",
+                  "recommendationScore": 78,
+                  "headline": "신생 브랜드의 탄탄한 장벽 설계",
+                  "recommendationReason": "세라마이드 중심의 성분 구성과 제품 차별점을 관리자가 검토했어요.",
+                  "destinationUrl": "https://www.coupang.com/np/search?q=ceramide",
+                  "emergingBrand": true,
+                  "status": "ACTIVE"
+                }
+                """;
+        String establishedPayload = """
+                {
+                  "productId": "rice-sunscreen",
+                  "recommendationScore": 96,
+                  "headline": "촉촉한 데일리 선케어",
+                  "recommendationReason": "사용감과 성분 구성을 관리자가 검토했어요.",
+                  "destinationUrl": "https://www.coupang.com/np/search?q=sunscreen",
+                  "emergingBrand": false,
+                  "status": "ACTIVE"
+                }
+                """;
+
+        HttpResponse<String> forbiddenResponse = client.send(
+                bearerRequest("POST", "/api/v1/admin/promotions", userToken, emergingPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> emergingResponse = client.send(
+                bearerRequest("POST", "/api/v1/admin/promotions", adminToken, emergingPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> establishedResponse = client.send(
+                bearerRequest("POST", "/api/v1/admin/promotions", adminToken, establishedPayload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> publicResponse = client.send(
+                HttpRequest.newBuilder().uri(URI.create("http://localhost:" + port + "/api/v1/promotions")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(forbiddenResponse.statusCode()).isEqualTo(403);
+        assertThat(emergingResponse.statusCode()).isEqualTo(201);
+        assertThat(establishedResponse.statusCode()).isEqualTo(201);
+        assertThat(publicResponse.statusCode()).isEqualTo(200);
+        assertThat(publicResponse.body()).contains(
+                "\"recommendationScore\":78",
+                "\"userReviewScore\":null",
+                "\"userReviewCount\":0",
+                "\"disclosure\":\"광고 · 관리자 추천점수\"",
+                "\"currentlyVisible\":true"
+        );
+        assertThat(publicResponse.body().indexOf("ceramide-serum"))
+                .isLessThan(publicResponse.body().indexOf("rice-sunscreen"));
+
+        HttpResponse<String> invalidSellerResponse = client.send(
+                bearerRequest("PUT", "/api/v1/admin/promotions/" + jsonString(emergingResponse.body(), "id"), adminToken,
+                        emergingPayload.replace("https://www.coupang.com/np/search?q=ceramide", "https://example.com/product")),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(invalidSellerResponse.statusCode()).isEqualTo(400);
+        assertThat(invalidSellerResponse.body()).contains("쿠팡 공식판매처");
     }
 
     @Test

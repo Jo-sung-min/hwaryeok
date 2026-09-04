@@ -96,6 +96,7 @@ class ProductReview {
     }
 
     String getId() { return id; }
+    Product getProduct() { return product; }
     User getUser() { return user; }
     BigDecimal getTotalScore() { return totalScore; }
     String getContent() { return content; }
