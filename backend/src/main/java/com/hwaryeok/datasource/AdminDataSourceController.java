@@ -61,7 +61,7 @@ public class AdminDataSourceController {
     @GetMapping("/mfds/product-matches")
     List<AdminMfdsProductMatchResponse> findProductMatches(@AuthenticationPrincipal Jwt jwt) {
         activeUserService.requireAdmin(jwt.getSubject());
-        return mfdsProductMatchService.findAllVerifiedMatches();
+        return mfdsProductMatchService.findAllReviewDecisions();
     }
 
     @GetMapping("/products/{productId}/mfds-candidates")
@@ -85,6 +85,20 @@ public class AdminDataSourceController {
         return mfdsProductMatchService.saveVerifiedMatch(
                 productId,
                 request.reportId(),
+                reviewer.getId(),
+                request.reviewNote()
+        );
+    }
+
+    @PutMapping("/products/{productId}/mfds-no-match")
+    AdminMfdsProductMatchResponse saveMfdsNoMatch(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @RequestBody MfdsProductNoMatchRequest request
+    ) {
+        User reviewer = activeUserService.requireAdmin(jwt.getSubject());
+        return mfdsProductMatchService.saveNoMatch(
+                productId,
                 reviewer.getId(),
                 request.reviewNote()
         );

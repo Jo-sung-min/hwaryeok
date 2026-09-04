@@ -12,9 +12,17 @@ public record ProductIngredientItemResponse(
         String caution,
         List<String> tags,
         int displayOrder,
-        String concentrationNote
+        String concentrationNote,
+        List<IngredientRegulationResponse> regulations
 ) {
     public static ProductIngredientItemResponse from(ProductIngredient relation) {
+        return from(relation, List.of());
+    }
+
+    public static ProductIngredientItemResponse from(
+            ProductIngredient relation,
+            List<IngredientRegulationResponse> regulations
+    ) {
         Ingredient ingredient = relation.getIngredient();
         return new ProductIngredientItemResponse(
                 ingredient.getId(),
@@ -26,7 +34,8 @@ public record ProductIngredientItemResponse(
                 ingredient.getCaution(),
                 ingredient.getTags().stream().sorted().toList(),
                 relation.getDisplayOrder(),
-                relation.getConcentrationNote()
+                relation.getConcentrationNote(),
+                regulations == null ? List.of() : List.copyOf(regulations)
         );
     }
 }

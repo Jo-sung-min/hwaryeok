@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, FlaskConical, Leaf, ShieldAlert, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, FlaskConical, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
-import { ApiRequestError, getIngredient, getIngredientFirepower } from "@/lib/api";
+import { ApiRequestError, getIngredient, getIngredientFirepower, getIngredientRegulations } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -29,9 +29,10 @@ export default async function IngredientDetailPage({ params }: { params: Promise
   const { id } = await params;
 
   try {
-    const [ingredient, firepower, favoriteState] = await Promise.all([
+    const [ingredient, firepower, regulations, favoriteState] = await Promise.all([
       getIngredient(id),
       getIngredientFirepower(id),
+      getIngredientRegulations(id),
       getFavoriteViewState(),
     ]);
     const favoriteIds = new Set(favoriteState.favoriteIds);
@@ -83,6 +84,43 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <div><h3 className="font-myeongjo text-lg font-semibold">사용 전에 확인해보세요</h3><p className="mt-2 text-sm leading-7 text-[#716158]">{ingredient.caution}</p></div>
             </div>
           )}
+
+          {regulations.length > 0 && (
+            <div className="mt-8 rounded-[28px] border border-[#d9a8b54d] bg-white p-6 md:p-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="eyebrow mb-3">MFDS VERIFIED CONDITIONS</p>
+                  <h2 className="flex items-center gap-2 font-myeongjo text-2xl font-semibold"><ShieldCheck size={22} className="text-[#9b4a5f]" /> 공식 사용조건 참고</h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-[#786970]">식약처 사용제한 원료정보에서 관리자가 성분명과 원문을 확인해 연결한 내용이에요.</p>
+                </div>
+                <span className="inline-flex shrink-0 self-start rounded-full bg-[#fff0f3] px-3 py-1.5 text-[11px] font-bold text-[#9b4a5f]">검수 완료 {regulations.length}건</span>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {regulations.map((regulation) => (
+                  <article key={regulation.sourceRecordId} className="rounded-[22px] border border-[#e8d4d9] bg-[#fffafb] p-5 md:p-6">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full border border-[#dca9b659] bg-white px-3 py-1.5 text-[10px] font-bold text-[#875867]">적용 국가 · {regulation.country ?? "원문 미기재"}</span>
+                      <span className="rounded-full border border-[#dca9b659] bg-white px-3 py-1.5 text-[10px] font-bold text-[#875867]">제한 유형 · {regulation.restrictionType ?? "원문 미기재"}</span>
+                    </div>
+                    <h3 className="mt-4 text-sm font-bold text-[#54474c]">{regulation.standardName}</h3>
+                    <p className="mt-1 text-[11px] leading-5 text-[#8b767e]">{regulation.englishName ?? ingredient.englishName}{regulation.casNo ? ` · CAS ${regulation.casNo}` : ""}</p>
+                    {regulation.noticeIngredientName && <p className="mt-2 whitespace-pre-line text-[11px] leading-5 text-[#8b767e]">고시 원료명 · {regulation.noticeIngredientName}</p>}
+                    <details className="group mt-4 rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[#68595f]">
+                      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 font-bold text-[#805664] marker:hidden">사용 조건 원문 확인 <span className="text-[10px] font-semibold text-[#a17b87] group-open:hidden">펼치기</span><span className="hidden text-[10px] font-semibold text-[#a17b87] group-open:inline">접기</span></summary>
+                      <p className="mt-2 whitespace-pre-line border-t border-[#eadde1] pt-3">{regulation.restrictionText || "원문에 별도 제한 문구가 기재되지 않았어요."}</p>
+                      {regulation.proviso && <p className="mt-3 whitespace-pre-line border-t border-[#eadde1] pt-3 text-xs text-[#806c73]">단서 · {regulation.proviso}</p>}
+                    </details>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[10px] text-[#917e85]">
+                      <span>{regulation.checkedAt ? `${formatRegulationDate(regulation.checkedAt)} 수집 자료` : "수집일 미기재"}</span>
+                      <a href={regulation.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-10 items-center gap-1.5 font-bold text-[#954e62] underline underline-offset-4">식약처 공식 데이터 안내 <ExternalLink size={12} /></a>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p className="mt-5 rounded-2xl bg-[#fff3df] px-4 py-3 text-[11px] leading-6 text-[#796333]">{regulations[0].disclaimer}</p>
+            </div>
+          )}
         </section>
 
         <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-20">
@@ -115,6 +153,10 @@ export default async function IngredientDetailPage({ params }: { params: Promise
     if (error instanceof ApiRequestError && error.status === 404) notFound();
     throw error;
   }
+}
+
+function formatRegulationDate(value: string) {
+  return value.slice(0, 10).replaceAll("-", ".");
 }
 
 function confidenceLabel(confidence: "HIGH" | "MEDIUM" | "LOW") {

@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, ExternalLink, FileSearch, Link2, LoaderCircle, Search, ShieldCheck, Unlink } from "lucide-react";
-import { useActionState } from "react";
+import { Check, CircleSlash2, ExternalLink, FileSearch, Link2, LoaderCircle, Search, ShieldCheck, Unlink } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
 import {
   removeMfdsProductMatchAction,
   saveMfdsProductMatchAction,
+  saveMfdsProductNoMatchAction,
   searchMfdsProductCandidatesAction,
   type MfdsProductMatchActionState,
 } from "@/app/admin/products/actions";
@@ -33,17 +34,39 @@ export function MfdsProductMatchForm({
     removeMfdsProductMatchAction.bind(null, productId),
     initialState,
   );
-  const currentMatch = removeState.success ? undefined : saveState.match ?? initialMatch;
+  const [noMatchState, noMatchAction, noMatchPending] = useActionState(
+    saveMfdsProductNoMatchAction.bind(null, productId),
+    initialState,
+  );
+  const [currentReview, setCurrentReview] = useState(initialMatch);
+  const [latestMutation, setLatestMutation] = useState<"save" | "no-match" | "remove" | null>(null);
+
+  useEffect(() => setCurrentReview(initialMatch), [initialMatch]);
+  useEffect(() => {
+    if (saveState.message) setLatestMutation("save");
+    if (saveState.match) setCurrentReview(saveState.match);
+  }, [saveState]);
+  useEffect(() => {
+    if (noMatchState.message) setLatestMutation("no-match");
+    if (noMatchState.match) setCurrentReview(noMatchState.match);
+  }, [noMatchState]);
+  useEffect(() => {
+    if (removeState.message) setLatestMutation("remove");
+    if (removeState.success) setCurrentReview(undefined);
+  }, [removeState]);
 
   return (
     <div className="mt-4 space-y-4">
-      {currentMatch ? (
-        <CurrentMatch match={currentMatch} removeAction={removeAction} pending={removePending} state={removeState} />
+      {currentReview?.matchStatus === "ADMIN_VERIFIED" ? (
+        <CurrentMatch match={currentReview} removeAction={removeAction} pending={removePending} state={latestMutation === "remove" ? removeState : initialState} />
+      ) : currentReview?.matchStatus === "NO_MATCH" ? (
+        <NoMatchReview review={currentReview} removeAction={removeAction} pending={removePending} state={latestMutation === "remove" ? removeState : initialState} />
       ) : (
         <div className="rounded-2xl border border-dashed border-[#d8adb8] bg-[#fff9fb] p-4 text-xs leading-5 text-[#826f76]">
           아직 확인된 식약처 품목 연결이 없어요. 아래에서 제품명을 검색한 뒤 실제 품목을 확인해 주세요.
         </div>
       )}
+      {latestMutation === "remove" && !currentReview && <ActionMessage state={removeState} />}
 
       <form action={searchAction} className="flex flex-col gap-2 sm:flex-row">
         <label className="min-w-0 flex-1">
@@ -66,15 +89,63 @@ export function MfdsProductMatchForm({
             <CandidateCard
               key={candidate.reportId}
               candidate={candidate}
-              currentReportId={currentMatch?.reportId}
+              currentReportId={currentReview?.matchStatus === "ADMIN_VERIFIED" ? currentReview.reportId ?? undefined : undefined}
               saveAction={saveAction}
               pending={savePending}
             />
           ))}
         </div>
       )}
-      <ActionMessage state={saveState} />
+      <ActionMessage state={latestMutation === "save" ? saveState : initialState} />
+      {currentReview?.matchStatus !== "NO_MATCH" && (
+        <div className="rounded-2xl border border-dashed border-[#d9c8bd] bg-[#fbfaf8] p-4">
+          <div className="flex items-start gap-2.5">
+            <CircleSlash2 size={17} className="mt-0.5 shrink-0 text-[#81736b]" />
+            <div><p className="text-xs font-bold text-[#665b55]">검색 결과에 해당 품목이 없나요?</p><p className="mt-1 text-[10px] leading-5 text-[#8d8078]">검색어와 업체 정보를 바꿔 확인한 뒤 `해당 없음`으로 검수를 마칠 수 있어요. 이 상태는 사용자 화면에 표시되지 않습니다.</p></div>
+          </div>
+          <form action={noMatchAction} className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <label className="min-w-0 flex-1"><span className="sr-only">해당 없음 검수 메모</span><input name="reviewNote" required minLength={5} maxLength={500} placeholder="예: 제품명·브랜드·업체명으로 검색했으나 후보 없음" className="min-h-10 w-full rounded-xl border border-[#d9c8bd] bg-white px-3 text-xs outline-none focus:border-[#9d7e70]" /></label>
+            <button type="submit" disabled={noMatchPending} className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-[#b9a69a] bg-white px-4 text-xs font-bold text-[#71635b] disabled:cursor-wait disabled:opacity-55">
+              {noMatchPending ? <LoaderCircle size={14} className="animate-spin" /> : <CircleSlash2 size={14} />}
+              {noMatchPending ? "저장 중" : "해당 없음으로 검수"}
+            </button>
+          </form>
+          <ActionMessage state={latestMutation === "no-match" ? noMatchState : initialState} />
+        </div>
+      )}
       <p className="text-[10px] leading-5 text-[#948188]">자동 후보는 공개되지 않습니다. 관리자가 제품명과 업체를 확인해 연결한 정보만 사용자 제품 상세에 표시돼요.</p>
+    </div>
+  );
+}
+
+function NoMatchReview({
+  review,
+  removeAction,
+  pending,
+  state,
+}: {
+  review: AdminMfdsProductMatch;
+  removeAction: (formData: FormData) => void;
+  pending: boolean;
+  state: MfdsProductMatchActionState;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#cbbeb54d] bg-[#f8f6f3] p-4 text-xs text-[#756961]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 font-bold"><CircleSlash2 size={15} /> 해당 품목 없음 검수 완료</p>
+          <p className="mt-2 text-[10px] leading-5 text-[#83766e]">{review.reviewerNickname ? `${review.reviewerNickname} 검수` : "관리자 검수"}{review.reviewedAt ? ` · ${formatDate(review.reviewedAt)}` : ""}</p>
+          {review.reviewNote && <p className="mt-2 rounded-xl bg-white/75 px-3 py-2 text-[10px] leading-5">검수 메모 · {review.reviewNote}</p>}
+        </div>
+        <form action={removeAction}>
+          <input type="hidden" name="confirmation" value={review.productId} />
+          <button type="submit" disabled={pending} className="inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-[#c5b7ad] bg-white px-3 font-bold text-[#75675f] disabled:cursor-wait disabled:opacity-55 sm:w-auto">
+            {pending ? <LoaderCircle size={14} className="animate-spin" /> : <Unlink size={14} />}
+            {pending ? "초기화 중" : "검수 초기화"}
+          </button>
+        </form>
+      </div>
+      <ActionMessage state={state} />
     </div>
   );
 }
@@ -157,4 +228,3 @@ function ActionMessage({ state }: { state: MfdsProductMatchActionState }) {
 function formatDate(value: string) {
   return value.slice(0, 10).replaceAll("-", ".");
 }
-

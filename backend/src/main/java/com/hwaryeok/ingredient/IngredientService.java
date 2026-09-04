@@ -21,15 +21,18 @@ public class IngredientService {
     private final ProductIngredientRepository productIngredientRepository;
     private final ProductService productService;
     private final ProductIngredientSourceService productIngredientSourceService;
+    private final IngredientRegulationService ingredientRegulationService;
 
     public IngredientService(IngredientRepository ingredientRepository,
                              ProductIngredientRepository productIngredientRepository,
                              ProductService productService,
-                             ProductIngredientSourceService productIngredientSourceService) {
+                             ProductIngredientSourceService productIngredientSourceService,
+                             IngredientRegulationService ingredientRegulationService) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
         this.productService = productService;
         this.productIngredientSourceService = productIngredientSourceService;
+        this.ingredientRegulationService = ingredientRegulationService;
     }
 
     public IngredientPageResponse findIngredients(String query, String status, String tag, int page, int size,
@@ -72,9 +75,12 @@ public class IngredientService {
                 .filter(relation -> parsedStatus == null || relation.getIngredient().getStatus() == parsedStatus)
                 .filter(relation -> normalizedTag.isBlank() || relation.getIngredient().getTags().contains(normalizedTag))
                 .toList();
-        return ProductIngredientsResponse.from(
-                productId, allRelations, filtered, productIngredientSourceService.findPublished(productId)
-        );
+        ProductIngredientSourceResponse source = productIngredientSourceService.findPublished(productId);
+        var regulations = source == null ? java.util.Map.<String, List<IngredientRegulationResponse>>of()
+                : ingredientRegulationService.findVerifiedForIngredientIds(
+                        filtered.stream().map(relation -> relation.getIngredient().getId()).toList()
+                );
+        return ProductIngredientsResponse.from(productId, allRelations, filtered, source, regulations);
     }
 
     private IngredientStatus parseStatus(String status) {

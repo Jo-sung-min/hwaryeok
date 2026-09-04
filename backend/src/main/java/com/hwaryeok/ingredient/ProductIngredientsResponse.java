@@ -1,6 +1,7 @@
 package com.hwaryeok.ingredient;
 
 import java.util.List;
+import java.util.Map;
 
 public record ProductIngredientsResponse(
         String productId,
@@ -19,13 +20,25 @@ public record ProductIngredientsResponse(
     public static ProductIngredientsResponse from(String productId, List<ProductIngredient> allRelations,
                                                   List<ProductIngredient> filteredRelations,
                                                   ProductIngredientSourceResponse source) {
+        return from(productId, allRelations, filteredRelations, source, Map.of());
+    }
+
+    public static ProductIngredientsResponse from(String productId, List<ProductIngredient> allRelations,
+                                                  List<ProductIngredient> filteredRelations,
+                                                  ProductIngredientSourceResponse source,
+                                                  Map<String, List<IngredientRegulationResponse>> regulations) {
         return new ProductIngredientsResponse(
                 productId,
                 allRelations.size(),
                 count(allRelations, IngredientStatus.GOOD),
                 count(allRelations, IngredientStatus.CAUTION),
                 count(allRelations, IngredientStatus.NEUTRAL),
-                filteredRelations.stream().map(ProductIngredientItemResponse::from).toList(),
+                filteredRelations.stream()
+                        .map(relation -> ProductIngredientItemResponse.from(
+                                relation,
+                                regulations.getOrDefault(relation.getIngredient().getId(), List.of())
+                        ))
+                        .toList(),
                 source
         );
     }

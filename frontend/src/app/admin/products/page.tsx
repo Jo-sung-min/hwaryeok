@@ -24,6 +24,9 @@ export default async function AdminProductsPage() {
   const ingredientsByProduct = new Map(ingredientEntries);
   const officialSourceByProduct = new Map(officialSources.map((source) => [source.productId, source]));
   const mfdsMatchByProduct = new Map(mfdsMatches.map((match) => [match.productId, match]));
+  const verifiedMfdsCount = mfdsMatches.filter((match) => match.matchStatus === "ADMIN_VERIFIED").length;
+  const noMatchMfdsCount = mfdsMatches.filter((match) => match.matchStatus === "NO_MATCH").length;
+  const mfdsReviewPercent = products.length === 0 ? 0 : Math.round((mfdsMatches.length / products.length) * 100);
   const defaultCheckedAt = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul" }).format(new Date());
 
   return (
@@ -48,6 +51,13 @@ export default async function AdminProductsPage() {
         </section>
 
         <section className="mt-10 md:mt-14">
+          <div className="mb-7 rounded-[24px] border border-[#b7cab94d] bg-white p-5 shadow-[0_12px_30px_rgba(83,113,91,.06)] sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#68806d]">MFDS REVIEW PROGRESS</p><h2 className="mt-2 font-myeongjo text-xl font-semibold">식약처 품목 검수 {mfdsMatches.length}/{products.length}개</h2><p className="mt-2 text-xs leading-5 text-[#7c716c]">연결 완료 {verifiedMfdsCount}개 · 해당 없음 {noMatchMfdsCount}개 · 미검수 {Math.max(0, products.length - mfdsMatches.length)}개</p></div>
+              <strong className="font-myeongjo text-3xl text-[#58715e]">{mfdsReviewPercent}%</strong>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#edf0ec]" aria-label={`식약처 품목 검수 진행률 ${mfdsReviewPercent}%`}><div className="h-full rounded-full bg-[#6f8b76] transition-[width]" style={{ width: `${mfdsReviewPercent}%` }} /></div>
+          </div>
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div><p className="eyebrow mb-2">REGISTERED PRODUCTS</p><h2 className="font-myeongjo text-2xl font-semibold">등록 상품 {products.length}개</h2></div>
             <p className="text-xs leading-5 text-[#89747c]">각 상품을 열어 정보·이미지·성분을 함께 관리할 수 있어요.</p>

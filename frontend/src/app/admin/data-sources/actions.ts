@@ -5,15 +5,25 @@ import {
   ApiRequestError,
   getCurrentUser,
   importAdminKciaDictionary,
+  removeAdminIngredientRegulationReview,
   saveAdminOfficialIngredientList,
+  saveAdminIngredientRegulationReview,
+  searchAdminIngredientRegulationCandidates,
   syncAdminMfdsData,
 } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
+import type { AdminIngredientRegulationReview, IngredientRegulationCandidate } from "@/lib/types";
 
 export type DataSourceActionState = {
   success: boolean;
   message: string;
   details?: string[];
+};
+
+export type IngredientRegulationActionState = DataSourceActionState & {
+  candidates?: IngredientRegulationCandidate[];
+  review?: AdminIngredientRegulationReview;
+  removedSourceRecordId?: string;
 };
 
 export async function syncMfdsAction(
@@ -84,6 +94,78 @@ export async function saveOfficialIngredientListAction(
   } catch (error) {
     return actionError(error, "브랜드 공식 전성분을 저장하지 못했어요.");
   }
+}
+
+export async function searchIngredientRegulationCandidatesAction(
+  ingredientId: string,
+  _previousState: IngredientRegulationActionState,
+  formData: FormData,
+): Promise<IngredientRegulationActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return authorization.error;
+  const query = String(formData.get("query") ?? "").trim();
+  if (query.length < 2) return { success: false, message: "두 글자 이상의 성분명을 입력해 주세요." };
+  try {
+    const candidates = await searchAdminIngredientRegulationCandidates(authorization.accessToken, ingredientId, query);
+    return {
+      success: true,
+      message: candidates.length > 0
+        ? `식약처 사용조건 후보 ${candidates.length}건을 찾았어요.`
+        : "일치하는 식약처 사용조건 후보가 없어요.",
+      candidates,
+    };
+  } catch (error) {
+    return actionError(error, "식약처 사용조건 후보를 찾지 못했어요.");
+  }
+}
+
+export async function saveIngredientRegulationReviewAction(
+  ingredientId: string,
+  sourceRecordId: string,
+  _previousState: IngredientRegulationActionState,
+  formData: FormData,
+): Promise<IngredientRegulationActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return authorization.error;
+  const confirmation = String(formData.get("confirmation") ?? "");
+  if (confirmation !== sourceRecordId) return { success: false, message: "연결할 식약처 원문을 다시 확인해 주세요." };
+  try {
+    const review = await saveAdminIngredientRegulationReview(
+      authorization.accessToken,
+      ingredientId,
+      sourceRecordId,
+      String(formData.get("reviewNote") ?? "").trim(),
+    );
+    revalidateIngredientRegulationPages(ingredientId);
+    return { success: true, message: "관리자 검수를 마치고 사용자 화면에 공개했어요.", review };
+  } catch (error) {
+    return actionError(error, "식약처 사용조건을 연결하지 못했어요.");
+  }
+}
+
+export async function removeIngredientRegulationReviewAction(
+  ingredientId: string,
+  sourceRecordId: string,
+  _previousState: IngredientRegulationActionState,
+  formData: FormData,
+): Promise<IngredientRegulationActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return authorization.error;
+  const confirmation = String(formData.get("confirmation") ?? "");
+  if (confirmation !== sourceRecordId) return { success: false, message: "해제할 연결을 다시 확인해 주세요." };
+  try {
+    await removeAdminIngredientRegulationReview(authorization.accessToken, ingredientId, sourceRecordId);
+    revalidateIngredientRegulationPages(ingredientId);
+    return { success: true, message: "검수 연결을 해제해 사용자 화면에서 내렸어요.", removedSourceRecordId: sourceRecordId };
+  } catch (error) {
+    return actionError(error, "식약처 사용조건 연결을 해제하지 못했어요.");
+  }
+}
+
+function revalidateIngredientRegulationPages(ingredientId: string) {
+  revalidatePath("/admin/data-sources");
+  revalidatePath(`/ingredients/${ingredientId}`);
+  revalidatePath("/products/[id]", "page");
 }
 
 async function authorizeAdmin(): Promise<{ accessToken: string } | { error: DataSourceActionState }> {

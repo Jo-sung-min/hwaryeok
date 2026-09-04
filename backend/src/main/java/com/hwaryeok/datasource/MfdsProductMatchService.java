@@ -33,18 +33,20 @@ public class MfdsProductMatchService {
         this.jdbc = jdbc;
     }
 
-    public List<AdminMfdsProductMatchResponse> findAllVerifiedMatches() {
+    public List<AdminMfdsProductMatchResponse> findAllReviewDecisions() {
         return jdbc.query("""
-                SELECT match.product_id, match.report_id, mfds.product_name, mfds.company_name,
-                       mfds.manufacturer_name, mfds.functional_types, mfds.report_date,
-                       match.confidence, reviewer.nickname, match.reviewed_at, match.review_note
-                FROM mfds_product_matches match
-                JOIN mfds_cosmetic_products mfds ON mfds.report_id = match.report_id
-                LEFT JOIN users reviewer ON reviewer.id = match.reviewed_by
-                WHERE match.match_type = 'ADMIN_VERIFIED'
-                ORDER BY match.reviewed_at DESC NULLS LAST, match.product_id
+                SELECT decision.product_id, decision.review_status, decision.report_id,
+                       mfds.product_name, mfds.company_name, mfds.manufacturer_name,
+                       mfds.functional_types, mfds.report_date,
+                       CASE WHEN decision.review_status = 'ADMIN_VERIFIED' THEN 100 ELSE 0 END AS confidence,
+                       reviewer.nickname, decision.reviewed_at, decision.review_note
+                FROM mfds_product_review_decisions decision
+                LEFT JOIN mfds_cosmetic_products mfds ON mfds.report_id = decision.report_id
+                LEFT JOIN users reviewer ON reviewer.id = decision.reviewed_by
+                ORDER BY decision.reviewed_at DESC, decision.product_id
                 """, (rs, rowNum) -> adminResponse(
                 rs.getString("product_id"),
+                rs.getString("review_status"),
                 rs.getString("report_id"),
                 rs.getString("product_name"),
                 rs.getString("company_name"),
@@ -109,6 +111,7 @@ public class MfdsProductMatchService {
             String reviewNote
     ) {
         findProduct(productId);
+        lockProduct(productId);
         String cleanedReportId = clean(reportId);
         if (cleanedReportId.isBlank()) throw new IllegalArgumentException("연결할 식약처 품목을 선택해 주세요.");
         if (cleanedReportId.length() > 120) throw new IllegalArgumentException("식약처 품목 식별자를 확인해 주세요.");
@@ -133,13 +136,31 @@ public class MfdsProductMatchService {
                 Timestamp.from(now),
                 cleanedNote.isBlank() ? null : cleanedNote
         );
-        return findVerifiedMatch(productId);
+        saveReviewDecision(productId, "ADMIN_VERIFIED", cleanedReportId, reviewerId, now, cleanedNote);
+        return findReviewDecision(productId);
+    }
+
+    @Transactional
+    public AdminMfdsProductMatchResponse saveNoMatch(String productId, String reviewerId, String reviewNote) {
+        findProduct(productId);
+        lockProduct(productId);
+        String cleanedNote = clean(reviewNote);
+        if (cleanedNote.length() < 5) {
+            throw new IllegalArgumentException("검색어 또는 확인 내용을 5자 이상 검수 메모에 입력해 주세요.");
+        }
+        if (cleanedNote.length() > 500) throw new IllegalArgumentException("검수 메모는 500자 이하로 입력해 주세요.");
+
+        jdbc.update("DELETE FROM mfds_product_matches WHERE product_id = ?", productId);
+        saveReviewDecision(productId, "NO_MATCH", null, reviewerId, Instant.now(), cleanedNote);
+        return findReviewDecision(productId);
     }
 
     @Transactional
     public void removeVerifiedMatch(String productId) {
         findProduct(productId);
-        jdbc.update("DELETE FROM mfds_product_matches WHERE product_id = ? AND match_type = 'ADMIN_VERIFIED'", productId);
+        lockProduct(productId);
+        jdbc.update("DELETE FROM mfds_product_matches WHERE product_id = ?", productId);
+        jdbc.update("DELETE FROM mfds_product_review_decisions WHERE product_id = ?", productId);
     }
 
     public ProductRegulatorySourceResponse findPublicSource(String productId) {
@@ -172,11 +193,34 @@ public class MfdsProductMatchService {
         ), productId).stream().findFirst().orElseGet(() -> ProductRegulatorySourceResponse.unmatched(productId));
     }
 
-    private AdminMfdsProductMatchResponse findVerifiedMatch(String productId) {
-        return findAllVerifiedMatches().stream()
+    private AdminMfdsProductMatchResponse findReviewDecision(String productId) {
+        return findAllReviewDecisions().stream()
                 .filter(match -> productId.equals(match.productId()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("저장한 식약처 연결정보를 찾지 못했어요."));
+                .orElseThrow(() -> new IllegalStateException("저장한 식약처 검수정보를 찾지 못했어요."));
+    }
+
+    private void saveReviewDecision(
+            String productId,
+            String reviewStatus,
+            String reportId,
+            String reviewerId,
+            Instant reviewedAt,
+            String reviewNote
+    ) {
+        String nullableNote = reviewNote == null || reviewNote.isBlank() ? null : reviewNote;
+        int updated = jdbc.update("""
+                UPDATE mfds_product_review_decisions
+                SET review_status = ?, report_id = ?, reviewed_by = ?, reviewed_at = ?, review_note = ?
+                WHERE product_id = ?
+                """, reviewStatus, reportId, reviewerId, Timestamp.from(reviewedAt), nullableNote, productId);
+        if (updated == 0) {
+            jdbc.update("""
+                    INSERT INTO mfds_product_review_decisions (
+                        product_id, review_status, report_id, reviewed_by, reviewed_at, review_note
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    """, productId, reviewStatus, reportId, reviewerId, Timestamp.from(reviewedAt), nullableNote);
+        }
     }
 
     private MfdsProductCandidateResponse candidate(
@@ -247,6 +291,10 @@ public class MfdsProductMatchService {
         ), productId).stream().findFirst().orElseThrow(() -> new ResourceNotFoundException("제품을 찾을 수 없어요."));
     }
 
+    private void lockProduct(String productId) {
+        jdbc.queryForObject("SELECT id FROM products WHERE id = ? FOR UPDATE", String.class, productId);
+    }
+
     private String currentReportId(String productId) {
         return jdbc.query("""
                 SELECT report_id FROM mfds_product_matches
@@ -257,6 +305,7 @@ public class MfdsProductMatchService {
 
     private AdminMfdsProductMatchResponse adminResponse(
             String productId,
+            String reviewStatus,
             String reportId,
             String productName,
             String companyName,
@@ -270,7 +319,7 @@ public class MfdsProductMatchService {
     ) {
         return new AdminMfdsProductMatchResponse(
                 productId,
-                "ADMIN_VERIFIED",
+                reviewStatus,
                 reportId,
                 productName,
                 companyName,

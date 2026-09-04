@@ -246,6 +246,35 @@ export type IngredientDetail = Ingredient & {
 export type ProductIngredient = Ingredient & {
   displayOrder: number;
   concentrationNote: string | null;
+  regulations: IngredientRegulation[];
+};
+
+export type IngredientRegulation = {
+  sourceRecordId: string;
+  standardName: string;
+  englishName: string | null;
+  casNo: string | null;
+  country: string | null;
+  noticeIngredientName: string | null;
+  restrictionType: string | null;
+  restrictionText: string | null;
+  proviso: string | null;
+  checkedAt: string | null;
+  sourceUrl: string;
+  disclaimer: string;
+};
+
+export type IngredientRegulationCandidate = Omit<IngredientRegulation, "sourceUrl" | "disclaimer"> & {
+  confidence: number;
+  matchReasons: string[];
+  verified: boolean;
+};
+
+export type AdminIngredientRegulationReview = Omit<IngredientRegulation, "sourceUrl" | "disclaimer"> & {
+  ingredientId: string;
+  reviewerNickname: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
 };
 
 export type ProductIngredients = {
@@ -316,9 +345,9 @@ export type MfdsProductCandidate = {
 
 export type AdminMfdsProductMatch = {
   productId: string;
-  matchStatus: "ADMIN_VERIFIED";
-  reportId: string;
-  productName: string;
+  matchStatus: "ADMIN_VERIFIED" | "NO_MATCH";
+  reportId: string | null;
+  productName: string | null;
   companyName: string | null;
   manufacturerName: string | null;
   reportBasis: string | null;

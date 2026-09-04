@@ -48,7 +48,8 @@ export function AdminProductItem({
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">{product.score}점</span>
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">성분 {ingredientCount}개</span>
             {product.coupangPartnersUrl && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f4] px-2 py-1 font-bold text-[#a34d65]"><BadgeDollarSign size={11} /> 파트너스 연결</span>}
-            {mfdsMatch && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 식약처 연결</span>}
+            {mfdsMatch?.matchStatus === "ADMIN_VERIFIED" && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 식약처 연결</span>}
+            {mfdsMatch?.matchStatus === "NO_MATCH" && <span className="inline-flex items-center gap-1 rounded-full bg-[#f1eeeb] px-2 py-1 font-bold text-[#71665f]"><CircleAlert size={11} /> 식약처 해당 없음</span>}
             {!isReady(product, ingredientCount) && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1df] px-2 py-1 text-[#936626]"><CircleAlert size={11} /> 정보 보완 필요</span>}
           </span>
         </span>

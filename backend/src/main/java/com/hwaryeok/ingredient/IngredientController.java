@@ -14,11 +14,14 @@ public class IngredientController {
 
     private final IngredientService ingredientService;
     private final IngredientFirepowerService ingredientFirepowerService;
+    private final IngredientRegulationService ingredientRegulationService;
 
     public IngredientController(IngredientService ingredientService,
-                                IngredientFirepowerService ingredientFirepowerService) {
+                                IngredientFirepowerService ingredientFirepowerService,
+                                IngredientRegulationService ingredientRegulationService) {
         this.ingredientService = ingredientService;
         this.ingredientFirepowerService = ingredientFirepowerService;
+        this.ingredientRegulationService = ingredientRegulationService;
     }
 
     @GetMapping("/featured")
@@ -52,5 +55,10 @@ public class IngredientController {
     @GetMapping("/{id}")
     public IngredientDetailResponse findIngredient(@PathVariable String id) {
         return ingredientService.findIngredient(id);
+    }
+
+    @GetMapping("/{id}/regulations")
+    public List<IngredientRegulationResponse> findIngredientRegulations(@PathVariable String id) {
+        return ingredientRegulationService.findVerified(id);
     }
 }

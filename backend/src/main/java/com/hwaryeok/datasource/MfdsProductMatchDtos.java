@@ -23,6 +23,11 @@ record MfdsProductMatchRequest(
 ) {
 }
 
+record MfdsProductNoMatchRequest(
+        String reviewNote
+) {
+}
+
 record AdminMfdsProductMatchResponse(
         String productId,
         String matchStatus,
@@ -70,4 +75,3 @@ record ProductRegulatorySourceResponse(
         );
     }
 }
-

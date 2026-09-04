@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Database, ExternalLink, Layers3, ShieldCheck } from "lucide-react";
 import { KciaImportForm, MfdsSyncForm } from "@/app/admin/data-sources/data-source-forms";
-import { getAdminDataPipelineStatus } from "@/lib/api";
+import { IngredientRegulationReviewBoard } from "@/app/admin/data-sources/ingredient-regulation-review";
+import { getAdminDataPipelineStatus, getAdminIngredientRegulationReviews, getIngredients } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import type { DataSourceStatus } from "@/lib/types";
 
@@ -11,8 +12,11 @@ export default async function AdminDataSourcesPage() {
   if (user.role !== "ADMIN") notFound();
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
-  const status = await getAdminDataPipelineStatus(accessToken)
-    .catch((error) => recoverAdminPageSession(error, "/admin/data-sources"));
+  const [status, ingredientPage, regulationReviews] = await Promise.all([
+    getAdminDataPipelineStatus(accessToken),
+    getIngredients({ page: 0, size: 50, sort: "name", direction: "asc" }),
+    getAdminIngredientRegulationReviews(accessToken),
+  ]).catch((error) => recoverAdminPageSession(error, "/admin/data-sources"));
   const mfdsSources = status.sources.filter((source) => source.id.startsWith("MFDS_"));
   const kciaSource = status.sources.find((source) => source.id === "KCIA_DICTIONARY")!;
   const brandSource = status.sources.find((source) => source.id === "BRAND_OFFICIAL")!;
@@ -31,12 +35,13 @@ export default async function AdminDataSourcesPage() {
       </section>
 
       <main className="container-page py-8 md:py-12">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <Stat label="표준 성분 레코드" value={status.ingredientReferenceCount} />
           <Stat label="식약처 품목" value={status.mfdsProductCount} />
           <Stat label="사용제한 원료" value={status.mfdsRegulationCount} />
           <Stat label="공식 전성분 등록" value={status.officialIngredientListCount} />
           <Stat label="검증·공개 완료" value={status.verifiedOfficialIngredientListCount} />
+          <Stat label="성분 사용조건 연결" value={regulationReviews.length} />
         </div>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-2">
@@ -54,6 +59,18 @@ export default async function AdminDataSourcesPage() {
             <Link href="/admin/products" className="ink-btn shrink-0">상품별 전성분 등록 <Layers3 size={16} /></Link>
           </div>
           <SourceLine source={brandSource} />
+        </section>
+
+        <section className="mt-5 rounded-[26px] border border-[#dca9b642] bg-white p-6 sm:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="eyebrow mb-2">04 · INGREDIENT CONDITIONS</p>
+              <h2 className="font-myeongjo text-2xl font-semibold">성분별 식약처 사용조건 검수</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#786970]">화력 성분과 식약처 사용제한 원료 후보를 대조합니다. 이름이 비슷하다는 이유만으로 자동 공개하지 않고, 국가·CAS No·제품 유형·농도와 단서를 관리자가 확인한 뒤 연결합니다.</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#9ebea64d] bg-[#f1f7f2] px-4 py-2 text-xs font-bold text-[#55735e]"><ShieldCheck size={14} /> 검수 공개 {regulationReviews.length}건</span>
+          </div>
+          <IngredientRegulationReviewBoard ingredients={ingredientPage.content} initialReviews={regulationReviews} />
         </section>
       </main>
     </div>

@@ -92,5 +92,19 @@ class MfdsProductMatchServiceTest {
 
         assertThat(service.findPublicSource("rice-sunscreen").matched()).isFalse();
     }
-}
 
+    @Test
+    void recordsNoMatchReviewWithoutPublishingARegulatorySource() {
+        var review = service.saveNoMatch(
+                "rice-sunscreen",
+                REVIEWER_ID,
+                "제품명과 업체명으로 검색했으나 동일 품목 없음"
+        );
+
+        assertThat(review.matchStatus()).isEqualTo("NO_MATCH");
+        assertThat(review.reportId()).isNull();
+        assertThat(review.reviewerNickname()).isEqualTo("식약처검수자");
+        assertThat(review.reviewNote()).contains("동일 품목 없음");
+        assertThat(service.findPublicSource("rice-sunscreen").matched()).isFalse();
+    }
+}

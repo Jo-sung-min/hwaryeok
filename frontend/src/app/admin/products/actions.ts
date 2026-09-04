@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   removeAdminMfdsProductMatch,
   saveAdminMfdsProductMatch,
+  saveAdminMfdsProductNoMatch,
   searchAdminMfdsProductCandidates,
   updateAdminProduct,
   updateAdminProductCoupangPartnersLink,
@@ -234,6 +235,28 @@ export async function removeMfdsProductMatchAction(
     return { success: true, message: "식약처 보고정보 연결을 해제했어요." };
   } catch (error) {
     return mfdsMatchError(error, "식약처 보고정보 연결을 해제하지 못했어요.");
+  }
+}
+
+export async function saveMfdsProductNoMatchAction(
+  productId: string,
+  _previousState: MfdsProductMatchActionState,
+  formData: FormData,
+): Promise<MfdsProductMatchActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+  if (reviewNote.length < 5) {
+    return { success: false, message: "검색어 또는 확인 내용을 5자 이상 검수 메모에 입력해 주세요." };
+  }
+  if (reviewNote.length > 500) return { success: false, message: "검수 메모는 500자 이하로 입력해 주세요." };
+
+  try {
+    const match = await saveAdminMfdsProductNoMatch(authorization.accessToken, productId, reviewNote);
+    revalidateProductPages(productId);
+    return { success: true, message: "식약처 보고품목에 해당 항목이 없는 것으로 검수했어요.", match };
+  } catch (error) {
+    return mfdsMatchError(error, "식약처 품목 검수 상태를 저장하지 못했어요.");
   }
 }
 
