@@ -80,7 +80,7 @@ public class ProductMatchEngine {
                 .limit(2)
                 .toList();
         if (!evidenceA.isEmpty()) {
-            reasons.add("근거 A 성분 " + String.join("·", evidenceA) + "을 주요 순서에서 확인했어요.");
+            reasons.add("근거 A 성분 " + String.join("·", evidenceA) + "이 연결된 성분 정보에 포함돼요.");
         }
         if (reasons.isEmpty()) reasons.add("연결된 성분의 안전성과 근거 수준을 중심으로 계산했어요.");
 

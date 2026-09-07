@@ -57,6 +57,10 @@ export default async function MyPage() {
       </section>
 
       <section className="container-page -mt-1 py-9 md:py-12">
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <Link href={`/reviewers/${user.id}`} className="flex items-center justify-between gap-4 rounded-2xl border border-[#efd7e1] bg-white p-5"><div><strong className="text-sm text-[#a54969]">내 리뷰 화력·작성 리뷰</strong><p className="mt-1 text-xs leading-6 text-[#927580]">다른 사용자에게 받은 평가와 내 리뷰를 확인해요.</p></div><ArrowRight size={18} className="shrink-0 text-[#b9627f]" /></Link>
+          <Link href="/my/usage-videos" className="flex items-center justify-between gap-4 rounded-2xl border border-[#efd7e1] bg-[#fff8fb] p-5"><div><strong className="text-sm text-[#a54969]">내 사용법 영상·채널 홍보</strong><p className="mt-1 text-xs leading-6 text-[#927580]">등록 영상의 승인 상태 확인, 수정·삭제를 할 수 있어요.</p></div><ArrowRight size={18} className="shrink-0 text-[#b9627f]" /></Link>
+        </div>
         <div className="paper-card grid overflow-hidden rounded-[24px] sm:rounded-[28px] md:grid-cols-[1.15fr_.85fr]">
           <div className="p-5 sm:p-6 md:p-9">
             <span className="rounded-full bg-[#a54f4910] px-3 py-1.5 text-xs font-semibold text-[#984944]">나의 피부 프로필</span>

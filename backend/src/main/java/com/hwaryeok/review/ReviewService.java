@@ -36,6 +36,7 @@ public class ReviewService {
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewScoreRepository reviewScoreRepository;
     private final UserRepository userRepository;
+    private final ReviewReputationService reputationService;
 
     public ReviewService(
             ProductService productService,
@@ -44,7 +45,8 @@ public class ReviewService {
             ReviewCriterionRepository criterionRepository,
             ProductReviewRepository reviewRepository,
             ProductReviewScoreRepository reviewScoreRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            ReviewReputationService reputationService
     ) {
         this.productService = productService;
         this.activeUserService = activeUserService;
@@ -53,6 +55,7 @@ public class ReviewService {
         this.reviewRepository = reviewRepository;
         this.reviewScoreRepository = reviewScoreRepository;
         this.userRepository = userRepository;
+        this.reputationService = reputationService;
     }
 
     @Transactional(readOnly = true)
@@ -81,7 +84,8 @@ public class ReviewService {
         List<ReviewCriterionAverageResponse> averages = context.criteria().stream()
                 .map(criterion -> average(criterion, scoreAggregates.get(criterion.getId())))
                 .toList();
-        List<ProductReview> recentReviews = reviewRepository.findTop5ByProductIdOrderByCreatedAtDesc(productId);
+        List<ProductReview> recentReviews = reviewRepository.findPublicByProductId(productId, PageRequest.of(0, 5));
+        Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(recentReviews, viewerId);
 
         return new ProductReviewSummaryResponse(
                 productId,
@@ -95,12 +99,17 @@ public class ReviewService {
                 rankingStatus(reviewCount),
                 MINIMUM_OFFICIAL_REVIEW_COUNT,
                 averages,
-                recentReviews.stream().map(ReviewDetailResponse::from).toList()
+                recentReviews.stream().map(review -> ReviewDetailResponse.from(review, communityRatings.get(review.getId()))).toList()
         );
     }
 
     @Transactional(readOnly = true)
     public ReviewerReviewListResponse reviewsByUser(String userId, int page, int size) {
+        return reviewsByUser(userId, page, size, null);
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewerReviewListResponse reviewsByUser(String userId, int page, int size, String viewerId) {
         if (page < 0) throw new IllegalArgumentException("페이지 번호를 다시 확인해 주세요.");
         if (size < 1 || size > 50) throw new IllegalArgumentException("페이지 크기는 1개 이상 50개 이하여야 해요.");
 
@@ -114,12 +123,13 @@ public class ReviewService {
         BigDecimal averageReviewScore = average == null
                 ? null
                 : BigDecimal.valueOf(average).setScale(1, RoundingMode.HALF_UP);
+        Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(reviews.getContent(), viewerId);
 
         return new ReviewerReviewListResponse(
                 ReviewerResponse.from(reviewer),
                 averageReviewScore,
                 reviews.getTotalElements(),
-                reviews.getContent().stream().map(ReviewerReviewResponse::from).toList(),
+                reviews.getContent().stream().map(review -> ReviewerReviewResponse.from(review, communityRatings.get(review.getId()))).toList(),
                 reviews.getNumber(),
                 reviews.getSize(),
                 reviews.getTotalPages(),
@@ -170,7 +180,8 @@ public class ReviewService {
                 now
         )));
         try {
-            return ReviewDetailResponse.from(reviewRepository.saveAndFlush(review));
+            return ReviewDetailResponse.from(reviewRepository.saveAndFlush(review),
+                    new ReviewCommunityRatingResponse(null, 0, null, false));
         } catch (DataIntegrityViolationException exception) {
             throw new ReviewAlreadyExistsException();
         }

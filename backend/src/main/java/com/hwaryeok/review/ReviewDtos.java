@@ -69,9 +69,10 @@ record ReviewDetailResponse(
         String skinType,
         String usagePeriod,
         boolean repurchaseYn,
-        Instant createdAt
+        Instant createdAt,
+        ReviewCommunityRatingResponse communityRating
 ) {
-    static ReviewDetailResponse from(ProductReview review) {
+    static ReviewDetailResponse from(ProductReview review, ReviewCommunityRatingResponse communityRating) {
         return new ReviewDetailResponse(
                 review.getId(),
                 review.getUser().getId(),
@@ -81,7 +82,8 @@ record ReviewDetailResponse(
                 review.getSkinType(),
                 review.getUsagePeriod(),
                 review.isRepurchase(),
-                review.getCreatedAt()
+                review.getCreatedAt(),
+                communityRating
         );
     }
 }
@@ -134,9 +136,10 @@ record ReviewerReviewResponse(
         String skinType,
         String usagePeriod,
         boolean repurchaseYn,
-        Instant createdAt
+        Instant createdAt,
+        ReviewCommunityRatingResponse communityRating
 ) {
-    static ReviewerReviewResponse from(ProductReview review) {
+    static ReviewerReviewResponse from(ProductReview review, ReviewCommunityRatingResponse communityRating) {
         return new ReviewerReviewResponse(
                 review.getId(),
                 ReviewedProductResponse.from(review.getProduct()),
@@ -145,7 +148,8 @@ record ReviewerReviewResponse(
                 review.getSkinType(),
                 review.getUsagePeriod(),
                 review.isRepurchase(),
-                review.getCreatedAt()
+                review.getCreatedAt(),
+                communityRating
         );
     }
 }

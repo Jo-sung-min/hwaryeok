@@ -2,10 +2,11 @@ import Link from "next/link";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 
 const discoverLinks = [
-  { href: "/promotions", label: "화력 추천 · 광고" },
-  { href: "/skin-check", label: "1분 피부 체크" },
-  { href: "/ranking", label: "내 피부 맞춤 랭킹" },
+  { href: "/ranking", label: "성분별 제품 랭킹" },
+  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품 탐색" },
+  { href: "/skin-check", label: "1분 피부 체크" },
+  { href: "/promotions", label: "화력 추천 · 광고" },
 ];
 
 const guideLinks = [
@@ -36,10 +37,10 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-6 max-w-sm text-[15px] font-medium leading-7 text-[#51454a]">
-              내 피부를 이해할수록,<br />화장품 선택은 더 선명해집니다.
+              나에게 맞는 성분,<br />종류별로 찾는 화장품 랭킹.
             </p>
             <p className="mt-3 max-w-sm text-xs leading-6 text-[#8b7b80]">
-              브랜드의 크기보다 성분과 피부 적합도를 먼저 보는<br className="hidden sm:block" /> 피부 맞춤 화장품 정보 서비스입니다.
+              성분과 제품 종류를 고르고, 성분 화력과 리뷰를<br className="hidden sm:block" /> 함께 살펴보며 나에게 맞는 화장품을 찾아보세요.
             </p>
           </div>
 

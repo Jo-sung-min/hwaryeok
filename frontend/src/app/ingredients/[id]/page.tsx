@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, ExternalLink, FlaskConical, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ExternalLink, FlaskConical, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
 import { ApiRequestError, getIngredient, getIngredientFirepower, getIngredientRegulations } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const ingredient = await getIngredient(id);
     return {
       title: `${ingredient.name} 성분`,
-      description: `${ingredient.name}(${ingredient.englishName})의 역할, 근거 수준, 피부별 특징과 포함 제품을 확인하세요.`,
+      description: `${ingredient.name}(${ingredient.englishName})의 역할과 피부별 특징을 알아보고, 이 성분이 포함된 제품의 랭킹과 사용자 리뷰를 확인하세요.`,
       alternates: { canonical: `/ingredients/${ingredient.id}` },
       openGraph: {
         title: `${ingredient.name} 성분 사전`,
@@ -58,6 +58,10 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <p className="mt-3 text-sm text-[#98877b] md:text-base">{ingredient.englishName}</p>
               <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">{ingredient.description}</p>
               <div className="mt-7 flex flex-wrap gap-2">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full border border-[#a45a5025] bg-[#fff9f1] px-3 py-1.5 text-xs text-[#91564d]">#{tag}</span>)}</div>
+              <div className="mt-8 flex flex-col items-start gap-3">
+                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="ink-btn">이 성분 제품 랭킹 <ArrowRight size={16} /></Link>
+                <p className="text-xs leading-6 text-[#826f76]">제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 비교해보세요.</p>
+              </div>
             </div>
           </div>
         </section>
@@ -126,14 +130,20 @@ export default async function IngredientDetailPage({ params }: { params: Promise
         <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-20">
           <div className="container-page">
             <div className="mb-9 flex items-end justify-between gap-5">
-              <div><p className="eyebrow mb-4">INGREDIENT FIREPOWER</p><h2 className="section-title font-myeongjo">{ingredient.name} 화력 TOP</h2><p className="mt-3 max-w-2xl text-xs leading-6 text-[#826f76]">{firepower.disclaimer}</p></div>
+              <div>
+                <p className="eyebrow mb-4">INGREDIENT ANALYSIS</p>
+                <h2 className="section-title font-myeongjo">{ingredient.name} 포함 제품 성분 분석</h2>
+                <p className="mt-3 max-w-2xl text-xs leading-6 text-[#826f76]">전성분 구성과 근거를 바탕으로 계산한 성분 분석 정보예요. 제품 랭킹에서는 제품 종류와 정렬 기준을 골라 비교할 수 있어요.</p>
+                <p className="mt-2 max-w-2xl text-xs leading-6 text-[#826f76]">{firepower.disclaimer}</p>
+                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#a44765]">{ingredient.name} 제품 랭킹 보기 <ArrowRight size={15} /></Link>
+              </div>
               <FlaskConical className="hidden text-[#b47664] md:block" size={32} strokeWidth={1.5} />
             </div>
             {firepower.products.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {firepower.products.map((item, index) => (
+                {firepower.products.map((item) => (
                   <div key={item.product.id} className="relative">
-                    <span className="absolute left-4 top-4 z-20 rounded-full border border-[#c94f73] bg-[#c94f73] px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">#{index + 1} · 화력 {item.firepowerScore}</span>
+                    <span className="absolute left-4 top-4 z-20 rounded-full border border-[#c94f73] bg-[#c94f73] px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">성분 분석 {item.firepowerScore}</span>
                     <ProductCard product={item.product} initialFavorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />
                     <div className="mx-2 -mt-2 rounded-b-2xl border border-t-0 border-[#dba7b438] bg-white/80 px-4 pb-4 pt-5">
                       <div className="flex items-center justify-between text-[11px]"><span className="text-[#806e75]">{item.concentrationNote ?? "전성분 순서 기반"}</span><strong className="text-[#9b4a5f]">신뢰도 {confidenceLabel(item.confidence)}</strong></div>

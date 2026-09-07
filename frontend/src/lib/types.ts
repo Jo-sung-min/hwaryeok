@@ -125,6 +125,7 @@ export type ReviewDetail = {
   id: string;
   authorId: string;
   authorNickname: string;
+  communityRating: ReviewCommunityRating;
   totalScore: number;
   content: string;
   skinType: string;
@@ -169,6 +170,7 @@ export type ReviewedProduct = {
 
 export type ReviewerReview = {
   id: string;
+  communityRating: ReviewCommunityRating;
   product: ReviewedProduct;
   totalScore: number;
   content: string;
@@ -190,6 +192,36 @@ export type ReviewerReviewList = {
   size: number;
   totalPages: number;
   hasNext: boolean;
+};
+
+export type ReviewCommunityRating = {
+  averageScore: number | null;
+  ratingCount: number;
+  viewerScore: number | null;
+  canRate: boolean;
+};
+
+export type ReviewerProfile = {
+  userId: string;
+  nickname: string;
+  skinType: string | null;
+  reviewFirepower: number | null;
+  averageReceivedRating: number | null;
+  receivedRatingCount: number;
+  uniqueRaterCount: number;
+  reviewCount: number;
+  averageReviewScore: number | null;
+  rank: number | null;
+};
+
+export type ReviewerRankingPage = {
+  content: ReviewerProfile[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  skinType: string | null;
 };
 
 export type ScoreDetail = {
@@ -235,6 +267,43 @@ export type IngredientPage = {
   totalElements: number;
   totalPages: number;
   hasNext: boolean;
+};
+
+export type IngredientRankingOption = {
+  id: string;
+  name: string;
+  englishName: string;
+  role: string;
+  tags: string[];
+  productCount: number;
+};
+
+export type IngredientRankingCategory = { name: string; productCount: number };
+export type IngredientRankingSort = "FIREPOWER" | "REVIEW";
+export type IngredientRankingOptions = {
+  ingredients: IngredientRankingOption[];
+  categories: IngredientRankingCategory[];
+};
+export type IngredientRankingItem = {
+  product: Product;
+  rank: number | null;
+  firepowerScore: number | null;
+  reviewScore: number | null;
+  reviewCount: number;
+  concentrationNote: string | null;
+};
+export type IngredientRankingPage = {
+  ingredientId: string | null;
+  ingredientName: string | null;
+  category: string | null;
+  sort: IngredientRankingSort;
+  content: IngredientRankingItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  categories: IngredientRankingCategory[];
 };
 
 export type IngredientDetail = Ingredient & {

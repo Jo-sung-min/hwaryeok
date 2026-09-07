@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { BookOpen, Check, ChevronLeft, ChevronRight, Search, TriangleAlert } from "lucide-react";
+import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Search, TriangleAlert } from "lucide-react";
 import { getIngredients, type IngredientQuery } from "@/lib/api";
 import type { IngredientStatus } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "성분 사전",
-  description: "화장품 성분의 역할, 근거 수준, 피부 타입별 특징과 주의점을 확인하세요.",
+  description: "화장품 성분의 역할과 피부별 특징을 알아보고, 성분별 제품 랭킹으로 이어서 탐색하세요.",
   alternates: { canonical: "/ingredients" },
 };
 
@@ -90,8 +90,8 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
         <div className="container-page">
           <BookOpen className="mx-auto mb-5 text-[#a45a50]" size={30} strokeWidth={1.5} />
           <p className="eyebrow mb-4">INGREDIENT DICTIONARY</p>
-          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-tight md:text-5xl">어려운 성분, 쉬운 우리말로</h1>
-          <p className="mt-4 text-sm leading-7 text-[#786c63]">전문 용어 대신 어떤 일을 하는지, 내 피부에는 어떻게 느껴질지 차분히 알려드려요.</p>
+          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-tight md:text-5xl">성분을 알아보고, 제품 랭킹까지</h1>
+          <p className="mt-4 text-sm leading-7 text-[#786c63]">성분의 역할과 피부별 특징을 확인한 뒤, 원하는 제품 종류의 랭킹과 사용자 리뷰를 살펴보세요.</p>
 
           <form className="mx-auto mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row" action="/ingredients">
             <label className="glass-field flex h-14 flex-1 items-center gap-3 rounded-full px-5 text-left">
@@ -147,21 +147,27 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
             {result.content.map((ingredient) => {
               const caution = ingredient.status === "CAUTION";
               return (
-                <Link href={`/ingredients/${ingredient.id}`} key={ingredient.id} className="paper-card group rounded-[24px] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.11)] sm:p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="font-myeongjo text-xl font-semibold group-hover:text-[#9b4a45]">{ingredient.name}</h2>
-                        {caution ? <TriangleAlert size={16} className="text-[#b47460]" /> : <Check size={16} className="text-[#72806b]" />}
+                <article key={ingredient.id} className="paper-card group rounded-[24px] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.11)] sm:p-6">
+                  <Link href={`/ingredients/${ingredient.id}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e5a8b9]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="font-myeongjo text-xl font-semibold group-hover:text-[#9b4a45]">{ingredient.name}</h2>
+                          {caution ? <TriangleAlert size={16} className="text-[#b47460]" /> : <Check size={16} className="text-[#72806b]" />}
+                        </div>
+                        <p className="mt-1 text-[11px] text-[#9a8a7e]">{ingredient.englishName}</p>
+                        <p className="mt-3 text-xs font-semibold text-[#9a6556]">{ingredient.role}</p>
                       </div>
-                      <p className="mt-1 text-[11px] text-[#9a8a7e]">{ingredient.englishName}</p>
-                      <p className="mt-3 text-xs font-semibold text-[#9a6556]">{ingredient.role}</p>
+                      <span className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] ${caution ? "bg-[#d3957d1c] text-[#a1614c]" : "bg-[#84917a1a] text-[#65715f]"}`}>{statusLabel(ingredient.status)}</span>
                     </div>
-                    <span className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] ${caution ? "bg-[#d3957d1c] text-[#a1614c]" : "bg-[#84917a1a] text-[#65715f]"}`}>{statusLabel(ingredient.status)}</span>
+                    <p className="mt-5 line-clamp-2 text-sm leading-7 text-[#71655d]">{ingredient.description}</p>
+                    <div className="mt-5 flex flex-wrap gap-1.5">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full bg-[#a54f490b] px-2.5 py-1 text-[10px] text-[#8e5a50]">#{tag}</span>)}</div>
+                  </Link>
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#efd9df] pt-3">
+                    <Link href={`/ingredients/${ingredient.id}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#88757c]">성분 자세히 보기</Link>
+                    <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[#fff0f4] px-4 text-xs font-bold text-[#a44765]" aria-label={`${ingredient.name} 제품 랭킹 보기`}>이 성분 제품 랭킹 <ArrowRight size={14} /></Link>
                   </div>
-                  <p className="mt-5 line-clamp-2 text-sm leading-7 text-[#71655d]">{ingredient.description}</p>
-                  <div className="mt-5 flex flex-wrap gap-1.5">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full bg-[#a54f490b] px-2.5 py-1 text-[10px] text-[#8e5a50]">#{tag}</span>)}</div>
-                </Link>
+                </article>
               );
             })}
           </div>

@@ -13,17 +13,42 @@ interface ProductReviewRepository extends JpaRepository<ProductReview, String> {
 
     boolean existsByProductIdAndUserId(String productId, String userId);
 
-    long countByProductId(String productId);
+    @Query("""
+            select count(review) from ProductReview review where review.product.id = :productId
+            and review.user.status = 'ACTIVE'
+            and review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+            """)
+    long countByProductId(@Param("productId") String productId);
 
-    @Query("select avg(review.totalScore) from ProductReview review where review.product.id = :productId")
+    @Query("""
+            select avg(review.totalScore) from ProductReview review where review.product.id = :productId
+            and review.user.status = 'ACTIVE'
+            and review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+            """)
     Double averageTotalScoreByProductId(@Param("productId") String productId);
 
-    @Query("select avg(review.totalScore) from ProductReview review where review.user.id = :userId")
+    @Query("""
+            select avg(review.totalScore) from ProductReview review where review.user.id = :userId
+            and review.user.status = 'ACTIVE'
+            and review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+            """)
     Double averageTotalScoreByUserId(@Param("userId") String userId);
 
     @EntityGraph(attributePaths = "user")
-    List<ProductReview> findTop5ByProductIdOrderByCreatedAtDesc(String productId);
+    @Query("""
+            select review from ProductReview review where review.product.id = :productId
+            and review.user.status = 'ACTIVE'
+            and review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+            order by review.createdAt desc, review.id asc
+            """)
+    List<ProductReview> findPublicByProductId(@Param("productId") String productId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"product", "user"})
-    Page<ProductReview> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+    @Query("""
+            select review from ProductReview review where review.user.id = :userId
+            and review.user.status = 'ACTIVE'
+            and review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
+            order by review.createdAt desc, review.id asc
+            """)
+    Page<ProductReview> findByUserIdOrderByCreatedAtDesc(@Param("userId") String userId, Pageable pageable);
 }

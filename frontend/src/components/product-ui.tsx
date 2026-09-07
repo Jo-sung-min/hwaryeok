@@ -92,7 +92,7 @@ export function ProductVisual({
   alt = "화장품 제품 이미지",
 }: {
   tone: Product["tone"];
-  variant?: "card" | "compact" | "thumbnail" | "comparison" | "fill" | "panel";
+  variant?: "card" | "compact" | "thumbnail" | "comparison" | "fill" | "panel" | "catalog";
   imageUrl?: string | null;
   alt?: string;
 }) {
@@ -104,6 +104,7 @@ export function ProductVisual({
     comparison: "h-full w-full",
     fill: "h-full w-full",
     panel: "h-64 sm:h-full",
+    catalog: "h-full w-full",
   }[variant];
   const responsiveSizes = {
     card: "(max-width: 768px) calc(100vw - 48px), (max-width: 1280px) 50vw, 380px",
@@ -112,6 +113,7 @@ export function ProductVisual({
     comparison: "(max-width: 640px) 50vw, 520px",
     fill: "(max-width: 1024px) 100vw, 46vw",
     panel: "(max-width: 640px) 100vw, 220px",
+    catalog: "(max-width: 767px) 43vw, (max-width: 1220px) 25vw, 278px",
   }[variant];
 
   return (

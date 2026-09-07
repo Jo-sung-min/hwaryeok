@@ -44,6 +44,12 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <Link href="/admin/usage-videos" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f8e1e7] text-[#a44f65]"><ShieldCheck size={22} /></span>
+            <p className="eyebrow mb-2 mt-6">CREATOR VIDEOS</p><h2 className="font-myeongjo text-2xl font-semibold">사용법 영상 검토</h2>
+            <p className="mt-3 text-sm leading-7 text-[#7d6b72]">사용자가 등록한 유튜브 영상과 홍보 채널을 검토하고 승인·숨김·추천 노출 순서를 관리합니다.</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">영상 관리 열기 <ArrowRight size={16} /></span>
+          </Link>
           <Link href="/admin/products" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f8e1e7] text-[#a44f65]"><PackagePlus size={22} /></span>
             <p className="eyebrow mb-2 mt-6">PRODUCTS</p><h2 className="font-myeongjo text-2xl font-semibold">상품 등록·관리</h2>

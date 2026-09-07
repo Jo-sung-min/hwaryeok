@@ -30,6 +30,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class HwaryeokApplicationTests {
@@ -54,6 +55,9 @@ class HwaryeokApplicationTests {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void loadsApplicationAndSeedsProducts() {
@@ -179,7 +183,13 @@ class HwaryeokApplicationTests {
         assertThat(detailResponse.statusCode()).isEqualTo(200);
         assertThat(detailResponse.body()).contains("birch-cream", "수분 장벽 강화");
         assertThat(rankingResponse.statusCode()).isEqualTo(200);
-        assertThat(rankingResponse.body()).contains("heartleaf-toner", "mugwort-ampoule", "bean-essence");
+        assertThat(rankingResponse.body()).contains("heartleaf-toner", "mugwort-ampoule");
+        var rankedProducts = objectMapper.readTree(rankingResponse.body());
+        assertThat(rankedProducts.size()).isEqualTo(3);
+        assertThat(rankedProducts.get(0).get("score").asInt())
+                .isGreaterThanOrEqualTo(rankedProducts.get(1).get("score").asInt());
+        assertThat(rankedProducts.get(1).get("score").asInt())
+                .isGreaterThanOrEqualTo(rankedProducts.get(2).get("score").asInt());
         assertThat(rankingResponse.body()).doesNotContain("hwahae-2015377");
     }
 

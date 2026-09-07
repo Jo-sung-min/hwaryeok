@@ -42,7 +42,11 @@ public class AuthConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/products/*/reviews").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products/*/usage-videos").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/reviews/*/firepower").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/*/firepower").authenticated()
                         .requestMatchers(
+                                "/api/v1/me/usage-videos", "/api/v1/me/usage-videos/**",
                                 "/api/v1/auth/me",
                                 "/api/v1/users/me/**",
                                 "/api/v1/experts/me/**",

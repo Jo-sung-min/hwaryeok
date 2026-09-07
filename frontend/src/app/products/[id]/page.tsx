@@ -8,6 +8,7 @@ import { ProductIngredientsPanel } from "@/components/product-ingredients-panel"
 import { RecentProductTracker } from "@/components/recent-product-tracker";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReviewSection } from "./review-section";
+import { ProductUsageVideos } from "@/components/usage-videos/product-usage-videos";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRegulatorySource, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { ReviewCriteria } from "@/lib/types";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
@@ -129,7 +130,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
               {hasCoupangPartnersLink
                 ? <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
                 : <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">쿠팡의 공식 브랜드·판매자 검색 결과로 이동해요. 주문 전 판매자 표시를 확인해 주세요.</p>}
-              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 리포트 보기</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href={`/compare?left=${product.id}`} className="line-btn col-span-2 px-4 sm:col-span-1">제품 비교</Link></div>
+              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 리포트 보기</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href="#usage-videos" className="line-btn px-4">사용법 영상</Link><Link href={`/compare?left=${product.id}`} className="line-btn px-4">제품 비교</Link></div>
               <p className="mt-4 text-[11px] leading-5 text-[#8b7a71]">{product.scoreBasis} · 브랜드 인지도와 판매량은 점수에서 제외</p>
             </div>
           </div>
@@ -199,6 +200,8 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
             </div>
           </div>
         </section>
+
+        <div className="container-page pb-12"><ProductUsageVideos productId={product.id} /></div>
 
         <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-24">
           <div className="container-page grid gap-12 lg:grid-cols-[.72fr_1.28fr]">

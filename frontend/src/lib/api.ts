@@ -1,8 +1,21 @@
 import "server-only";
+import type { ReviewCommunityRating, ReviewerProfile, ReviewerRankingPage } from "@/lib/types";
+import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
 import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
+
+export function getIngredientRankingOptions(): Promise<IngredientRankingOptions> {
+  return requestJson<IngredientRankingOptions>("/ingredient-rankings/options");
+}
+
+export function getIngredientRanking(query: { ingredientId?: string; category?: string; sort?: IngredientRankingSort; page?: number; size?: number } = {}): Promise<IngredientRankingPage> {
+  const search = new URLSearchParams({ sort: query.sort ?? "FIREPOWER", page: String(query.page ?? 0), size: String(query.size ?? 12) });
+  if (query.ingredientId) search.set("ingredientId", query.ingredientId);
+  if (query.category) search.set("category", query.category);
+  return requestJson<IngredientRankingPage>(`/ingredient-rankings?${search}`);
+}
 
 export class ApiRequestError extends Error {
   constructor(
@@ -394,9 +407,29 @@ export function getProductReviewSummary(productId: string, accessToken?: string)
   });
 }
 
-export function getReviewerReviews(userId: string, page = 0, size = 12): Promise<ReviewerReviewList> {
+export function getReviewerReviews(userId: string, page = 0, size = 12, accessToken?: string): Promise<ReviewerReviewList> {
   const search = new URLSearchParams({ page: String(page), size: String(size) });
-  return requestJson<ReviewerReviewList>(`/reviewers/${encodeURIComponent(userId)}/reviews?${search}`);
+  return requestJson<ReviewerReviewList>(`/reviewers/${encodeURIComponent(userId)}/reviews?${search}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+}
+
+export function getReviewerRanking(skinType = "", page = 0, size = 20): Promise<ReviewerRankingPage> {
+  const search = new URLSearchParams({ page: String(page), size: String(size) });
+  if (skinType) search.set("skinType", skinType);
+  return requestJson<ReviewerRankingPage>(`/reviewers/ranking?${search}`);
+}
+
+export function getReviewerProfile(userId: string): Promise<ReviewerProfile> {
+  return requestJson<ReviewerProfile>(`/reviewers/${encodeURIComponent(userId)}/profile`);
+}
+
+export function rateReviewFirepower(accessToken: string, reviewId: string, score: number | null): Promise<ReviewCommunityRating> {
+  return requestJson<ReviewCommunityRating>(`/reviews/${encodeURIComponent(reviewId)}/firepower`, {
+    method: score === null ? "DELETE" : "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    ...(score === null ? {} : { body: JSON.stringify({ score }) }),
+  });
 }
 
 export function createProductReview(

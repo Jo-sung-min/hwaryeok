@@ -14,6 +14,8 @@ interface ProductReviewScoreRepository extends JpaRepository<ProductReviewScore,
                    count(score) as reviewCount
             from ProductReviewScore score
             where score.review.product.id = :productId
+              and score.review.user.status = 'ACTIVE'
+              and score.review.product.publicationStatus = com.hwaryeok.product.ProductPublicationStatus.PUBLISHED
             group by score.criterion.id
             """)
     List<CriterionScoreAggregate> aggregateByProductId(@Param("productId") String productId);

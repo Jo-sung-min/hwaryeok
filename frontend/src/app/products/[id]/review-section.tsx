@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { useActionState, useMemo, useState } from "react";
 import { BarChart3, Check, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { createReviewAction, type ReviewActionState } from "./review-actions";
@@ -118,8 +119,9 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
                 {summary.reviews.slice(0, 5).map((review) => (
                   <article key={review.id} className="rounded-[20px] border border-[#75564516] bg-white/82 p-5">
                     <div className="flex items-start justify-between gap-4"><div><Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link><p className="mt-1 text-[11px] text-[#8a7c72]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-2xl text-[#9b4a45]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d73]">리뷰점수</p></div></div>
-                    <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#655a53]">{review.content}</p>
+                    <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#655a53] [overflow-wrap:anywhere]">{review.content}</p>
                     <div className="mt-4 flex items-center justify-between text-[10px] text-[#93857b]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
+                    <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />
                   </article>
                 ))}
               </div>

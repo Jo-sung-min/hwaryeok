@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.hwaryeok.common.error.ResourceNotFoundException;
 import com.hwaryeok.product.Product;
 import com.hwaryeok.product.ProductResponse;
+import com.hwaryeok.product.ProductPublicationStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +38,9 @@ public class IngredientFirepowerService {
         Ingredient ingredient = ingredientRepository.findById(ingredientId)
                 .orElseThrow(() -> new ResourceNotFoundException("성분을 찾을 수 없어요: " + ingredientId));
 
-        List<ProductIngredient> relations = productIngredientRepository.findByIngredientId(ingredientId);
+        List<ProductIngredient> relations = productIngredientRepository.findByIngredientId(ingredientId).stream()
+                .filter(relation -> relation.getProduct().getPublicationStatus() == ProductPublicationStatus.PUBLISHED)
+                .toList();
         Set<String> productIds = relations.stream()
                 .map(relation -> relation.getProduct().getId())
                 .collect(Collectors.toSet());
@@ -65,7 +68,7 @@ public class IngredientFirepowerService {
         );
     }
 
-    private IngredientFirepowerProductResponse score(
+    IngredientFirepowerProductResponse score(
             Ingredient ingredient,
             ProductIngredient relation,
             long ingredientCount

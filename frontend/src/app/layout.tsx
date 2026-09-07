@@ -9,26 +9,26 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
   title: {
-    default: "화력 — 내 피부에 맞는 화장품 이야기",
+    default: "화력 — 나에게 맞는 성분, 화장품 랭킹",
     template: "%s | 화력",
   },
-  description: "성분과 실사용 리뷰, 내 피부 궁합을 한눈에 살펴보고 나에게 맞는 화장품을 발견하세요.",
+  description: "히알루론산부터 세라마이드까지, 나에게 맞는 성분을 고르고 앰플·크림·토너의 성분별 랭킹과 사용자 리뷰를 확인하세요.",
   applicationName: "화력 HWA:RYEOK",
-  keywords: ["화장품", "성분", "피부 적합도", "화장품 리뷰", "화장품 비교"],
+  keywords: ["화장품 랭킹", "성분 랭킹", "히알루론산", "세라마이드", "화장품 리뷰", "화장품 비교"],
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "ko_KR",
     siteName: "화력 HWA:RYEOK",
-    title: "화력 — 내 피부에 맞는 화장품 이야기",
-    description: "성분부터 사용감까지, 내 피부에 맞춰 읽는 화장품 이야기",
+    title: "화력 — 나에게 맞는 성분, 화장품 랭킹",
+    description: "성분과 제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 살펴보세요.",
     url: "/",
     images: [{ url: "/hero-watercolor.png", width: 1200, height: 630, alt: "화력의 매화 수채화 배경" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "화력 — 내 피부에 맞는 화장품 이야기",
-    description: "성분과 사용감, 피부 궁합을 한눈에 담은 화력 리포트를 만나보세요.",
+    title: "화력 — 나에게 맞는 성분, 화장품 랭킹",
+    description: "성분과 제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 살펴보세요.",
     images: ["/hero-watercolor.png"],
   },
 };

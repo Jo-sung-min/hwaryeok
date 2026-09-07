@@ -2,23 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowRight, BarChart3, Heart, Home, Megaphone, Search, UserRound, X } from "lucide-react";
+import { ArrowRight, BarChart3, Heart, Home, Megaphone, Search, UserRound, UsersRound, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
-  { href: "/promotions", label: "화력 추천", sponsored: true },
+  { href: "/ranking", label: "성분 랭킹" },
+  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품" },
-  { href: "/skin-check", label: "피부 체크" },
-  { href: "/ranking", label: "맞춤 랭킹" },
   { href: "/ingredients", label: "성분 사전" },
+  { href: "/skin-check", label: "피부 체크" },
+  { href: "/promotions", label: "화력 추천", sponsored: true },
 ];
 
 const mobileHeaderNav = [
-  { href: "/", label: "홈" },
-  { href: "/promotions", label: "추천" },
+  { href: "/ranking", label: "성분 랭킹" },
+  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품" },
-  { href: "/skin-check", label: "피부체크" },
-  { href: "/ingredients", label: "성분" },
+  { href: "/ingredients", label: "성분 사전" },
+  { href: "/skin-check", label: "피부 체크" },
+  { href: "/promotions", label: "추천·광고" },
 ];
 
 export function Header({ authSlot }: { authSlot?: ReactNode }) {
@@ -27,15 +29,15 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
     <header className="sticky top-0 z-50 bg-transparent p-2 md:px-3 md:py-2.5">
       <div className="site-glass mobile-glass-header mx-auto flex h-14 w-full items-center gap-2 rounded-[22px] px-2 md:hidden">
         <Link href="/" className="seal h-10 w-10 shrink-0 font-myeongjo text-lg font-bold" aria-label="화력 홈">화</Link>
-        <nav className="grid min-w-0 flex-1 grid-cols-5 gap-0.5" aria-label="모바일 상단 메뉴">
+        <nav className="scrollbar-hide flex min-w-0 flex-1 gap-0.5 overflow-x-auto" aria-label="모바일 상단 메뉴">
           {mobileHeaderNav.map((item) => {
             const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className="glass-nav-item grid min-h-11 min-w-0 place-items-center rounded-full px-1 text-[11px] font-bold transition">{item.label}</Link>;
+            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className="glass-nav-item grid min-h-11 shrink-0 place-items-center rounded-full px-3 text-[11px] font-bold transition">{item.label}</Link>;
           })}
         </nav>
       </div>
 
-      <div className="site-glass container-page hidden h-[64px] items-center justify-between rounded-[24px] px-5 md:flex">
+      <div className="site-glass container-page hidden min-h-[64px] flex-wrap items-center justify-between gap-y-1 rounded-[24px] px-5 py-2 md:flex lg:flex-nowrap">
         <Link href="/" className="flex min-h-11 items-center gap-2.5 md:gap-3" aria-label="화력 홈">
           <span className="seal h-9 w-9 font-myeongjo text-xl font-bold">화</span>
           <div className="leading-none">
@@ -43,7 +45,7 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
             <span className="ml-2 text-[8px] font-bold tracking-[.24em] text-[#b96a80]">HWA:RYEOK</span>
           </div>
         </Link>
-        <nav className="hidden items-center gap-2 md:flex" aria-label="주요 메뉴">
+        <nav className="order-3 hidden w-full flex-wrap items-center justify-center gap-1 md:flex lg:order-none lg:w-auto" aria-label="주요 메뉴">
           {nav.map((item) => (
             <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? "page" : undefined} className="glass-nav-item relative rounded-full px-3.5 py-2 text-sm transition">
               {item.label}{item.sponsored && <span className="ml-1 align-top text-[8px] font-bold text-[#bf4d6c]">AD</span>}
@@ -62,9 +64,10 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
 
 const mobileNav = [
   { href: "/", label: "홈", icon: Home },
-  { href: "/promotions", label: "추천", icon: Megaphone },
+  { href: "/ranking", label: "성분 랭킹", icon: BarChart3 },
+  { href: "/reviewers", label: "리뷰어", icon: UsersRound },
   { href: "/products", label: "탐색", icon: Search },
-  { href: "/ranking", label: "랭킹", icon: BarChart3 },
+  { href: "/promotions", label: "추천·광고", icon: Megaphone },
   { href: "/my", label: "MY", icon: UserRound },
 ];
 
@@ -116,7 +119,7 @@ export function BottomNav() {
           </button>
         </form>
       ) : (
-        <div className="grid h-full grid-cols-5">
+        <div className="grid h-full grid-cols-6">
           {mobileNav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             const className = `group flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition ${active ? "font-bold text-[#aa4261]" : "font-semibold text-[#817278]"}`;

@@ -3,7 +3,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
-import { ApiRequestError, getReviewerReviews } from "@/lib/api";
+import { ApiRequestError, getReviewerProfile, getReviewerReviews } from "@/lib/api";
+import { getCurrentSession, readAuthTokens } from "@/lib/auth-session";
+import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
+import { ReviewerFirepower } from "@/components/reviewer-firepower";
 import { resolveProductImageUrl } from "@/lib/media";
 import type { ProductTone, ReviewerReview } from "@/lib/types";
 
@@ -48,31 +51,37 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
   const page = safePage(requestedPage);
 
   try {
-    const data = await getReviewerReviews(userId, page, 10);
+    const [session, tokens] = await Promise.all([getCurrentSession(), readAuthTokens()]);
+    const [data, profile] = await Promise.all([getReviewerReviews(userId, page, 10, session ? tokens.accessToken : undefined), getReviewerProfile(userId)]);
     const averageScore = data.averageReviewScore === null ? "—" : Number(data.averageReviewScore).toFixed(1);
 
     return (
       <div className="min-h-screen pb-24">
         <section className="border-b border-[#efd8df] bg-[#fff8fa] py-8 sm:py-10 md:py-14">
           <div className="container-page">
-            <Link href="/products" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#77686d]"><ArrowLeft size={16} /> 화장품 둘러보기</Link>
+            <Link href="/reviewers" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#77686d]"><ArrowLeft size={16} /> 리뷰어 랭킹</Link>
             <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
               <div className="flex items-center gap-4 sm:gap-5">
                 <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-[#edc6d1] bg-white text-2xl font-bold text-[#b44968] shadow-sm sm:h-20 sm:w-20 sm:text-3xl" aria-hidden="true">{data.reviewer.nickname.slice(0, 1)}</span>
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.15em] text-[#b24b69]"><ShieldCheck size={14} /> REAL USER REVIEWS</p>
                   <h1 className="mt-2 break-words font-myeongjo text-3xl font-semibold sm:text-4xl">{data.reviewer.nickname}님의 리뷰</h1>
+                  <p className="mt-3 inline-flex rounded-full border border-[#ebc7d5] bg-white px-3 py-1.5 text-xs font-semibold text-[#a15070]">{profile.skinType ? `${profile.skinType === "민감" ? "민감성" : profile.skinType} 피부` : "피부타입 미등록"}</p>
                   <p className="mt-2 text-sm leading-6 text-[#7d6c72]">직접 남긴 제품별 리뷰와 점수를 모아 보여드려요.</p>
                 </div>
               </div>
 
               <div className="grid min-w-[240px] grid-cols-[1fr_auto] items-center gap-5 rounded-[24px] border border-[#edcbd5] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(104,50,67,.07)] sm:px-6 sm:py-5">
                 <div>
-                  <p className="text-[11px] font-bold text-[#96737e]">평균 리뷰점수</p>
+                  <p className="text-[11px] font-bold text-[#96737e]">제품에 매긴 평균 리뷰점수</p>
                   <p className="mt-1 text-xs text-[#9a8990]">작성 리뷰 {data.reviewCount.toLocaleString("ko-KR")}개 기준</p>
                 </div>
                 <div className="text-right"><strong className="font-myeongjo text-4xl font-semibold text-[#bd4d6f]">{averageScore}</strong><span className="ml-1 text-xs text-[#8d7c82]">/ 100</span></div>
               </div>
+            </div>
+            <div className="mt-6 grid gap-5 rounded-2xl border border-[#edd5df] bg-white p-5 sm:grid-cols-[minmax(180px,1fr)_2fr] sm:items-center sm:gap-8 sm:p-6">
+              <ReviewerFirepower score={profile.reviewFirepower} />
+              <div><div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#896f7b]"><span>전체 순위 <strong className="text-[#aa4b6d]">{profile.rank === null ? "집계 전" : `${profile.rank}위`}</strong></span><span>평가자 {profile.uniqueRaterCount}명</span><span>받은 평가 {profile.receivedRatingCount}개</span><span>도움 평가 {profile.averageReceivedRating === null ? "—" : profile.averageReceivedRating.toFixed(1)} / 5</span></div><p className="mt-3 text-[11px] leading-6 text-[#9a858e]">리뷰 화력은 다른 사용자가 평가한 도움 정도와 평가자 수로 계산해요. 제품에 매긴 점수와는 별개예요.</p></div>
             </div>
           </div>
         </section>
@@ -92,7 +101,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
             </div>
           ) : (
             <div className="grid gap-5">
-              {data.content.map((review) => <ReviewCard key={review.id} review={review} />)}
+              {data.content.map((review) => <ReviewCard key={review.id} review={review} authorId={userId} isAuthenticated={Boolean(session)} />)}
             </div>
           )}
 
@@ -112,25 +121,26 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
   }
 }
 
-function ReviewCard({ review }: { review: ReviewerReview }) {
+function ReviewCard({ review, authorId, isAuthenticated }: { review: ReviewerReview; authorId: string; isAuthenticated: boolean }) {
   const imageUrl = resolveProductImageUrl(review.product.imageUrl);
   return (
     <article className="grid overflow-hidden rounded-[26px] border border-[#efd8df] bg-white shadow-[0_9px_28px_rgba(101,53,67,.06)] sm:grid-cols-[190px_1fr]">
       <Link href={`/products/${review.product.id}`} className={`relative grid min-h-44 place-items-center overflow-hidden ${productToneMap[review.product.tone]}`} aria-label={`${review.product.brand} ${review.product.name} 제품 보기`}>
         {imageUrl ? <Image src={imageUrl} alt={`${review.product.brand} ${review.product.name}`} fill sizes="(max-width: 640px) 100vw, 190px" className="object-contain p-5" /> : <><UserRound size={32} className="text-[#cf8ca0]" /><span className="absolute bottom-4 text-[10px] font-bold tracking-[.12em] text-[#b76a80]">HWA:RYEOK REVIEW</span></>}
       </Link>
-      <div className="p-5 sm:p-6 md:p-7">
+      <div className="min-w-0 p-5 sm:p-6 md:p-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a56a7b]">{review.product.brand} · {review.product.category}</p><Link href={`/products/${review.product.id}`} className="mt-1 block font-myeongjo text-lg font-semibold leading-snug hover:text-[#b54768] sm:text-xl">{review.product.name}</Link></div>
           <div className="shrink-0 rounded-2xl bg-[#fff0f4] px-3 py-2 text-right"><strong className="font-myeongjo text-2xl text-[#b94769]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] font-semibold text-[#98737e]">리뷰점수</p></div>
         </div>
-        <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#61555a]">{review.content}</p>
+        <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#61555a] [overflow-wrap:anywhere]">{review.content}</p>
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#f0dfe4] pt-4 text-[11px] text-[#88787d]">
           <span className="rounded-full bg-[#fff3f6] px-2.5 py-1">{review.skinType}</span>
           <span className="rounded-full bg-[#fff3f6] px-2.5 py-1">{usagePeriodLabels[review.usagePeriod]}</span>
           <span className="rounded-full bg-[#fff3f6] px-2.5 py-1">{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span>
           <time dateTime={review.createdAt} className="ml-auto">{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time>
         </div>
+        <ReviewFirepowerVote reviewId={review.id} productId={review.product.id} authorId={authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/reviewers/${authorId}`} />
       </div>
     </article>
   );
@@ -138,5 +148,5 @@ function ReviewCard({ review }: { review: ReviewerReview }) {
 
 function safePage(value: string | undefined) {
   const parsed = Number(value ?? "0");
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+  return Number.isSafeInteger(parsed) && parsed >= 0 && parsed <= 100000 ? parsed : 0;
 }

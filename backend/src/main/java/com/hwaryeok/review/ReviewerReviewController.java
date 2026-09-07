@@ -1,5 +1,7 @@
 package com.hwaryeok.review;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,10 +20,11 @@ public class ReviewerReviewController {
 
     @GetMapping
     public ReviewerReviewListResponse reviews(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
     ) {
-        return reviewService.reviewsByUser(userId, page, size);
+        return reviewService.reviewsByUser(userId, page, size, jwt == null ? null : jwt.getSubject());
     }
 }
