@@ -1,49 +1,39 @@
 import Link from "next/link";
-import { ArrowRight, Bubbles, ChevronRight, Droplet, Droplets, FlaskConical, Grid2X2, Leaf, Megaphone, Pipette, Search, Shield, Sparkles, Sun, type LucideIcon } from "lucide-react";
-import { getIngredientRanking, getIngredientRankingOptions, getUserPreferredIngredients } from "@/lib/api";
-import { getFavoriteViewState, readAuthTokens } from "@/lib/auth-session";
-import { rankingHref, type IngredientRankingFilters } from "@/lib/ingredient-ranking";
-import { homeCategoryId, orderHomeCategories } from "@/lib/home-catalog";
-import type { IngredientRankingItem } from "@/lib/types";
-import { IngredientPicker } from "@/components/ingredient-picker";
-import { FavoriteButton, ProductVisual } from "@/components/product-ui";
+import { ArrowRight, ChevronRight, FlaskConical, Megaphone, Search, Sparkles, TrendingUp, SlidersHorizontal, MessageCircle } from "lucide-react";
+import { getIngredientRanking, getIngredientRankingOptions, getProductPage, getRanking, getRisingProductRanking } from "@/lib/api";
+import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
+import { rankingHref } from "@/lib/ingredient-ranking";
+import { buildHomeBannerSlides, homeCatalogHref, homeDisplayMode, orderHomeCategories } from "@/lib/home-catalog";
 import { HomeBanner, type HomeBannerSlide } from "@/components/home-banner";
+import { HomeProductCard } from "@/components/home-product-card";
+import { HomePersonalization } from "@/components/home-personalization";
 import styles from "./home-catalog.module.css";
 
-const categoryIcons: Record<string, LucideIcon> = {
-  앰플: Pipette, 세럼: Droplets, 크림: Shield, 토너: Droplet, 에센스: FlaskConical,
-  로션: Droplets, 선케어: Sun, 클렌저: Bubbles, 마스크팩: Sparkles, 젤: Leaf,
-};
-
 const bannerGuides = [
-  { ingredient: "hyaluronic-acid", category: "앰플", label: "히알루론산 × 앰플", title: "내가 찾던 성분,\n앰플에서 만나보세요", description: "히알루론산이 포함된 앰플 모아보기" },
+  { ingredient: "hyaluronic-acid", category: "앰플", label: "히알루론산 × 앰플", title: "수분 성분으로 찾는\n나의 앰플", description: "히알루론산이 포함된 앰플 모아보기" },
   { ingredient: "panthenol", category: "크림", label: "판테놀 × 크림", title: "크림을 고르는 기준,\n이번에는 판테놀", description: "성분부터 살펴보는 나의 크림" },
   { ingredient: "heartleaf", category: "토너", label: "어성초 × 토너", title: "토너 한 병도,\n나의 관심 성분으로", description: "어성초가 포함된 토너 살펴보기" },
 ];
 
-async function preferredIngredientIds() {
-  const { accessToken } = await readAuthTokens();
-  if (!accessToken) return [];
-  try {
-    return (await getUserPreferredIngredients(accessToken)).content.map((item) => item.ingredient.id);
-  } catch {
-    return [];
-  }
-}
-
-export async function HomeCatalog({ filters }: { filters: IngredientRankingFilters }) {
-  const [options, favoriteState, preferredIds] = await Promise.all([
-    getIngredientRankingOptions(), getFavoriteViewState(), preferredIngredientIds(),
+export async function HomeCatalog({ category: requestedCategory }: { category: string }) {
+  const [options, user, savedProfile, favoriteState, bannerProducts] = await Promise.all([
+    getIngredientRankingOptions(), getCurrentSession(), getOptionalSkinProfile(), getFavoriteViewState(),
+    getProductPage({ size: 50, sort: "name", direction: "asc" }),
   ]);
-  const selected = options.ingredients.find((item) => item.id === filters.ingredient);
-  const unknownIngredient = Boolean(filters.ingredient && !selected);
-  const ingredient = selected?.id ?? "";
-  const homeFilters = { ...filters, ingredient, category: "", page: 0 };
-  const returnTo = rankingHref("/", homeFilters);
+  const categories = orderHomeCategories(options.categories.filter((item) => item.productCount > 0));
+  const category = categories.some((item) => item.name === requestedCategory) ? requestedCategory : "";
+  const mode = homeDisplayMode(Boolean(user), Boolean(savedProfile?.configured));
+  const personalized = mode === "personalized";
+  const profile = personalized && savedProfile ? savedProfile : undefined;
   const favoriteIds = new Set(favoriteState.favoriteIds);
+  const returnTo = homeCatalogHref(category, "home-products");
+  const categoryQuery = category ? `?${new URLSearchParams({ category })}` : "";
+  const catalogHref = personalized ? `/ranking/personal${categoryQuery}` : `/products?${new URLSearchParams({ ...(category ? { category } : {}), order: "name-asc" })}`;
 
-  const [overview, banners] = await Promise.all([
-    getIngredientRanking({ ingredientId: ingredient, size: 1 }),
+  const [catalog, personalRanking, risingResult, guides] = await Promise.all([
+    getProductPage({ category, profile, size: 8, sort: personalized ? "score" : "name", direction: personalized ? "desc" : "asc" }),
+    profile ? getRanking(profile, 4, category) : Promise.resolve([]),
+    getRisingProductRanking({ category, size: 4 }).then((data) => ({ data, failed: false })).catch(() => ({ data: null, failed: true })),
     Promise.all(bannerGuides.filter((guide) => options.ingredients.some((item) => item.id === guide.ingredient)).map(async (guide) => {
       const result = await getIngredientRanking({ ingredientId: guide.ingredient, category: guide.category, size: 1 });
       const product = result.content[0]?.product;
@@ -52,96 +42,52 @@ export async function HomeCatalog({ filters }: { filters: IngredientRankingFilte
         href: rankingHref("/ranking", { ingredient: guide.ingredient, category: guide.category }), product } satisfies HomeBannerSlide;
     })),
   ]);
-  const categories = orderHomeCategories(overview.categories.filter((item) => item.productCount > 0));
-  const shelves = await Promise.all(categories.map(async (category) => ({
-    category: category.name,
-    result: await getIngredientRanking({ ingredientId: ingredient, category: category.name, size: 4 }),
-  })));
-  const slides = banners.filter((slide): slide is HomeBannerSlide => slide !== null);
+  const slides = buildHomeBannerSlides(guides.filter((slide): slide is HomeBannerSlide => slide !== null), bannerProducts.content);
 
-  return (
-    <div className={`container-page ${styles.home}`}>
-      <div className={styles.searchRow}>
-        <h1>나에게 맞는 성분, <span>화력</span></h1>
-        <form action="/products" role="search" aria-label="화장품 찾기" className={styles.search}>
-          <Search size={19} aria-hidden="true" />
-          <label htmlFor="home-product-search" className="sr-only">제품명 또는 브랜드</label>
-          <input id="home-product-search" name="query" placeholder="궁금한 제품명·브랜드를 검색하세요" />
-          <button type="submit">검색</button>
-        </form>
-      </div>
-
-      <div className={slides.length ? styles.bannerGrid : styles.bannerGridEmpty}>
-        <HomeBanner slides={slides} />
-        <Link href="/skin-check" className={styles.guideBanner}>
-          <span className={styles.guideEyebrow}><Sparkles size={17} /> 나의 성분 찾기</span>
-          <h2>어떤 성분부터<br />골라야 할지 고민이라면</h2>
-          <span className={styles.guideCta}>1분 피부 체크 <ArrowRight size={17} /></span>
-        </Link>
-      </div>
-
-      <nav className={styles.categoryNav} aria-label="홈 제품 카테고리 바로가기">
-        <Link href={rankingHref("/ranking", { ingredient })}><span className={styles.categoryIcon}><Grid2X2 size={24} strokeWidth={1.7} /></span><span>전체보기</span></Link>
-        {categories.map(({ name }) => {
-          const Icon = categoryIcons[name] ?? FlaskConical;
-          return <Link key={name} href={`#${homeCategoryId(name)}`}><span className={styles.categoryIcon}><Icon size={24} strokeWidth={1.7} /></span><span>{name}</span></Link>;
-        })}
-      </nav>
-
-      <section className={styles.ingredientFilter} aria-label="성분별 카테고리 선택">
-        <div className={styles.filterHeading}><h2>어떤 성분을 찾으세요?</h2><Link href="/ingredients">성분 사전 <ChevronRight size={15} /></Link></div>
-        <IngredientPicker ingredients={options.ingredients} filters={homeFilters} basePath="/" preferredIds={preferredIds} />
-        {unknownIngredient && <p role="status" className={styles.filterNote}>해당 성분을 찾지 못해 전체 성분의 제품을 보여드려요.</p>}
-        {selected && <p role="status" className={styles.filterNote}><strong>{selected.name}</strong> 포함 제품 {overview.totalElements}개 · 아래 모든 카테고리에 적용 중</p>}
-      </section>
-
-      <div className={styles.shelves}>
-        {shelves.map(({ category, result }) => {
-          const href = rankingHref("/ranking", { ingredient, category });
-          const title = selected ? `${selected.name} ${category}` : category;
-          return <section key={category} id={homeCategoryId(category)} aria-label={`${title} 제품`} className={styles.shelf}>
-            <div className={styles.shelfHeading}>
-              <div>{selected && <p>성분으로 찾는 제품 랭킹</p>}<h2>{title}<span>{result.totalElements}</span></h2></div>
-              <Link href={href} aria-label={`${title} 전체보기`}>전체보기 <ChevronRight size={17} /></Link>
-            </div>
-            <div className={styles.products}>
-              {result.content.map((item) => <HomeProductCard key={item.product.id} item={item} ingredientName={selected?.name ?? null}
-                favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={returnTo} />)}
-            </div>
-            <Link href={href} className={styles.seeAll}>{title} 전체보기 <ChevronRight size={16} /></Link>
-          </section>;
-        })}
-        {shelves.length === 0 && <section className={styles.empty}>
-          <FlaskConical size={30} /><h2>{selected ? `${selected.name} 제품을 준비하고 있어요` : "등록된 제품을 준비하고 있어요"}</h2>
-          <p>성분이 연결된 공개 제품이 등록되면 카테고리별로 보여드릴게요.</p><Link href="/" className="line-btn">전체 성분으로 둘러보기</Link>
-        </section>}
-      </div>
-
-      <section className={styles.bottomGuide} aria-label="화력 추천과 집계 원칙">
-        <Link href="/promotions" className={styles.promotionGuide}><Megaphone size={24} /><div><h2>새로운 브랜드를 만나는 화력 추천 <span>광고</span></h2><p>관리자 추천 제품은 별도의 광고 탭에서 확인하세요.</p></div><ChevronRight size={20} /></Link>
-        <p className={styles.scoreNote}>성분 랭킹은 성분 비교 지표이며 실제 함량이나 개인별 효과를 뜻하지 않아요. 사용자 리뷰점수와 광고 추천점수는 별도로 집계합니다. <Link href="/principles">집계 기준 보기</Link></p>
-      </section>
+  return <div className={`container-page ${styles.home}`}>
+    <div className={styles.searchRow}>
+      <div className={styles.intro}><p className={styles.eyebrow}>나만의 성분, 나만의 랭킹</p><h1>화장품의 기준을, <span>내 피부로.</span></h1></div>
+      <form action="/products" role="search" aria-label="화장품 찾기" className={styles.search}>
+        <Search size={19} aria-hidden="true" /><label htmlFor="home-product-search" className="sr-only">제품명 또는 브랜드</label>
+        <input id="home-product-search" name="query" placeholder="제품명·브랜드 검색" /><button type="submit">검색</button>
+      </form>
     </div>
-  );
-}
 
-function HomeProductCard({ item, ingredientName, favorited, isAuthenticated, returnTo }: {
-  item: IngredientRankingItem; ingredientName: string | null; favorited: boolean; isAuthenticated: boolean; returnTo: string;
-}) {
-  const { product } = item;
-  return <article className={styles.product}>
-    <Link href={`/products/${product.id}`} className={styles.productLink}>
-      <div className={styles.productImage}>
-        <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="catalog" />
-        {ingredientName && item.rank !== null && <span className={styles.rank} aria-label={`${item.rank}위`}>{item.rank}</span>}
-      </div>
-      <div className={styles.productText}>
-        <p className={styles.brand}>{product.brand}</p><h3>{product.name}</h3>
-        <p className={styles.price}>{product.price}</p>
-        {ingredientName && item.firepowerScore !== null && <p className={styles.firepower}><strong>{item.firepowerScore}</strong> 성분 화력 / 100</p>}
-        <p className={styles.review}>{item.reviewScore === null ? "첫 리뷰를 기다려요" : <>리뷰 <strong>{item.reviewScore.toFixed(1)}</strong> / 100 <span>({item.reviewCount})</span></>}</p>
-      </div>
-    </Link>
-    <div className={styles.favorite}><FavoriteButton productId={product.id} initialFavorited={favorited} isAuthenticated={isAuthenticated} returnTo={returnTo} small /></div>
-  </article>;
+    <HomeBanner slides={slides} />
+    <HomePersonalization user={user} profile={savedProfile} />
+
+    <nav className={styles.sectionNav} aria-label="홈 상품 주제">
+      <Link href="#home-products">{personalized ? "나의 맞춤 상품" : "전체 상품"}<ChevronRight size={14} /></Link>
+      <Link href="#personal-ranking"><Sparkles size={15} />내 피부 랭킹</Link>
+      <Link href="#rising-ranking"><TrendingUp size={15} />급상승 랭킹</Link>
+    </nav>
+
+    <section id="home-products" className={styles.shelf} aria-labelledby="home-products-title">
+      <div className={styles.shelfHeading}><div><p>{personalized ? "내 피부 설정을 반영한 상품 진열" : "궁금한 제품부터 가볍게 둘러보세요"}</p><h2 id="home-products-title">{personalized ? `${user?.nickname}님의 맞춤 상품` : "전체 상품"}<span>{catalog.totalElements}</span></h2></div><Link href={catalogHref}>전체보기 <ChevronRight size={17} /></Link></div>
+      <nav className={styles.categoryTabs} aria-label="메인 상품 카테고리">
+        {[{ name: "", productCount: 0 }, ...categories].map(({ name }) => <Link key={name} href={homeCatalogHref(name, "home-products")} scroll={false} aria-current={name === category ? "page" : undefined}>{name || "전체"}</Link>)}
+      </nav>
+      {requestedCategory && !category && <p className={styles.filterNote} role="status">해당 카테고리를 찾지 못해 전체 상품을 보여드려요.</p>}
+      <div className={styles.catalogMeta}><p>{personalized ? "같은 제품도, 피부 설정에 따라 순위가 달라져요." : "피부 설정을 저장하면 나에게 맞는 순서로 바뀌어요."}</p><span><SlidersHorizontal size={14} />{personalized ? "맞춤 화력 높은 순" : "제품명순"}</span></div>
+      {category && <p className={styles.filterNote}>‘{category}’ 카테고리가 아래 두 랭킹에도 적용돼요.</p>}
+      {catalog.content.length > 0 ? <div className={styles.catalogProducts}>{catalog.content.map((product, index) => <HomeProductCard key={product.id} product={product} rank={personalized ? index + 1 : undefined} scoreLabel={personalized ? "맞춤 화력" : undefined} favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={returnTo} />)}</div> : <div className={styles.empty}><FlaskConical size={25} /><h3>이 카테고리의 제품을 준비하고 있어요</h3><p>공개된 제품이 등록되면 여기에 보여드릴게요.</p></div>}
+      <Link href={catalogHref} className={styles.seeAll}>{category || "전체"} 상품 더 보기 <ChevronRight size={16} /></Link>
+    </section>
+
+    <section id="personal-ranking" className={styles.shelf} aria-labelledby="personal-ranking-title">
+      <div className={styles.shelfHeading}><div><p className={styles.sectionEyebrow}><Sparkles size={14} /> 오직 내 피부를 기준으로</p><h2 id="personal-ranking-title">내 피부에 맞는 제품 랭킹</h2></div><Link href={`/ranking/personal${categoryQuery}`}>전체보기 <ChevronRight size={17} /></Link></div>
+      {personalized ? <><p className={styles.catalogNote}>{category || "전체 카테고리"} · {savedProfile?.skinType} 피부 기준 최대 4개. 점수와 함께 ‘추천 이유’를 확인해 보세요.</p><div className={styles.products}>{personalRanking.map((product, index) => <HomeProductCard key={product.id} product={product} rank={index + 1} scoreLabel="맞춤 화력" favorited={favoriteIds.has(product.id)} isAuthenticated returnTo={homeCatalogHref(category, "personal-ranking")} />)}</div>{personalRanking.length === 0 && <p className={styles.catalogNote}>이 카테고리에 공개된 제품이 아직 없어요.</p>}</> : <div className={styles.profileGate}><div className={styles.gateHeading}><div><h3>내 피부를 알려주면, 순위의 기준이 바뀌어요</h3><p>{user ? "아직 저장된 피부 설정이 없어요. 지금 피부 상태부터 알려주세요." : "가입 없이 먼저 체크하고, 로그인해 저장하면 메인에도 반영돼요."}</p></div><Link href="/skin-check" className="ink-btn">나의 성분 찾기<ArrowRight size={16} /></Link></div><ol className={styles.personalSteps}><li><span>01</span><div><strong>내 피부 체크</strong><p>수분·유분·민감도 확인</p></div></li><li><span>02</span><div><strong>맞춤 순위 확인</strong><p>피부 설정으로 달라지는 랭킹</p></div></li><li><span>03</span><div><strong>추천 이유 비교</strong><p>성분 근거를 읽고 선택</p></div></li></ol></div>}
+    </section>
+
+    <section id="rising-ranking" className={styles.shelf} aria-labelledby="rising-ranking-title">
+      <div className={styles.shelfHeading}><div><p className={styles.sectionEyebrow}><MessageCircle size={14} /> 실제 사용자의 리뷰로</p><h2 id="rising-ranking-title">급상승 랭킹</h2></div><Link href={`/ranking/rising${categoryQuery}`}>전체보기 <ChevronRight size={17} /></Link></div>
+      <p className={styles.catalogNote}>이전 7일보다 최근 7일의 리뷰가 늘어난 순서예요. 광고비는 반영하지 않아요.</p>
+      {risingResult.failed ? <div className={styles.empty}><p role="status">급상승 랭킹을 잠시 불러오지 못했어요.</p><Link href={`/ranking/rising${categoryQuery}`} className="line-btn">다시 확인하기</Link></div> : risingResult.data?.content.length ? <div className={styles.products}>{risingResult.data.content.map((item) => <HomeProductCard key={item.product.id} product={item.product} rank={item.rank} growth={item} review={{ score: item.recentReviewScore, count: item.recentReviewCount }} favorited={favoriteIds.has(item.product.id)} isAuthenticated={Boolean(user)} returnTo={homeCatalogHref(category, "rising-ranking")} />)}</div> : <div className={styles.trendEmpty}><TrendingUp size={29} /><div><h3>새로운 리뷰가 모이면 순위가 생겨요</h3><p>{category ? `${category} 중 ` : ""}이전 7일보다 리뷰가 늘어난 제품이 아직 없어요. 첫 리뷰로 사용 경험을 나눠주세요.</p></div><Link href={catalogHref}>제품 둘러보기 <ArrowRight size={15} /></Link></div>}
+    </section>
+
+    <section className={styles.bottomGuide} aria-label="화력 추천과 집계 원칙">
+      <Link href="/promotions" className={styles.promotionGuide}><Megaphone size={24} /><div><h2>새로운 브랜드를 만나는 화력 추천 <span>광고</span></h2><p>관리자 추천 제품은 별도의 광고 탭에서 확인하세요.</p></div><ChevronRight size={20} /></Link>
+      <details className={styles.scoreDetails}><summary>맞춤 화력·사용자 리뷰·광고, 어떻게 다를까요?</summary><p className={styles.scoreNote}>맞춤 화력은 피부 조사와 성분 자료를 이용한 비교 지표이며 개인별 효과를 보장하지 않아요. 제품 리뷰점수, 급상승 리뷰 증가량, 광고 추천점수는 서로 별도로 집계해요. <Link href="/principles">집계 기준 보기</Link></p></details>
+    </section>
+  </div>;
 }

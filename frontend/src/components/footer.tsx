@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 
 const discoverLinks = [
+  { href: "/ranking/personal", label: "내 피부 맞춤 랭킹" },
   { href: "/ranking", label: "성분별 제품 랭킹" },
   { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품 탐색" },
@@ -25,7 +26,7 @@ const footerLinkClass =
 
 export function Footer() {
   return (
-    <footer className="border-t border-[#efd9df] bg-[#fff7f9] text-[#3c3236]">
+    <footer className="border-t border-[#e8e5e9] bg-white text-[#292730]">
       <div className="container-page relative pb-[calc(8rem+env(safe-area-inset-bottom))] pt-14 sm:pt-16 md:pb-10 md:pt-20">
         <div className="grid gap-11 sm:grid-cols-2 lg:grid-cols-[1.35fr_.72fr_.72fr_1fr] lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-1">
@@ -37,10 +38,10 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-6 max-w-sm text-[15px] font-medium leading-7 text-[#51454a]">
-              나에게 맞는 성분,<br />종류별로 찾는 화장품 랭킹.
+              화장품의 기준을, 내 피부로.<br />나만의 성분, 나만의 랭킹.
             </p>
-            <p className="mt-3 max-w-sm text-xs leading-6 text-[#8b7b80]">
-              성분과 제품 종류를 고르고, 성분 화력과 리뷰를<br className="hidden sm:block" /> 함께 살펴보며 나에게 맞는 화장품을 찾아보세요.
+            <p className="mt-3 max-w-sm text-sm leading-6 text-[#69646f]">
+              내 피부 상태를 설정하고, 맞춤 화력과 추천 이유를 살펴보세요. 실제 사용자 리뷰와 함께 비교할 수 있어요.
             </p>
           </div>
 

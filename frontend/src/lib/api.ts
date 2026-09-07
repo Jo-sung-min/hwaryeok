@@ -1,10 +1,17 @@
 import "server-only";
+import type { RisingProductRankingPage } from "@/lib/types";
 import type { ReviewCommunityRating, ReviewerProfile, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
 import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
+
+export function getRisingProductRanking(query: { category?: string; page?: number; size?: number } = {}): Promise<RisingProductRankingPage> {
+  const search = new URLSearchParams({ page: String(query.page ?? 0), size: String(query.size ?? 12) });
+  if (query.category) search.set("category", query.category);
+  return requestJson<RisingProductRankingPage>(`/rankings/rising?${search}`);
+}
 
 export function getIngredientRankingOptions(): Promise<IngredientRankingOptions> {
   return requestJson<IngredientRankingOptions>("/ingredient-rankings/options");

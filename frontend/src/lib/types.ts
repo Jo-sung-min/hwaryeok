@@ -53,6 +53,29 @@ export type ProductPage = {
   hasNext: boolean;
 };
 
+export type RisingProductRankingItem = {
+  product: Product;
+  rank: number;
+  reviewCount: number;
+  recentReviewCount: number;
+  previousReviewCount: number;
+  reviewGrowth: number;
+  recentReviewScore: number;
+};
+
+export type RisingProductRankingPage = {
+  category: string | null;
+  content: RisingProductRankingItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  categories: IngredientRankingCategory[];
+  window: { asOf: string; recentStart: string; previousStart: string; days: number };
+  scoreBasis: string;
+};
+
 export type PromotionStatus = "DRAFT" | "ACTIVE" | "PAUSED";
 
 export type ProductPromotion = {

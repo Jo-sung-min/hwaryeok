@@ -2,59 +2,46 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowRight, BarChart3, Heart, Home, Megaphone, Search, UserRound, UsersRound, X } from "lucide-react";
+import { ArrowRight, BarChart3, Heart, Home, Search, SlidersHorizontal, UserRound, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import styles from "./navigation.module.css";
 
 const nav = [
+  { href: "/ranking/personal", label: "내 피부 랭킹" },
   { href: "/ranking", label: "성분 랭킹" },
-  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품" },
+  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/ingredients", label: "성분 사전" },
-  { href: "/skin-check", label: "피부 체크" },
   { href: "/promotions", label: "화력 추천", sponsored: true },
 ];
 
-const mobileHeaderNav = [
-  { href: "/ranking", label: "성분 랭킹" },
-  { href: "/reviewers", label: "리뷰어 랭킹" },
-  { href: "/products", label: "화장품" },
-  { href: "/ingredients", label: "성분 사전" },
-  { href: "/skin-check", label: "피부 체크" },
-  { href: "/promotions", label: "추천·광고" },
-];
+function isHeaderActive(pathname: string, href: string) {
+  if (href === "/ranking") return pathname.startsWith(href) && !pathname.startsWith("/ranking/personal");
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function Header({ authSlot }: { authSlot?: ReactNode }) {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-50 bg-transparent p-2 md:px-3 md:py-2.5">
-      <div className="site-glass mobile-glass-header mx-auto flex h-14 w-full items-center gap-2 rounded-[22px] px-2 md:hidden">
-        <Link href="/" className="seal h-10 w-10 shrink-0 font-myeongjo text-lg font-bold" aria-label="화력 홈">화</Link>
-        <nav className="scrollbar-hide flex min-w-0 flex-1 gap-0.5 overflow-x-auto" aria-label="모바일 상단 메뉴">
-          {mobileHeaderNav.map((item) => {
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className="glass-nav-item grid min-h-11 shrink-0 place-items-center rounded-full px-3 text-[11px] font-bold transition">{item.label}</Link>;
-          })}
-        </nav>
-      </div>
-
-      <div className="site-glass container-page hidden min-h-[64px] flex-wrap items-center justify-between gap-y-1 rounded-[24px] px-5 py-2 md:flex lg:flex-nowrap">
-        <Link href="/" className="flex min-h-11 items-center gap-2.5 md:gap-3" aria-label="화력 홈">
-          <span className="seal h-9 w-9 font-myeongjo text-xl font-bold">화</span>
-          <div className="leading-none">
-            <strong className="font-myeongjo text-[23px] tracking-[-.08em]">화력</strong>
-            <span className="ml-2 text-[8px] font-bold tracking-[.24em] text-[#b96a80]">HWA:RYEOK</span>
-          </div>
+    <header className={styles.header}>
+      <div className={`container-page ${styles.headerInner}`}>
+        <Link href="/" className={styles.brand} aria-label="화력 홈">
+          <span className={styles.brandMark} aria-hidden="true">화</span>
+          <span className={styles.brandName}>화력</span>
+          <span className={styles.brandDescription}>나에게 맞는 성분의 발견</span>
         </Link>
-        <nav className="order-3 hidden w-full flex-wrap items-center justify-center gap-1 md:flex lg:order-none lg:w-auto" aria-label="주요 메뉴">
+        <nav className={`scrollbar-hide ${styles.primaryNav}`} aria-label="주요 메뉴">
           {nav.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={pathname.startsWith(item.href) ? "page" : undefined} className="glass-nav-item relative rounded-full px-3.5 py-2 text-sm transition">
-              {item.label}{item.sponsored && <span className="ml-1 align-top text-[8px] font-bold text-[#bf4d6c]">AD</span>}
+            <Link key={item.href} href={item.href} aria-current={isHeaderActive(pathname, item.href) ? "page" : undefined} className={styles.navLink}>
+              {item.label}{item.sponsored && <span className={styles.adLabel}>AD</span>}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
-          <Link href="/products" aria-label="검색" className="glass-nav-item grid h-10 w-10 place-items-center rounded-full transition"><Search size={18} /></Link>
-          <Link href="/my" aria-label="찜" className="glass-nav-item grid h-10 w-10 place-items-center rounded-full transition"><Heart size={18} /></Link>
+        <div className={styles.headerActions}>
+          <Link href="/skin-check" className={styles.skinLink} aria-current={pathname.startsWith("/skin-check") ? "page" : undefined}>
+            <SlidersHorizontal size={16} aria-hidden="true" /> 내 피부 맞춤
+          </Link>
+          <Link href="/my" aria-label="찜한 제품" className={styles.favoriteLink}><Heart size={19} /></Link>
           {authSlot}
         </div>
       </div>
@@ -64,10 +51,9 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
 
 const mobileNav = [
   { href: "/", label: "홈", icon: Home },
-  { href: "/ranking", label: "성분 랭킹", icon: BarChart3 },
-  { href: "/reviewers", label: "리뷰어", icon: UsersRound },
+  { href: "/ranking", label: "랭킹", icon: BarChart3 },
+  { href: "/skin-check", label: "내 피부", icon: SlidersHorizontal },
   { href: "/products", label: "탐색", icon: Search },
-  { href: "/promotions", label: "추천·광고", icon: Megaphone },
   { href: "/my", label: "MY", icon: UserRound },
 ];
 
@@ -101,34 +87,27 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="site-glass mobile-bottom-nav fixed inset-x-3 z-50 h-[70px] overflow-hidden rounded-[28px] px-2 md:hidden" aria-label="모바일 메뉴">
+    <nav className={styles.bottomNav} aria-label="모바일 메뉴">
       {searchOpen ? (
-        <form id="mobile-product-search" role="search" aria-label="화장품 검색" onSubmit={submitSearch} onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }} className="flex h-full w-full items-center gap-1.5 px-1">
-          <button type="submit" aria-label="입력한 화장품 검색" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#fff0f4] text-[#b44768]">
-            <Search size={20} strokeWidth={2.4} />
-          </button>
-          <div className="mobile-bottom-search-field flex h-12 min-w-0 flex-1 items-center overflow-hidden rounded-full border border-[#eccbd5] bg-white">
+        <form id="mobile-product-search" role="search" aria-label="화장품 검색" onSubmit={submitSearch} onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }} className={styles.searchForm}>
+          <Search size={20} aria-hidden="true" />
+          <div className={styles.searchField}>
             <label htmlFor="mobile-product-query" className="sr-only">검색할 제품명 또는 브랜드</label>
-            <input ref={searchInputRef} id="mobile-product-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} enterKeyHint="search" autoComplete="off" placeholder="제품명·브랜드" className="h-11 min-w-0 flex-1 bg-transparent px-3 text-base font-medium text-[#3d3337] outline-none placeholder:text-[#aa9299]" />
-            <button type="submit" aria-label="검색하기" className="mr-1 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#cf5b7d] text-white">
-              <ArrowRight size={17} />
-            </button>
+            <input ref={searchInputRef} id="mobile-product-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} enterKeyHint="search" autoComplete="off" placeholder="제품명·브랜드 검색" />
+            <button type="submit" aria-label="검색하기" className={styles.searchSubmit}><ArrowRight size={18} /></button>
           </div>
-          <button type="button" onClick={closeSearch} aria-label="검색 닫기" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#8e727a] transition active:bg-[#fff0f4]">
-            <X size={19} />
-          </button>
+          <button type="button" onClick={closeSearch} aria-label="검색 닫기" className={styles.searchClose}><X size={20} /></button>
         </form>
       ) : (
-        <div className="grid h-full grid-cols-6">
+        <div className={styles.bottomItems}>
           {mobileNav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-            const className = `group flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] transition ${active ? "font-bold text-[#aa4261]" : "font-semibold text-[#817278]"}`;
-            const content = <><span className={`grid h-9 min-w-11 place-items-center rounded-full transition ${active ? "bg-[#fff0f4]" : "group-active:bg-[#fff7f9]"}`}><Icon size={19} strokeWidth={active ? 2.5 : 1.9} /></span>{label}</>;
+            const className = `${styles.bottomItem} ${href === "/skin-check" ? styles.personalItem : ""}`;
+            const content = <><span className={styles.bottomIcon}><Icon size={21} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /></span>{label}</>;
 
             if (href === "/products") {
               return <button ref={searchToggleRef} key={href} type="button" aria-current={active ? "page" : undefined} aria-expanded="false" aria-controls="mobile-product-search" onClick={() => setSearchOpen(true)} className={className}>{content}</button>;
             }
-
             return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={className}>{content}</Link>;
           })}
         </div>
