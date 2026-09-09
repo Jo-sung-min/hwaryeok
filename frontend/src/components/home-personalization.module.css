@@ -32,7 +32,7 @@
 .explanation p { margin-top: 5px; color: #66606a; font-size: 13px; line-height: 1.8; word-break: keep-all; }
 .primary:focus-visible, .secondary:focus-visible, .explanation summary:focus-visible { outline: 2px solid #8e3557; outline-offset: 4px; }
 
-@media (max-width: 767px) {
+@media (min-width: 0) {
   .panel { align-items: stretch; flex-direction: column; gap: 13px; margin-top: 18px; padding: 19px 20px 14px; border-radius: 12px; }
   .panel h2 { font-size: 21px; }
   .mobileBreak { display: block; }

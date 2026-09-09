@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Boxes, CircleOff, DatabaseZap, FileWarning, Megaphone, PackagePlus, Send, ShieldCheck, Stethoscope, UsersRound } from "lucide-react";
+import { ArrowRight, Boxes, CircleOff, DatabaseZap, FileWarning, Megaphone, PackagePlus, Send, ShieldCheck, Stethoscope, Trophy, UsersRound } from "lucide-react";
 import { getAdminExpertApplications, getAdminProducts, getAdminPromotions } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 
@@ -44,6 +44,12 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <Link href="/admin/weekly-ranking" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f7e4e9] text-[#a44f65]"><Trophy size={22} /></span>
+            <p className="eyebrow mb-2 mt-6">WEEKLY RANKING</p><h2 className="font-myeongjo text-2xl font-semibold">이주의 화력 랭킹</h2>
+            <p className="mt-3 text-sm leading-7 text-[#7d6b72]">평가 개수와 평가점수로 자동 선정된 메인 배너의 상품과 노출 순서를 관리합니다.</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">주간 랭킹 관리 열기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
+          </Link>
           <Link href="/admin/usage-videos" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 sm:p-8">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f8e1e7] text-[#a44f65]"><ShieldCheck size={22} /></span>
             <p className="eyebrow mb-2 mt-6">CREATOR VIDEOS</p><h2 className="font-myeongjo text-2xl font-semibold">사용법 영상 검토</h2>

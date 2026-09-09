@@ -45,12 +45,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ko" data-scroll-behavior="smooth">
       <body>
-        <UiAlertProvider>
-          <Header authSlot={<Suspense fallback={<span className="line-btn !min-h-10 !w-24 opacity-50" aria-hidden="true" />}><HeaderAuth /></Suspense>} />
-          <main>{children}</main>
-          <Footer />
-          <BottomNav />
-        </UiAlertProvider>
+        <div className="app-shell">
+          <UiAlertProvider>
+            <Header authSlot={<Suspense fallback={<span className="line-btn !min-h-10 !w-24 opacity-50" aria-hidden="true" />}><HeaderAuth /></Suspense>} />
+            <main>{children}</main>
+            <Footer />
+            <BottomNav />
+          </UiAlertProvider>
+        </div>
       </body>
     </html>
   );

@@ -90,7 +90,7 @@
   .catalogProducts, .products { gap: 26px 18px; }
   .productImage { padding: 16px; }
 }
-@media (max-width: 767px) {
+@media (min-width: 0) {
   .home { padding-top: 18px; padding-bottom: 36px; }
   .searchRow { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 18px; }
   .eyebrow { font-size: 12px; margin-bottom: 5px; }

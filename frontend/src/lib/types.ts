@@ -76,6 +76,23 @@ export type RisingProductRankingPage = {
   scoreBasis: string;
 };
 
+export type WeeklyRankingMode = "AUTO" | "MANUAL";
+
+export type WeeklyRankingItem = {
+  product: Product;
+  rank: number;
+  reviewCount: number;
+  reviewScore: number | null;
+};
+
+export type WeeklyRanking = {
+  weekStart: string;
+  nextRefreshOn: string;
+  mode: WeeklyRankingMode;
+  content: WeeklyRankingItem[];
+  scoreBasis: string;
+};
+
 export type PromotionStatus = "DRAFT" | "ACTIVE" | "PAUSED";
 
 export type ProductPromotion = {

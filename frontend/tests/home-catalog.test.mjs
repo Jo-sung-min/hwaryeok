@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBannerSlides, homeCatalogHref, homeDisplayMode } from '../src/lib/home-catalog.ts';
+import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode } from '../src/lib/home-catalog.ts';
 
 const product = (id, extra = {}) => ({ id, name: `제품${id}`, brand: '테스트', category: '앰플', publicationStatus: 'PUBLISHED', imageUrl: '/test.png', ...extra });
 test('guest and unconfigured users never get personalized mode', () => {
@@ -14,17 +14,24 @@ test('category href retains home and safely encodes user input', () => {
   assert.equal(homeCatalogHref('앰플', 'home-products'), '/?category=%EC%95%B0%ED%94%8C#home-products');
   assert.equal(homeCatalogHref('a&b'), '/?category=a%26b');
 });
-test('banner cap, image/publication checks and product deduplication', () => {
-  const first = { id: 'guide', label: '성분', title: '가이드', description: '', href: '/ranking', product: product('same') };
-  const products = [product('same'), product('hidden', { publicationStatus: 'HIDDEN' }), product('noimage', { imageUrl: null }), ...Array.from({length: 16}, (_, i) => product(String(i)))];
-  const slides = buildHomeBannerSlides([first, first], products);
+test('weekly banner uses ranked products and their review metrics', () => {
+  const content = Array.from({length: 12}, (_, index) => ({
+    product: product(String(index)), rank: index + 1, reviewCount: 20 - index, reviewScore: 90 - index,
+  }));
+  content[1].product.publicationStatus = 'HIDDEN';
+  content[2].product.imageUrl = null;
+  const slides = buildWeeklyRankingSlides({
+    weekStart: '2026-09-07', nextRefreshOn: '2026-09-14', mode: 'AUTO', scoreBasis: '평가 개수, 평가점수 순', content,
+  }, []);
   assert.equal(slides.length, 10);
-  assert.equal(slides[0].id, 'guide');
-  assert.equal(new Set(slides.map(s => s.product.id)).size, 10);
+  assert.equal(slides[0].id, '2026-09-07-0');
+  assert.match(slides[0].label, /이주의 화력 랭킹 · 평가 20개/);
+  assert.match(slides[0].description, /평가점수 90\.0 \/ 100/);
   assert.ok(slides.every(s => s.product.imageUrl && s.product.publicationStatus === 'PUBLISHED'));
 });
-test('banner uses only available images without padding and prioritizes category variety', () => {
-  assert.deepEqual(buildHomeBannerSlides([], []), []);
-  const slides = buildHomeBannerSlides([], [product('a'), product('b'), product('c', { category: '크림' })]);
-  assert.deepEqual(slides.map(s => s.product.id), ['a', 'c', 'b']);
+test('weekly banner falls back safely while ranking data is unavailable', () => {
+  assert.deepEqual(buildWeeklyRankingSlides(null, []), []);
+  const slides = buildWeeklyRankingSlides(null, [product('a'), product('hidden', { publicationStatus: 'HIDDEN' }), product('noimage', { imageUrl: null }), product('b')]);
+  assert.deepEqual(slides.map(s => s.product.id), ['a', 'b']);
+  assert.ok(slides.every(s => s.label.includes('집계 준비 중')));
 });

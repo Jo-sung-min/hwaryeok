@@ -3,7 +3,7 @@ import type { RisingProductRankingPage } from "@/lib/types";
 import type { ReviewCommunityRating, ReviewerProfile, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
-import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail } from "@/lib/types";
+import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -11,6 +11,31 @@ export function getRisingProductRanking(query: { category?: string; page?: numbe
   const search = new URLSearchParams({ page: String(query.page ?? 0), size: String(query.size ?? 12) });
   if (query.category) search.set("category", query.category);
   return requestJson<RisingProductRankingPage>(`/rankings/rising?${search}`);
+}
+
+export function getWeeklyRanking(): Promise<WeeklyRanking> {
+  return requestJson<WeeklyRanking>("/rankings/weekly");
+}
+
+export function getAdminWeeklyRanking(accessToken: string): Promise<WeeklyRanking> {
+  return requestJson<WeeklyRanking>("/admin/weekly-ranking", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function updateAdminWeeklyRanking(accessToken: string, productIds: string[]): Promise<WeeklyRanking> {
+  return requestJson<WeeklyRanking>("/admin/weekly-ranking", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ productIds }),
+  });
+}
+
+export function resetAdminWeeklyRanking(accessToken: string): Promise<void> {
+  return requestEmpty("/admin/weekly-ranking", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 }
 
 export function getIngredientRankingOptions(): Promise<IngredientRankingOptions> {

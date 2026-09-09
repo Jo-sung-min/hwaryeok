@@ -1,24 +1,17 @@
 import Link from "next/link";
 import { ArrowRight, ChevronRight, FlaskConical, Megaphone, Search, Sparkles, TrendingUp, SlidersHorizontal, MessageCircle } from "lucide-react";
-import { getIngredientRanking, getIngredientRankingOptions, getProductPage, getRanking, getRisingProductRanking } from "@/lib/api";
+import { getIngredientRankingOptions, getProductPage, getRanking, getRisingProductRanking, getWeeklyRanking } from "@/lib/api";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
-import { rankingHref } from "@/lib/ingredient-ranking";
-import { buildHomeBannerSlides, homeCatalogHref, homeDisplayMode, orderHomeCategories } from "@/lib/home-catalog";
-import { HomeBanner, type HomeBannerSlide } from "@/components/home-banner";
+import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, orderHomeCategories } from "@/lib/home-catalog";
+import { HomeBanner } from "@/components/home-banner";
 import { HomeProductCard } from "@/components/home-product-card";
 import { HomePersonalization } from "@/components/home-personalization";
 import styles from "./home-catalog.module.css";
 
-const bannerGuides = [
-  { ingredient: "hyaluronic-acid", category: "앰플", label: "히알루론산 × 앰플", title: "수분 성분으로 찾는\n나의 앰플", description: "히알루론산이 포함된 앰플 모아보기" },
-  { ingredient: "panthenol", category: "크림", label: "판테놀 × 크림", title: "크림을 고르는 기준,\n이번에는 판테놀", description: "성분부터 살펴보는 나의 크림" },
-  { ingredient: "heartleaf", category: "토너", label: "어성초 × 토너", title: "토너 한 병도,\n나의 관심 성분으로", description: "어성초가 포함된 토너 살펴보기" },
-];
-
 export async function HomeCatalog({ category: requestedCategory }: { category: string }) {
-  const [options, user, savedProfile, favoriteState, bannerProducts] = await Promise.all([
+  const [options, user, savedProfile, favoriteState, weeklyRanking] = await Promise.all([
     getIngredientRankingOptions(), getCurrentSession(), getOptionalSkinProfile(), getFavoriteViewState(),
-    getProductPage({ size: 50, sort: "name", direction: "asc" }),
+    getWeeklyRanking().catch(() => null),
   ]);
   const categories = orderHomeCategories(options.categories.filter((item) => item.productCount > 0));
   const category = categories.some((item) => item.name === requestedCategory) ? requestedCategory : "";
@@ -30,19 +23,12 @@ export async function HomeCatalog({ category: requestedCategory }: { category: s
   const categoryQuery = category ? `?${new URLSearchParams({ category })}` : "";
   const catalogHref = personalized ? `/ranking/personal${categoryQuery}` : `/products?${new URLSearchParams({ ...(category ? { category } : {}), order: "name-asc" })}`;
 
-  const [catalog, personalRanking, risingResult, guides] = await Promise.all([
+  const [catalog, personalRanking, risingResult] = await Promise.all([
     getProductPage({ category, profile, size: 8, sort: personalized ? "score" : "name", direction: personalized ? "desc" : "asc" }),
     profile ? getRanking(profile, 4, category) : Promise.resolve([]),
     getRisingProductRanking({ category, size: 4 }).then((data) => ({ data, failed: false })).catch(() => ({ data: null, failed: true })),
-    Promise.all(bannerGuides.filter((guide) => options.ingredients.some((item) => item.id === guide.ingredient)).map(async (guide) => {
-      const result = await getIngredientRanking({ ingredientId: guide.ingredient, category: guide.category, size: 1 });
-      const product = result.content[0]?.product;
-      if (!product?.imageUrl) return null;
-      return { id: guide.ingredient, label: guide.label, title: guide.title, description: guide.description,
-        href: rankingHref("/ranking", { ingredient: guide.ingredient, category: guide.category }), product } satisfies HomeBannerSlide;
-    })),
   ]);
-  const slides = buildHomeBannerSlides(guides.filter((slide): slide is HomeBannerSlide => slide !== null), bannerProducts.content);
+  const slides = buildWeeklyRankingSlides(weeklyRanking, catalog.content);
 
   return <div className={`container-page ${styles.home}`}>
     <div className={styles.searchRow}>

@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-sm: 999rem;
+  --breakpoint-md: 1000rem;
+  --breakpoint-lg: 1001rem;
+  --breakpoint-xl: 1002rem;
+  --breakpoint-2xl: 1003rem;
+}
+
 :root {
   --paper: #ffffff;
   --paper-deep: #fff4f7;
@@ -35,12 +43,23 @@ body {
   max-width: 100%;
   overflow-x: clip;
   color: var(--ink);
-  background: var(--paper);
+  background: #f3f3f3;
   font-family: var(--font-ui);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+.app-shell {
+  position: relative;
+  width: min(100%, 594px);
+  min-height: 100vh;
+  margin-inline: auto;
+  padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  overflow: clip;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px rgba(41, 39, 48, .06), 0 0 32px rgba(41, 39, 48, .08);
 }
 
 body::before {
@@ -95,7 +114,7 @@ button:disabled { cursor: not-allowed; }
   word-break: keep-all;
 }
 
-.container-page { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+.container-page { width: calc(100% - 24px); margin-inline: auto; }
 
 .paper-card {
   background: #ffffff;
@@ -377,8 +396,8 @@ button:disabled { cursor: not-allowed; }
 .delay-2 { animation-delay: .2s; }
 .delay-3 { animation-delay: .3s; }
 
-@media (max-width: 767px) {
-  .container-page { width: min(100% - 24px, 1180px); }
+@media (min-width: 0) {
+  .container-page { width: calc(100% - 24px); }
   body { padding-bottom: 0; }
   input, select, textarea { font-size: 16px; }
   .ink-btn, .line-btn { min-height: 48px; }

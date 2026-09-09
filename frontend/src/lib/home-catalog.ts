@@ -1,5 +1,5 @@
 import type { IngredientRankingCategory } from "@/lib/types";
-import type { Product } from "@/lib/types";
+import type { Product, WeeklyRanking } from "@/lib/types";
 import type { HomeBannerSlide } from "@/components/home-banner";
 
 const categoryOrder = ["앰플", "세럼", "크림", "토너", "에센스", "로션", "선케어", "클렌저", "마스크팩", "젤"];
@@ -29,26 +29,32 @@ export function homeCatalogHref(category = "", anchor = "") {
   return `/${query}${anchor ? `#${anchor}` : ""}`;
 }
 
-export function buildHomeBannerSlides(guides: HomeBannerSlide[], products: Product[]): HomeBannerSlide[] {
-  const slides: HomeBannerSlide[] = [];
-  const usedProducts = new Set<string>();
-  const append = (slide: HomeBannerSlide) => {
-    if (slides.length >= 10 || usedProducts.has(slide.product.id) || !slide.product.imageUrl || slide.product.publicationStatus !== "PUBLISHED") return;
-    usedProducts.add(slide.product.id);
-    slides.push(slide);
-  };
-  guides.forEach(append);
-  const categories = new Set<string>();
-  const valid = products.filter((product) => product.imageUrl && product.publicationStatus === "PUBLISHED");
-  const varied = valid.filter((product) => {
-    if (categories.has(product.category)) return false;
-    categories.add(product.category);
-    return true;
-  });
-  [...varied, ...valid].forEach((product) => append({
-    id: `product-${product.id}`, label: `${product.category} 둘러보기`, title: product.name,
-    description: `${product.brand} · 성분과 사용 리뷰를 함께 살펴보세요`,
-    href: `/products/${encodeURIComponent(product.id)}`, product,
-  }));
-  return slides;
+export function buildWeeklyRankingSlides(ranking: WeeklyRanking | null, fallbackProducts: Product[]): HomeBannerSlide[] {
+  if (ranking?.content.length) {
+    return ranking.content
+      .filter((item) => item.product.imageUrl && item.product.publicationStatus === "PUBLISHED")
+      .slice(0, 10)
+      .map((item) => ({
+        id: `${ranking.weekStart}-${item.product.id}`,
+        label: `이주의 화력 랭킹 · 평가 ${item.reviewCount.toLocaleString("ko-KR")}개`,
+        title: item.product.name,
+        description: item.reviewScore === null
+          ? `${item.product.brand} · 첫 평가를 기다리고 있어요`
+          : `${item.product.brand} · 평가점수 ${item.reviewScore.toFixed(1)} / 100`,
+        href: `/products/${encodeURIComponent(item.product.id)}`,
+        product: item.product,
+      }));
+  }
+
+  return fallbackProducts
+    .filter((product) => product.imageUrl && product.publicationStatus === "PUBLISHED")
+    .slice(0, 10)
+    .map((product) => ({
+      id: `weekly-fallback-${product.id}`,
+      label: "이주의 화력 랭킹 · 집계 준비 중",
+      title: product.name,
+      description: `${product.brand} · 평가 데이터가 준비되면 순위가 반영돼요`,
+      href: `/products/${encodeURIComponent(product.id)}`,
+      product,
+    }));
 }
