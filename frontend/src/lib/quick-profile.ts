@@ -20,9 +20,19 @@ export type QuickSkinProfile = {
 
 export function isQuickSkinProfile(value: unknown): value is QuickSkinProfile {
   if (!value || typeof value !== "object") return false;
-  const profile = value as Partial<QuickSkinProfile>;
-  return typeof profile.skinType === "string"
-    && Array.isArray(profile.concerns)
-    && typeof profile.hydrationLevel === "string"
-    && typeof profile.oilinessLevel === "string";
+  const profile = value as Record<string, unknown>;
+  const enums: Record<string, string[]> = {
+    skinType: ["건성", "지성", "복합성", "수부지", "중성", "민감"],
+    hydrationLevel: ["LOW", "BALANCED", "HIGH"], oilinessLevel: ["LOW", "BALANCED", "HIGH"],
+    sensitivityLevel: ["LOW", "MEDIUM", "HIGH"], poreLevel: ["LOW", "MEDIUM", "HIGH"],
+    breakoutFrequency: ["RARE", "OCCASIONAL", "FREQUENT"], rednessFrequency: ["RARE", "OCCASIONAL", "FREQUENT"],
+    cleansingTightness: ["NONE", "SHORT", "LONG"], texturePreference: ["LIGHT", "BALANCED", "RICH"],
+    routineComplexity: ["MINIMAL", "STANDARD", "LAYERED"], sunscreenUsage: ["RARE", "SOMETIMES", "DAILY"],
+  };
+  if (!Object.entries(enums).every(([key, allowed]) => typeof profile[key] === "string" && allowed.includes(profile[key] as string))) return false;
+  for (const key of ["concerns", "reactionTriggers", "environments", "routineContexts"]) {
+    const items = profile[key];
+    if (!Array.isArray(items) || items.length > (key === "concerns" ? 3 : 10) || !items.every(item => typeof item === "string" && item.length > 0 && item.length <= 80) || new Set(items).size !== items.length) return false;
+  }
+  return (profile.concerns as string[]).length > 0;
 }

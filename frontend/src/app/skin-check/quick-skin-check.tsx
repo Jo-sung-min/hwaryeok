@@ -1,145 +1,181 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Droplets, Leaf, LoaderCircle, ShieldCheck, Sparkles } from "lucide-react";
-import { useState, useTransition } from "react";
+import { ArrowLeft, ArrowRight, Check, ClipboardList, Clock3, Droplets, Flower2, Layers, Leaf, LoaderCircle, Pencil, ShieldCheck, Sparkles, SunMedium, Waves, Wind } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { ProductVisual } from "@/components/product-ui";
-import { concerns as concernOptions } from "@/lib/data";
-import { QUICK_PROFILE_STORAGE_KEY, type QuickSkinProfile } from "@/lib/quick-profile";
+import type { SkinTypeStatistics } from "@/lib/skin-report";
+import { SkinReport } from "./skin-report";
+import { SKIN_CHECK_DRAFT_KEY, answerLabel, canContinue, chooseAnswer, firstMissingAnswer, restoreSkinDraft, safeCheckView, skinQuestions, toQuickProfile, type CheckView, type SkinAnswers } from "@/lib/skin-check";
 import { getQuickRecommendations, type QuickRecommendationResult } from "./actions";
+import styles from "./quick-skin-check.module.css";
 
-const TOTAL_STEPS = 6;
-const skinTypes = [
-  ["건성", "세안 뒤 당김이 오래가요"],
-  ["지성", "오후에 유분과 번들거림이 많아요"],
-  ["복합성", "T존은 번들거리고 볼은 건조해요"],
-  ["수부지", "겉은 번들거리지만 속은 당겨요"],
-  ["중성", "유수분 균형이 비교적 편안해요"],
-  ["민감", "온도나 새 제품에 쉽게 반응해요"],
-] as const;
+const icons = { drop: Droplets, sun: SunMedium, waves: Waves, shield: ShieldCheck, flower: Flower2, sparkles: Sparkles, clock: Clock3, layers: Layers, leaf: Leaf, wind: Wind };
+const total = skinQuestions.length;
 
-const balanceOptions = [
-  { label: "당기고 건조해요", hydration: "LOW", oil: "LOW" },
-  { label: "속은 당기고 겉은 번들거려요", hydration: "LOW", oil: "HIGH" },
-  { label: "대체로 균형이 편안해요", hydration: "BALANCED", oil: "BALANCED" },
-  { label: "유분이 빠르게 올라와요", hydration: "BALANCED", oil: "HIGH" },
-] as const;
-
-const sensitivityOptions = [
-  ["LOW", "새 제품에도 반응이 드물어요"],
-  ["MEDIUM", "컨디션에 따라 가끔 붉어져요"],
-  ["HIGH", "따가움·붉어짐이 쉽게 생겨요"],
-] as const;
-const breakoutOptions = [
-  ["RARE", "트러블이 거의 없어요"],
-  ["OCCASIONAL", "피곤할 때 가끔 생겨요"],
-  ["FREQUENT", "좁쌀이나 염증이 자주 생겨요"],
-] as const;
-const textureOptions = [
-  ["LIGHT", "가볍고 산뜻하게"],
-  ["BALANCED", "촉촉하지만 편안하게"],
-  ["RICH", "쫀쫀하고 든든하게"],
-] as const;
-const routineOptions = [
-  ["MINIMAL", "1~2단계로 간단하게"],
-  ["STANDARD", "3~4단계로 균형 있게"],
-  ["LAYERED", "기능성 제품을 여러 겹"],
-] as const;
-const triggerOptions = ["향료", "에탄올", "에센셜 오일", "각질 케어 성분", "아직 모름"];
-const contextOptions = ["면도 자주", "면도 후 붉어짐", "메이크업 자주", "메이크업 밀림", "이중 세안", "고기능성 성분 사용"];
-
-const initialProfile: QuickSkinProfile = {
-  skinType: "수부지",
-  hydrationLevel: "LOW",
-  oilinessLevel: "HIGH",
-  sensitivityLevel: "MEDIUM",
-  breakoutFrequency: "OCCASIONAL",
-  cleansingTightness: "SHORT",
-  rednessFrequency: "OCCASIONAL",
-  poreLevel: "MEDIUM",
-  texturePreference: "BALANCED",
-  routineComplexity: "STANDARD",
-  sunscreenUsage: "SOMETIMES",
-  concerns: ["속건조·당김"],
-  reactionTriggers: [],
-  environments: [],
-  routineContexts: [],
-};
-
-export function QuickSkinCheck({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const [step, setStep] = useState(1);
-  const [profile, setProfile] = useState(initialProfile);
-  const [result, setResult] = useState<QuickRecommendationResult | null>(null);
-  const [pending, startTransition] = useTransition();
-
-  const setValue = <K extends keyof QuickSkinProfile>(key: K, value: QuickSkinProfile[K]) => {
-    setProfile((previous) => ({ ...previous, [key]: value }));
-  };
-  const toggle = (key: "concerns" | "reactionTriggers" | "routineContexts", value: string, max: number) => {
-    setProfile((previous) => {
-      const selected = previous[key];
-      let next = selected.includes(value) ? selected.filter((item) => item !== value) : selected.length < max ? [...selected, value] : selected;
-      if (key === "reactionTriggers") {
-        if (value === "아직 모름" && !selected.includes(value)) next = [value];
-        else if (value !== "아직 모름") next = next.filter((item) => item !== "아직 모름");
-      }
-      return { ...previous, [key]: next };
-    });
-  };
-  const next = () => {
-    if (step === 4 && profile.concerns.length === 0) return;
-    setStep((current) => Math.min(TOTAL_STEPS, current + 1));
-  };
-  const calculate = () => {
-    const enriched = {
-      ...profile,
-      cleansingTightness: profile.hydrationLevel === "LOW" ? "LONG" as const : "SHORT" as const,
-      rednessFrequency: profile.sensitivityLevel === "HIGH" ? "FREQUENT" as const : "OCCASIONAL" as const,
-      poreLevel: profile.concerns.includes("블랙헤드·모공") ? "HIGH" as const : "MEDIUM" as const,
-    };
-    setProfile(enriched);
-    window.localStorage.setItem(QUICK_PROFILE_STORAGE_KEY, JSON.stringify(enriched));
-    startTransition(async () => setResult(await getQuickRecommendations(enriched)));
-  };
-
-  if (result?.success) {
-    const continueHref = isAuthenticated
-      ? "/profile?from=quick"
-      : `/login?returnTo=${encodeURIComponent("/profile?from=quick")}`;
-    return <main className="min-h-[calc(100vh-72px)] bg-white py-8 md:py-14">
-      <div className="container-page max-w-5xl">
-        <button type="button" onClick={() => { setResult(null); setStep(1); }} className="mb-7 inline-flex min-h-11 items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 다시 체크하기</button>
-        <div className="text-center"><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1f4] px-4 py-2 text-xs font-bold text-[#9b4b60]"><Sparkles size={14} /> 내 피부 기준 계산 완료</span><h1 className="mt-5 font-myeongjo text-3xl font-semibold sm:text-4xl">지금 살펴볼 제품 세 가지</h1><p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#74675f]">브랜드 크기나 인기보다 연결된 성분, 근거 수준, 선택한 피부 신호를 먼저 봤어요.</p></div>
-        <div className="mt-8 grid gap-5 md:grid-cols-3">{result.products.map((product, index) => <article key={product.id} className="paper-card overflow-hidden rounded-[26px]"><Link href={`/products/${product.id}`}><div className="relative border-b border-[#f2dfe5]"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="compact" /><span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-[#9b4b60] font-myeongjo text-white">{index + 1}</span></div><div className="p-5"><p className="text-[10px] font-bold tracking-[.14em] text-[#88746a]">{product.brand}</p><h2 className="mt-1 font-myeongjo text-lg font-semibold">{product.name}</h2><div className="mt-4 flex items-end justify-between"><span className="text-xs text-[#817168]">내 피부 적합도</span><strong className="font-myeongjo text-3xl text-[#9b4a45]">{product.score}</strong></div><p className="mt-4 min-h-12 border-t border-[#76564318] pt-4 text-xs leading-6 text-[#6f625a]">{product.matchReasons?.[0] ?? "성분 구성을 중심으로 계산했어요."}</p><span className="mt-3 inline-flex rounded-full bg-[#eef3e9] px-2.5 py-1 text-[10px] font-bold text-[#63705e]">근거 신뢰 {confidenceLabel(product.confidenceLevel)}</span></div></Link></article>)}</div>
-        <div className="mt-7 rounded-[24px] border border-[#e1a5b333] bg-white/65 p-5 sm:flex sm:items-center sm:justify-between sm:p-7"><div><strong className="font-myeongjo text-xl">이 결과를 내 피부 기준으로 이어갈까요?</strong><p className="mt-2 text-xs leading-6 text-[#7c6e66]">상세 프로필에서 확인한 뒤 저장하면 제품 목록·랭킹·분석에 같은 기준이 적용돼요.</p></div><Link href={continueHref} className="ink-btn mt-5 w-full sm:mt-0 sm:w-auto">{isAuthenticated ? "확인하고 저장" : "로그인하고 저장"} <ArrowRight size={16} /></Link></div>
-        <p className="mt-5 text-center text-[11px] text-[#8c7d74]">성분 55% · 피부 적합 35% · 데이터 신뢰 10% · 광고·판매량·브랜드 인지도 미반영</p>
-      </div>
-    </main>;
-  }
-
-  return <main className="min-h-[calc(100vh-72px)] bg-white py-8 md:py-14">
-    <div className="container-page max-w-3xl">
-      <Link href="/" className="mb-7 inline-flex min-h-11 items-center gap-2 text-sm text-[#76685f]"><ArrowLeft size={16} /> 홈으로</Link>
-      <div className="mb-7 flex items-end justify-between gap-4"><div><p className="eyebrow mb-3">1 MINUTE SKIN CHECK</p><h1 className="font-myeongjo text-3xl font-semibold sm:text-4xl">내 피부에 뭐가 맞을까?</h1><p className="mt-3 text-sm leading-6 text-[#786b63]">로그인 없이 최근 피부 상태만 골라보세요. 성별보다 실제 피부 신호와 생활 습관을 봐요.</p></div><span className="shrink-0 font-myeongjo text-sm text-[#9a6e60]">{step} / {TOTAL_STEPS}</span></div>
-      <div className="mb-7 flex gap-1.5">{Array.from({ length: TOTAL_STEPS }, (_, index) => <span key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? "bg-[#a54f63]" : "bg-[#efd9df]"}`} />)}</div>
-      <section className="paper-card rounded-[28px] p-5 sm:p-8">
-        {step === 1 && <Step title="세안하고 몇 시간 뒤, 피부는 어떤가요?" description="가장 자주 느끼는 상태를 골라주세요."><ChoiceGrid>{skinTypes.map(([name, text]) => <Choice key={name} active={profile.skinType === name} onClick={() => setValue("skinType", name)} title={name} text={text} />)}</ChoiceGrid></Step>}
-        {step === 2 && <Step title="당김과 번들거림은 어느 쪽인가요?" description="수분과 유분을 따로 계산하는 데 사용해요."><div className="grid gap-2.5 sm:grid-cols-2">{balanceOptions.map((option) => <Choice key={option.label} active={profile.hydrationLevel === option.hydration && profile.oilinessLevel === option.oil} onClick={() => setProfile((previous) => ({ ...previous, hydrationLevel: option.hydration, oilinessLevel: option.oil }))} title={option.label} />)}</div></Step>}
-        {step === 3 && <Step title="자극과 트러블은 얼마나 자주 생기나요?" description="주의 성분과 진정 성분의 가중치를 정해요."><SubTitle icon={ShieldCheck} text="붉어짐·따가움" /><ChoiceGrid>{sensitivityOptions.map(([value, label]) => <Choice key={value} active={profile.sensitivityLevel === value} onClick={() => setValue("sensitivityLevel", value)} title={label} />)}</ChoiceGrid><SubTitle icon={CircleAlert} text="트러블 빈도" /><ChoiceGrid>{breakoutOptions.map(([value, label]) => <Choice key={value} active={profile.breakoutFrequency === value} onClick={() => setValue("breakoutFrequency", value)} title={label} />)}</ChoiceGrid></Step>}
-        {step === 4 && <Step title="지금 가장 먼저 바꾸고 싶은 것은?" description={`최대 3개까지 골라주세요. ${profile.concerns.length}/3`}><div className="grid grid-cols-2 gap-2.5">{concernOptions.map((concern) => <Choice key={concern} active={profile.concerns.includes(concern)} onClick={() => toggle("concerns", concern, 3)} title={concern} />)}</div>{profile.concerns.length === 0 && <p className="mt-4 text-xs text-[#a64e47]">한 가지 이상 선택해 주세요.</p>}</Step>}
-        {step === 5 && <Step title="매일 손이 가는 사용감은 어느 쪽인가요?" description="좋은 성분도 꾸준히 쓸 수 있어야 하니까요."><SubTitle icon={Droplets} text="선호 제형" /><ChoiceGrid>{textureOptions.map(([value, label]) => <Choice key={value} active={profile.texturePreference === value} onClick={() => setValue("texturePreference", value)} title={label} />)}</ChoiceGrid><SubTitle icon={Leaf} text="평소 단계" /><ChoiceGrid>{routineOptions.map(([value, label]) => <Choice key={value} active={profile.routineComplexity === value} onClick={() => setValue("routineComplexity", value)} title={label} />)}</ChoiceGrid></Step>}
-        {step === 6 && <Step title="피부에 반복해서 닿는 습관이 있나요?" description="성별 대신 면도·메이크업·세안처럼 실제 자극을 선택해요. 모두 선택 사항이에요."><SubTitle icon={CircleAlert} text="반응이 의심되는 성분" /><TagChoices options={triggerOptions} selected={profile.reactionTriggers} onToggle={(value) => toggle("reactionTriggers", value, 5)} /><SubTitle icon={Sparkles} text="생활 습관" /><TagChoices options={contextOptions} selected={profile.routineContexts} onToggle={(value) => toggle("routineContexts", value, 6)} /></Step>}
-        <div className="mt-8 flex justify-between gap-3 border-t border-[#76564316] pt-6"><button type="button" onClick={() => setStep((current) => Math.max(1, current - 1))} disabled={step === 1 || pending} className="line-btn disabled:invisible"><ArrowLeft size={16} /> 이전</button>{step < TOTAL_STEPS ? <button type="button" onClick={next} disabled={step === 4 && profile.concerns.length === 0} className="ink-btn ml-auto disabled:opacity-50">다음 <ArrowRight size={16} /></button> : <button type="button" onClick={calculate} disabled={pending} className="ink-btn ml-auto disabled:opacity-60">{pending ? <><LoaderCircle size={16} className="animate-spin" /> 계산 중</> : <><Sparkles size={16} /> 내 추천 보기</>}</button>}</div>
-        {result && !result.success && <p role="alert" className="mt-4 rounded-xl bg-[#fff0ed] px-4 py-3 text-xs text-[#994a43]">{result.message}</p>}
-      </section>
-      <p className="mt-5 text-center text-[11px] leading-5 text-[#8c7d74]">의료 진단이 아닌 제품 선택을 위한 참고 정보예요. 광고비와 판매량은 추천 점수에 넣지 않아요.</p>
-    </div>
-  </main>;
+function writeView(view: CheckView, replace = false) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("step", String(view));
+  if (replace) window.history.replaceState(null, "", url);
+  else window.history.pushState(null, "", url);
 }
 
-function Step({ title, description, children }: { title: string; description: string; children: React.ReactNode }) { return <div><h2 className="font-myeongjo text-2xl font-semibold">{title}</h2><p className="mt-2 mb-7 text-sm leading-6 text-[#7e7168]">{description}</p>{children}</div>; }
-function ChoiceGrid({ children }: { children: React.ReactNode }) { return <div className="grid gap-2.5 sm:grid-cols-3">{children}</div>; }
-function Choice({ active, onClick, title, text }: { active: boolean; onClick: () => void; title: string; text?: string }) { return <button type="button" aria-pressed={active} onClick={onClick} className="glass-choice min-h-16 rounded-2xl p-4 text-left"><span className="flex items-center justify-between gap-2"><strong className="font-myeongjo text-[15px]">{title}</strong>{active && <Check size={15} />}</span>{text && <small className="choice-copy mt-2 block text-[11px] leading-5">{text}</small>}</button>; }
-function SubTitle({ icon: Icon, text }: { icon: typeof ShieldCheck; text: string }) { return <h3 className="mb-3 mt-7 first:mt-0 flex items-center gap-2 text-sm font-semibold text-[#655a53]"><Icon size={16} className="text-[#a45161]" />{text}</h3>; }
-function TagChoices({ options, selected, onToggle }: { options: string[]; selected: string[]; onToggle: (value: string) => void }) { return <div className="flex flex-wrap gap-2">{options.map((option) => <button type="button" key={option} aria-pressed={selected.includes(option)} onClick={() => onToggle(option)} className="glass-choice rounded-full px-3.5 py-2.5 text-xs">{selected.includes(option) && <Check size={13} className="mr-1 inline" />}{option}</button>)}</div>; }
-function confidenceLabel(value?: string) { return value === "HIGH" ? "높음" : value === "MEDIUM" ? "보통" : "자료 보강 중"; }
+export function QuickSkinCheck({ statistics }: { statistics: SkinTypeStatistics | null }) {
+  const [answers, setAnswers] = useState<SkinAnswers>({});
+  const [view, setView] = useState<CheckView>(1);
+  const [ready, setReady] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [result, setResult] = useState<QuickRecommendationResult | null>(null);
+  const answersRef = useRef<SkinAnswers>({});
+  const resultRef = useRef<QuickRecommendationResult | null>(null);
+  const requestId = useRef(0);
+  const questionArea = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let restored: ReturnType<typeof restoreSkinDraft> = null;
+    try { restored = restoreSkinDraft(window.sessionStorage.getItem(SKIN_CHECK_DRAFT_KEY)); }
+    catch { setNotice("이 브라우저에서는 임시 보관이 안 돼요. 새로고침하면 답변이 사라질 수 있어요."); }
+    const initial = restored?.answers ?? {};
+    const initialView = safeCheckView(new URL(window.location.href).searchParams.get("step") ?? restored?.view ?? 1, initial);
+    answersRef.current = initial;
+    setAnswers(initial);
+    setView(initialView);
+    writeView(initialView, true);
+    setReady(true);
+    const onBack = () => {
+      requestId.current++;
+      setPending(false);
+      setEditing(false);
+      const requested = new URL(window.location.href).searchParams.get("step");
+      const next = requested === "result" && resultRef.current ? "result" : safeCheckView(requested, answersRef.current);
+      setView(next);
+      if (String(next) !== requested) writeView(next, true);
+    };
+    window.addEventListener("popstate", onBack);
+    return () => { window.removeEventListener("popstate", onBack); requestId.current++; };
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    try { window.sessionStorage.setItem(SKIN_CHECK_DRAFT_KEY, JSON.stringify({ version: 2, updatedAt: Date.now(), answers, view })); }
+    catch { setNotice("임시 보관 공간을 사용할 수 없어요. 이 화면에서는 계속 답변할 수 있어요."); }
+  }, [answers, view, ready]);
+
+  useEffect(() => {
+    questionArea.current?.scrollTo({ top: 0, behavior: "instant" });
+    questionArea.current?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+  }, [view, ready]);
+
+  // Restore the readable report from answers, but request fresh product recommendations.
+  useEffect(() => {
+    if (!ready || view !== "result" || result) return;
+    const profile = toQuickProfile(answersRef.current);
+    if (!profile) return;
+    const id = ++requestId.current;
+    setPending(true);
+    getQuickRecommendations(profile).catch(() => ({
+      success: false, message: "제품 추천을 불러오지 못했어요. 다시 시도해 주세요.", products: [],
+    })).then(response => {
+      if (id !== requestId.current) return;
+      resultRef.current = response;
+      setResult(response);
+      setPending(false);
+    });
+    return () => { requestId.current++; };
+  }, [ready, view, result]);
+
+  const navigate = (next: CheckView) => {
+    requestId.current++;
+    setPending(false);
+    setView(next);
+    writeView(next);
+  };
+  const updateAnswers = (next: SkinAnswers) => {
+    answersRef.current = next;
+    setAnswers(next);
+    resultRef.current = null;
+    setResult(null);
+    requestId.current++;
+  };
+  const editQuestion = (index: number) => { setEditing(true); navigate(index + 1); };
+  const calculate = async () => {
+    const profile = toQuickProfile(answersRef.current);
+    if (!profile) { setEditing(false); navigate(firstMissingAnswer(answersRef.current) + 1); return; }
+    const id = ++requestId.current;
+    setPending(true);
+    let response: QuickRecommendationResult;
+    try { response = await getQuickRecommendations(profile); }
+    catch { response = { success: false, message: "제품 추천을 불러오지 못했어요. 답변은 유지되니 다시 시도해 주세요.", products: [] }; }
+    if (id !== requestId.current) return;
+    resultRef.current = response;
+    setResult(response);
+    setEditing(false);
+    navigate("result");
+  };
+  const question = typeof view === "number" ? skinQuestions[view - 1] : null;
+  const missing = firstMissingAnswer(answers);
+  const selected = question ? answers[question.key] : undefined;
+  const GroupIcon = question ? icons[question.icon] : ClipboardList;
+
+  return <div className={styles.questionnaire}>
+    <header className={styles.topbar}>
+      <Link href="/" aria-label="피부 체크 나가고 홈으로"><ArrowLeft size={18} aria-hidden="true" /><span>홈으로</span></Link>
+      <h1>나의 피부 체크</h1>
+      {view === "result" ? <span className={styles.counter}>피부 리포트</span> : <button type="button" className={styles.reviewLink} onClick={() => { setEditing(false); navigate("review"); }} disabled={!ready || pending}><ClipboardList size={15} aria-hidden="true" />답변 보기</button>}
+    </header>
+    {view !== "result" && <div className={styles.progress} aria-hidden="true">{skinQuestions.map((q, i) => <span key={q.key} data-complete={answers[q.key] !== undefined} data-current={view === i + 1} />)}</div>}
+    <section ref={questionArea} className={styles.questionArea} aria-labelledby="skin-step-title">
+      {!ready ? <h2 id="skin-step-title" tabIndex={-1}>피부 체크를 준비하고 있어요…</h2> : question ? <div className={styles.step} data-tone={question.tone}>
+        <div className={styles.eyebrow}><span><GroupIcon size={15} aria-hidden="true" />{question.group}</span><span className={styles.counter}><strong>{view}</strong> / {total}</span></div>
+        <h2 id="skin-step-title" tabIndex={-1}>{question.title}</h2>
+        <p className={styles.description}>{question.hint}</p>
+        <div className={styles.selectionMeta}><span>{question.multiple ? question.min ? "복수 선택 · 최대 " + question.max + "개" : "복수 선택 · 선택 사항" : "하나를 선택해 주세요"}</span>{question.multiple && <strong aria-live="polite">{Array.isArray(selected) ? selected.length : 0} / {question.max}</strong>}</div>
+        <div className={styles.choices + " " + (question.multiple ? styles.multiChoices : styles.singleChoices)} role="group" aria-label={question.title}>
+          {question.options.map(option => {
+            const active = Array.isArray(selected) ? selected.includes(option.value) : selected === option.value;
+            const Icon = icons[option.icon];
+            const atLimit = question.multiple && Array.isArray(selected) && selected.length >= (question.max ?? question.options.length) && !active && option.value !== question.exclusive;
+            return <button type="button" key={option.value} aria-pressed={active} disabled={Boolean(atLimit)} className={styles.choice} onClick={() => updateAnswers(chooseAnswer(answers, question, option.value))}>
+              <span className={styles.optionIcon}><Icon size={21} strokeWidth={1.7} aria-hidden="true" /></span>
+              <span className={styles.optionText}><strong>{option.label}</strong><small>{option.description}</small></span>
+              <span className={styles.selectionMark} aria-hidden="true">{active && <Check size={13} strokeWidth={3} />}</span>
+            </button>;
+          })}
+        </div>
+        <p className={styles.questionNote}><ShieldCheck size={14} aria-hidden="true" />{question.note}</p>
+        {view === 1 && <p className={styles.intro}>총 15문항 · 답변은 이 탭에 최대 24시간 임시 보관돼요. 이전 답변은 언제든 바꿀 수 있어요.</p>}
+      </div> : view === "review" ? <div className={styles.step}>
+        <div className={styles.eyebrow}><span><ClipboardList size={15} />나의 답변 노트</span><span>언제든 수정 가능</span></div>
+        <h2 id="skin-step-title" tabIndex={-1}>답변을 한 번 더 살펴볼까요?</h2>
+        <p className={styles.description}>수정할 문항을 누르세요. 다른 답변은 그대로 두고 원하는 항목만 바꿀 수 있어요.</p>
+        <AnswerReview answers={answers} onEdit={editQuestion} />
+      </div> : <div className={styles.step}>
+        <div className={styles.eyebrow}><span><Sparkles size={15} />답변 기반 피부 요약</span><button type="button" onClick={() => navigate("review")} className={styles.textButton}><Pencil size={13} />답변 수정</button></div>
+        <SkinReport answers={answers} statistics={statistics} />
+        <div className={styles.resultHeading} id="skin-report-products"><h3>내 피부 기준 맞춤 제품{result?.products.length ? " " + result.products.length + "개" : ""}</h3><p>내 피부 고민과 선호하는 사용감을 함께 비교해 보세요.</p></div>
+        {result?.success && result.products.length > 0 ? <div className={styles.productList}>{result.products.map((product, index) => <Link key={product.id} href={"/products/" + encodeURIComponent(product.id)} className={styles.product}>
+          <div className={styles.productImage}><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={product.brand + " " + product.name} variant="compact" /><span>{index + 1}</span></div>
+          <div><small>{product.brand}</small><h3>{product.name}</h3><strong className={styles.productScore}>맞춤 화력 {product.score}</strong><p>{product.matchReasons?.[0] ?? "연결된 성분과 답변을 함께 살펴봤어요."}</p><small>근거 신뢰 · {product.confidenceLevel === "HIGH" ? "높음" : product.confidenceLevel === "MEDIUM" ? "보통" : "자료 보강 중"}</small></div>
+        </Link>)}</div> : <div className={styles.emptyResult}><p role={result?.success === false ? "alert" : "status"}>{result?.message ?? "추천을 다시 계산해 주세요."}</p><button type="button" onClick={calculate} disabled={pending} className={styles.textButton}>{pending ? "불러오는 중…" : "제품 추천 다시 불러오기"}</button></div>}
+      </div>}
+    </section>
+    <footer className={styles.footer}>
+      {notice && <p role="status" className={styles.validation}>{notice}</p>}
+      <div className={styles.actions}>
+        {question && typeof view === "number" && view > 1 && <button type="button" className={styles.previous} onClick={() => { setEditing(false); navigate(view - 1); }}><ArrowLeft size={15} />이전</button>}
+        {question && typeof view === "number" ? <button type="button" className={styles.next} disabled={!ready || !canContinue(question, answers)} onClick={() => {
+          if (question.multiple && answers[question.key] === undefined) updateAnswers({ ...answers, [question.key]: [] });
+          navigate(editing || view === total ? "review" : view + 1);
+          setEditing(false);
+        }}>{editing ? "수정 완료" : view === total ? "답변 확인하기" : "다음"}<ArrowRight size={16} /></button> : view === "review" ? <button type="button" onClick={calculate} disabled={pending || !ready} className={styles.next}>{pending ? <><LoaderCircle size={16} className="animate-spin" />맞춤 제품을 찾고 있어요</> : missing >= 0 ? <>아직 안 고른 문항 이어하기<ArrowRight size={16} /></> : <><Sparkles size={16} />내 피부 요약과 추천 보기</>}</button> : <Link href="/" className={styles.next}>리포트 확인 완료<ArrowRight size={16} /></Link>}
+      </div>
+      <p className={styles.disclaimer}>피부 상태 자가 체크 · 의료 진단이 아니에요</p>
+    </footer>
+  </div>;
+}
+
+function AnswerReview({ answers, onEdit }: { answers: SkinAnswers; onEdit: (index: number) => void }) {
+  return <ol className={styles.reviewList}>{skinQuestions.map((question, index) => <li key={question.key}><button type="button" onClick={() => onEdit(index)} aria-label={(index + 1) + "번 " + question.title + " 수정"}><span className={styles.reviewNumber}>{index + 1}</span><span><small>{question.group}{question.multiple && !question.min ? " · 선택" : ""}</small><strong>{question.title}</strong><em>{answerLabel(question, answers)}</em></span><Pencil size={15} aria-hidden="true" /></button></li>)}</ol>;
+}

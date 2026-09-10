@@ -6,7 +6,7 @@ const discoverLinks = [
   { href: "/ranking", label: "성분별 제품 랭킹" },
   { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품 탐색" },
-  { href: "/skin-check", label: "1분 피부 체크" },
+  { href: "/skin-check", label: "피부 상태 체크" },
   { href: "/promotions", label: "화력 추천 · 광고" },
 ];
 

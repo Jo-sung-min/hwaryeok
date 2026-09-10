@@ -7,6 +7,27 @@ import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, 
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
+export function getSkinPhotoStatus(accessToken: string): Promise<import("./skin-photo").SkinPhotoStatus> {
+  return requestJson("/users/me/photo-analysis", { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(5000) });
+}
+
+export async function analyzeSkinPhoto(accessToken: string, photo: File): Promise<import("./skin-photo").SkinPhotoReport> {
+  const response = await fetch(`${API_BASE_URL}/users/me/photo-analysis`, {
+    method: "POST", cache: "no-store", signal: AbortSignal.timeout(55000),
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": photo.type, "X-Photo-Consent": "photo-v1" },
+    body: await photo.arrayBuffer(),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({})) as { message?: string; code?: string };
+    throw new ApiRequestError(error.message ?? "사진 분석을 완료하지 못했어요.", response.status, error.code);
+  }
+  return response.json();
+}
+
+export function getSkinTypeStatistics(): Promise<import("./skin-report").SkinTypeStatistics> {
+  return requestJson("/skin-check/statistics", { signal: AbortSignal.timeout(3000) });
+}
+
 export function getRisingProductRanking(query: { category?: string; page?: number; size?: number } = {}): Promise<RisingProductRankingPage> {
   const search = new URLSearchParams({ page: String(query.page ?? 0), size: String(query.size ?? 12) });
   if (query.category) search.set("category", query.category);

@@ -5,6 +5,7 @@ import { HomeProductCard } from "@/components/home-product-card";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
+import { buildSkinCareGuide } from "@/lib/skin-care-guide";
 import { catalogRankingHref, firstSearchValue, RankingCategories, RankingPagination, requestedRankingPage, type CatalogRankingSearch } from "../_components/catalog-ranking-controls";
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
   const data = await getProductPage({ profile, category: category || undefined, page, size: 12, sort: "score", direction: "desc" });
   const favoriteIds = new Set(favorites.favoriteIds);
   const returnTo = catalogRankingHref(basePath, category, data.page);
+  const care = buildSkinCareGuide(profile);
 
   return <div className="container-page pb-24 pt-4 sm:pt-7">
     <RankingTabs active="personal" />
@@ -58,7 +60,8 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
         <div className="min-w-0 break-words"><p className="mb-2 text-xs font-bold text-[#a63e65]">{user.nickname}님을 위한 랭킹</p><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">내 피부에 맞는 제품 랭킹</h1><p className="mt-3 text-sm leading-7 text-[#69646f]">저장한 피부 설정을 반영해 맞춤 화력이 높은 순서로 보여드려요.</p></div>
         <Link href="/profile" className="line-btn text-sm"><SlidersHorizontal size={14} />피부 설정 수정</Link>
       </div>
-      <p className="mt-5 rounded-2xl border border-[#efdce4] bg-[#fff8fa] px-4 py-3 text-sm leading-6 text-[#69646f]">맞춤 화력은 성분 정보와 피부 설정에 기반한 비교 점수예요. 사용자 리뷰점수와 별개이며, 실제 사용감이나 피부 반응을 보장하지 않아요.</p>
+      <div className="mt-5 rounded-2xl border border-[#efdce4] bg-[#fff8fa] px-4 py-4"><p className="text-sm font-semibold text-[#a33e65]">{care.summary}</p><p className="mt-2 text-sm leading-6 text-[#69646f]">추천 제형 · {care.texture}</p><p className="mt-1 text-xs leading-6 text-[#80717b]">{care.application}</p><div className="mt-3 flex flex-wrap gap-2">{care.ingredients.map(ingredient => <Link key={ingredient.name} href={`/ingredients?query=${encodeURIComponent(ingredient.name)}`} className="rounded-lg border border-[#edcedc] bg-white px-3 py-2 text-xs text-[#a4476c]">{ingredient.name} 알아보기</Link>)}</div><p className="mt-3 text-xs leading-6 text-[#80717b]">{care.check.title} · {care.check.text}</p></div>
+      <Link href="/principles#skin-guide" className="mt-3 inline-flex min-h-9 items-center text-xs text-[#897581]">맞춤 화력·추천 기준 안내 →</Link>
     </section>
     <section aria-labelledby="personal-products-heading">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 id="personal-products-heading" className="text-lg font-bold">{category || "전체상품"} <span className="ml-1 text-sm font-normal text-[#69646f]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2><span className="text-sm text-[#69646f]">맞춤 화력 높은 순</span></div>

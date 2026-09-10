@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight, FlaskConical, Megaphone, Search, Sparkles, TrendingUp, SlidersHorizontal, MessageCircle } from "lucide-react";
-import { getIngredientRankingOptions, getProductPage, getRanking, getRisingProductRanking, getWeeklyRanking } from "@/lib/api";
+import { ArrowRight, ChevronRight, FlaskConical, Megaphone, Search, TrendingUp, SlidersHorizontal, MessageCircle } from "lucide-react";
+import { getIngredientRankingOptions, getProductPage, getRisingProductRanking, getWeeklyRanking } from "@/lib/api";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, orderHomeCategories } from "@/lib/home-catalog";
 import { HomeBanner } from "@/components/home-banner";
@@ -23,9 +23,8 @@ export async function HomeCatalog({ category: requestedCategory }: { category: s
   const categoryQuery = category ? `?${new URLSearchParams({ category })}` : "";
   const catalogHref = personalized ? `/ranking/personal${categoryQuery}` : `/products?${new URLSearchParams({ ...(category ? { category } : {}), order: "name-asc" })}`;
 
-  const [catalog, personalRanking, risingResult] = await Promise.all([
+  const [catalog, risingResult] = await Promise.all([
     getProductPage({ category, profile, size: 8, sort: personalized ? "score" : "name", direction: personalized ? "desc" : "asc" }),
-    profile ? getRanking(profile, 4, category) : Promise.resolve([]),
     getRisingProductRanking({ category, size: 4 }).then((data) => ({ data, failed: false })).catch(() => ({ data: null, failed: true })),
   ]);
   const slides = buildWeeklyRankingSlides(weeklyRanking, catalog.content);
@@ -44,7 +43,6 @@ export async function HomeCatalog({ category: requestedCategory }: { category: s
 
     <nav className={styles.sectionNav} aria-label="홈 상품 주제">
       <Link href="#home-products">{personalized ? "나의 맞춤 상품" : "전체 상품"}<ChevronRight size={14} /></Link>
-      <Link href="#personal-ranking"><Sparkles size={15} />내 피부 랭킹</Link>
       <Link href="#rising-ranking"><TrendingUp size={15} />급상승 랭킹</Link>
     </nav>
 
@@ -55,14 +53,9 @@ export async function HomeCatalog({ category: requestedCategory }: { category: s
       </nav>
       {requestedCategory && !category && <p className={styles.filterNote} role="status">해당 카테고리를 찾지 못해 전체 상품을 보여드려요.</p>}
       <div className={styles.catalogMeta}><p>{personalized ? "같은 제품도, 피부 설정에 따라 순위가 달라져요." : "피부 설정을 저장하면 나에게 맞는 순서로 바뀌어요."}</p><span><SlidersHorizontal size={14} />{personalized ? "맞춤 화력 높은 순" : "제품명순"}</span></div>
-      {category && <p className={styles.filterNote}>‘{category}’ 카테고리가 아래 두 랭킹에도 적용돼요.</p>}
+      {category && <p className={styles.filterNote}>‘{category}’ 카테고리가 아래 급상승 랭킹에도 적용돼요.</p>}
       {catalog.content.length > 0 ? <div className={styles.catalogProducts}>{catalog.content.map((product, index) => <HomeProductCard key={product.id} product={product} rank={personalized ? index + 1 : undefined} scoreLabel={personalized ? "맞춤 화력" : undefined} favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={returnTo} />)}</div> : <div className={styles.empty}><FlaskConical size={25} /><h3>이 카테고리의 제품을 준비하고 있어요</h3><p>공개된 제품이 등록되면 여기에 보여드릴게요.</p></div>}
       <Link href={catalogHref} className={styles.seeAll}>{category || "전체"} 상품 더 보기 <ChevronRight size={16} /></Link>
-    </section>
-
-    <section id="personal-ranking" className={styles.shelf} aria-labelledby="personal-ranking-title">
-      <div className={styles.shelfHeading}><div><p className={styles.sectionEyebrow}><Sparkles size={14} /> 오직 내 피부를 기준으로</p><h2 id="personal-ranking-title">내 피부에 맞는 제품 랭킹</h2></div><Link href={`/ranking/personal${categoryQuery}`}>전체보기 <ChevronRight size={17} /></Link></div>
-      {personalized ? <><p className={styles.catalogNote}>{category || "전체 카테고리"} · {savedProfile?.skinType} 피부 기준 최대 4개. 점수와 함께 ‘추천 이유’를 확인해 보세요.</p><div className={styles.products}>{personalRanking.map((product, index) => <HomeProductCard key={product.id} product={product} rank={index + 1} scoreLabel="맞춤 화력" favorited={favoriteIds.has(product.id)} isAuthenticated returnTo={homeCatalogHref(category, "personal-ranking")} />)}</div>{personalRanking.length === 0 && <p className={styles.catalogNote}>이 카테고리에 공개된 제품이 아직 없어요.</p>}</> : <div className={styles.profileGate}><div className={styles.gateHeading}><div><h3>내 피부를 알려주면, 순위의 기준이 바뀌어요</h3><p>{user ? "아직 저장된 피부 설정이 없어요. 지금 피부 상태부터 알려주세요." : "가입 없이 먼저 체크하고, 로그인해 저장하면 메인에도 반영돼요."}</p></div><Link href="/skin-check" className="ink-btn">나의 성분 찾기<ArrowRight size={16} /></Link></div><ol className={styles.personalSteps}><li><span>01</span><div><strong>내 피부 체크</strong><p>수분·유분·민감도 확인</p></div></li><li><span>02</span><div><strong>맞춤 순위 확인</strong><p>피부 설정으로 달라지는 랭킹</p></div></li><li><span>03</span><div><strong>추천 이유 비교</strong><p>성분 근거를 읽고 선택</p></div></li></ol></div>}
     </section>
 
     <section id="rising-ranking" className={styles.shelf} aria-labelledby="rising-ranking-title">

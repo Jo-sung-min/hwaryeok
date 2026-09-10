@@ -59,8 +59,8 @@ export function FirepowerReport({ analysis, ingredientData, reviewSummary, perso
 
         {!personalized && (
           <div className="flex flex-col gap-4 border-t border-[#75564516] bg-[#fff8f9] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <p className="text-sm leading-6 text-[#705f59]">지금 보이는 적합도는 <strong>수부지·속건조·민감 예시 조건</strong>입니다. 로그인 없이 1분만 체크하면 내 조건으로 다시 볼 수 있어요.</p>
-            <Link href="/skin-check" className="line-btn shrink-0">1분 피부 체크</Link>
+            <p className="text-sm leading-6 text-[#705f59]">지금 보이는 적합도는 <strong>수부지·속건조·민감 예시 조건</strong>입니다. 로그인 없이 피부 상태를 체크하면 내 조건으로 다시 볼 수 있어요.</p>
+            <Link href="/skin-check" className="line-btn shrink-0">피부 상태 체크</Link>
           </div>
         )}
       </div>

@@ -1,0 +1,45 @@
+.body { padding-top:22px; }
+.intro h2,.report h2 { margin:10px 0 8px; font-size:21px; font-weight:750; line-height:1.45; }
+.intro p { font-size:13px; line-height:1.8; color:#756b79; }
+.tag { display:inline-block; border-radius:6px; background:#fff0f6; color:#aa426b; padding:4px 7px; font-size:11px; font-weight:650; }
+.notice { padding:14px; margin:18px 0; border:1px solid #f0dbe5; border-radius:12px; background:#fff8fb; color:#80576c; font-size:12px; line-height:1.8; }
+.notice strong { display:block; font-size:13px; margin-bottom:4px; }
+.notice a,.privacy a { text-decoration:underline; text-underline-offset:3px; }
+.quota { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:16px 0; font-size:12px; color:#7b7180; }
+.quota strong { color:#ac426a; }
+.quota span { margin-left:auto; font-size:10px; }
+.guide { margin:18px 0; padding:15px; border:1px solid #ebe6ed; border-radius:12px; }
+.guide strong { font-size:13px; }
+.guide ul { list-style:disc; padding-left:18px; margin-top:8px; }
+.guide li { font-size:12px; color:#726877; line-height:1.9; }
+.guide > p { font-size:10px; color:#918692; margin-top:8px; }
+.hidden { display:none; }
+.placeholder { min-height:180px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; border:1px dashed #e4bbcD; border-radius:16px; color:#b05d7e; background:#fffafb; }
+.placeholder strong { font-size:14px; color:#675564; }
+.placeholder span { font-size:11px; color:#8a7b88; }
+.preview { border:1px solid #efdae4; border-radius:16px; padding:12px; text-align:center; background:#fffafb; }
+.preview img { max-height:320px; width:100%; object-fit:contain; border-radius:10px; }
+.preview button { display:inline-flex; align-items:center; gap:5px; min-height:40px; font-size:12px; color:#ab4c71; }
+.preview p { font-size:10px; color:#8b7c88; }
+.photoButtons { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 8px; }
+.photoButtons button { display:flex; align-items:center; justify-content:center; gap:7px; min-height:46px; border:1px solid #e6d3df; border-radius:10px; background:white; color:#80435e; font-size:13px; font-weight:650; }
+.small { font-size:11px; line-height:1.8; color:#8b7f8c; margin-top:7px; }
+.privacy { padding:16px 0; margin-top:12px; border-top:1px solid #eee5ec; }
+.privacy > strong { display:flex; gap:6px; align-items:center; font-size:13px; }
+.privacy > p { font-size:11px; line-height:1.85; color:#7c717f; margin-top:9px; }
+.consent { display:flex; gap:10px; align-items:flex-start; padding:13px; margin-top:14px; border:1px solid #efdae4; border-radius:10px; background:#fff8fb; cursor:pointer; }
+.consent input { width:18px; height:18px; flex-shrink:0; margin-top:2px; accent-color:#ae426d; }
+.consent span { font-size:12px; color:#624f60; line-height:1.7; }
+.analyze { display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px; width:100%; background:#ac3f69; color:#fff; border-radius:12px; font-size:14px; font-weight:700; }
+.body button:disabled { opacity:.45; cursor:not-allowed; }
+.body button:focus-visible,.body input:focus-visible,.body a:focus-visible { outline:2px solid #ac3f69; outline-offset:3px; }
+.error { color:#a92d50; background:#fff3f6; border-radius:10px; padding:12px; margin-bottom:12px; font-size:12px; line-height:1.7; }
+.report { margin-top:28px; padding-top:24px; border-top:1px solid #e7d2de; outline:none; scroll-margin-top:100px; }
+.summary { font-size:14px; line-height:1.9; color:#594954; }
+.observations { display:grid; gap:10px; margin-top:16px; }
+.observations article { padding:15px; border:1px solid #eee0e8; border-radius:12px; }
+.observations h3 { font-size:13px; color:#a83d65; font-weight:700; }
+.observations p { font-size:13px; line-height:1.8; margin-top:5px; }
+.observations small { display:block; font-size:11px; line-height:1.8; color:#877583; margin-top:6px; }
+.disclaimer { font-size:11px; color:#887686; line-height:1.9; margin-top:12px; }
+.checkLink { display:block; border:1px solid #eddae4; border-radius:10px; padding:14px; text-align:center; color:#ab426a; font-size:12px; font-weight:650; margin-top:16px; }

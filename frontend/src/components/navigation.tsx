@@ -38,9 +38,9 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
           ))}
         </nav>
         <div className={styles.headerActions}>
-          <Link href="/skin-check" className={styles.skinLink} aria-current={pathname.startsWith("/skin-check") ? "page" : undefined}>
+          {pathname !== "/" && <Link href="/skin-check" className={styles.skinLink} aria-current={pathname.startsWith("/skin-check") ? "page" : undefined}>
             <SlidersHorizontal size={16} aria-hidden="true" /> 내 피부 맞춤
-          </Link>
+          </Link>}
           <Link href="/my" aria-label="찜한 제품" className={styles.favoriteLink}><Heart size={19} /></Link>
           {authSlot}
         </div>

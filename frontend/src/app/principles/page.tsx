@@ -123,6 +123,16 @@ export default function PrinciplesPage() {
           </div>
         </section>
 
+        <section id="skin-guide" className="container-page scroll-mt-24 py-10 md:py-14">
+          <h2 className="text-2xl font-semibold">피부 리포트와 맞춤 추천 기준</h2>
+          <div className="mt-6 space-y-6 text-sm leading-7 text-[#756860]">
+            <div><h3 className="font-semibold text-[#4e3e4b]">피부 유형과 네 가지 코드</h3><p>최근의 자기 보고 답변을 요약한 참고 리포트입니다. 피부 코드와 유형은 화력의 표현이며 MBTI 검사나 의학적으로 검증된 분류가 아닙니다. 유형의 희소성은 피부의 좋고 나쁨을 뜻하지 않고 실제 수분·유분 측정이나 의료 진단을 대신하지 않습니다. 피부가 불편하거나 증상이 지속되면 전문가와 상담해 주세요.</p></div>
+            <div><h3 className="font-semibold text-[#4e3e4b]">추천 성분과 제형</h3><p>피부 타입·속당김·세안 후 당김·민감 반응·트러블·선호 제형을 바탕으로 일반적인 화장품 선택 가이드를 제공합니다. 개별 성분의 효과가 특정 완제품의 효과나 개인의 적합성을 보장하지는 않습니다. 제품의 전성분·제형·사용 경험을 함께 확인하고 새 제품은 좁은 부위에서 먼저 살펴보세요. 불편했던 성분 경험은 알레르기 확정 결과가 아닙니다.</p><p className="mt-2">일반적인 보습 성분·제형 선택과 지성 피부의 제품 표시 안내는 <a className="underline" href="https://www.aad.org/public/everyday-care/skin-care-basics/dry/pick-moisturizer" target="_blank" rel="noreferrer">미국피부과학회 보습제 선택 안내</a> 및 <a className="underline" href="https://www.aad.org/public/everyday-care/skin-care-basics/dry/oily-skin" target="_blank" rel="noreferrer">지성 피부 관리 안내</a>를 참고했습니다. 이를 화력의 답변 항목에 연결한 규칙은 서비스의 추천 기준입니다.</p></div>
+            <div><h3 className="font-semibold text-[#4e3e4b]">맞춤 화력 점수</h3><p>연결된 성분 정보와 저장한 피부 설정에 기반한 비교 점수로, 실제 사용자 리뷰점수와 별개입니다. 피부의 건강 상태를 측정하는 점수가 아니며 실제 사용감이나 피부 반응을 보장하지 않습니다. 자료의 양과 정확도에 따라 결과가 달라질 수 있습니다.</p></div>
+            <div><h3 className="font-semibold text-[#4e3e4b]">같은 피부 유형의 회원 비율</h3><p>피부 프로필을 직접 저장한 활성 일반 회원의 최신 프로필 1개씩을 집계합니다. 비회원 체크·기본값 프로필·관리자·비활성 계정은 제외하며 최소 30명 이상일 때 실제 비율을 표시합니다. 기본 피부 타입의 비율이지 4자리 코드 비율이나 전체 인구의 비율은 아닙니다. 집계 자료가 없거나 조회에 실패하면 임의 수치를 표시하지 않습니다.</p></div>
+          </div>
+        </section>
+
         <section className="container-page py-14 text-center md:py-20">
           <p className="text-sm leading-7 text-[#756860]">화력의 정보는 화장품 선택을 돕기 위한 참고 자료이며 의료적 진단이나 치료를 대신하지 않습니다.</p>
           <Link href="/ranking" className="ink-btn mt-7">나에게 맞는 성분으로 랭킹 보기 <ArrowRight size={17} /></Link>

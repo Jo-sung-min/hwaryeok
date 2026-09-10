@@ -1,7 +1,7 @@
 "use server";
 
 import { ApiRequestError, getRanking } from "@/lib/api";
-import type { QuickSkinProfile } from "@/lib/quick-profile";
+import { isQuickSkinProfile, type QuickSkinProfile } from "@/lib/quick-profile";
 import type { Product } from "@/lib/types";
 
 export type QuickRecommendationResult = {
@@ -10,10 +10,8 @@ export type QuickRecommendationResult = {
   products: Product[];
 };
 
-const allowedSkinTypes = new Set(["건성", "지성", "복합성", "수부지", "중성", "민감"]);
-
 export async function getQuickRecommendations(profile: QuickSkinProfile): Promise<QuickRecommendationResult> {
-  if (!allowedSkinTypes.has(profile.skinType) || profile.concerns.length < 1 || profile.concerns.length > 3) {
+  if (!isQuickSkinProfile(profile)) {
     return { success: false, message: "피부 타입과 가장 중요한 고민을 다시 확인해 주세요.", products: [] };
   }
   try {
