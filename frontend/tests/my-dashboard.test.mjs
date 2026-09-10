@@ -10,6 +10,8 @@ test("personal dashboard renders actual metrics and text-only product lists", as
   assert.match(html, /미등록/);
   assert.match(html, /나머지 1개 펼쳐보기/);
   assert.match(html, /찜 해제/);
+  assert.match(html, /href="\/my\/reviewer-profile"/);
+  assert.match(html, /내 리뷰어 소개/);
   assert.match(html, /left=qa-ampoule&amp;right=qa-cream/);
   assert.doesNotMatch(html, /<img|must-not-render|나의 추천 제품|수부지 기준/);
 });

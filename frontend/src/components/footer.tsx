@@ -7,11 +7,9 @@ const discoverLinks = [
   { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/products", label: "화장품 탐색" },
   { href: "/skin-check", label: "피부 상태 체크" },
-  { href: "/promotions", label: "화력 추천 · 광고" },
 ];
 
 const guideLinks = [
-  { href: "/ingredients", label: "성분 사전" },
   { href: "/compare", label: "제품 비교" },
   { href: "/principles", label: "화력의 추천 원칙" },
 ];

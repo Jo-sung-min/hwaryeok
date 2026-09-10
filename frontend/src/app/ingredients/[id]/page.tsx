@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, ExternalLink, FlaskConical, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
-import { ProductCard } from "@/components/product-ui";
-import { ApiRequestError, getIngredient, getIngredientFirepower, getIngredientRegulations } from "@/lib/api";
+import { ArrowLeft, ArrowRight, Check, ExternalLink, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { IngredientRankingCard } from "@/components/ingredient-ranking-card";
+import { ApiRequestError, getIngredient, getIngredientRanking, getIngredientRegulations } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -29,9 +29,9 @@ export default async function IngredientDetailPage({ params }: { params: Promise
   const { id } = await params;
 
   try {
-    const [ingredient, firepower, regulations, favoriteState] = await Promise.all([
+    const [ingredient, ranking, regulations, favoriteState] = await Promise.all([
       getIngredient(id),
-      getIngredientFirepower(id),
+      getIngredientRanking({ ingredientId: id, sort: "FIREPOWER", page: 0, size: 4 }),
       getIngredientRegulations(id),
       getFavoriteViewState(),
     ]);
@@ -59,10 +59,29 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">{ingredient.description}</p>
               <div className="mt-7 flex flex-wrap gap-2">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full border border-[#a45a5025] bg-[#fff9f1] px-3 py-1.5 text-xs text-[#91564d]">#{tag}</span>)}</div>
               <div className="mt-8 flex flex-col items-start gap-3">
-                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="ink-btn">이 성분 제품 랭킹 <ArrowRight size={16} /></Link>
+                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="ink-btn">성분 랭킹 탭으로 이동 <ArrowRight size={16} /></Link>
                 <p className="text-xs leading-6 text-[#826f76]">제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 비교해보세요.</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="ingredient-ranking" className="mt-10 border-y border-[#dfa6b51f] bg-[#fff7f9] py-10 md:mt-14 md:py-16" aria-labelledby="ingredient-ranking-title">
+          <div className="container-page">
+            <div className="mb-7 flex items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow mb-3">INGREDIENT RANKING</p>
+                <h2 id="ingredient-ranking-title" className="section-title font-myeongjo">{ingredient.name} 제품 랭킹</h2>
+                <p className="mt-3 text-xs leading-6 text-[#826f76]">DB에 연결된 공개 제품을 성분 화력이 높은 순서로 보여드려요. 총 {ranking.totalElements.toLocaleString("ko-KR")}개예요.</p>
+              </div>
+              <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold text-[#a44765]">전체보기 <ArrowRight size={14} /></Link>
+            </div>
+            {ranking.content.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+                {ranking.content.map((item) => <IngredientRankingCard key={item.product.id} item={item} ingredientName={ranking.ingredientName} sort="FIREPOWER" favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${encodeURIComponent(id)}#ingredient-ranking`} />)}
+              </div>
+            ) : <div className="rounded-2xl border border-dashed border-[#e3b9c8] bg-white px-5 py-10 text-center text-sm text-[#74606a]">이 성분과 연결된 공개 제품을 준비 중이에요.</div>}
+            <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#dfb6c4] bg-white px-4 text-sm font-bold text-[#9e3f61]">{ingredient.name} 성분 랭킹 탭에서 전체 보기 <ArrowRight size={15} /></Link>
           </div>
         </section>
 
@@ -127,36 +146,6 @@ export default async function IngredientDetailPage({ params }: { params: Promise
           )}
         </section>
 
-        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-20">
-          <div className="container-page">
-            <div className="mb-9 flex items-end justify-between gap-5">
-              <div>
-                <p className="eyebrow mb-4">INGREDIENT ANALYSIS</p>
-                <h2 className="section-title font-myeongjo">{ingredient.name} 포함 제품 성분 분석</h2>
-                <p className="mt-3 max-w-2xl text-xs leading-6 text-[#826f76]">전성분 구성과 근거를 바탕으로 계산한 성분 분석 정보예요. 제품 랭킹에서는 제품 종류와 정렬 기준을 골라 비교할 수 있어요.</p>
-                <p className="mt-2 max-w-2xl text-xs leading-6 text-[#826f76]">{firepower.disclaimer}</p>
-                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[#a44765]">{ingredient.name} 제품 랭킹 보기 <ArrowRight size={15} /></Link>
-              </div>
-              <FlaskConical className="hidden text-[#b47664] md:block" size={32} strokeWidth={1.5} />
-            </div>
-            {firepower.products.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {firepower.products.map((item) => (
-                  <div key={item.product.id} className="relative">
-                    <span className="absolute left-4 top-4 z-20 rounded-full border border-[#c94f73] bg-[#c94f73] px-3 py-1.5 text-[11px] font-bold text-white shadow-sm">성분 분석 {item.firepowerScore}</span>
-                    <ProductCard product={item.product} initialFavorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/ingredients/${id}`} />
-                    <div className="mx-2 -mt-2 rounded-b-2xl border border-t-0 border-[#dba7b438] bg-white/80 px-4 pb-4 pt-5">
-                      <div className="flex items-center justify-between text-[11px]"><span className="text-[#806e75]">{item.concentrationNote ?? "전성분 순서 기반"}</span><strong className="text-[#9b4a5f]">신뢰도 {confidenceLabel(item.confidence)}</strong></div>
-                      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-[10px] text-[#88757c]">
-                        {breakdownItems(item.breakdown).map(([label, value]) => <div key={label} className="flex items-center justify-between gap-2"><span>{label}</span><strong>{value}</strong></div>)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : <div className="paper-card rounded-[26px] p-10 text-center text-sm text-[#74695f]">연결된 제품을 준비 중이에요.</div>}
-          </div>
-        </section>
       </div>
     );
   } catch (error) {
@@ -167,28 +156,4 @@ export default async function IngredientDetailPage({ params }: { params: Promise
 
 function formatRegulationDate(value: string) {
   return value.slice(0, 10).replaceAll("-", ".");
-}
-
-function confidenceLabel(confidence: "HIGH" | "MEDIUM" | "LOW") {
-  return confidence === "HIGH" ? "높음" : confidence === "MEDIUM" ? "보통" : "낮음";
-}
-
-function breakdownItems(breakdown: {
-  match: number;
-  concentration: number;
-  evidence: number;
-  productType: number;
-  synergy: number;
-  stability: number;
-  dataConfidence: number;
-}): [string, number][] {
-  return [
-    ["성분 일치", breakdown.match],
-    ["함량 추정", breakdown.concentration],
-    ["근거 수준", breakdown.evidence],
-    ["제품 유형", breakdown.productType],
-    ["시너지", breakdown.synergy],
-    ["안정성", breakdown.stability],
-    ["데이터 신뢰", breakdown.dataConfidence],
-  ];
 }

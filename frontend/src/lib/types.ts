@@ -241,7 +241,7 @@ export type ReviewCommunityRating = {
   canRate: boolean;
 };
 
-export type ReviewerProfile = {
+export type ReviewerProfileStats = {
   userId: string;
   nickname: string;
   skinType: string | null;
@@ -254,8 +254,28 @@ export type ReviewerProfile = {
   rank: number | null;
 };
 
+export type ReviewerProfile = ReviewerProfileStats & {
+  bioBlocks: ReviewerBioBlock[];
+  blogUrl: string | null;
+  instagramUrl: string | null;
+  profileUpdatedAt: string | null;
+};
+
+export type ReviewerBioBlock = Record<string, unknown>;
+
+export type MyReviewerProfile = {
+  userId: string;
+  nickname: string;
+  bioBlocks: ReviewerBioBlock[];
+  blogUrl: string | null;
+  instagramUrl: string | null;
+  profileUpdatedAt: string | null;
+};
+
+export type ReviewerProfileInput = Pick<MyReviewerProfile, "bioBlocks" | "blogUrl" | "instagramUrl">;
+
 export type ReviewerRankingPage = {
-  content: ReviewerProfile[];
+  content: ReviewerProfileStats[];
   page: number;
   size: number;
   totalElements: number;

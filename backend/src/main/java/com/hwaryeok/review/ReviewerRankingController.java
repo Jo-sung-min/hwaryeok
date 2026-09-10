@@ -10,8 +10,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/reviewers")
 public class ReviewerRankingController {
     private final ReviewReputationService service;
+    private final ReviewerProfileService reviewerProfileService;
 
-    public ReviewerRankingController(ReviewReputationService service) { this.service = service; }
+    public ReviewerRankingController(
+            ReviewReputationService service,
+            ReviewerProfileService reviewerProfileService
+    ) {
+        this.service = service;
+        this.reviewerProfileService = reviewerProfileService;
+    }
 
     @GetMapping("/ranking")
     public ReviewerRankingResponse ranking(@RequestParam(required = false) String skinType,
@@ -21,5 +28,7 @@ public class ReviewerRankingController {
     }
 
     @GetMapping("/{userId}/profile")
-    public ReviewerProfileResponse profile(@PathVariable String userId) { return service.profile(userId); }
+    public ReviewerProfileDtos.PublicResponse profile(@PathVariable String userId) {
+        return reviewerProfileService.publicProfile(service.profile(userId));
+    }
 }

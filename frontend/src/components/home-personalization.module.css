@@ -1,49 +1,66 @@
 .panel {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-  margin-top: 24px;
-  padding: 24px 28px;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 13px 14px 13px 16px;
   border: 1px solid #f0dce3;
-  border-radius: 16px;
+  border-radius: 14px;
   background: #fff8fa;
   color: #25262b;
 }
 
 .content { min-width: 0; }
-.eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; color: #9b3e60; font-size: 12px; font-weight: 700; }
-.applied { display: inline-flex; align-items: center; gap: 3px; margin-left: 3px; padding: 3px 7px; border-radius: 5px; background: #ffffff; color: #72525e; font-size: 11px; }
-.panel h2 { margin: 9px 0 0; font-size: clamp(20px, 1.9vw, 25px); line-height: 1.4; letter-spacing: -.045em; font-weight: 750; word-break: keep-all; overflow-wrap: anywhere; }
-.mobileBreak { display: none; }
-.description { margin: 7px 0 0; color: #62616a; font-size: 13px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
-.chips li { padding: 5px 9px; border: 1px solid #eadce1; border-radius: 6px; background: #ffffff; color: #4a4348; font-size: 12px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
-.actions { display: flex; flex-shrink: 0; flex-direction: column; align-items: stretch; gap: 7px; min-width: 176px; }
-.primary { display: inline-flex; align-items: center; justify-content: center; gap: 16px; min-height: 46px; padding: 11px 19px; border: 1px solid #a64168; border-radius: 8px; background: #a64168; color: #ffffff; font-size: 14px; font-weight: 700; }
-.primary:hover { border-color: #8e3557; background: #8e3557; }
-.secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 9px 12px; border-radius: 8px; color: #59505a; font-size: 12px; font-weight: 600; }
-.secondary:hover { background: #f8eaf0; color: #8e3557; }
-.explanation { margin-top: 7px; max-width: 650px; }
-.explanation summary { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; color: #70606a; font-size: 12px; line-height: 1.6; cursor: pointer; list-style: none; }
-.explanation summary::-webkit-details-marker { display: none; }
-.explanation summary:hover { color: #8e3557; }
-.explanation[open] summary svg { transform: rotate(180deg); }
-.explanation p { margin-top: 5px; color: #66606a; font-size: 13px; line-height: 1.8; word-break: keep-all; }
-.primary:focus-visible, .secondary:focus-visible, .explanation summary:focus-visible { outline: 2px solid #8e3557; outline-offset: 4px; }
+.eyebrow { display: flex; align-items: center; gap: 6px; color: #9b3e60; font-size: 11px; font-weight: 750; }
+.panel h2 { margin: 5px 0 0; font-size: clamp(17px, 4vw, 21px); line-height: 1.33; letter-spacing: -.045em; font-weight: 760; word-break: keep-all; }
 
-@media (min-width: 0) {
-  .panel { align-items: stretch; flex-direction: column; gap: 13px; margin-top: 18px; padding: 19px 20px 14px; border-radius: 12px; }
-  .panel h2 { font-size: 21px; }
-  .mobileBreak { display: block; }
-  .description { font-size: 13px; }
-  .actions { flex-direction: row; align-items: center; gap: 6px; min-width: 0; }
-  .primary { flex: 1; gap: 9px; min-height: 44px; padding: 10px 12px; font-size: 13px; }
-  .secondary { flex: 1; padding: 10px 6px; font-size: 12px; }
+.profileSummary {
+  display: grid;
+  grid-template: "emblem copy" auto "emblem edit" auto / 48px minmax(75px, auto);
+  align-items: center;
+  column-gap: 9px;
+  min-width: 162px;
+  min-height: 64px;
+  padding: 7px 10px 7px 8px;
+  border: 1px solid #ebcfda;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .84);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.profileSummary:hover { border-color: #dca8ba; background: #fff; }
+.emblem { grid-area: emblem; position: relative; display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid #efcad7; border-radius: 15px; background: #fff1f5; color: #b4476d; }
+.emblem > span { position: absolute; right: -4px; bottom: -3px; display: grid; width: 21px; height: 21px; place-items: center; border: 2px solid #fff; border-radius: 7px; background: #eef6f7; color: #688e99; }
+.profileCopy { grid-area: copy; min-width: 0; }
+.profileCopy small { display: block; color: #8b7980; font-size: 9px; font-weight: 650; line-height: 1.3; }
+.profileCopy strong { display: block; margin-top: 2px; color: #a13b61; font-size: 14px; line-height: 1.35; white-space: nowrap; }
+.editLabel { grid-area: edit; display: inline-flex; align-items: center; gap: 4px; align-self: start; color: #665a60; font-size: 10px; font-weight: 650; }
+
+.setup { width: min(185px, 38vw); }
+.setup p { margin: 0 0 5px; color: #756a70; font-size: 10px; line-height: 1.45; word-break: keep-all; }
+.primary { display: inline-flex; width: 100%; min-height: 42px; align-items: center; justify-content: center; gap: 8px; padding: 8px 11px; border: 1px solid #a64168; border-radius: 9px; background: #a64168; color: #fff; font-size: 12px; font-weight: 750; }
+.primary:hover { border-color: #8e3557; background: #8e3557; }
+.primary:focus-visible, .profileSummary:focus-visible { outline: 2px solid #8e3557; outline-offset: 3px; }
+
+@media (max-width: 430px) {
+  .panel { gap: 9px; padding: 11px 10px 11px 12px; }
+  .eyebrow { font-size: 10px; }
+  .panel h2 { font-size: 17px; }
+  .profileSummary { grid-template-columns: 41px minmax(68px, auto); min-width: 137px; min-height: 58px; padding: 6px 7px 6px 6px; column-gap: 7px; }
+  .emblem { width: 40px; height: 40px; border-radius: 13px; }
+  .emblem > svg { width: 25px; }
+  .profileCopy small { display: none; }
+  .profileCopy strong { margin-top: 0; font-size: 13px; }
+  .setup { width: min(148px, 40vw); }
+  .setup p { display: none; }
+  .primary { min-height: 44px; padding-inline: 7px; font-size: 11px; }
 }
 
-@media (max-width: 359px) {
-  .panel { padding-right: 16px; padding-left: 16px; }
-  .panel h2 { font-size: 19px; }
-  .actions { align-items: stretch; flex-direction: column; }
+@media (max-width: 340px) {
+  .panel { grid-template-columns: 1fr; }
+  .profileSummary, .setup { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profileSummary { transition: none; }
 }

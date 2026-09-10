@@ -1,6 +1,6 @@
 import "server-only";
 import type { RisingProductRankingPage } from "@/lib/types";
-import type { ReviewCommunityRating, ReviewerProfile, ReviewerRankingPage } from "@/lib/types";
+import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
 import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
@@ -105,6 +105,9 @@ type ProductQuery = {
   query?: string;
   category?: string;
   grade?: number;
+  ingredientId?: string;
+  minReviewScore?: number;
+  minFirepowerScore?: number;
   concern?: string;
   maxPrice?: number;
   confidence?: "HIGH" | "MEDIUM" | "LOW";
@@ -421,6 +424,9 @@ export function getProductPage(query: ProductQuery = {}): Promise<ProductPage> {
   if (query.query) search.set("query", query.query);
   if (query.category && query.category !== "전체") search.set("category", query.category);
   if (query.grade) search.set("grade", String(query.grade));
+  if (query.ingredientId) search.set("ingredientId", query.ingredientId);
+  if (query.minReviewScore != null) search.set("minReviewScore", String(query.minReviewScore));
+  if (query.minFirepowerScore != null) search.set("minFirepowerScore", String(query.minFirepowerScore));
   if (query.concern) search.set("concern", query.concern);
   if (query.maxPrice) search.set("maxPrice", String(query.maxPrice));
   if (query.confidence) search.set("confidence", query.confidence);
@@ -475,6 +481,20 @@ export function getReviewerRanking(skinType = "", page = 0, size = 20): Promise<
 
 export function getReviewerProfile(userId: string): Promise<ReviewerProfile> {
   return requestJson<ReviewerProfile>(`/reviewers/${encodeURIComponent(userId)}/profile`);
+}
+
+export function getMyReviewerProfile(accessToken: string): Promise<MyReviewerProfile> {
+  return requestJson<MyReviewerProfile>("/users/me/reviewer-profile", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function saveMyReviewerProfile(accessToken: string, input: ReviewerProfileInput): Promise<MyReviewerProfile> {
+  return requestJson<MyReviewerProfile>("/users/me/reviewer-profile", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
 }
 
 export function rateReviewFirepower(accessToken: string, reviewId: string, score: number | null): Promise<ReviewCommunityRating> {

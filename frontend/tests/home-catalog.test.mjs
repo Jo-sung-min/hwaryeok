@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode } from '../src/lib/home-catalog.ts';
+import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, homeProductListHref, readHomeCatalogFilters } from '../src/lib/home-catalog.ts';
 
 const product = (id, extra = {}) => ({ id, name: `제품${id}`, brand: '테스트', category: '앰플', publicationStatus: 'PUBLISHED', imageUrl: '/test.png', ...extra });
 test('guest and unconfigured users never get personalized mode', () => {
@@ -11,8 +11,23 @@ test('guest and unconfigured users never get personalized mode', () => {
 });
 test('category href retains home and safely encodes user input', () => {
   assert.equal(homeCatalogHref(), '/');
-  assert.equal(homeCatalogHref('앰플', 'home-products'), '/?category=%EC%95%B0%ED%94%8C#home-products');
-  assert.equal(homeCatalogHref('a&b'), '/?category=a%26b');
+  assert.equal(homeCatalogHref({ category: '앰플' }, 'home-products'), '/?category=%EC%95%B0%ED%94%8C#home-products');
+  assert.equal(homeCatalogHref({ category: 'a&b' }), '/?category=a%26b');
+});
+test('home filter parser accepts only supported thresholds and bounds identifiers', () => {
+  assert.deepEqual(readHomeCatalogFilters({ category: ['토너', '크림'], ingredientId: 'niacinamide', minReviewScore: '80', minFirepowerScore: '65' }), {
+    category: '토너', ingredientId: 'niacinamide', minReviewScore: 80, minFirepowerScore: 65,
+  });
+  const invalid = readHomeCatalogFilters({ ingredientId: 'x'.repeat(100), minReviewScore: '75', minFirepowerScore: '101' });
+  assert.equal(invalid.ingredientId.length, 64);
+  assert.equal(invalid.minReviewScore, null);
+  assert.equal(invalid.minFirepowerScore, null);
+});
+test('home and product-list links retain every active filter without default noise', () => {
+  const filters = { category: '토너', ingredientId: 'niacinamide', minReviewScore: 80, minFirepowerScore: 65 };
+  assert.equal(homeCatalogHref(filters, 'home-products'), '/?category=%ED%86%A0%EB%84%88&ingredientId=niacinamide&minReviewScore=80&minFirepowerScore=65#home-products');
+  assert.equal(homeProductListHref(filters, true), '/products?category=%ED%86%A0%EB%84%88&ingredientId=niacinamide&minReviewScore=80&minFirepowerScore=65');
+  assert.match(homeProductListHref(filters, false), /&order=name-asc$/);
 });
 test('weekly banner uses ranked products and their review metrics', () => {
   const content = Array.from({length: 12}, (_, index) => ({

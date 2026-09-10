@@ -2,13 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, MessageCircle, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, AtSign, BookOpen, CheckCircle2, MessageCircle, PencilLine, ShieldCheck, UserRound } from "lucide-react";
 import { ApiRequestError, getReviewerProfile, getReviewerReviews } from "@/lib/api";
 import { getCurrentSession, readAuthTokens } from "@/lib/auth-session";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { ReviewerFirepower } from "@/components/reviewer-firepower";
 import { resolveProductImageUrl } from "@/lib/media";
+import { hasMeaningfulReviewerBio, normalizeReviewerBioBlocks } from "@/lib/reviewer-profile";
 import type { ProductTone, ReviewerReview } from "@/lib/types";
+import { DynamicBlockNote } from "@/app/my/reviewer-profile/dynamic-blocknote";
 
 const usagePeriodLabels: Record<ReviewerReview["usagePeriod"], string> = {
   ONE_WEEK: "1주 이내 사용",
@@ -34,11 +36,11 @@ type ReviewerPageProps = {
 export async function generateMetadata({ params }: Pick<ReviewerPageProps, "params">): Promise<Metadata> {
   const { userId } = await params;
   try {
-    const data = await getReviewerReviews(userId, 0, 1);
+    const profile = await getReviewerProfile(userId);
     return {
-      title: `${data.reviewer.nickname}님의 화장품 리뷰`,
-      description: `${data.reviewer.nickname}님이 작성한 실제 사용 리뷰 ${data.reviewCount}개와 평균 리뷰점수를 확인하세요.`,
-      alternates: { canonical: `/reviewers/${data.reviewer.id}` },
+      title: `${profile.nickname}님의 리뷰어 소개`,
+      description: `${profile.nickname}님의 피부 취향과 소개, 연결 채널, 실제 사용 리뷰 ${profile.reviewCount}개를 확인하세요.`,
+      alternates: { canonical: `/reviewers/${profile.userId}` },
     };
   } catch {
     return { title: "리뷰 사용자를 찾을 수 없어요", robots: { index: false, follow: false } };
@@ -54,6 +56,9 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
     const [session, tokens] = await Promise.all([getCurrentSession(), readAuthTokens()]);
     const [data, profile] = await Promise.all([getReviewerReviews(userId, page, 10, session ? tokens.accessToken : undefined), getReviewerProfile(userId)]);
     const averageScore = data.averageReviewScore === null ? "—" : Number(data.averageReviewScore).toFixed(1);
+    const bioBlocks = normalizeReviewerBioBlocks(profile.bioBlocks);
+    const hasBio = hasMeaningfulReviewerBio(bioBlocks);
+    const isOwner = session?.id === profile.userId;
 
     return (
       <div className="min-h-screen pb-24">
@@ -64,10 +69,10 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
               <div className="flex items-center gap-4 sm:gap-5">
                 <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-[#edc6d1] bg-white text-2xl font-bold text-[#b44968] shadow-sm sm:h-20 sm:w-20 sm:text-3xl" aria-hidden="true">{data.reviewer.nickname.slice(0, 1)}</span>
                 <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.15em] text-[#b24b69]"><ShieldCheck size={14} /> REAL USER REVIEWS</p>
-                  <h1 className="mt-2 break-words font-myeongjo text-3xl font-semibold sm:text-4xl">{data.reviewer.nickname}님의 리뷰</h1>
+                  <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.15em] text-[#b24b69]"><ShieldCheck size={14} /> REVIEWER STORY</p>
+                  <h1 className="mt-2 break-words font-myeongjo text-3xl font-semibold sm:text-4xl">{data.reviewer.nickname}님의 화력</h1>
                   <p className="mt-3 inline-flex rounded-full border border-[#ebc7d5] bg-white px-3 py-1.5 text-xs font-semibold text-[#a15070]">{profile.skinType ? `${profile.skinType === "민감" ? "민감성" : profile.skinType} 피부` : "피부타입 미등록"}</p>
-                  <p className="mt-2 text-sm leading-6 text-[#7d6c72]">직접 남긴 제품별 리뷰와 점수를 모아 보여드려요.</p>
+                  <p className="mt-2 text-sm leading-6 text-[#7d6c72]">피부 취향과 직접 남긴 제품 리뷰를 한곳에서 만나보세요.</p>
                 </div>
               </div>
 
@@ -86,7 +91,39 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
           </div>
         </section>
 
-        <section className="container-page py-10 md:py-16">
+        <nav aria-label="리뷰어 소개 메뉴" className="container-page mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-[#f0dce3] bg-white p-1.5">
+          <Link href="#introduction" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#fff0f5] text-xs font-bold text-[#aa4767]"><BookOpen size={15} />소개</Link>
+          <Link href="#reviews" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-xs font-bold text-[#826f77] transition hover:bg-[#fff8fa]"><MessageCircle size={15} />리뷰 {data.reviewCount}</Link>
+        </nav>
+
+        <section id="introduction" className="container-page scroll-mt-24 py-9 sm:py-11" aria-labelledby="introduction-heading">
+          <div className="mb-5 flex items-end justify-between gap-3">
+            <div><p className="eyebrow">ABOUT THIS REVIEWER</p><h2 id="introduction-heading" className="mt-2 font-myeongjo text-2xl font-semibold">리뷰어 소개</h2></div>
+            {isOwner && <Link href="/my/reviewer-profile" className="inline-flex min-h-10 items-center gap-1.5 text-xs font-bold text-[#a54b6c]"><PencilLine size={14} />소개 수정</Link>}
+          </div>
+
+          {hasBio ? (
+            <article className="rounded-[24px] border border-[#eed9e1] bg-white p-5 shadow-[0_10px_30px_rgba(101,53,67,.05)] sm:p-7">
+              <DynamicBlockNote initialContent={bioBlocks} editable={false} />
+            </article>
+          ) : (
+            <div className="rounded-[22px] border border-dashed border-[#dfbdc8] bg-[#fff9fb] px-5 py-9 text-center">
+              <BookOpen className="mx-auto text-[#c47890]" size={25} />
+              <p className="mt-3 text-sm font-semibold text-[#725e66]">{isOwner ? "아직 작성한 소개가 없어요." : "리뷰어가 소개를 준비하고 있어요."}</p>
+              <p className="mt-2 text-xs leading-6 text-[#937f87]">{isOwner ? "나의 리뷰 기준과 피부 취향을 알려주세요." : "아래 실제 사용 리뷰를 먼저 살펴보세요."}</p>
+              {isOwner && <Link href="/my/reviewer-profile" className="line-btn mt-5 !min-h-10 text-xs">소개 작성하기 <ArrowRight size={14} /></Link>}
+            </div>
+          )}
+
+          {(profile.blogUrl || profile.instagramUrl) && (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="리뷰어 외부 채널">
+              {profile.blogUrl && <a href={profile.blogUrl} target="_blank" rel="noopener noreferrer ugc nofollow" className="flex min-h-13 items-center justify-between rounded-2xl border border-[#ead6de] bg-white px-4 text-sm font-bold text-[#8d5068] transition hover:-translate-y-0.5 hover:shadow-md" aria-label={`${profile.nickname}님의 블로그, 새 창 열림`}><span className="inline-flex items-center gap-2"><BookOpen size={17} />블로그</span><ArrowUpRight size={15} /></a>}
+              {profile.instagramUrl && <a href={profile.instagramUrl} target="_blank" rel="noopener noreferrer ugc nofollow" className="flex min-h-13 items-center justify-between rounded-2xl border border-[#ead6de] bg-white px-4 text-sm font-bold text-[#9d486a] transition hover:-translate-y-0.5 hover:shadow-md" aria-label={`${profile.nickname}님의 Instagram, 새 창 열림`}><span className="inline-flex items-center gap-2"><AtSign size={17} />Instagram</span><ArrowUpRight size={15} /></a>}
+            </div>
+          )}
+        </section>
+
+        <section id="reviews" className="container-page scroll-mt-24 border-t border-[#f1e3e8] py-10 md:py-14">
           <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div><p className="eyebrow">REVIEW HISTORY</p><h2 className="mt-2 font-myeongjo text-2xl font-semibold sm:text-3xl">작성한 화장품 리뷰</h2></div>
             <p className="flex items-center gap-1.5 text-xs text-[#88777d]"><CheckCircle2 size={14} className="text-[#bd5875]" /> 제품마다 한 사용자의 리뷰는 하나만 집계돼요.</p>
@@ -107,9 +144,9 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
 
           {data.totalPages > 1 && (
             <nav aria-label="리뷰 페이지" className="mt-9 flex items-center justify-center gap-2">
-              {data.page > 0 && <Link href={`/reviewers/${data.reviewer.id}?page=${data.page - 1}`} className="line-btn !min-h-11">이전</Link>}
+              {data.page > 0 && <Link href={`/reviewers/${data.reviewer.id}?page=${data.page - 1}#reviews`} className="line-btn !min-h-11">이전</Link>}
               <span className="px-3 text-xs font-semibold text-[#806f75]">{data.page + 1} / {data.totalPages}</span>
-              {data.hasNext && <Link href={`/reviewers/${data.reviewer.id}?page=${data.page + 1}`} className="line-btn !min-h-11">다음</Link>}
+              {data.hasNext && <Link href={`/reviewers/${data.reviewer.id}?page=${data.page + 1}#reviews`} className="line-btn !min-h-11">다음</Link>}
             </nav>
           )}
         </section>

@@ -8,9 +8,11 @@ const providerStyles = {
 } as const;
 
 export function SocialLoginButtons({ providers, returnTo }: { providers: OAuthProviderStatus[]; returnTo?: string }) {
+  const visibleProviders = providers.filter((provider) => provider.id === "kakao");
+
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
-      {providers.map((provider) => {
+      {visibleProviders.map((provider) => {
         const style = providerStyles[provider.id];
         const content = (
           <>
@@ -30,8 +32,8 @@ export function SocialLoginButtons({ providers, returnTo }: { providers: OAuthPr
           </span>
         );
       })}
-      {!providers.some((provider) => provider.configured) && (
-        <p className="text-center text-[11px] leading-5 text-[#8a7d74]">백엔드 환경변수에 앱 키를 넣으면 해당 버튼이 자동으로 활성화돼요.</p>
+      {!visibleProviders.some((provider) => provider.configured) && (
+        <p className="text-center text-[11px] leading-5 text-[#8a7d74]">카카오 앱 키를 설정하면 간편 로그인이 활성화돼요.</p>
       )}
     </div>
   );

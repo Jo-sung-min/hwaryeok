@@ -37,6 +37,9 @@ public class ProductController {
             @RequestParam(required = false) String concern,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) String confidence,
+            @RequestParam(required = false) String ingredientId,
+            @RequestParam(required = false) Integer minReviewScore,
+            @RequestParam(required = false) Integer minFirepowerScore,
             @RequestParam(required = false) String skinType,
             @RequestParam(required = false) String hydrationLevel,
             @RequestParam(required = false) String oilinessLevel,
@@ -64,7 +67,9 @@ public class ProductController {
                 mergeConcern(concerns, concern), reactionTriggers, breakoutZones, environments, routineContexts
         );
         return productService.findProducts(
-                query, category, grade, concern, maxPrice, confidence, page, size, sort, direction, profile
+                query, category, grade, concern, maxPrice, confidence,
+                ingredientId, minReviewScore, minFirepowerScore,
+                page, size, sort, direction, profile
         );
     }
 

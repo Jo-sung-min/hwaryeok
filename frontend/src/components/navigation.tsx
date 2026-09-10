@@ -2,21 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowRight, BarChart3, Heart, Home, Search, SlidersHorizontal, UserRound, X } from "lucide-react";
+import { ArrowRight, BarChart3, Home, Search, SlidersHorizontal, UserRound, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./navigation.module.css";
 
 const nav = [
-  { href: "/ranking/personal", label: "내 피부 랭킹" },
-  { href: "/ranking", label: "성분 랭킹" },
-  { href: "/products", label: "화장품" },
-  { href: "/reviewers", label: "리뷰어 랭킹" },
   { href: "/ingredients", label: "성분 사전" },
   { href: "/promotions", label: "화력 추천", sponsored: true },
 ];
 
 function isHeaderActive(pathname: string, href: string) {
-  if (href === "/ranking") return pathname.startsWith(href) && !pathname.startsWith("/ranking/personal");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -30,7 +25,7 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
           <span className={styles.brandName}>화력</span>
           <span className={styles.brandDescription}>나에게 맞는 성분의 발견</span>
         </Link>
-        <nav className={`scrollbar-hide ${styles.primaryNav}`} aria-label="주요 메뉴">
+        <nav className={styles.primaryNav} aria-label="보조 메뉴">
           {nav.map((item) => (
             <Link key={item.href} href={item.href} aria-current={isHeaderActive(pathname, item.href) ? "page" : undefined} className={styles.navLink}>
               {item.label}{item.sponsored && <span className={styles.adLabel}>AD</span>}
@@ -38,10 +33,6 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
           ))}
         </nav>
         <div className={styles.headerActions}>
-          {pathname !== "/" && <Link href="/skin-check" className={styles.skinLink} aria-current={pathname.startsWith("/skin-check") ? "page" : undefined}>
-            <SlidersHorizontal size={16} aria-hidden="true" /> 내 피부 맞춤
-          </Link>}
-          <Link href="/my" aria-label="찜한 제품" className={styles.favoriteLink}><Heart size={19} /></Link>
           {authSlot}
         </div>
       </div>
@@ -102,7 +93,7 @@ export function BottomNav() {
         <div className={styles.bottomItems}>
           {mobileNav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-            const className = `${styles.bottomItem} ${href === "/skin-check" ? styles.personalItem : ""}`;
+            const className = styles.bottomItem;
             const content = <><span className={styles.bottomIcon}><Icon size={21} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /></span>{label}</>;
 
             if (href === "/products") {

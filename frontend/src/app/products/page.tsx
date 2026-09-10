@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { ProductCard } from "@/components/product-ui";
-import { getProductPage } from "@/lib/api";
+import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
-import { CategoryNavigation, DesktopFilters, MobileFilters, ProductSearch, ProductSort, type ProductFilterValues, type ProductSortOrder } from "./product-filters";
+import { AppliedProductFilters, CategoryNavigation, DesktopFilters, MobileFilters, ProductSearch, ProductSort, type ProductFilterValues, type ProductSortOrder } from "./product-filters";
 
 export const metadata: Metadata = {
   title: "화장품 탐색",
@@ -17,6 +17,9 @@ type SearchParams = Promise<{
   query?: string | string[];
   category?: string | string[];
   grade?: string | string[];
+  ingredientId?: string | string[];
+  minReviewScore?: string | string[];
+  minFirepowerScore?: string | string[];
   page?: string | string[];
   order?: string | string[];
   concern?: string | string[];
@@ -41,6 +44,9 @@ function productPageHref(filters: ProductFilterValues, page: number) {
   if (filters.query) search.set("query", filters.query);
   if (filters.category !== "전체") search.set("category", filters.category);
   if (filters.grade !== "전체 등급") search.set("grade", filters.grade.replace("등급", ""));
+  if (filters.ingredientId) search.set("ingredientId", filters.ingredientId);
+  if (filters.minReviewScore) search.set("minReviewScore", filters.minReviewScore);
+  if (filters.minFirepowerScore) search.set("minFirepowerScore", filters.minFirepowerScore);
   if (filters.concern !== "전체 고민") search.set("concern", filters.concern);
   if (filters.maxPrice) search.set("maxPrice", filters.maxPrice);
   if (filters.confidence !== "전체 근거") search.set("confidence", filters.confidence);
@@ -62,21 +68,38 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   const maxPrice = ["20000", "30000", "40000"].includes(rawMaxPrice) ? rawMaxPrice : "";
   const rawConfidence = first(params.confidence).toUpperCase();
   const confidence = ["HIGH", "MEDIUM", "LOW"].includes(rawConfidence) ? rawConfidence : "전체 근거";
+  const rawReviewScore = first(params.minReviewScore);
+  const minReviewScore = ["70", "80", "90"].includes(rawReviewScore) ? rawReviewScore : "";
+  const rawFirepowerScore = first(params.minFirepowerScore);
+  const minFirepowerScore = ["50", "65", "80", "90"].includes(rawFirepowerScore) ? rawFirepowerScore : "";
   const requestedPage = Number.isInteger(rawPage) && rawPage > 0 ? rawPage - 1 : 0;
+  const [favoriteState, savedProfile, rankingOptions] = await Promise.all([
+    getFavoriteViewState(),
+    getOptionalSkinProfile(),
+    getIngredientRankingOptions(),
+  ]);
+  const ingredients = rankingOptions.ingredients.filter((item) => item.productCount > 0);
+  const requestedIngredientId = first(params.ingredientId).trim().slice(0, 64);
+  const ingredientId = ingredients.some((item) => item.id === requestedIngredientId) ? requestedIngredientId : "";
   const filters: ProductFilterValues = {
     query: first(params.query).trim(),
     category: first(params.category) || "전체",
     grade: parsedGrade ? `${parsedGrade}등급` : "전체 등급",
+    ingredientId,
+    minReviewScore,
+    minFirepowerScore,
     concern: first(params.concern) || "전체 고민",
     maxPrice,
     confidence,
     order,
   };
-  const [favoriteState, savedProfile] = await Promise.all([getFavoriteViewState(), getOptionalSkinProfile()]);
   const productPage = await getProductPage({
       query: filters.query || undefined,
       category: filters.category,
       grade: parsedGrade,
+      ingredientId: filters.ingredientId || undefined,
+      minReviewScore: filters.minReviewScore ? Number(filters.minReviewScore) : undefined,
+      minFirepowerScore: filters.minFirepowerScore ? Number(filters.minFirepowerScore) : undefined,
       concern: filters.concern === "전체 고민" ? undefined : filters.concern,
       maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
       confidence: filters.confidence === "전체 근거" ? undefined : filters.confidence as "HIGH" | "MEDIUM" | "LOW",
@@ -104,13 +127,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
 
       <div className="container-page py-7 sm:py-9">
         <CategoryNavigation filters={filters} />
+        <AppliedProductFilters filters={filters} ingredients={ingredients} />
+        {requestedIngredientId && !ingredientId && <p className="mb-5 text-xs text-[#9d3b5e]" role="status">사용할 수 없는 주요 성분 필터를 제외했어요.</p>}
         <div className="mt-7 grid gap-8 lg:grid-cols-[220px_1fr]">
-          <DesktopFilters filters={filters} />
+          <DesktopFilters filters={filters} ingredients={ingredients} />
           <section>
             <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개 제품이 현재 기준과 연결돼요</p>
               <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end">
-                <MobileFilters filters={filters} resultCount={productPage.totalElements} />
+                <MobileFilters filters={filters} ingredients={ingredients} resultCount={productPage.totalElements} />
                 <ProductSort filters={filters} />
               </div>
             </div>

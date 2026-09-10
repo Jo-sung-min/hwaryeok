@@ -1,5 +1,6 @@
 package com.hwaryeok.product;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -19,10 +20,13 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMatchEngine productMatchEngine;
+    private final ProductFilterQuery productFilterQuery;
 
-    public ProductService(ProductRepository productRepository, ProductMatchEngine productMatchEngine) {
+    public ProductService(ProductRepository productRepository, ProductMatchEngine productMatchEngine,
+                          ProductFilterQuery productFilterQuery) {
         this.productRepository = productRepository;
         this.productMatchEngine = productMatchEngine;
+        this.productFilterQuery = productFilterQuery;
     }
 
     public ProductPageResponse findProducts(String query, String category, Integer grade, int page, int size,
@@ -43,11 +47,37 @@ public class ProductService {
             String direction,
             ProductMatchProfile profile
     ) {
-        validatePage(page, size, grade);
+        return findProducts(
+                query, category, grade, concern, maxPrice, confidence,
+                null, null, null, page, size, sort, direction, profile
+        );
+    }
+
+    public ProductPageResponse findProducts(
+            String query,
+            String category,
+            Integer grade,
+            String concern,
+            Integer maxPrice,
+            String confidence,
+            String ingredientId,
+            Integer minReviewScore,
+            Integer minFirepowerScore,
+            int page,
+            int size,
+            String sort,
+            String direction,
+            ProductMatchProfile profile
+    ) {
+        validateFilters(page, size, grade, ingredientId, minReviewScore, minFirepowerScore);
         String normalizedQuery = normalize(query).toLowerCase(Locale.ROOT);
         String normalizedCategory = normalizeCategory(category);
         String normalizedConcern = normalize(concern);
         String normalizedConfidence = normalize(confidence).toUpperCase(Locale.ROOT);
+        String normalizedIngredientId = normalize(ingredientId);
+        Set<String> ingredientProductIds = normalizedIngredientId.isEmpty()
+                ? Set.of()
+                : productFilterQuery.findProductIdsContainingIngredient(normalizedIngredientId);
 
         List<Product> candidates = productRepository.findAllByPublicationStatus(
                 ProductPublicationStatus.PUBLISHED, Sort.by(Sort.Direction.ASC, "id")
@@ -57,16 +87,30 @@ public class ProductService {
                         || product.getBrand().toLowerCase(Locale.ROOT).contains(normalizedQuery))
                 .filter(product -> normalizedCategory.isEmpty() || normalizedCategory.equals(product.getCategory()))
                 .filter(product -> maxPrice == null || maxPrice <= 0 || product.getPrice() <= maxPrice)
+                .filter(product -> normalizedIngredientId.isEmpty() || ingredientProductIds.contains(product.getId()))
                 .toList();
 
         Map<String, ProductMatchResult> matches = productMatchEngine.evaluateAll(candidates, profile);
-        List<ProductResponse> results = candidates.stream()
+        List<ProductResponse> matchedProducts = candidates.stream()
                 .map(product -> ProductResponse.from(product, matches.get(product.getId()), productMatchEngine.scoreBasis()))
                 .filter(product -> grade == null || product.grade() == grade)
                 .filter(product -> normalizedConcern.isEmpty()
                         || matches.get(product.id()).matchedConcerns().contains(normalizedConcern))
                 .filter(product -> normalizedConfidence.isEmpty()
                         || normalizedConfidence.equals(product.confidenceLevel()))
+                .filter(product -> minFirepowerScore == null || product.score() >= minFirepowerScore)
+                .toList();
+
+        Set<String> matchedProductIds = matchedProducts.stream()
+                .map(ProductResponse::id)
+                .collect(java.util.stream.Collectors.toSet());
+        Map<String, BigDecimal> reviewAverages = minReviewScore == null
+                ? Map.of()
+                : productFilterQuery.findActiveReviewAverageScores(matchedProductIds);
+        List<ProductResponse> results = matchedProducts.stream()
+                .filter(product -> minReviewScore == null
+                        || reviewAverages.getOrDefault(product.id(), BigDecimal.valueOf(-1))
+                                .compareTo(BigDecimal.valueOf(minReviewScore)) >= 0)
                 .sorted(productComparator(sort, direction))
                 .toList();
 
@@ -200,11 +244,23 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("제품을 찾을 수 없어요: " + id));
     }
 
-    private void validatePage(int page, int size, Integer grade) {
+    private void validateFilters(int page, int size, Integer grade, String ingredientId,
+                                 Integer minReviewScore, Integer minFirepowerScore) {
         if (page < 0) throw new IllegalArgumentException("페이지 번호는 0 이상이어야 해요.");
         if (size < 1 || size > 50) throw new IllegalArgumentException("페이지 크기는 1~50 사이여야 해요.");
         if (grade != null && (grade < 1 || grade > 5)) {
             throw new IllegalArgumentException("화력 등급은 1~5 사이여야 해요.");
+        }
+        if (normalize(ingredientId).length() > 64) {
+            throw new IllegalArgumentException("성분 ID는 64자 이하여야 해요.");
+        }
+        validateScore("최소 사용자 평점", minReviewScore);
+        validateScore("최소 화력 점수", minFirepowerScore);
+    }
+
+    private void validateScore(String label, Integer score) {
+        if (score != null && (score < 0 || score > 100)) {
+            throw new IllegalArgumentException(label + "는 0~100 사이여야 해요.");
         }
     }
 

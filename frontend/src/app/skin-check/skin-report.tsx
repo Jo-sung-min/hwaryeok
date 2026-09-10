@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Droplets, Flower2, Leaf, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { answerLabel, skinQuestions, type SkinAnswers } from "@/lib/skin-check";
 import { buildSkinReport, populationShare, type SkinTypeStatistics } from "@/lib/skin-report";
@@ -25,7 +26,7 @@ export function SkinReport({ answers, statistics }: { answers: SkinAnswers; stat
     <section className={styles.careGuide} aria-labelledby="skin-care-title">
       <div className={styles.sectionTop}><Sparkles size={18} /><h3 id="skin-care-title">내 피부에는 무엇을 먼저 고르면 좋을까요?</h3></div>
       <p className={styles.careSummary}>{care.summary}</p>
-      <div className={styles.ingredientCards}>{care.ingredients.map(ingredient => <a key={ingredient.name} href={`/ingredients?query=${encodeURIComponent(ingredient.name)}`}><span>{ingredient.role}</span><h4>{ingredient.name}<span aria-hidden="true"> ↗</span></h4><p>{ingredient.reason}</p><small>성분 알아보기 →</small></a>)}</div>
+      <div className={styles.ingredientCards}>{care.ingredients.map(ingredient => <Link key={ingredient.id} href={`/ingredients/${encodeURIComponent(ingredient.id)}`}><span>{ingredient.role}</span><h4>{ingredient.name}<span aria-hidden="true"> ↗</span></h4><p>{ingredient.reason}</p><small>성분 설명과 랭킹 보기 →</small></Link>)}</div>
       <div className={styles.careTexture}><span>추천 제형</span><strong>{care.texture}</strong><p>{care.application}</p></div>
       <div className={styles.careTexture}><strong>{care.check.title}</strong><p>{care.check.text}</p></div>
     </section>

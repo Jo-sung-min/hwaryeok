@@ -142,11 +142,11 @@ function defaults(profile: SkinProfile | null, ingredientIds: string[]) {
   };
 }
 
-export function SkinProfileForm({ nickname, initialProfile, ingredients, initialPreferredIngredientIds, importQuickProfile = false }: { nickname: string; initialProfile: SkinProfile | null; ingredients: Ingredient[]; initialPreferredIngredientIds: string[]; importQuickProfile?: boolean }) {
+export function SkinProfileForm({ nickname, initialProfile, ingredients, initialPreferredIngredientIds, importQuickProfile = false, initialEditing = false }: { nickname: string; initialProfile: SkinProfile | null; ingredients: Ingredient[]; initialPreferredIngredientIds: string[]; importQuickProfile?: boolean; initialEditing?: boolean }) {
   const initial = defaults(initialProfile, initialPreferredIngredientIds);
   const configured = Boolean(initialProfile?.configured && initialProfile.skinType);
   const [hasProfile, setHasProfile] = useState(configured);
-  const [editing, setEditing] = useState(!configured);
+  const [editing, setEditing] = useState(!configured || initialEditing);
   const [step, setStep] = useState(1);
   const [values, setValues] = useState(initial);
   const [savedValues, setSavedValues] = useState(initial);

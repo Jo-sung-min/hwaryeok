@@ -22,6 +22,7 @@ function load(path) {
     if (name === "./skin-check" || name === "@/lib/skin-check") return load("../src/lib/skin-check.ts");
     if (name === "@/lib/skin-report") return load("../src/lib/skin-report.ts");
     if (name === "@/lib/skin-care-guide") return load("../src/lib/skin-care-guide.ts");
+    if (name === "next/link") return ({ children, ...props }) => React.createElement("a", props, children);
     if (name.endsWith(".module.css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
     if (["react", "react/jsx-runtime", "lucide-react"].includes(name)) return require(name);
     throw Error("Unexpected import " + name);
@@ -58,7 +59,10 @@ test("report renders detailed read-only content and labelled cohort percentage",
   assert.match(html, /30명 중 12명/);
   assert.match(html, /프로필을 저장한 화력 회원/);
   assert.match(html, /내 피부에는 무엇을 먼저 고르면 좋을까요/);
-  assert.match(html, /히알루론산|세라마이드/);
+  assert.match(html, /href="\/ingredients\/hyaluronic-acid"/);
+  assert.match(html, /href="\/ingredients\/ceramide-np"/);
+  assert.match(html, /히알루론산|세라마이드 NP/);
+  assert.doesNotMatch(html, /\/ingredients\?query=/);
   assert.match(html, /추천 제형/);
   assert.match(html, /\/principles#skin-guide/);
   assert.doesNotMatch(html, /좋고 나쁨|의학적으로 검증|효과를 보장|임의의 퍼센트|비활성 계정/);
@@ -78,7 +82,9 @@ test("care guidance changes with dryness, oiliness and reported reactions", () =
   const dry = buildSkinCareGuide({ skinType: "건성", hydrationLevel: "LOW" });
   const oily = buildSkinCareGuide({ skinType: "지성", hydrationLevel: "BALANCED" });
   assert.match(dry.texture, /크림/);
-  assert.equal(dry.ingredients[0].name, "세라마이드");
+  assert.deepEqual(Array.from(dry.ingredients, ingredient => ingredient.id), ["ceramide-np", "hyaluronic-acid"]);
+  assert.equal(dry.ingredients[0].name, "세라마이드 NP");
+  assert.deepEqual(Array.from(oily.ingredients, ingredient => ingredient.id), ["hyaluronic-acid", "ceramide-np"]);
   assert.match(oily.texture, /젤·로션/);
   assert.match(oily.check.title, /논코메도제닉/);
   assert.match(buildSkinCareGuide({ skinType: "수부지", hydrationLevel: "LOW" }).summary, /수분 보습/);
@@ -99,6 +105,8 @@ test("personal ranking uses the same guide and explanations remain available on 
   const policy = readFileSync(new URL("../src/app/principles/page.tsx", import.meta.url), "utf8");
   assert.match(ranking, /buildSkinCareGuide\(profile\)/);
   assert.match(ranking, /care\.summary|care\.texture/);
+  assert.match(ranking, /\/ingredients\/\$\{encodeURIComponent\(ingredient\.id\)\}/);
+  assert.doesNotMatch(ranking, /\/ingredients\?query=/);
   assert.match(ranking, /\/principles#skin-guide/);
   assert.doesNotMatch(ranking, /실제 사용감이나 피부 반응을 보장하지/);
   assert.match(policy, /id="skin-guide"/);

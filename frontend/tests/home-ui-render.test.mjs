@@ -16,6 +16,7 @@ const moduleCache = new Map();
 const realModules = new Map([
   ["@/lib/home-catalog", "../src/lib/home-catalog.ts"],
   ["@/lib/home-personalization", "../src/lib/home-personalization.ts"],
+  ["@/lib/skin-check", "../src/lib/skin-check.ts"],
 ]);
 
 // Render the actual component JSX and pure helpers without a Next server or account.
@@ -33,6 +34,7 @@ function loadSource(relativePath) {
   const localModule = { exports: {} };
   const isolatedRequire = (specifier) => {
     if (realModules.has(specifier)) return loadSource(realModules.get(specifier));
+    if (specifier === "react") return require(specifier);
     if (specifier === "react/jsx-runtime") return require(specifier);
     if (specifier === "next/link") return ({ children, ...props }) => React.createElement("a", props, children);
     if (specifier === "lucide-react") return new Proxy({}, {
@@ -79,46 +81,43 @@ const product = (extra = {}) => ({
   matchReasons: ["부족한 수분을 고려한 성분 조합이에요.", "두 번째 내부 근거"], ...extra,
 });
 
-test("guest panel gives skin-check and ingredient links without revealing orphaned profile answers", () => {
+test("guest panel keeps the main message and a single skin-check action without revealing orphaned profile answers", () => {
   for (const profile of [null, savedProfile]) {
     const html = render(HomePersonalization, { user: null, profile });
+    const text = visibleText(html);
     assert.match(html, /data-personalization="guest"/);
     assert.match(html, /href="\/skin-check"[^>]*>나의 성분 찾기/);
-    assert.match(html, /href="\/ranking"[^>]*>성분 직접 고르기/);
-    assert.match(visibleText(html), /로그인 없이 피부 상태를 체크/);
-    assert.doesNotMatch(html, /저장된 내 피부 설정|수부지|수분 부족|유분 많음|적용 중/);
+    assert.match(text, /다른 사람의 1위보다,.*내 피부에 맞는 1위/);
+    assert.match(text, /1분 체크로 내 피부 기준/);
+    assert.doesNotMatch(html, /성분 직접 고르기|수부지|수분 부족|유분 많음/);
   }
 });
 
 test("logged-in but unconfigured users get the save prompt, never a personalized claim", () => {
   const html = render(HomePersonalization, { user, profile: { ...savedProfile, configured: false } });
   assert.match(html, /data-personalization="needs-profile"/);
-  assert.match(visibleText(html), /아직 저장된 피부 설정이 없어요/);
+  assert.match(visibleText(html), /피부 체크 후 결과를 저장할 수 있어요/);
   assert.match(html, /href="\/skin-check"/);
-  assert.doesNotMatch(html, /저장된 내 피부 설정|수부지|수분 부족|적용 중/);
+  assert.doesNotMatch(html, /저장된 피부 타입|수부지|수분 부족/);
 });
 
-test("personalized panel displays saved traits, separate score explanation, and working setting links", () => {
+test("personalized panel shows a compact saved skin type and opens editing directly", () => {
   const html = render(HomePersonalization, { user, profile: savedProfile });
   const text = visibleText(html);
   assert.match(html, /data-personalization="personalized"/);
-  assert.match(html, /aria-label="저장된 내 피부 설정"/);
-  for (const trait of ["수부지", "수분 부족", "유분 많음", "민감도 보통", "적용 중"]) assert.ok(text.includes(trait));
-  assert.equal((html.match(/<li>/g) ?? []).length, 4);
-  assert.match(html, /href="\/ranking\/personal"[^>]*>내 맞춤 랭킹 보기/);
-  assert.match(html, /href="\/profile"[^>]*>피부 설정 수정/);
-  assert.match(text, /리뷰점수나 광고 추천점수와는 별개의 비교 지표/);
-  assert.match(text, /개인별 효과를 보장하지 않아요/);
+  assert.match(html, /aria-label="수부지 경향 설정 수정"/);
+  for (const copy of ["다른 사람의 1위보다", "내 피부에 맞는 1위", "저장된 피부 타입", "수부지 경향", "수정"]) assert.ok(text.includes(copy));
+  assert.match(html, /href="\/profile\?edit=1"/);
+  assert.doesNotMatch(text, /수분 부족|유분 많음|민감도 보통|맞춤 화력은 어떻게/);
   assert.doesNotMatch(html, /private-user-id|private@example|private-concern|private-trigger|private-created-at/);
-  assert.doesNotMatch(html, /href="[^"]*\?/);
 });
 
-test("incomplete saved settings do not invent missing traits or render an empty chips list", () => {
+test("incomplete saved settings do not invent a missing skin type", () => {
   const partial = render(HomePersonalization, { user, profile: { configured: true, oilinessLevel: "BALANCED" } });
-  assert.equal((partial.match(/<li>/g) ?? []).length, 1);
-  assert.match(partial, /유분 균형/);
-  assert.doesNotMatch(partial, /수분 부족|민감도 낮음|건성/);
+  assert.match(partial, /피부 설정 완료/);
+  assert.doesNotMatch(partial, /유분 균형|수분 부족|민감도 낮음|건성/);
   const empty = render(HomePersonalization, { user, profile: { configured: true } });
+  assert.match(empty, /피부 설정 완료/);
   assert.doesNotMatch(empty, /<ul|<li>/);
 });
 

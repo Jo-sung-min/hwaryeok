@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import type { IngredientRankingOption } from "@/lib/types";
 
-const categories = ["전체", "토너", "세럼", "앰플", "에센스", "크림", "선케어", "마스크팩", "젤", "클렌저"];
+const categories = ["전체", "토너", "세럼", "앰플", "에센스", "크림", "로션", "선케어", "마스크팩", "젤", "클렌저"];
 const concernOptions = ["전체 고민", "속건조·당김", "유분·번들거림", "트러블·여드름", "블랙헤드·모공", "붉은기·민감", "장벽·각질", "잡티·칙칙함"];
 
 export type ProductFilterValues = {
   query: string;
   category: string;
   grade: string;
+  ingredientId: string;
+  minReviewScore: string;
+  minFirepowerScore: string;
   concern: string;
   maxPrice: string;
   confidence: string;
@@ -24,6 +28,9 @@ function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues
   if (next.query) params.set("query", next.query);
   if (next.category !== "전체") params.set("category", next.category);
   if (next.grade !== "전체 등급") params.set("grade", next.grade.replace("등급", ""));
+  if (next.ingredientId) params.set("ingredientId", next.ingredientId);
+  if (next.minReviewScore) params.set("minReviewScore", next.minReviewScore);
+  if (next.minFirepowerScore) params.set("minFirepowerScore", next.minFirepowerScore);
   if (next.concern !== "전체 고민") params.set("concern", next.concern);
   if (next.maxPrice) params.set("maxPrice", next.maxPrice);
   if (next.confidence !== "전체 근거") params.set("confidence", next.confidence);
@@ -37,6 +44,9 @@ function HiddenFilters({ filters, includeOrder = true, includeQuery = true }: { 
     {includeQuery && filters.query && <input type="hidden" name="query" value={filters.query} />}
     {filters.category !== "전체" && <input type="hidden" name="category" value={filters.category} />}
     {filters.grade !== "전체 등급" && <input type="hidden" name="grade" value={filters.grade.replace("등급", "")} />}
+    {filters.ingredientId && <input type="hidden" name="ingredientId" value={filters.ingredientId} />}
+    {filters.minReviewScore && <input type="hidden" name="minReviewScore" value={filters.minReviewScore} />}
+    {filters.minFirepowerScore && <input type="hidden" name="minFirepowerScore" value={filters.minFirepowerScore} />}
     {filters.concern !== "전체 고민" && <input type="hidden" name="concern" value={filters.concern} />}
     {filters.maxPrice && <input type="hidden" name="maxPrice" value={filters.maxPrice} />}
     {filters.confidence !== "전체 근거" && <input type="hidden" name="confidence" value={filters.confidence} />}
@@ -74,25 +84,55 @@ export function CategoryNavigation({ filters }: { filters: ProductFilterValues }
   </nav>;
 }
 
-export function DesktopFilters({ filters }: { filters: ProductFilterValues }) {
+export function DesktopFilters({ filters, ingredients }: { filters: ProductFilterValues; ingredients: IngredientRankingOption[] }) {
   return <aside className="hidden lg:block"><div className="glass-panel sticky top-28 rounded-2xl p-5">
     <div className="mb-5 flex items-center justify-between"><strong className="font-myeongjo text-lg">내 기준으로 찾기</strong><SlidersHorizontal size={16} /></div>
-    <AllFilterBlocks filters={filters} />
+    <AllFilterBlocks filters={filters} ingredients={ingredients} />
     <p className="text-[10px] leading-5 text-[#907f76]">선택한 고민과 실제로 연결된 성분이 있는 제품만 보여줘요.</p>
   </div></aside>;
 }
 
-export function MobileFilters({ filters, resultCount }: { filters: ProductFilterValues; resultCount: number }) {
-  return <details className="relative lg:hidden"><summary className="line-btn !min-h-11 !px-3 text-xs [&::-webkit-details-marker]:hidden"><SlidersHorizontal size={15} /> 필터</summary><div className="glass-panel absolute left-0 top-12 z-30 max-h-[70dvh] w-[min(350px,calc(100dvw-32px))] overflow-y-auto rounded-2xl p-5"><AllFilterBlocks filters={filters} /><p className="text-center text-xs text-[#7d6f66]">현재 조건에 {resultCount}개 제품</p></div></details>;
+export function MobileFilters({ filters, ingredients, resultCount }: { filters: ProductFilterValues; ingredients: IngredientRankingOption[]; resultCount: number }) {
+  const count = activeProductFilterCount(filters);
+  return <details className="relative lg:hidden"><summary className={`line-btn !min-h-11 !px-3 text-xs [&::-webkit-details-marker]:hidden ${count ? "!border-[#d87896] !bg-[#fff0f5] !text-[#973153]" : ""}`}><SlidersHorizontal size={15} /> 필터{count ? ` ${count}` : ""}</summary><div className="glass-panel absolute left-0 top-12 z-[70] max-h-[70dvh] w-[min(350px,calc(100dvw-32px))] overscroll-contain overflow-y-auto rounded-2xl p-5 pb-[calc(80px+env(safe-area-inset-bottom))]"><AllFilterBlocks filters={filters} ingredients={ingredients} /><p className="text-center text-xs text-[#7d6f66]">현재 조건에 {resultCount}개 제품</p></div></details>;
 }
 
-function AllFilterBlocks({ filters }: { filters: ProductFilterValues }) {
+function AllFilterBlocks({ filters, ingredients }: { filters: ProductFilterValues; ingredients: IngredientRankingOption[] }) {
   return <>
+    <FilterBlock title="주요 성분" options={[{ label: "전체", value: "" }, ...ingredients.map((item) => ({ label: item.name, value: item.id }))]} selected={filters.ingredientId} filters={filters} filterKey="ingredientId" />
+    <FilterBlock title="리뷰 평점" options={[{ label: "전체", value: "" }, ...[70, 80, 90].map((score) => ({ label: `${score}점 이상`, value: String(score) }))]} selected={filters.minReviewScore} filters={filters} filterKey="minReviewScore" />
+    <FilterBlock title="화력 점수" options={[{ label: "전체", value: "" }, ...[50, 65, 80, 90].map((score) => ({ label: `${score}점 이상`, value: String(score) }))]} selected={filters.minFirepowerScore} filters={filters} filterKey="minFirepowerScore" />
     <FilterBlock title="성분·적합 등급" options={["전체 등급", "1등급", "2등급", "3등급"].map(value => ({ label: value, value }))} selected={filters.grade} filters={filters} filterKey="grade" />
     <FilterBlock title="피부 고민" options={concernOptions.map(value => ({ label: value, value }))} selected={filters.concern} filters={filters} filterKey="concern" />
     <FilterBlock title="가격" options={[{ label: "전체", value: "" }, { label: "2만원 이하", value: "20000" }, { label: "3만원 이하", value: "30000" }, { label: "4만원 이하", value: "40000" }]} selected={filters.maxPrice} filters={filters} filterKey="maxPrice" />
     <FilterBlock title="성분 자료 신뢰" options={[{ label: "전체 근거", value: "전체 근거" }, { label: "높음", value: "HIGH" }, { label: "보통", value: "MEDIUM" }]} selected={filters.confidence} filters={filters} filterKey="confidence" />
   </>;
+}
+
+export function AppliedProductFilters({ filters, ingredients }: { filters: ProductFilterValues; ingredients: IngredientRankingOption[] }) {
+  const ingredient = ingredients.find((item) => item.id === filters.ingredientId);
+  const chips: { key: keyof ProductFilterValues; label: string; active: boolean }[] = [
+    { key: "category", label: `제품 유형 · ${filters.category}`, active: filters.category !== "전체" },
+    { key: "ingredientId", label: `주요 성분 · ${ingredient?.name ?? ""}`, active: Boolean(ingredient) },
+    { key: "minReviewScore", label: `리뷰 평점 · ${filters.minReviewScore}점+`, active: Boolean(filters.minReviewScore) },
+    { key: "minFirepowerScore", label: `화력 점수 · ${filters.minFirepowerScore}점+`, active: Boolean(filters.minFirepowerScore) },
+  ];
+  const visible = chips.filter((chip) => chip.active);
+  if (!visible.length) return null;
+  return <div className="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="적용된 상품 필터">
+    {visible.map((chip) => <Link key={chip.key} href={filterHref(filters, chip.key, chip.key === "category" ? "전체" : "")} scroll={false} className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#d87896] bg-[#fff0f5] px-3 text-xs font-bold text-[#973153]">{chip.label}<X size={13} aria-hidden="true" /></Link>)}
+  </div>;
+}
+
+function activeProductFilterCount(filters: ProductFilterValues) {
+  return Number(filters.category !== "전체")
+    + Number(Boolean(filters.ingredientId))
+    + Number(Boolean(filters.minReviewScore))
+    + Number(Boolean(filters.minFirepowerScore))
+    + Number(filters.grade !== "전체 등급")
+    + Number(filters.concern !== "전체 고민")
+    + Number(Boolean(filters.maxPrice))
+    + Number(filters.confidence !== "전체 근거");
 }
 
 function FilterBlock({ title, options, selected, filters, filterKey }: { title: string; options: FilterOption[]; selected: string; filters: ProductFilterValues; filterKey: keyof ProductFilterValues }) {

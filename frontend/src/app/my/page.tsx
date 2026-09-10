@@ -63,6 +63,7 @@ export default async function MyPage() {
 
     <section className={styles.section}>
       <div className={styles.sectionHead}><h2>나의 활동</h2></div>
+      <MenuRow href="/my/reviewer-profile" title="내 리뷰어 소개" detail="소개·블로그·Instagram 공개 연결 관리" />
       <MenuRow href={`/reviewers/${user.id}`} title="작성 리뷰와 받은 화력" detail={reviewer ? `리뷰 ${reviewer.reviewCount}개 · 받은 평가 ${reviewer.receivedRatingCount}개` : "리뷰 기록 확인"} />
       <MenuRow href="/my/usage-videos" title="내 사용법 영상" detail="영상·유튜브 채널 관리 및 승인 상태" />
     </section>
