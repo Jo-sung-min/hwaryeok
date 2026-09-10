@@ -133,22 +133,24 @@ export function HomeProductFilters({ filters, categories, ingredients, resultCou
     setOpen(false);
   }
 
-  const chipDefinitions: { id: FilterTab; label: string; value: string; active: boolean }[] = [
-    { id: "category", label: "제품 유형", value: filters.category, active: Boolean(filters.category) },
-    { id: "ingredient", label: "주요 성분", value: selectedIngredient?.name ?? "", active: Boolean(selectedIngredient) },
-    { id: "review", label: "리뷰 평점", value: filters.minReviewScore == null ? "" : `${filters.minReviewScore}점+`, active: filters.minReviewScore != null },
-    { id: "firepower", label: "화력 점수", value: filters.minFirepowerScore == null ? "" : `${filters.minFirepowerScore}점+`, active: filters.minFirepowerScore != null },
+  const chipDefinitions: { id: FilterTab; label: string; shortLabel: string; value: string; active: boolean }[] = [
+    { id: "category", label: "제품 유형", shortLabel: "종류", value: filters.category, active: Boolean(filters.category) },
+    { id: "ingredient", label: "주요 성분", shortLabel: "성분", value: selectedIngredient?.name ?? "", active: Boolean(selectedIngredient) },
+    { id: "review", label: "리뷰 평점", shortLabel: "리뷰", value: filters.minReviewScore == null ? "" : `${filters.minReviewScore}점+`, active: filters.minReviewScore != null },
+    { id: "firepower", label: "화력 점수", shortLabel: "화력", value: filters.minFirepowerScore == null ? "" : `${filters.minFirepowerScore}점+`, active: filters.minFirepowerScore != null },
   ];
 
   return <>
     <div className={styles.filterRail} role="group" aria-label="상품 필터">
-      <button type="button" className={`${styles.filterIconButton} ${activeCount ? styles.filterChipActive : ""}`} onClick={(event) => show("category", event)} aria-haspopup="dialog" aria-expanded={open} aria-controls="home-product-filter-sheet" aria-label={`상품 필터${activeCount ? `, ${activeCount}개 적용됨` : " 열기"}`}>
-        <SlidersHorizontal size={17} aria-hidden="true" />
-        {activeCount > 0 && <span>{activeCount}</span>}
-      </button>
-      {chipDefinitions.map((chip) => <button key={chip.id} type="button" className={`${styles.filterChip} ${chip.active ? styles.filterChipActive : ""}`} data-active={chip.active || undefined} onClick={(event) => show(chip.id, event)} aria-haspopup="dialog" aria-expanded={open && activeTab === chip.id} aria-controls="home-product-filter-sheet">
-        <span>{chip.label}{chip.value && <strong> · {chip.value}</strong>}</span><ChevronDown size={14} aria-hidden="true" />
-      </button>)}
+      <div className={styles.filterRailRow}>
+        <button type="button" className={`${styles.filterIconButton} ${activeCount ? styles.filterChipActive : ""}`} onClick={(event) => show("category", event)} aria-haspopup="dialog" aria-expanded={open} aria-controls="home-product-filter-sheet" aria-label={`상품 필터${activeCount ? `, ${activeCount}개 적용됨` : " 열기"}`}>
+          <SlidersHorizontal size={15} aria-hidden="true" />
+          {activeCount > 0 && <span>{activeCount}</span>}
+        </button>
+        {chipDefinitions.map((chip) => <button key={chip.id} type="button" className={`${styles.filterChip} ${chip.active ? styles.filterChipActive : ""}`} data-active={chip.active || undefined} onClick={(event) => show(chip.id, event)} aria-haspopup="dialog" aria-expanded={open && activeTab === chip.id} aria-controls="home-product-filter-sheet" aria-label={`${chip.label}${chip.value ? ` · ${chip.value}` : ""}`} title={`${chip.label}${chip.value ? ` · ${chip.value}` : ""}`}>
+          <span>{chip.shortLabel}{chip.value && <strong> · {chip.value}</strong>}</span><ChevronDown size={12} aria-hidden="true" />
+        </button>)}
+      </div>
     </div>
 
     {open && createPortal(<div className={styles.filterBackdrop} onClick={(event) => { if (event.target === event.currentTarget) close(); }}>

@@ -9,6 +9,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 const require = createRequire(import.meta.url);
 
+function cssDeclarations(css, selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = css.match(new RegExp(`${escapedSelector}\\s*\\{([^}]*)\\}`));
+  assert.ok(match, `Expected a CSS rule for ${selector}`);
+  return match[1];
+}
+
 function loadFilterComponent() {
   const relativePath = "../src/components/home-product-filters.tsx";
   const filename = fileURLToPath(new URL(relativePath, import.meta.url));
@@ -37,7 +44,7 @@ function loadFilterComponent() {
   return localModule.exports.HomeProductFilters;
 }
 
-test("home product filter rail exposes four branded axes and their selected values", () => {
+test("home product filter rail exposes four compact axes and their selected values", () => {
   const HomeProductFilters = loadFilterComponent();
   const html = renderToStaticMarkup(React.createElement(HomeProductFilters, {
     filters: { category: "토너", ingredientId: "niacinamide", minReviewScore: 80, minFirepowerScore: 65 },
@@ -46,10 +53,55 @@ test("home product filter rail exposes four branded axes and their selected valu
     resultCount: 3,
   }));
   const text = html.replace(/<[^>]+>/g, "").replaceAll("&amp;", "&");
-  for (const copy of ["제품 유형 · 토너", "주요 성분 · 나이아신아마이드", "리뷰 평점 · 80점+", "화력 점수 · 65점+"]) assert.ok(text.includes(copy));
+  for (const copy of ["종류 · 토너", "성분 · 나이아신아마이드", "리뷰 · 80점+", "화력 · 65점+"]) assert.ok(text.includes(copy));
+  assert.doesNotMatch(text, /제품 유형 ·|주요 성분 ·|리뷰 평점 ·|화력 점수 ·/);
   assert.match(html, /aria-label="상품 필터, 4개 적용됨"/);
   assert.equal((html.match(/data-active="true"/g) ?? []).length, 4);
   assert.ok((html.match(/filterChipActive/g) ?? []).length >= 4);
+});
+
+test("home product filters render as one compact rail", () => {
+  const HomeProductFilters = loadFilterComponent();
+  const html = renderToStaticMarkup(React.createElement(HomeProductFilters, {
+    filters: { category: "세럼", ingredientId: "ceramide-np", minReviewScore: null, minFirepowerScore: null },
+    categories: [{ name: "세럼", productCount: 5 }],
+    ingredients: [{ id: "ceramide-np", name: "세라마이드 NP", englishName: "Ceramide NP", role: "피부 보호", tags: [], productCount: 4 }],
+    resultCount: 3,
+  }));
+  const rows = [...html.matchAll(/<div class="filterRailRow">([\s\S]*?)<\/div>/g)].map((match) => match[1]);
+
+  assert.equal(rows.length, 1);
+  assert.equal((rows[0].match(/<button\b/g) ?? []).length, 5);
+  const labels = ["종류", "성분", "리뷰", "화력"];
+  let previousIndex = -1;
+  for (const label of labels) {
+    const index = rows[0].indexOf(label);
+    assert.ok(index > previousIndex, `${label} should appear in filter-axis order`);
+    previousIndex = index;
+  }
+});
+
+test("home filter rail is compact and cannot create a horizontal scrollbar", () => {
+  const css = readFileSync(new URL("../src/components/home-catalog.module.css", import.meta.url), "utf8");
+  const rail = cssDeclarations(css, ".filterRail");
+  const row = cssDeclarations(css, ".filterRailRow");
+  const controls = cssDeclarations(css, ".filterIconButton, .filterChip");
+  const chipText = cssDeclarations(css, ".filterChip > span");
+  const chipIcon = cssDeclarations(css, ".filterChip > svg");
+
+  assert.match(rail, /min-width:\s*0/);
+  assert.match(rail, /overflow:\s*(?:hidden|clip)/);
+  assert.doesNotMatch(css, /\.filterRail\s*\{[^}]*overflow-x:\s*auto/);
+  assert.match(row, /display:\s*flex/);
+  assert.match(row, /min-width:\s*0/);
+  assert.doesNotMatch(css, /\.filterRailRow\s*\{[^}]*flex-wrap:\s*(?:wrap|wrap-reverse)/);
+  assert.match(controls, /min-width:\s*0/);
+  assert.match(controls, /min-height:\s*36px/);
+  assert.match(chipText, /min-width:\s*0/);
+  assert.match(chipText, /overflow:\s*hidden/);
+  assert.match(chipText, /text-overflow:\s*ellipsis/);
+  assert.match(chipText, /white-space:\s*nowrap/);
+  assert.match(chipIcon, /(?:flex-shrink:\s*0|flex:\s*0\s+0\s+auto)/);
 });
 
 test("home filter active CSS uses the Hwaryeok pink palette and honors reduced motion", () => {
