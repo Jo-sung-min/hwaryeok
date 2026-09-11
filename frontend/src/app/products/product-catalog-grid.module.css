@@ -1,0 +1,55 @@
+.catalog { min-width: 0; }
+.gridFrame { margin-inline: -12px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1px; row-gap: 28px; margin: 0; padding: 0; list-style: none; }
+.grid > li { min-width: 0; }
+.card { position: relative; min-width: 0; overflow: hidden; background: #fff; }
+.cardLink { display: block; min-width: 0; }
+.imageBox { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #f4f4f5; }
+.productImage { object-fit: cover; object-position: center; transition: transform .22s ease; }
+.imageFallback { display: flex; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #9a929a; background: #f5f4f5; font-size: 10px; text-align: center; }
+.copy { min-width: 0; padding: 10px 10px 0; }
+.brand { display: flex; min-width: 0; align-items: center; gap: 4px; margin: 0 0 5px; color: #77717a; font-size: clamp(9px, 2.2vw, 11px); line-height: 1.45; }
+.brand span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brand span:first-child { color: #514d54; font-weight: 650; }
+.brand span + span::before { content: "·"; margin-right: 4px; color: #aaa4ab; }
+.copy h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 2.9em; overflow: hidden; margin: 0; color: #302d33; font-size: clamp(11px, 2.6vw, 14px); font-weight: 600; letter-spacing: -.025em; line-height: 1.45; overflow-wrap: anywhere; }
+.price { margin: 7px 0 0; overflow: hidden; color: #29262d; font-size: clamp(11px, 2.5vw, 14px); font-weight: 700; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.score { display: flex; min-width: 0; align-items: baseline; gap: 4px; margin: 6px 0 0; color: #a43b61; line-height: 1.35; }
+.score strong { flex: 0 0 auto; font-size: clamp(15px, 3.4vw, 20px); font-variant-numeric: tabular-nums; line-height: 1; }
+.score span { min-width: 0; overflow: hidden; color: #8b828b; font-size: clamp(8px, 1.9vw, 10px); text-overflow: ellipsis; white-space: nowrap; }
+.benefit { margin: 5px 0 0; overflow: hidden; color: #777079; font-size: clamp(9px, 2.1vw, 11px); line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.favorite { position: absolute; z-index: 2; top: 2px; right: 2px; }
+.favorite :global(button) { border-color: transparent !important; background: rgba(255, 255, 255, .88) !important; box-shadow: 0 1px 5px rgba(48, 39, 44, .08) !important; }
+.sentinel { width: 100%; height: 1px; }
+.loadArea { display: grid; min-height: 82px; place-items: center; gap: 8px; padding: 18px 12px 6px; text-align: center; }
+.loadMore { display: inline-flex; min-width: 150px; min-height: 46px; align-items: center; justify-content: center; gap: 7px; border: 1px solid #dfdbe0; border-radius: 10px; color: #4e4951; background: #fff; font-size: 13px; font-weight: 650; }
+.loadMore[aria-disabled="true"] { color: #87818a; cursor: wait; }
+.complete { margin: 0; color: #88818a; font-size: 12px; }
+.error { max-width: 360px; margin: 0; color: #a13d60; font-size: 11px; line-height: 1.6; }
+.spinner { animation: catalog-spin .8s linear infinite; }
+.skeletonImage { aspect-ratio: 3 / 4; background: #f0eef0; animation: catalog-pulse 1.3s ease-in-out infinite; }
+.skeletonCopy { display: grid; gap: 7px; padding: 10px; }
+.skeletonLine { height: 10px; border-radius: 2px; background: #f0eef0; animation: catalog-pulse 1.3s ease-in-out infinite; }
+.skeletonLine:nth-child(2) { width: 82%; }
+.skeletonLine:nth-child(3) { width: 55%; }
+
+@media (max-width: 360px) {
+  .grid { row-gap: 24px; }
+  .copy { padding-inline: 7px; }
+  .brand { gap: 2px; }
+  .brand span + span::before { margin-right: 2px; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cardLink:hover .productImage { transform: scale(1.025); }
+  .cardLink:hover h2 { color: #9e355b; }
+  .loadMore:hover { border-color: #d69ab0; color: #9c345a; background: #fff8fa; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .productImage { transition: none; }
+  .spinner, .skeletonImage, .skeletonLine { animation: none; }
+}
+
+@keyframes catalog-spin { to { transform: rotate(360deg); } }
+@keyframes catalog-pulse { 50% { opacity: .55; } }

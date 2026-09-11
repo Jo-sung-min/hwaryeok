@@ -1,5 +1,6 @@
 package com.hwaryeok.product;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
@@ -14,6 +15,9 @@ public record ProductResponse(
         int score,
         String benefit,
         String subBenefit,
+        BigDecimal netContentValue,
+        ProductNetContentUnit netContentUnit,
+        String netContent,
         int priceValue,
         String price,
         String tone,
@@ -43,6 +47,9 @@ public record ProductResponse(
                 score,
                 product.getBenefit(),
                 product.getSubBenefit(),
+                product.getNetContentValue(),
+                product.getNetContentUnit(),
+                netContent(product),
                 product.getPrice(),
                 product.getPrice() > 0
                         ? NumberFormat.getNumberInstance(Locale.KOREA).format(product.getPrice()) + "원"
@@ -76,6 +83,9 @@ public record ProductResponse(
                 score,
                 product.getBenefit(),
                 product.getSubBenefit(),
+                product.getNetContentValue(),
+                product.getNetContentUnit(),
+                netContent(product),
                 product.getPrice(),
                 product.getPrice() > 0
                         ? NumberFormat.getNumberInstance(Locale.KOREA).format(product.getPrice()) + "원"
@@ -104,5 +114,11 @@ public record ProductResponse(
         if (score >= 65) return 3;
         if (score >= 50) return 4;
         return 5;
+    }
+
+    private static String netContent(Product product) {
+        if (product.getNetContentValue() == null || product.getNetContentUnit() == null) return null;
+        String unit = product.getNetContentUnit() == ProductNetContentUnit.ML ? "mL" : "g";
+        return product.getNetContentValue().stripTrailingZeros().toPlainString() + " " + unit;
     }
 }

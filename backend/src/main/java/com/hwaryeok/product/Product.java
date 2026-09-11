@@ -1,5 +1,6 @@
 package com.hwaryeok.product;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -60,6 +61,13 @@ public class Product {
     @Column(name = "coupang_partners_url", length = 1000)
     private String coupangPartnersUrl;
 
+    @Column(name = "net_content_value", precision = 12, scale = 3)
+    private BigDecimal netContentValue;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "net_content_unit", length = 10)
+    private ProductNetContentUnit netContentUnit;
+
     protected Product() {
     }
 
@@ -71,12 +79,20 @@ public class Product {
     public Product(String id, String brand, String name, String category, int baseScore, String benefit,
                    String subBenefit, int price, String tone, String tag, String imageUrl) {
         this(id, brand, name, category, baseScore, benefit, subBenefit, price, tone, tag, imageUrl,
-                ProductPublicationStatus.PUBLISHED, null, null);
+                ProductPublicationStatus.PUBLISHED, null, null, null, null);
     }
 
     public Product(String id, String brand, String name, String category, int baseScore, String benefit,
                    String subBenefit, int price, String tone, String tag, String imageUrl,
                    ProductPublicationStatus publicationStatus, String sourceUrl, LocalDate sourceCheckedAt) {
+        this(id, brand, name, category, baseScore, benefit, subBenefit, price, tone, tag, imageUrl,
+                publicationStatus, sourceUrl, sourceCheckedAt, null, null);
+    }
+
+    public Product(String id, String brand, String name, String category, int baseScore, String benefit,
+                   String subBenefit, int price, String tone, String tag, String imageUrl,
+                   ProductPublicationStatus publicationStatus, String sourceUrl, LocalDate sourceCheckedAt,
+                   BigDecimal netContentValue, ProductNetContentUnit netContentUnit) {
         this.id = id;
         this.brand = brand;
         this.name = name;
@@ -92,6 +108,8 @@ public class Product {
         this.sourceUrl = sourceUrl;
         this.sourceCheckedAt = sourceCheckedAt;
         this.coupangPartnersUrl = null;
+        this.netContentValue = netContentValue;
+        this.netContentUnit = netContentUnit;
     }
 
     public String getId() { return id; }
@@ -109,6 +127,8 @@ public class Product {
     public String getSourceUrl() { return sourceUrl; }
     public LocalDate getSourceCheckedAt() { return sourceCheckedAt; }
     public String getCoupangPartnersUrl() { return coupangPartnersUrl; }
+    public BigDecimal getNetContentValue() { return netContentValue; }
+    public ProductNetContentUnit getNetContentUnit() { return netContentUnit; }
 
     public void updateImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
@@ -121,7 +141,8 @@ public class Product {
     public void updateDetails(String brand, String name, String category, int baseScore, String benefit,
                               String subBenefit, int price, String tone, String tag,
                               ProductPublicationStatus publicationStatus, String sourceUrl,
-                              LocalDate sourceCheckedAt) {
+                              LocalDate sourceCheckedAt, BigDecimal netContentValue,
+                              ProductNetContentUnit netContentUnit) {
         this.brand = brand;
         this.name = name;
         this.category = category;
@@ -134,5 +155,7 @@ public class Product {
         this.publicationStatus = publicationStatus;
         this.sourceUrl = sourceUrl;
         this.sourceCheckedAt = sourceCheckedAt;
+        this.netContentValue = netContentValue;
+        this.netContentUnit = netContentUnit;
     }
 }

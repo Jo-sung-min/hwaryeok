@@ -82,4 +82,96 @@ class CosmeticDataPipelineServiceTest {
         assertThat(result.verificationStatus()).isEqualTo("PARTIAL");
         assertThat(result.unmatchedIngredients()).containsExactly("아직없는성분");
     }
+
+    @Test
+    void keepsCommaInsideAmountAnnotationAndMatchesOnlyTheIngredientName() {
+        OfficialIngredientListResponse result = service.saveOfficialIngredientList(
+                "rice-sunscreen",
+                new OfficialIngredientListRequest(
+                        "https://beautyofjoseon.com/products/relief-sun",
+                        "조선미녀 맑은 쌀 선크림",
+                        LocalDate.of(2026, 9, 4),
+                        "쌀 추출물(10,000ppm), 나이아신아마이드",
+                        true
+                )
+        );
+
+        assertThat(result.published()).isTrue();
+        assertThat(result.totalIngredientCount()).isEqualTo(2);
+        assertThat(result.matchedIngredientCount()).isEqualTo(2);
+        assertThat(jdbc.queryForObject("""
+                SELECT concentration_note
+                FROM product_ingredients
+                WHERE product_id = 'rice-sunscreen' AND ingredient_id = 'rice-extract'
+                """, String.class)).contains("(10,000ppm)");
+    }
+
+    @Test
+    void preservesVerifiedAmountEvidenceWhenOfficialListOnlyReordersIngredients() {
+        insertVerifiedRiceAmountClaim();
+
+        service.saveOfficialIngredientList(
+                "rice-sunscreen",
+                new OfficialIngredientListRequest(
+                        "https://beautyofjoseon.com/products/relief-sun",
+                        "조선미녀 맑은 쌀 선크림",
+                        LocalDate.of(2026, 9, 4),
+                        "나이아신아마이드, 쌀 추출물",
+                        true
+                )
+        );
+
+        assertThat(jdbc.queryForObject("""
+                SELECT verification_status
+                FROM product_ingredient_amount_claims
+                WHERE product_id = 'rice-sunscreen' AND ingredient_id = 'rice-extract'
+                """, String.class)).isEqualTo("VERIFIED");
+        assertThat(jdbc.queryForObject("""
+                SELECT display_order
+                FROM product_ingredients
+                WHERE product_id = 'rice-sunscreen' AND ingredient_id = 'rice-extract'
+                """, Integer.class)).isEqualTo(2);
+    }
+
+    @Test
+    void marksAmountEvidenceStaleBeforeOfficialListRemovesItsIngredient() {
+        insertVerifiedRiceAmountClaim();
+
+        service.saveOfficialIngredientList(
+                "rice-sunscreen",
+                new OfficialIngredientListRequest(
+                        "https://beautyofjoseon.com/products/relief-sun",
+                        "조선미녀 맑은 쌀 선크림",
+                        LocalDate.of(2026, 9, 4),
+                        "나이아신아마이드",
+                        true
+                )
+        );
+
+        assertThat(jdbc.queryForObject("""
+                SELECT verification_status
+                FROM product_ingredient_amount_claims
+                WHERE product_id = 'rice-sunscreen' AND ingredient_id = 'rice-extract'
+                """, String.class)).isEqualTo("STALE");
+        assertThat(jdbc.queryForObject("""
+                SELECT COUNT(*)
+                FROM product_ingredients
+                WHERE product_id = 'rice-sunscreen' AND ingredient_id = 'rice-extract'
+                """, Long.class)).isZero();
+    }
+
+    private void insertVerifiedRiceAmountClaim() {
+        jdbc.update("""
+                INSERT INTO product_ingredient_amount_claims (
+                    product_id, ingredient_id, kind, min_amount, max_amount, unit, basis, substance_basis,
+                    raw_claim_text, source_type, source_url, page_title, source_ingredient_name, checked_at,
+                    verification_status, review_note, reviewed_at
+                ) VALUES (
+                    'rice-sunscreen', 'rice-extract', 'EXACT', 10000, 10000, 'PPM', 'UNSPECIFIED',
+                    'PURE_INGREDIENT', '쌀 추출물(10,000ppm)', 'BRAND_OFFICIAL',
+                    'https://beautyofjoseon.com/products/relief-sun', '조선미녀 맑은 쌀 선크림',
+                    '쌀 추출물', DATE '2026-09-04', 'VERIFIED', '테스트 공식 근거', CURRENT_TIMESTAMP
+                )
+                """);
+    }
 }

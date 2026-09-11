@@ -33,19 +33,35 @@ public class ProductIngredient {
     @Column(name = "concentration_note", length = 100)
     private String concentrationNote;
 
+    @Column(name = "is_key_ingredient", nullable = false)
+    private boolean keyIngredient;
+
     protected ProductIngredient() {
     }
 
     public ProductIngredient(Product product, Ingredient ingredient, int displayOrder, String concentrationNote) {
+        this(product, ingredient, displayOrder, concentrationNote, false);
+    }
+
+    public ProductIngredient(Product product, Ingredient ingredient, int displayOrder, String concentrationNote,
+                             boolean keyIngredient) {
         this.id = new ProductIngredientId(product.getId(), ingredient.getId());
         this.product = product;
         this.ingredient = ingredient;
         this.displayOrder = displayOrder;
         this.concentrationNote = concentrationNote;
+        this.keyIngredient = keyIngredient;
+    }
+
+    public void updateDetails(int displayOrder, String concentrationNote, boolean keyIngredient) {
+        this.displayOrder = displayOrder;
+        this.concentrationNote = concentrationNote;
+        this.keyIngredient = keyIngredient;
     }
 
     public Product getProduct() { return product; }
     public Ingredient getIngredient() { return ingredient; }
     public int getDisplayOrder() { return displayOrder; }
     public String getConcentrationNote() { return concentrationNote; }
+    public boolean isKeyIngredient() { return keyIngredient; }
 }

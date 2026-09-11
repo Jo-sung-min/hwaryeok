@@ -29,6 +29,7 @@ export function AdminProductItem({
 }) {
   const [open, setOpen] = useState(false);
   const ingredientCount = initialIngredients.totalCount;
+  const verifiedAmountCount = initialIngredients.verifiedAmountCount ?? initialIngredients.ingredients.filter((item) => item.amount?.verificationStatus === "VERIFIED").length;
 
   return (
     <section className="overflow-hidden rounded-[24px] border border-[#dca9b63d] bg-[#fffafc] shadow-[0_14px_34px_rgba(151,76,96,.06)]">
@@ -47,6 +48,7 @@ export function AdminProductItem({
             <StatusBadge status={product.publicationStatus} />
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">{product.score}점</span>
             <span className="rounded-full bg-[#f5eff1] px-2 py-1">성분 {ingredientCount}개</span>
+            {verifiedAmountCount > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 함량 {verifiedAmountCount}개 검증</span>}
             {product.coupangPartnersUrl && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f4] px-2 py-1 font-bold text-[#a34d65]"><BadgeDollarSign size={11} /> 파트너스 연결</span>}
             {mfdsMatch?.matchStatus === "ADMIN_VERIFIED" && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 식약처 연결</span>}
             {mfdsMatch?.matchStatus === "NO_MATCH" && <span className="inline-flex items-center gap-1 rounded-full bg-[#f1eeeb] px-2 py-1 font-bold text-[#71665f]"><CircleAlert size={11} /> 식약처 해당 없음</span>}
@@ -70,7 +72,7 @@ export function AdminProductItem({
           <div className="mt-7 border-t border-[#74513f18] pt-6">
             <div className="flex items-start gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf2e9] text-[#60755c]"><FlaskConical size={17} /></span>
-              <div><div className="text-xs font-bold text-[#6c665b]">제품 성분 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">확인된 성분만 연결하고 표시 순서와 역할 메모를 저장해 주세요.</p></div>
+              <div><div className="text-xs font-bold text-[#6c665b]">제품 성분·공개 함량 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">성분 순서와 역할을 연결하고, 공식 수치가 있을 때만 단위와 출처를 따로 검수해 주세요.</p></div>
             </div>
             <ProductIngredientsForm productId={product.id} availableIngredients={availableIngredients} initialIngredients={initialIngredients} />
           </div>

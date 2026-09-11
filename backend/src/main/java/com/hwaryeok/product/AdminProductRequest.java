@@ -1,8 +1,11 @@
 package com.hwaryeok.product;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -60,13 +63,32 @@ public record AdminProductRequest(
         String sourceUrl,
 
         @PastOrPresent(message = "출처 확인일은 오늘 또는 이전 날짜여야 해요.")
-        LocalDate sourceCheckedAt
+        LocalDate sourceCheckedAt,
+
+        @DecimalMin(value = "0", inclusive = false, message = "순용량은 0보다 커야 해요.")
+        @Digits(integer = 9, fraction = 3, message = "순용량은 정수 9자리, 소수 3자리 이하여야 해요.")
+        BigDecimal netContentValue,
+
+        ProductNetContentUnit netContentUnit
 ) {
+    public AdminProductRequest(
+            String id, String brand, String name, String category, Integer baseScore,
+            String benefit, String subBenefit, Integer price, String tone, String tag,
+            ProductPublicationStatus publicationStatus, String sourceUrl, LocalDate sourceCheckedAt
+    ) {
+        this(id, brand, name, category, baseScore, benefit, subBenefit, price, tone, tag,
+                publicationStatus, sourceUrl, sourceCheckedAt, null, null);
+    }
+
     public Product toProduct() {
+        if ((netContentValue == null) != (netContentUnit == null)) {
+            throw new IllegalArgumentException("순용량 값과 단위를 함께 입력해 주세요.");
+        }
         return new Product(
                 id.strip(), brand.strip(), name.strip(), category.strip(), baseScore,
                 benefit.strip(), subBenefit.strip(), price, tone, normalizeOptional(tag), null,
-                publicationStatus, normalizeOptional(sourceUrl), sourceCheckedAt
+                publicationStatus, normalizeOptional(sourceUrl), sourceCheckedAt,
+                netContentValue, netContentUnit
         );
     }
 

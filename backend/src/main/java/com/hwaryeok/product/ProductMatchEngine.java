@@ -12,7 +12,11 @@ import java.util.Set;
 import com.hwaryeok.ingredient.Ingredient;
 import com.hwaryeok.ingredient.IngredientStatus;
 import com.hwaryeok.ingredient.ProductIngredient;
+import com.hwaryeok.ingredient.ProductIngredientAmountClaim;
+import com.hwaryeok.ingredient.ProductIngredientAmountService;
+import com.hwaryeok.ingredient.ProductIngredientId;
 import com.hwaryeok.ingredient.ProductIngredientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +31,25 @@ public class ProductMatchEngine {
     private static final String SCORE_BASIS = "성분 55% · 피부 적합 35% · 데이터 신뢰 10%";
 
     private final ProductIngredientRepository productIngredientRepository;
+    private final ProductIngredientAmountService productIngredientAmountService;
+
+    @Autowired
+    public ProductMatchEngine(ProductIngredientRepository productIngredientRepository,
+                              ProductIngredientAmountService productIngredientAmountService) {
+        this.productIngredientRepository = productIngredientRepository;
+        this.productIngredientAmountService = productIngredientAmountService;
+    }
 
     public ProductMatchEngine(ProductIngredientRepository productIngredientRepository) {
-        this.productIngredientRepository = productIngredientRepository;
+        this(productIngredientRepository, null);
     }
 
     public ProductMatchResult evaluate(Product product, ProductMatchProfile profile) {
-        return calculate(product, safe(profile), productIngredientRepository.findByProductId(product.getId()));
+        List<ProductIngredient> relations = productIngredientRepository.findByProductId(product.getId());
+        Map<ProductIngredientId, ProductIngredientAmountClaim> claims = productIngredientAmountService == null
+                ? Map.of()
+                : productIngredientAmountService.findVerifiedClaims(Set.of(product.getId()));
+        return calculate(product, safe(profile), relations, claims);
     }
 
     public Map<String, ProductMatchResult> evaluateAll(List<Product> products, ProductMatchProfile profile) {
@@ -43,9 +59,14 @@ public class ProductMatchEngine {
         for (ProductIngredient relation : productIngredientRepository.findByProductIds(ids)) {
             grouped.computeIfAbsent(relation.getProduct().getId(), ignored -> new ArrayList<>()).add(relation);
         }
+        Map<ProductIngredientId, ProductIngredientAmountClaim> claims = productIngredientAmountService == null
+                ? Map.of()
+                : productIngredientAmountService.findVerifiedClaims(ids);
         Map<String, ProductMatchResult> results = new LinkedHashMap<>();
         for (Product product : products) {
-            results.put(product.getId(), calculate(product, safe(profile), grouped.getOrDefault(product.getId(), List.of())));
+            results.put(product.getId(), calculate(
+                    product, safe(profile), grouped.getOrDefault(product.getId(), List.of()), claims
+            ));
         }
         return results;
     }
@@ -54,7 +75,12 @@ public class ProductMatchEngine {
         return SCORE_BASIS;
     }
 
-    private ProductMatchResult calculate(Product product, ProductMatchProfile profile, List<ProductIngredient> relations) {
+    private ProductMatchResult calculate(
+            Product product,
+            ProductMatchProfile profile,
+            List<ProductIngredient> relations,
+            Map<ProductIngredientId, ProductIngredientAmountClaim> claims
+    ) {
         if (relations.isEmpty()) {
             return new ProductMatchResult(
                     42, 42, 50, 15, "LOW",
@@ -66,12 +92,28 @@ public class ProductMatchEngine {
 
         int ingredientQuality = ingredientQuality(relations);
         MatchSignals signals = compatibility(product, profile, relations);
-        int dataConfidence = dataConfidence(product, relations);
+        long verifiedAmountCount = relations.stream()
+                .map(relation -> new ProductIngredientId(product.getId(), relation.getIngredient().getId()))
+                .filter(claims::containsKey)
+                .count();
+        int dataConfidence = dataConfidence(product, relations, verifiedAmountCount);
         int score = clamp((int) Math.round(
                 ingredientQuality * 0.55 + signals.score() * 0.35 + dataConfidence * 0.10
         ), 35, 96);
 
-        List<String> reasons = new ArrayList<>(signals.reasons());
+        List<String> verifiedAmounts = relations.stream()
+                .filter(relation -> claims.containsKey(new ProductIngredientId(
+                        product.getId(), relation.getIngredient().getId()
+                )))
+                .map(relation -> relation.getIngredient().getName())
+                .distinct()
+                .limit(2)
+                .toList();
+        List<String> reasons = new ArrayList<>();
+        if (!verifiedAmounts.isEmpty()) {
+            reasons.add("검수된 출처에서 " + String.join("·", verifiedAmounts) + " 함량 근거를 확인했어요.");
+        }
+        reasons.addAll(signals.reasons());
         List<String> evidenceA = relations.stream()
                 .map(ProductIngredient::getIngredient)
                 .filter(ingredient -> "A".equals(ingredient.getEvidenceLevel()))
@@ -264,7 +306,7 @@ public class ProductMatchEngine {
                 : ingredient.getCaution();
     }
 
-    private int dataConfidence(Product product, List<ProductIngredient> relations) {
+    private int dataConfidence(Product product, List<ProductIngredient> relations, long verifiedAmountCount) {
         int countScore = switch (relations.size()) {
             case 0 -> 15;
             case 1, 2 -> 52;
@@ -284,7 +326,10 @@ public class ProductMatchEngine {
         int sourceScore = product.getSourceUrl() == null || product.getSourceUrl().isBlank()
                 ? 25
                 : product.getSourceCheckedAt() == null ? 55 : 90;
-        return clamp((int) Math.round(countScore * 0.6 + evidenceAverage * 0.3 + sourceScore * 0.1), 10, 96);
+        int amountEvidenceScore = verifiedAmountCount > 0 ? 95 : 30;
+        return clamp((int) Math.round(
+                countScore * 0.50 + evidenceAverage * 0.25 + sourceScore * 0.10 + amountEvidenceScore * 0.15
+        ), 10, 96);
     }
 
     private String confidenceLevel(int score, int ingredientCount) {

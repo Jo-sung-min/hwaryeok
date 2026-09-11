@@ -14,6 +14,8 @@ export function ProductForm({ product }: { product?: Product }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const fieldError = (name: string) => state.fieldErrors?.[name];
   const prefix = product?.id ?? "new";
+  const netContentError = fieldError("netContentValue") ?? fieldError("netContentUnit");
+  const netContentDescriptionId = `${prefix}-net-content-description`;
 
   return (
     <form action={formAction} className="space-y-5">
@@ -30,7 +32,7 @@ export function ProductForm({ product }: { product?: Product }) {
         <input id={`${prefix}-name`} name="name" required maxLength={140} defaultValue={product?.name} placeholder="제품 전체 이름" className={inputClass} />
       </Field>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Field label="카테고리" error={fieldError("category")}>
           <input id={`${prefix}-category`} name="category" required maxLength={40} defaultValue={product?.category} list={`${prefix}-product-categories`} placeholder="크림" className={inputClass} />
         </Field>
@@ -40,6 +42,18 @@ export function ProductForm({ product }: { product?: Product }) {
         <Field label="가격(원)" error={fieldError("price")}>
           <input id={`${prefix}-price`} name="price" type="number" required min={0} step={100} defaultValue={product?.priceValue ?? 0} className={inputClass} />
         </Field>
+        <fieldset className="min-w-0">
+          <legend className={labelClass}>본품 순용량</legend>
+          <span className="mt-2 grid grid-cols-[minmax(0,1fr)_5rem] gap-2">
+            <input aria-label="본품 순용량 수치" aria-describedby={netContentDescriptionId} aria-invalid={Boolean(netContentError)} name="netContentValue" type="number" min={0.001} step="any" defaultValue={product?.netContentValue ?? ""} placeholder="예: 50" className={inputClass.replace("mt-2 ", "")} />
+            <select aria-label="본품 순용량 단위" aria-describedby={netContentDescriptionId} aria-invalid={Boolean(netContentError)} name="netContentUnit" defaultValue={product?.netContentUnit ?? ""} className={inputClass.replace("mt-2 ", "")}>
+              <option value="">단위</option>
+              <option value="ML">mL</option>
+              <option value="G">g</option>
+            </select>
+          </span>
+          <span id={netContentDescriptionId} className={`mt-1.5 block text-xs font-normal leading-5 ${netContentError ? "text-[#a14f61]" : "text-[#917e85]"}`}>{netContentError ?? "기획세트·증정품을 빼고 본품 1개의 용량만 적어 주세요."}</span>
+        </fieldset>
         <Field label="대표 색상" error={fieldError("tone")}>
           <select id={`${prefix}-tone`} name="tone" required defaultValue={product?.tone ?? "rose"} className={inputClass}>
             <option value="rose">로즈</option>

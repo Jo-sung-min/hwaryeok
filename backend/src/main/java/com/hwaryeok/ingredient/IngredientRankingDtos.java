@@ -19,7 +19,8 @@ public final class IngredientRankingDtos {
 
     public record RankedProduct(
             ProductResponse product, Integer rank, Integer firepowerScore,
-            BigDecimal reviewScore, long reviewCount, String concentrationNote
+            BigDecimal reviewScore, long reviewCount, String concentrationNote,
+            IngredientAmountResponse amount
     ) { }
 
     public record RankingResponse(

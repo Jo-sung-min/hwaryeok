@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { ProductCard } from "@/components/product-ui";
 import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
-import { AppliedProductFilters, CategoryNavigation, DesktopFilters, MobileFilters, ProductSearch, ProductSort, type ProductFilterValues, type ProductSortOrder } from "./product-filters";
+import { buildProductCatalogFeedUrl, buildProductCatalogHref, PRODUCT_PAGE_SIZE, productCatalogBackendFilters, readProductCatalogState } from "@/lib/product-catalog";
+import { ProductCatalogGrid } from "./product-catalog-grid";
+import { AppliedProductFilters, CategoryNavigation, MobileFilters, ProductSearch, ProductSort } from "./product-filters";
 
 export const metadata: Metadata = {
   title: "화장품 탐색",
@@ -27,139 +27,68 @@ type SearchParams = Promise<{
   confidence?: string | string[];
 }>;
 
-const productOrders: Record<ProductSortOrder, { sort: "score" | "ingredient" | "price" | "name"; direction: "asc" | "desc" }> = {
-  "score-desc": { sort: "score", direction: "desc" },
-  "ingredient-desc": { sort: "ingredient", direction: "desc" },
-  "price-asc": { sort: "price", direction: "asc" },
-  "price-desc": { sort: "price", direction: "desc" },
-  "name-asc": { sort: "name", direction: "asc" },
-};
-
-function first(value?: string | string[]) {
-  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
-}
-
-function productPageHref(filters: ProductFilterValues, page: number) {
-  const search = new URLSearchParams();
-  if (filters.query) search.set("query", filters.query);
-  if (filters.category !== "전체") search.set("category", filters.category);
-  if (filters.grade !== "전체 등급") search.set("grade", filters.grade.replace("등급", ""));
-  if (filters.ingredientId) search.set("ingredientId", filters.ingredientId);
-  if (filters.minReviewScore) search.set("minReviewScore", filters.minReviewScore);
-  if (filters.minFirepowerScore) search.set("minFirepowerScore", filters.minFirepowerScore);
-  if (filters.concern !== "전체 고민") search.set("concern", filters.concern);
-  if (filters.maxPrice) search.set("maxPrice", filters.maxPrice);
-  if (filters.confidence !== "전체 근거") search.set("confidence", filters.confidence);
-  if (filters.order !== "score-desc") search.set("order", filters.order);
-  if (page > 0) search.set("page", String(page + 1));
-  const suffix = search.toString();
-  return suffix ? `/products?${suffix}` : "/products";
-}
-
 export default async function ProductsPage({ searchParams }: { searchParams: SearchParams }) {
   await connection();
   const params = await searchParams;
-  const gradeValue = first(params.grade);
-  const parsedGrade = /^[1-5]$/.test(gradeValue) ? Number(gradeValue) : undefined;
-  const rawOrder = first(params.order);
-  const order = Object.hasOwn(productOrders, rawOrder) ? rawOrder as ProductSortOrder : "score-desc";
-  const rawPage = Number(first(params.page));
-  const rawMaxPrice = first(params.maxPrice);
-  const maxPrice = ["20000", "30000", "40000"].includes(rawMaxPrice) ? rawMaxPrice : "";
-  const rawConfidence = first(params.confidence).toUpperCase();
-  const confidence = ["HIGH", "MEDIUM", "LOW"].includes(rawConfidence) ? rawConfidence : "전체 근거";
-  const rawReviewScore = first(params.minReviewScore);
-  const minReviewScore = ["70", "80", "90"].includes(rawReviewScore) ? rawReviewScore : "";
-  const rawFirepowerScore = first(params.minFirepowerScore);
-  const minFirepowerScore = ["50", "65", "80", "90"].includes(rawFirepowerScore) ? rawFirepowerScore : "";
-  const requestedPage = Number.isInteger(rawPage) && rawPage > 0 ? rawPage - 1 : 0;
   const [favoriteState, savedProfile, rankingOptions] = await Promise.all([
     getFavoriteViewState(),
     getOptionalSkinProfile(),
     getIngredientRankingOptions(),
   ]);
   const ingredients = rankingOptions.ingredients.filter((item) => item.productCount > 0);
-  const requestedIngredientId = first(params.ingredientId).trim().slice(0, 64);
-  const ingredientId = ingredients.some((item) => item.id === requestedIngredientId) ? requestedIngredientId : "";
-  const filters: ProductFilterValues = {
-    query: first(params.query).trim(),
-    category: first(params.category) || "전체",
-    grade: parsedGrade ? `${parsedGrade}등급` : "전체 등급",
-    ingredientId,
-    minReviewScore,
-    minFirepowerScore,
-    concern: first(params.concern) || "전체 고민",
-    maxPrice,
-    confidence,
-    order,
-  };
+  const validIngredientIds = new Set(ingredients.map((ingredient) => ingredient.id));
+  const { filters, requestedIngredientId, requestedPage } = readProductCatalogState(params, validIngredientIds);
   const productPage = await getProductPage({
-      query: filters.query || undefined,
-      category: filters.category,
-      grade: parsedGrade,
-      ingredientId: filters.ingredientId || undefined,
-      minReviewScore: filters.minReviewScore ? Number(filters.minReviewScore) : undefined,
-      minFirepowerScore: filters.minFirepowerScore ? Number(filters.minFirepowerScore) : undefined,
-      concern: filters.concern === "전체 고민" ? undefined : filters.concern,
-      maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
-      confidence: filters.confidence === "전체 근거" ? undefined : filters.confidence as "HIGH" | "MEDIUM" | "LOW",
+      ...productCatalogBackendFilters(filters),
       profile: savedProfile ?? undefined,
       page: requestedPage,
-      size: 6,
-      ...productOrders[order],
+      size: PRODUCT_PAGE_SIZE,
     });
-  const favoriteIds = new Set(favoriteState.favoriteIds);
-  const currentHref = productPageHref(filters, productPage.page);
-  const visiblePages = Array.from({ length: productPage.totalPages }, (_, index) => index)
-    .filter((page) => Math.abs(page - productPage.page) <= 2);
+  const currentHref = buildProductCatalogHref(filters, productPage.page);
+  const feedUrl = buildProductCatalogFeedUrl(filters);
 
   return (
     <div className="min-h-screen pb-24">
-      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 md:py-20">
-        <div className="container-page text-center">
-          <p className="eyebrow mb-4">PRODUCT REPORTS</p>
-          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-[1.25] sm:text-4xl md:text-5xl">내 피부에 맞는 화장품을 찾아보세요</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#776b62]">브랜드 크기보다 성분 구성과 내 피부 적합도를 먼저 보고, 고민·가격·근거 수준으로 실제 후보를 좁혀보세요.</p>
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><Sparkles size={13} /> 광고비·판매량을 뺀 성분 중심 순서</p>
+      <header className="border-b border-[#ece8eb] bg-white py-6">
+        <div className="container-page">
+          <p className="eyebrow mb-1.5">PRODUCT SEARCH</p>
+          <h1 className="font-myeongjo text-[26px] font-semibold leading-tight">화장품 찾기</h1>
+          <p className="mt-2 text-xs leading-6 text-[#756f78]">성분과 내 피부 기준으로 제품을 빠르게 비교해 보세요.</p>
           <ProductSearch filters={filters} />
         </div>
-      </section>
+      </header>
 
-      <div className="container-page py-7 sm:py-9">
+      <div className="container-page pb-7">
         <CategoryNavigation filters={filters} />
         <AppliedProductFilters filters={filters} ingredients={ingredients} />
-        {requestedIngredientId && !ingredientId && <p className="mb-5 text-xs text-[#9d3b5e]" role="status">사용할 수 없는 주요 성분 필터를 제외했어요.</p>}
-        <div className="mt-7 grid gap-8 lg:grid-cols-[220px_1fr]">
-          <DesktopFilters filters={filters} ingredients={ingredients} />
-          <section>
-            <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-              <p className="text-sm text-[#766a61]"><strong className="text-[#9b4a45]">{productPage.totalElements}</strong>개 제품이 현재 기준과 연결돼요</p>
-              <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end">
-                <MobileFilters filters={filters} ingredients={ingredients} resultCount={productPage.totalElements} />
-                <ProductSort filters={filters} />
-              </div>
+        {requestedIngredientId && !filters.ingredientId && <p className="mb-4 text-xs text-[#9d3b5e]" role="status">사용할 수 없는 주요 성분 필터를 제외했어요.</p>}
+        <section className="mt-2">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="shrink-0 text-xs text-[#716b74]"><strong className="text-sm text-[#9d385d]">{productPage.totalElements}</strong>개 제품</p>
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+              <MobileFilters filters={filters} ingredients={ingredients} resultCount={productPage.totalElements} />
+              <ProductSort filters={filters} />
             </div>
-            {productPage.content.length > 0 ? (
-              <>
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{productPage.content.map(product => <ProductCard key={product.id} product={product} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={currentHref} scoreLabel={savedProfile ? "내 피부 적합도" : "성분 기준 점수"} />)}</div>
-                {productPage.totalPages > 1 && (
-                  <nav aria-label="화장품 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
-                    {productPage.page > 0 && <Link href={productPageHref(filters, productPage.page - 1)} className="glass-choice grid h-11 w-11 place-items-center rounded-full" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
-                    {visiblePages.map((page) => <Link key={page} href={productPageHref(filters, page)} aria-current={page === productPage.page ? "page" : undefined} className="glass-choice grid h-11 w-11 place-items-center rounded-full text-xs">{page + 1}</Link>)}
-                    {productPage.hasNext && <Link href={productPageHref(filters, productPage.page + 1)} className="glass-choice grid h-11 w-11 place-items-center rounded-full" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
-                  </nav>
-                )}
-              </>
-            ) : (
-              <div className="paper-card rounded-3xl py-20 text-center">
-                <span className="text-4xl text-[#d08f7c]">❀</span>
-                <h2 className="mt-5 font-myeongjo text-2xl">조건에 맞는 제품이 없어요.</h2>
-                <p className="mt-2 text-sm text-[#81736a]">검색어나 필터를 조금 줄여보세요.</p>
-                <Link href="/products" className="line-btn mt-6">조건 초기화</Link>
-              </div>
-            )}
-          </section>
-        </div>
+          </div>
+          {productPage.content.length > 0 ? (
+            <ProductCatalogGrid
+              key={`${feedUrl}:${productPage.page}`}
+              initialPage={productPage}
+              favoriteIds={favoriteState.favoriteIds}
+              isAuthenticated={favoriteState.isAuthenticated}
+              returnTo={currentHref}
+              feedUrl={feedUrl}
+              scoreLabel={savedProfile ? "내 피부 적합도" : "성분 화력"}
+            />
+          ) : (
+            <div className="border-y border-[#ece8eb] py-16 text-center">
+              <span className="text-3xl text-[#ca7794]">❀</span>
+              <h2 className="mt-4 font-myeongjo text-xl font-semibold">조건에 맞는 제품이 없어요.</h2>
+              <p className="mt-2 text-xs text-[#817982]">검색어나 필터를 조금 줄여보세요.</p>
+              <Link href="/products" className="line-btn mt-6">조건 초기화</Link>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -22,17 +22,20 @@ public class IngredientService {
     private final ProductService productService;
     private final ProductIngredientSourceService productIngredientSourceService;
     private final IngredientRegulationService ingredientRegulationService;
+    private final ProductIngredientAmountService productIngredientAmountService;
 
     public IngredientService(IngredientRepository ingredientRepository,
                              ProductIngredientRepository productIngredientRepository,
                              ProductService productService,
                              ProductIngredientSourceService productIngredientSourceService,
-                             IngredientRegulationService ingredientRegulationService) {
+                             IngredientRegulationService ingredientRegulationService,
+                             ProductIngredientAmountService productIngredientAmountService) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
         this.productService = productService;
         this.productIngredientSourceService = productIngredientSourceService;
         this.ingredientRegulationService = ingredientRegulationService;
+        this.productIngredientAmountService = productIngredientAmountService;
     }
 
     public IngredientPageResponse findIngredients(String query, String status, String tag, int page, int size,
@@ -67,7 +70,7 @@ public class IngredientService {
     }
 
     public ProductIngredientsResponse findProductIngredients(String productId, String status, String tag) {
-        productService.getProduct(productId);
+        var product = productService.getProduct(productId);
         IngredientStatus parsedStatus = parseStatus(status);
         String normalizedTag = normalize(tag);
         List<ProductIngredient> allRelations = productIngredientRepository.findByProductId(productId);
@@ -80,7 +83,10 @@ public class IngredientService {
                 : ingredientRegulationService.findVerifiedForIngredientIds(
                         filtered.stream().map(relation -> relation.getIngredient().getId()).toList()
                 );
-        return ProductIngredientsResponse.from(productId, allRelations, filtered, source, regulations);
+        return ProductIngredientsResponse.from(
+                productId, allRelations, filtered, source, regulations,
+                productIngredientAmountService.findVerifiedResponses(product)
+        );
     }
 
     private IngredientStatus parseStatus(String status) {

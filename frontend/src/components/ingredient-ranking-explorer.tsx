@@ -66,7 +66,7 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
       axes={[
         { id: "ingredient", param: "ingredient", label: "주요 성분", shortLabel: "성분", value: filters.ingredient, searchable: true, searchPlaceholder: "성분명 또는 역할 검색", options: [{ value: "", label: "전체 성분" }, ...orderedIngredients.map((item) => ({ value: item.id, label: item.name, count: item.productCount, keywords: `${item.englishName} ${item.role} ${item.tags.join(" ")}` }))] },
         { id: "category", param: "category", label: "제품 유형", shortLabel: "종류", value: filters.category, options: [{ value: "", label: "전체 종류", count: totalForIngredient }, ...categoryNames.map((name) => ({ value: name, label: name, count: result.categories.find((item) => item.name === name)?.productCount ?? 0 }))] },
-        { id: "sort", param: "sort", label: "정렬 기준", shortLabel: "정렬", value: filters.sort, defaultValue: "FIREPOWER", options: [{ value: "FIREPOWER", label: selected ? "성분 화력순" : "기본 진열순" }, { value: "REVIEW", label: "리뷰점수순" }] },
+        { id: "sort", param: "sort", label: "정렬 기준", shortLabel: "정렬", value: filters.sort, defaultValue: "FIREPOWER", options: [{ value: "FIREPOWER", label: selected ? "함량 근거 추천순" : "기본 진열순" }, { value: "REVIEW", label: "리뷰점수순" }] },
       ]}
     />
 
@@ -74,7 +74,7 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
     <section id="ranking-products" aria-label="제품 랭킹" className="scroll-mt-28 pt-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-[#57414b]"><h2>{selected?.name ?? "전체 성분"}</h2><ChevronRight size={14} className="text-[#d1aaba]" /><span>{filters.category || "모든 제품"}</span><span className="ml-1 text-[11px] font-normal text-[#a08b94]">{result.totalElements}개</span></div>
-        <span className="text-[11px] text-[#8f7983]">{filters.sort === "REVIEW" ? "리뷰점수순" : selected ? "성분 화력순" : "기본 진열순"}</span>
+        <span className="text-[11px] text-[#8f7983]">{filters.sort === "REVIEW" ? "리뷰점수순" : selected ? "함량 근거 추천순" : "기본 진열순"}</span>
       </div>
       {result.content.length > 0 ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{result.content.map((item) => <IngredientRankingCard key={item.product.id} item={item} ingredientName={result.ingredientName} sort={filters.sort} favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={currentHref} />)}</div> : <div className="rounded-2xl border border-dashed border-[#e3b9c8] bg-[#fffafb] px-5 py-12 text-center">
         <FlaskConical size={26} className="mx-auto text-[#cc7795]" /><h3 className="mt-4 text-lg font-bold">{selected?.name ? `${selected.name} ${filters.category || "제품"}` : filters.category || "선택한 조건"}의 연결된 제품이 아직 없어요</h3><p className="mx-auto mt-2 max-w-md text-xs leading-6 text-[#947f88]">성분이 확인된 상품이 등록되면 이 목록에 자동으로 모여요. 다른 제품 종류도 살펴보세요.</p><Link href={rankingHref(basePath, { ingredient: filters.ingredient, sort: filters.sort })} className="mt-5 inline-flex min-h-10 items-center gap-1 rounded-full border border-[#e6c1ce] bg-white px-4 text-xs font-semibold text-[#af5674]">{selected?.name ?? "전체 성분"}의 모든 제품 <ArrowRight size={13} /></Link>
@@ -87,7 +87,7 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
       </nav>}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#9a8590]">
-        <details className="max-w-2xl"><summary className="cursor-pointer py-2">순위는 어떻게 정해지나요?</summary><p className="pb-3 leading-6">{filters.sort === "REVIEW" ? "실제 사용자 리뷰의 평균점수로 정렬하고, 같은 점수일 때는 리뷰 수를 비교해요. 리뷰가 없는 제품은 순위를 매기지 않고 뒤에 표시해요." : selected ? "선택한 성분이 연결된 제품을 모아 성분 순서·근거·제품 유형을 바탕으로 비교해요. 표시된 점수는 성분 비교 지표이며 실제 함량이나 개인별 효과를 뜻하지 않아요." : "전체 상품은 등록된 기본 점수에 따라 진열해요. 성분을 선택하면 해당 성분의 순서·근거·제품 유형을 반영한 순위로 바뀌어요."} 사용자 리뷰점수는 별도로 집계합니다.</p></details>
+        <details className="max-w-2xl"><summary className="cursor-pointer py-2">순위는 어떻게 정해지나요?</summary><p className="pb-3 leading-6">{filters.sort === "REVIEW" ? "실제 사용자 리뷰의 평균점수로 정렬하고, 같은 점수일 때는 리뷰 수를 비교해요. 리뷰가 없는 제품은 순위를 매기지 않고 뒤에 표시해요." : selected ? "공식 출처로 검증한 공개 함량, 성분 근거, 제품 유형을 함께 봐요. 전성분 순서는 실제 함량이 아니며, 성분별 적정 구간이 확인되지 않았다면 수치가 높다는 이유만으로 더 추천하지 않고 미공개 함량을 0으로 보지도 않아요." : "전체 상품은 등록된 기본 점수에 따라 진열해요. 성분을 선택하면 검증된 함량 자료와 성분 근거를 함께 본 추천순으로 바뀌어요."} 사용자 리뷰점수는 별도로 집계합니다.</p></details>
         {selected && <Link href={`/ingredients/${selected.id}`} className="inline-flex items-center gap-1 font-semibold text-[#b5617f]">{selected.name} 성분 알아보기 <ArrowRight size={12} /></Link>}
       </div>
     </section>

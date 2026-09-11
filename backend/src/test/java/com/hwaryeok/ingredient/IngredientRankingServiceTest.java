@@ -137,6 +137,31 @@ class IngredientRankingServiceTest {
                 """, Integer.class)).isZero();
     }
 
+    @Test
+    void verifiedAmountAddsEvidenceButLargerNumberDoesNotAddMoreScore() {
+        jdbc.update("UPDATE product_ingredients SET display_order = 1 WHERE product_id IN (?, ?)",
+                "ranking-ampoule-a", "ranking-ampoule-b");
+        addAmountClaim("ranking-ampoule-a", "0.1");
+        addAmountClaim("ranking-ampoule-b", "10");
+
+        var ranked = firepowerService.rankProducts(INGREDIENT_ID, 50).products();
+        var lower = ranked.stream().filter(item -> item.product().id().equals("ranking-ampoule-a"))
+                .findFirst().orElseThrow();
+        var higher = ranked.stream().filter(item -> item.product().id().equals("ranking-ampoule-b"))
+                .findFirst().orElseThrow();
+        var withoutClaim = ranked.stream().filter(item -> item.product().id().equals("ranking-toner"))
+                .findFirst().orElseThrow();
+
+        assertThat(lower.amount().displayValue()).isEqualTo("0.1%");
+        assertThat(higher.amount().displayValue()).isEqualTo("10%");
+        assertThat(lower.firepowerScore()).isEqualTo(higher.firepowerScore());
+        assertThat(lower.breakdown().formulationClue()).isEqualTo(16);
+        assertThat(lower.breakdown().amountEvidence()).isEqualTo(4);
+        assertThat(withoutClaim.breakdown().amountEvidence()).isZero();
+        assertThat(service.rank(INGREDIENT_ID, "앰플", "FIREPOWER", 0, 12).content())
+                .allSatisfy(item -> assertThat(item.amount()).isNotNull());
+    }
+
     private void addProduct(String id, String name, String category, String status, int position) {
         jdbc.update("""
                 INSERT INTO products (id, brand, name, category, base_score, benefit, sub_benefit, price, tone, publication_status)
@@ -156,5 +181,18 @@ class IngredientRankingServiceTest {
                 INSERT INTO reviews (id, product_id, user_id, template_id, total_score, content, skin_type, usage_period, repurchase_yn)
                 VALUES (?, ?, ?, 'review-essence-serum-v1', ?, '직접 작성한 테스트 리뷰입니다.', '건성', 'ONE_MONTH', TRUE)
                 """, UUID.randomUUID().toString(), productId, userId, score);
+    }
+
+    private void addAmountClaim(String productId, String amount) {
+        jdbc.update("""
+                INSERT INTO product_ingredient_amount_claims (
+                    product_id, ingredient_id, kind, min_amount, max_amount, unit, basis,
+                    substance_basis, raw_claim_text, source_type, source_url, page_title,
+                    source_ingredient_name, checked_at, verification_status
+                ) VALUES (?, ?, 'EXACT', ?, ?, 'PERCENT', 'W_V', 'PURE_INGREDIENT',
+                          ?, 'TEST_REPORT', ?, '랭킹 함량 시험성적서', '랭킹 테스트 성분',
+                          DATE '2026-09-11', 'VERIFIED')
+                """, productId, INGREDIENT_ID, new java.math.BigDecimal(amount),
+                new java.math.BigDecimal(amount), amount + "%", "https://example.com/" + productId);
     }
 }

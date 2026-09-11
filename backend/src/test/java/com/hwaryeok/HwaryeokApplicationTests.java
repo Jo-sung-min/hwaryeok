@@ -996,7 +996,7 @@ class HwaryeokApplicationTests {
         assertThat(featuredResponse.body()).contains("판테놀", "나이아신아마이드", "세라마이드 NP", "\"evidenceLevel\":\"A\"");
         assertThat(firepowerResponse.statusCode()).isEqualTo(200);
         assertThat(firepowerResponse.body()).contains(
-                "ingredient-firepower-v1", "birch-cream", "firepowerScore", "breakdown", "dataConfidence", "의학적 효능을 보장하지 않아요"
+                "ingredient-firepower-v2", "birch-cream", "firepowerScore", "breakdown", "dataConfidence", "의학적 효능을 보장하지 않아요"
         );
     }
 

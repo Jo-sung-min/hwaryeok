@@ -18,7 +18,12 @@ public record AdminProductIngredientRequest(
             String ingredientId,
 
             @Size(max = 100, message = "성분 메모는 100자 이하여야 해요.")
-            String concentrationNote
+            String concentrationNote,
+
+            Boolean isKeyIngredient
     ) {
+        public Item(String ingredientId, String concentrationNote) {
+            this(ingredientId, concentrationNote, null);
+        }
     }
 }

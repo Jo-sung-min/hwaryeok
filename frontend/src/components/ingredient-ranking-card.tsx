@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { FlaskConical, Star } from "lucide-react";
 import { FavoriteButton, ProductVisual } from "@/components/product-ui";
 import type { IngredientRankingItem, IngredientRankingSort } from "@/lib/types";
 
@@ -26,6 +26,9 @@ export function IngredientRankingCard({ item, ingredientName, sort, favorited, i
         <p className="truncate text-[10px] text-[#9b848e] sm:text-xs">{product.brand} <span className="mx-1 text-[#dccbd2]">·</span> {product.category}</p>
         <h3 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-[#493b41] group-hover:text-[#b3476b] sm:text-[15px]">{product.name}</h3>
         <p className="mt-2 text-xs font-semibold text-[#74606a]">{product.price}</p>
+        {ingredientName && <div className="mt-2 min-h-9 rounded-lg bg-[#fff7f9] px-2.5 py-2 text-[9px] leading-4 text-[#806b73]">
+          {item.amount?.verificationStatus === "VERIFIED" ? <><p className="flex items-center gap-1 font-bold text-[#a04464]"><FlaskConical size={10} /> 공개 함량 {item.amount.displayValue}</p><p>{item.amount.amountPerContainer ?? item.amount.comparisonNote}</p></> : <p><strong className="text-[#76666e]">정확 함량 미공개</strong> · 전성분 순서는 실제 함량이 아니에요</p>}
+        </div>}
         <div className="mt-3 border-t border-[#f4e9ed] pt-3">
           <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><strong className="text-xl font-bold tabular-nums text-[#bb4b70] sm:text-2xl">{score === null ? "—" : Number.isInteger(score) ? score : score.toFixed(1)}</strong><span className="text-[10px] text-[#8d7580]">{showReviewScore ? "리뷰점수 / 100" : "성분 화력 / 100"}</span></div>
           <p className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-[#9a838d]"><Star size={11} className="text-[#cf7893]" />{item.reviewCount > 0 ? `리뷰 ${item.reviewCount}개${!showReviewScore && item.reviewScore !== null ? ` · ${item.reviewScore}점` : ""}` : "첫 리뷰를 기다려요"}</p>

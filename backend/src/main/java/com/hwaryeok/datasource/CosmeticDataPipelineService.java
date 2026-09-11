@@ -34,6 +34,11 @@ class CosmeticDataPipelineService {
     private static final String KCIA_SOURCE = "KCIA_DICTIONARY";
     private static final long MAX_REFERENCE_FILE_BYTES = 15L * 1024 * 1024;
     private static final Pattern SAFE_ID = Pattern.compile("[^a-zA-Z0-9_-]");
+    private static final Pattern TRAILING_QUANTITATIVE_ANNOTATION = Pattern.compile(
+            "(?i)\\s*[\\(（]\\s*(?:약\\s*)?\\d[\\d,]*(?:\\.\\d+)?"
+                    + "(?:\\s*[-~–]\\s*\\d[\\d,]*(?:\\.\\d+)?)?\\s*"
+                    + "(?:%|ppm|ppb|mg\\s*/\\s*(?:g|ml))\\s*[\\)）]\\s*$"
+    );
 
     private final JdbcTemplate jdbc;
     private final ProductService productService;
@@ -259,18 +264,57 @@ class CosmeticDataPipelineService {
         if (unique.size() != matched.size()) {
             throw new IllegalArgumentException("같은 표준 성분으로 해석되는 전성분이 중복돼 있어 원문을 확인해 주세요.");
         }
-        jdbc.update("DELETE FROM product_ingredients WHERE product_id = ?", product.getId());
+
+        Set<String> existingIds = new LinkedHashSet<>(jdbc.query(
+                "SELECT ingredient_id FROM product_ingredients WHERE product_id = ? ORDER BY display_order",
+                (rs, rowNum) -> rs.getString("ingredient_id"),
+                product.getId()
+        ));
+        Set<String> removedIds = new LinkedHashSet<>(existingIds);
+        removedIds.removeAll(unique.keySet());
+        for (String removedId : removedIds) {
+            jdbc.update("""
+                    UPDATE product_ingredient_amount_claims
+                    SET verification_status = 'STALE',
+                        review_note = CASE
+                            WHEN review_note IS NULL OR review_note = '' THEN ?
+                            ELSE review_note || ?
+                        END
+                    WHERE product_id = ? AND ingredient_id = ? AND verification_status <> 'STALE'
+                    """,
+                    "공식 전성분 갱신으로 성분 연결이 제외되어 재검수가 필요해요.",
+                    " · 공식 전성분 갱신으로 성분 연결이 제외되어 재검수가 필요해요.",
+                    product.getId(), removedId
+            );
+            jdbc.update(
+                    "DELETE FROM product_ingredients WHERE product_id = ? AND ingredient_id = ?",
+                    product.getId(), removedId
+            );
+        }
+
+        // 기존 순서를 임시 영역으로 옮긴 다음 최종 순서를 넣어 UNIQUE(product_id, display_order)를 지킵니다.
+        jdbc.update("UPDATE product_ingredients SET display_order = display_order + 10000 WHERE product_id = ?", product.getId());
         int order = 1;
         for (MatchedIngredient item : unique.values()) {
-            jdbc.update("""
-                    INSERT INTO product_ingredients (product_id, ingredient_id, display_order, concentration_note)
-                    VALUES (?, ?, ?, ?)
-                    """, product.getId(), item.ingredientId(), order++, "공식 전성분 · " + checkedAt);
+            int updated = jdbc.update("""
+                    UPDATE product_ingredients
+                    SET display_order = ?, concentration_note = ?
+                    WHERE product_id = ? AND ingredient_id = ?
+                    """, order, officialIngredientNote(item.rawName(), checkedAt), product.getId(), item.ingredientId());
+            if (updated == 0) {
+                jdbc.update("""
+                        INSERT INTO product_ingredients (
+                            product_id, ingredient_id, display_order, concentration_note, is_key_ingredient
+                        ) VALUES (?, ?, ?, ?, FALSE)
+                        """, product.getId(), item.ingredientId(), order,
+                        officialIngredientNote(item.rawName(), checkedAt));
+            }
+            order++;
         }
     }
 
     private MatchedIngredient matchIngredient(String rawIngredient) {
-        String normalized = normalizeName(rawIngredient);
+        String normalized = normalizeName(ingredientNameForMatching(rawIngredient));
         List<ReferenceMatch> candidates = jdbc.query("""
                 SELECT r.source_id, r.source_ingredient_id, r.standard_name, r.english_name
                 FROM cosmetic_ingredient_aliases a
@@ -324,12 +368,44 @@ class CosmeticDataPipelineService {
 
     private List<String> splitIngredients(String rawText) {
         String withoutLabel = rawText.replaceFirst("(?i)^\\s*(전성분|ingredients?)\\s*[:：]?\\s*", "");
-        Set<String> unique = new LinkedHashSet<>();
-        Arrays.stream(withoutLabel.split("[,，\\n\\r]+"))
-                .map(CosmeticDataPipelineService::clean)
-                .filter(value -> !value.isBlank())
-                .forEach(unique::add);
-        return List.copyOf(unique);
+        List<String> ingredients = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int parenthesisDepth = 0;
+        for (int index = 0; index < withoutLabel.length(); index++) {
+            char character = withoutLabel.charAt(index);
+            if (character == '(' || character == '（' || character == '[' || character == '［') {
+                parenthesisDepth++;
+            } else if (character == ')' || character == '）' || character == ']' || character == '］') {
+                parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+            }
+            boolean delimiter = parenthesisDepth == 0
+                    && (character == ',' || character == '，' || character == '\n' || character == '\r');
+            if (delimiter) {
+                addIngredient(ingredients, current);
+            } else {
+                current.append(character);
+            }
+        }
+        addIngredient(ingredients, current);
+        return List.copyOf(ingredients);
+    }
+
+    private void addIngredient(List<String> ingredients, StringBuilder current) {
+        String ingredient = clean(current.toString());
+        current.setLength(0);
+        if (!ingredient.isBlank()) ingredients.add(ingredient);
+    }
+
+    private String ingredientNameForMatching(String rawIngredient) {
+        return TRAILING_QUANTITATIVE_ANNOTATION.matcher(clean(rawIngredient)).replaceFirst("");
+    }
+
+    private String officialIngredientNote(String rawName, LocalDate checkedAt) {
+        String amountAnnotation = clean(rawName).substring(ingredientNameForMatching(rawName).length()).strip();
+        String note = amountAnnotation.isBlank()
+                ? "공식 전성분 · " + checkedAt
+                : "공식 전성분 " + amountAnnotation + " · " + checkedAt;
+        return limit(note, 100);
     }
 
     private List<AliasRow> aliases(KciaIngredientRow row) {

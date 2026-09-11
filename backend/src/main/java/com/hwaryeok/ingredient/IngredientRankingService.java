@@ -38,17 +38,20 @@ public class IngredientRankingService {
     private final ProductRepository productRepository;
     private final ProductIngredientRepository relationRepository;
     private final IngredientFirepowerService firepowerService;
+    private final ProductIngredientAmountService productIngredientAmountService;
     private final JdbcTemplate jdbc;
 
     public IngredientRankingService(IngredientRepository ingredientRepository,
                                     ProductRepository productRepository,
                                     ProductIngredientRepository relationRepository,
                                     IngredientFirepowerService firepowerService,
+                                    ProductIngredientAmountService productIngredientAmountService,
                                     JdbcTemplate jdbc) {
         this.ingredientRepository = ingredientRepository;
         this.productRepository = productRepository;
         this.relationRepository = relationRepository;
         this.firepowerService = firepowerService;
+        this.productIngredientAmountService = productIngredientAmountService;
         this.jdbc = jdbc;
     }
 
@@ -102,14 +105,23 @@ public class IngredientRankingService {
                         ProductIngredientRepository.ProductIngredientCount::getIngredientCount
                 ));
         Map<String, ReviewAggregate> reviews = reviewAggregates(productIds);
+        Map<String, ProductIngredientAmountClaim> amountClaims = ingredient == null
+                ? Map.of()
+                : productIngredientAmountService.findVerifiedClaims(ingredient.getId(), productIds);
         List<RankedProduct> scored = candidates.stream().map(product -> {
             ProductIngredient relation = relations.get(product.getId());
             int firepower = ingredient == null ? product.getBaseScore()
-                    : firepowerService.score(ingredient, relation, ingredientCounts.getOrDefault(product.getId(), 0L)).firepowerScore();
+                    : firepowerService.score(
+                            ingredient, relation, ingredientCounts.getOrDefault(product.getId(), 0L),
+                            amountClaims.get(product.getId())
+                    ).firepowerScore();
             ReviewAggregate review = reviews.get(product.getId());
             return new RankedProduct(ProductResponse.from(product), null, firepower,
                     review == null ? null : review.score(), review == null ? 0L : review.count(),
-                    relation == null ? null : relation.getConcentrationNote());
+                    relation == null ? null : relation.getConcentrationNote(),
+                    relation == null || amountClaims.get(product.getId()) == null
+                            ? null
+                            : IngredientAmountResponse.from(amountClaims.get(product.getId()), product));
         }).sorted(comparator(sort)).toList();
 
         int from = (int) Math.min((long) page * size, scored.size());
@@ -120,7 +132,7 @@ public class IngredientRankingService {
             Integer rank = "REVIEW".equals(sort) && item.reviewCount() == 0 ? null : index + 1;
             content.add(new RankedProduct(item.product(), rank, item.firepowerScore(),
                     item.reviewScore() == null ? null : item.reviewScore().setScale(1, RoundingMode.HALF_UP),
-                    item.reviewCount(), item.concentrationNote()));
+                    item.reviewCount(), item.concentrationNote(), item.amount()));
         }
         int totalPages = scored.isEmpty() ? 0 : (scored.size() + size - 1) / size;
         return new RankingResponse(ingredient == null ? null : ingredient.getId(),

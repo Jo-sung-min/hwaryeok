@@ -1,7 +1,10 @@
 package com.hwaryeok.product;
 
 import com.hwaryeok.ingredient.AdminProductIngredientRequest;
+import com.hwaryeok.ingredient.AdminProductIngredientAmountRequest;
 import com.hwaryeok.ingredient.AdminProductIngredientService;
+import com.hwaryeok.ingredient.IngredientAmountResponse;
+import com.hwaryeok.ingredient.ProductIngredientAmountService;
 import com.hwaryeok.ingredient.ProductIngredientsResponse;
 import com.hwaryeok.user.ActiveUserService;
 import jakarta.validation.Valid;
@@ -30,17 +33,20 @@ public class AdminProductController {
     private final ProductService productService;
     private final ActiveUserService activeUserService;
     private final AdminProductIngredientService adminProductIngredientService;
+    private final ProductIngredientAmountService productIngredientAmountService;
 
     public AdminProductController(
             ProductImageService productImageService,
             ProductService productService,
             ActiveUserService activeUserService,
-            AdminProductIngredientService adminProductIngredientService
+            AdminProductIngredientService adminProductIngredientService,
+            ProductIngredientAmountService productIngredientAmountService
     ) {
         this.productImageService = productImageService;
         this.productService = productService;
         this.activeUserService = activeUserService;
         this.adminProductIngredientService = adminProductIngredientService;
+        this.productIngredientAmountService = productIngredientAmountService;
     }
 
     @GetMapping
@@ -113,5 +119,27 @@ public class AdminProductController {
     ) {
         activeUserService.requireAdmin(jwt.getSubject());
         return adminProductIngredientService.replace(productId, request);
+    }
+
+    @PutMapping("/{productId}/ingredients/{ingredientId}/amount")
+    public IngredientAmountResponse saveIngredientAmount(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @PathVariable String ingredientId,
+            @Valid @RequestBody AdminProductIngredientAmountRequest request
+    ) {
+        var reviewer = activeUserService.requireAdmin(jwt.getSubject());
+        return productIngredientAmountService.save(productId, ingredientId, reviewer.getId(), request);
+    }
+
+    @DeleteMapping("/{productId}/ingredients/{ingredientId}/amount")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteIngredientAmount(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @PathVariable String ingredientId
+    ) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        productIngredientAmountService.delete(productId, ingredientId);
     }
 }

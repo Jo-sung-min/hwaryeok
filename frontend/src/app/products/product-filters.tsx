@@ -1,42 +1,15 @@
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
+import { buildProductCatalogHref, PRODUCT_CATEGORIES, PRODUCT_CONCERNS, type ProductFilterValues, type ProductSortOrder } from "@/lib/product-catalog";
 import type { IngredientRankingOption } from "@/lib/types";
 
-const categories = ["전체", "토너", "세럼", "앰플", "에센스", "크림", "로션", "선케어", "마스크팩", "젤", "클렌저"];
-const concernOptions = ["전체 고민", "속건조·당김", "유분·번들거림", "트러블·여드름", "블랙헤드·모공", "붉은기·민감", "장벽·각질", "잡티·칙칙함"];
-
-export type ProductFilterValues = {
-  query: string;
-  category: string;
-  grade: string;
-  ingredientId: string;
-  minReviewScore: string;
-  minFirepowerScore: string;
-  concern: string;
-  maxPrice: string;
-  confidence: string;
-  order: ProductSortOrder;
-};
-
-export type ProductSortOrder = "score-desc" | "ingredient-desc" | "price-asc" | "price-desc" | "name-asc";
+export type { ProductFilterValues, ProductSortOrder } from "@/lib/product-catalog";
 
 type FilterOption = { label: string; value: string };
 
 function filterHref(current: ProductFilterValues, key: keyof ProductFilterValues, value: string) {
-  const params = new URLSearchParams();
   const next = { ...current, [key]: value };
-  if (next.query) params.set("query", next.query);
-  if (next.category !== "전체") params.set("category", next.category);
-  if (next.grade !== "전체 등급") params.set("grade", next.grade.replace("등급", ""));
-  if (next.ingredientId) params.set("ingredientId", next.ingredientId);
-  if (next.minReviewScore) params.set("minReviewScore", next.minReviewScore);
-  if (next.minFirepowerScore) params.set("minFirepowerScore", next.minFirepowerScore);
-  if (next.concern !== "전체 고민") params.set("concern", next.concern);
-  if (next.maxPrice) params.set("maxPrice", next.maxPrice);
-  if (next.confidence !== "전체 근거") params.set("confidence", next.confidence);
-  if (next.order !== "score-desc") params.set("order", next.order);
-  const queryString = params.toString();
-  return queryString ? `/products?${queryString}` : "/products";
+  return buildProductCatalogHref(next);
 }
 
 function HiddenFilters({ filters, includeOrder = true, includeQuery = true }: { filters: ProductFilterValues; includeOrder?: boolean; includeQuery?: boolean }) {
@@ -80,7 +53,7 @@ export function ProductSort({ filters }: { filters: ProductFilterValues }) {
 
 export function CategoryNavigation({ filters }: { filters: ProductFilterValues }) {
   return <nav aria-label="제품 카테고리" className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto overscroll-x-contain px-4 py-4 sm:mx-0">
-    {categories.map((item) => <Link key={item} href={filterHref(filters, "category", item)} scroll={false} aria-current={filters.category === item ? "page" : undefined} className="glass-choice shrink-0 snap-start rounded-full px-4 py-2.5 text-sm">{item}</Link>)}
+    {PRODUCT_CATEGORIES.map((item) => <Link key={item} href={filterHref(filters, "category", item)} scroll={false} aria-current={filters.category === item ? "page" : undefined} className="glass-choice shrink-0 snap-start rounded-full px-4 py-2.5 text-sm">{item}</Link>)}
   </nav>;
 }
 
@@ -103,7 +76,7 @@ function AllFilterBlocks({ filters, ingredients }: { filters: ProductFilterValue
     <FilterBlock title="리뷰 평점" options={[{ label: "전체", value: "" }, ...[70, 80, 90].map((score) => ({ label: `${score}점 이상`, value: String(score) }))]} selected={filters.minReviewScore} filters={filters} filterKey="minReviewScore" />
     <FilterBlock title="화력 점수" options={[{ label: "전체", value: "" }, ...[50, 65, 80, 90].map((score) => ({ label: `${score}점 이상`, value: String(score) }))]} selected={filters.minFirepowerScore} filters={filters} filterKey="minFirepowerScore" />
     <FilterBlock title="성분·적합 등급" options={["전체 등급", "1등급", "2등급", "3등급"].map(value => ({ label: value, value }))} selected={filters.grade} filters={filters} filterKey="grade" />
-    <FilterBlock title="피부 고민" options={concernOptions.map(value => ({ label: value, value }))} selected={filters.concern} filters={filters} filterKey="concern" />
+    <FilterBlock title="피부 고민" options={PRODUCT_CONCERNS.map(value => ({ label: value, value }))} selected={filters.concern} filters={filters} filterKey="concern" />
     <FilterBlock title="가격" options={[{ label: "전체", value: "" }, { label: "2만원 이하", value: "20000" }, { label: "3만원 이하", value: "30000" }, { label: "4만원 이하", value: "40000" }]} selected={filters.maxPrice} filters={filters} filterKey="maxPrice" />
     <FilterBlock title="성분 자료 신뢰" options={[{ label: "전체 근거", value: "전체 근거" }, { label: "높음", value: "HIGH" }, { label: "보통", value: "MEDIUM" }]} selected={filters.confidence} filters={filters} filterKey="confidence" />
   </>;

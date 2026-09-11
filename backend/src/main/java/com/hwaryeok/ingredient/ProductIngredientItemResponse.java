@@ -13,6 +13,8 @@ public record ProductIngredientItemResponse(
         List<String> tags,
         int displayOrder,
         String concentrationNote,
+        boolean isKeyIngredient,
+        IngredientAmountResponse amount,
         List<IngredientRegulationResponse> regulations
 ) {
     public static ProductIngredientItemResponse from(ProductIngredient relation) {
@@ -21,7 +23,8 @@ public record ProductIngredientItemResponse(
 
     public static ProductIngredientItemResponse from(
             ProductIngredient relation,
-            List<IngredientRegulationResponse> regulations
+            List<IngredientRegulationResponse> regulations,
+            IngredientAmountResponse amount
     ) {
         Ingredient ingredient = relation.getIngredient();
         return new ProductIngredientItemResponse(
@@ -35,7 +38,16 @@ public record ProductIngredientItemResponse(
                 ingredient.getTags().stream().sorted().toList(),
                 relation.getDisplayOrder(),
                 relation.getConcentrationNote(),
+                relation.isKeyIngredient(),
+                amount,
                 regulations == null ? List.of() : List.copyOf(regulations)
         );
+    }
+
+    public static ProductIngredientItemResponse from(
+            ProductIngredient relation,
+            List<IngredientRegulationResponse> regulations
+    ) {
+        return from(relation, regulations, null);
     }
 }

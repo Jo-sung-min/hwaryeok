@@ -17,18 +17,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class IngredientFirepowerService {
 
-    private static final String SCORE_VERSION = "ingredient-firepower-v1";
-    private static final String DISCLAIMER = "화력 점수는 전성분 순서와 공개 근거를 바탕으로 한 비교 지표이며 의학적 효능을 보장하지 않아요.";
+    private static final String SCORE_VERSION = "ingredient-firepower-v2";
+    private static final String DISCLAIMER = "화력 점수는 성분 연결과 검증된 공개 함량 근거를 바탕으로 한 비교 지표예요. 적정 함량 기준이 없는 성분은 수치가 높다고 더 가산하지 않으며 의학적 효능을 보장하지 않아요.";
 
     private final IngredientRepository ingredientRepository;
     private final ProductIngredientRepository productIngredientRepository;
+    private final ProductIngredientAmountService productIngredientAmountService;
 
     public IngredientFirepowerService(
             IngredientRepository ingredientRepository,
-            ProductIngredientRepository productIngredientRepository
+            ProductIngredientRepository productIngredientRepository,
+            ProductIngredientAmountService productIngredientAmountService
     ) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
+        this.productIngredientAmountService = productIngredientAmountService;
     }
 
     public IngredientFirepowerResponse rankProducts(String ingredientId, int limit) {
@@ -51,12 +54,15 @@ public class IngredientFirepowerService {
                                 ProductIngredientRepository.ProductIngredientCount::getProductId,
                                 ProductIngredientRepository.ProductIngredientCount::getIngredientCount
                         ));
+        Map<String, ProductIngredientAmountClaim> amountClaims =
+                productIngredientAmountService.findVerifiedClaims(ingredientId, productIds);
         List<IngredientFirepowerProductResponse> products = relations
                 .stream()
                 .map(relation -> score(
                         ingredient,
                         relation,
-                        ingredientCounts.getOrDefault(relation.getProduct().getId(), 0L)
+                        ingredientCounts.getOrDefault(relation.getProduct().getId(), 0L),
+                        amountClaims.get(relation.getProduct().getId())
                 ))
                 .sorted(Comparator.comparingInt(IngredientFirepowerProductResponse::firepowerScore).reversed()
                         .thenComparing(item -> item.product().name()))
@@ -73,9 +79,22 @@ public class IngredientFirepowerService {
             ProductIngredient relation,
             long ingredientCount
     ) {
+        ProductIngredientAmountClaim claim = productIngredientAmountService.findVerifiedClaims(
+                ingredient.getId(), Set.of(relation.getProduct().getId())
+        ).get(relation.getProduct().getId());
+        return score(ingredient, relation, ingredientCount, claim);
+    }
+
+    IngredientFirepowerProductResponse score(
+            Ingredient ingredient,
+            ProductIngredient relation,
+            long ingredientCount,
+            ProductIngredientAmountClaim claim
+    ) {
         Product product = relation.getProduct();
         int match = 20;
-        int concentration = concentrationScore(relation.getDisplayOrder());
+        int formulationClue = formulationClueScore(relation.getDisplayOrder());
+        int amountEvidence = claim == null ? 0 : 4;
         int evidence = evidenceScore(ingredient.getEvidenceLevel());
         int productType = productTypeScore(product.getCategory());
         int synergy = ingredientCount >= 3 ? 8 : 5;
@@ -84,22 +103,28 @@ public class IngredientFirepowerService {
             case "B" -> 7;
             default -> 5;
         };
-        int dataConfidence = relation.getDisplayOrder() <= 3 ? 5 : 3;
-        int total = Math.clamp(match + concentration + evidence + productType + synergy + stability + dataConfidence, 0, 100);
+        int dataConfidence = claim == null ? 2 : 5;
+        int total = Math.clamp(
+                match + formulationClue + amountEvidence + evidence + productType + synergy + stability + dataConfidence,
+                0,
+                100
+        );
         IngredientFirepowerBreakdown breakdown = new IngredientFirepowerBreakdown(
-                match, concentration, evidence, productType, synergy, stability, dataConfidence
+                match, formulationClue, amountEvidence, evidence, productType, synergy, stability, dataConfidence
         );
         return new IngredientFirepowerProductResponse(
-                ProductResponse.from(product), total, confidence(total), relation.getConcentrationNote(), breakdown
+                ProductResponse.from(product), total, confidence(total), relation.getConcentrationNote(),
+                claim == null ? null : IngredientAmountResponse.from(claim, product), breakdown
         );
     }
 
-    private int concentrationScore(int displayOrder) {
-        if (displayOrder == 1) return 30;
-        if (displayOrder == 2) return 26;
-        if (displayOrder == 3) return 21;
-        if (displayOrder <= 5) return 15;
-        return 8;
+    private int formulationClueScore(int displayOrder) {
+        // 전성분 순서는 처방 단서일 뿐 실제 함량이 아니다. 검증된 수치 근거와 분리해 공개한다.
+        if (displayOrder == 1) return 16;
+        if (displayOrder == 2) return 14;
+        if (displayOrder == 3) return 12;
+        if (displayOrder <= 5) return 9;
+        return 5;
     }
 
     private int evidenceScore(String evidenceLevel) {

@@ -112,7 +112,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
             <div className={styles.heroBody}>
               <p className="text-[11px] font-semibold text-[#837984]">{product.brand} · {product.category}</p>
               <h1 className="mt-2 text-balance font-myeongjo text-[25px] font-semibold leading-[1.35]">{product.name}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"><strong className="text-sm">{product.price}</strong><span className="text-[11px] text-[#8a818a]">{product.benefit} · {product.subBenefit}</span></div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"><strong className="text-sm">{product.price}</strong>{product.netContent && <span className="text-[11px] font-semibold text-[#766b72]">본품 {product.netContent}</span>}<span className="text-[11px] text-[#8a818a]">{product.benefit} · {product.subBenefit}</span></div>
 
               <div className={styles.scoreSummary}>
                 <div className="min-w-0"><span>{savedProfile?.skinType ? "내 피부 적합도" : "예시 피부 적합도"}</span><strong>{analysis.verdict}</strong><small>{analysis.skinType} 기준 · {analysis.grade}등급</small></div>

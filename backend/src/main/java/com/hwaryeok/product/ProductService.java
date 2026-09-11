@@ -161,7 +161,8 @@ public class ProductService {
         product.updateDetails(
                 updated.getBrand(), updated.getName(), updated.getCategory(), updated.getBaseScore(),
                 updated.getBenefit(), updated.getSubBenefit(), updated.getPrice(), updated.getTone(), updated.getTag(),
-                updated.getPublicationStatus(), updated.getSourceUrl(), updated.getSourceCheckedAt()
+                updated.getPublicationStatus(), updated.getSourceUrl(), updated.getSourceCheckedAt(),
+                updated.getNetContentValue(), updated.getNetContentUnit()
         );
         return ProductResponse.from(product);
     }

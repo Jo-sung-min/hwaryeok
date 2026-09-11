@@ -10,6 +10,9 @@ import java.util.Set;
 import com.hwaryeok.ingredient.Ingredient;
 import com.hwaryeok.ingredient.IngredientStatus;
 import com.hwaryeok.ingredient.ProductIngredient;
+import com.hwaryeok.ingredient.ProductIngredientAmountClaim;
+import com.hwaryeok.ingredient.ProductIngredientAmountService;
+import com.hwaryeok.ingredient.ProductIngredientId;
 import com.hwaryeok.ingredient.ProductIngredientRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -47,6 +50,42 @@ class ProductMatchEngineTest {
         assertThat(result.score()).isEqualTo(42);
         assertThat(result.confidenceLevel()).isEqualTo("LOW");
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("보수적으로"));
+    }
+
+    @Test
+    void verifiedAmountOnlyRaisesDataConfidenceAndAlwaysExplainsItsSource() {
+        ProductIngredientRepository repository = Mockito.mock(ProductIngredientRepository.class);
+        ProductIngredientAmountService amountService = Mockito.mock(ProductIngredientAmountService.class);
+        Ingredient ingredient = ingredient(
+                "hyaluronic-acid", "히알루론산", "A", Set.of("보습", "장벽", "진정", "붉은기")
+        );
+        when(ingredient.getSkinTypeFeatures()).thenReturn(Map.of("복합성", "적합"));
+        when(ingredient.getConcernFeatures()).thenReturn(Map.of(
+                "속건조", "적합", "피부 장벽", "적합", "민감", "적합", "붉은기", "적합"
+        ));
+        Product product = new Product(
+                "verified-amount", "테스트", "검증 함량 앰플", "앰플", 90,
+                "보습", "장벽", 20000, "rose", null
+        );
+        ProductIngredient relation = new ProductIngredient(product, ingredient, 1, "전성분 첫 번째", true);
+        ProductIngredientId id = new ProductIngredientId(product.getId(), ingredient.getId());
+        when(repository.findByProductId(product.getId())).thenReturn(List.of(relation));
+        when(amountService.findVerifiedClaims(Set.of(product.getId())))
+                .thenReturn(Map.of(id, Mockito.mock(ProductIngredientAmountClaim.class)));
+
+        ProductMatchProfile richProfile = new ProductMatchProfile(
+                "복합성", "LOW", "HIGH", "HIGH", "FREQUENT", "LONG", "FREQUENT", "HIGH",
+                "LIGHT", "STANDARD", "DAILY",
+                List.of("속건조·당김", "붉은기·민감", "장벽·각질"), List.of(), List.of("볼"),
+                List.of("냉난방 건조"), List.of("메이크업 전", "이중 세안", "고기능성 성분 사용")
+        );
+        ProductMatchResult withoutAmount = new ProductMatchEngine(repository).evaluate(product, richProfile);
+        ProductMatchResult withAmount = new ProductMatchEngine(repository, amountService).evaluate(product, richProfile);
+
+        assertThat(withAmount.ingredientQualityScore()).isEqualTo(withoutAmount.ingredientQualityScore());
+        assertThat(withAmount.compatibilityScore()).isEqualTo(withoutAmount.compatibilityScore());
+        assertThat(withAmount.dataConfidenceScore()).isGreaterThan(withoutAmount.dataConfidenceScore());
+        assertThat(withAmount.reasons()).first().asString().contains("검수된 출처", "함량 근거");
     }
 
     private Ingredient ingredient(String id, String name, String evidence, Set<String> tags) {

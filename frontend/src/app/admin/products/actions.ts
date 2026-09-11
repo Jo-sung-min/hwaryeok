@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   ApiRequestError,
   createAdminProduct,
+  deleteAdminProductIngredientAmount,
   deleteAdminProduct,
   getCurrentUser,
   removeAdminMfdsProductMatch,
@@ -12,6 +13,7 @@ import {
   searchAdminMfdsProductCandidates,
   updateAdminProduct,
   updateAdminProductCoupangPartnersLink,
+  updateAdminProductIngredientAmount,
   updateAdminProductIngredients,
   uploadAdminProductImage,
   type AdminProductInput,
@@ -31,6 +33,11 @@ export type ProductImageActionState = {
 };
 
 export type ProductIngredientsActionState = {
+  success: boolean;
+  message: string;
+};
+
+export type ProductIngredientAmountActionState = {
   success: boolean;
   message: string;
 };
@@ -162,8 +169,9 @@ export async function saveProductIngredientsAction(
       const record = item as Record<string, unknown>;
       const ingredientId = String(record.ingredientId ?? "").trim();
       const concentrationNote = String(record.concentrationNote ?? "").trim();
+      const isKeyIngredient = record.isKeyIngredient === true;
       if (!ingredientId) throw new Error("선택하지 않은 성분이 있어요.");
-      return { ingredientId, concentrationNote: concentrationNote || undefined };
+      return { ingredientId, concentrationNote: concentrationNote || undefined, isKeyIngredient };
     });
     await updateAdminProductIngredients(authorization.accessToken, productId, ingredients);
     revalidateProductPages(productId);
@@ -173,6 +181,79 @@ export async function saveProductIngredientsAction(
       success: false,
       message: error instanceof ApiRequestError || error instanceof Error ? error.message : "성분을 저장하지 못했어요.",
     };
+  }
+}
+
+export async function saveProductIngredientAmountAction(
+  productId: string,
+  ingredientId: string,
+  _previousState: ProductIngredientAmountActionState,
+  formData: FormData,
+): Promise<ProductIngredientAmountActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+
+  try {
+    const kind = oneOf(formData, "kind", ["EXACT", "RANGE", "MINIMUM", "MAXIMUM"] as const);
+    const unit = oneOf(formData, "unit", ["PERCENT", "PPM", "PPB", "MG_PER_G", "MG_PER_ML"] as const);
+    const basis = oneOf(formData, "basis", ["W_W", "W_V", "V_V", "UNSPECIFIED"] as const);
+    const substanceBasis = oneOf(formData, "substanceBasis", ["PURE_INGREDIENT", "RAW_MATERIAL_COMPLEX", "DERIVATIVE_EQUIVALENT"] as const);
+    const sourceType = oneOf(formData, "sourceType", ["BRAND_OFFICIAL", "PACKAGE_LABEL", "MFDS_FUNCTIONAL_REPORT", "TEST_REPORT"] as const);
+    const verificationStatus = oneOf(formData, "verificationStatus", ["DRAFT", "VERIFIED", "STALE"] as const);
+    const amount = positiveNumber(formData, "amount", "함량 수치");
+    const maxValue = String(formData.get("maxAmount") ?? "").trim();
+    const rangeMaximum = maxValue ? positiveNumber(formData, "maxAmount", "범위 최댓값") : undefined;
+    if (kind === "RANGE" && (rangeMaximum === undefined || rangeMaximum <= amount)) {
+      throw new Error("범위 함량은 최댓값을 시작값보다 크게 입력해 주세요.");
+    }
+    if (kind !== "RANGE" && rangeMaximum !== undefined) {
+      throw new Error("범위 함량일 때만 최댓값을 입력할 수 있어요.");
+    }
+
+    const minAmount = kind === "MAXIMUM" ? undefined : amount;
+    const maxAmount = kind === "EXACT" ? amount : kind === "RANGE" ? rangeMaximum : kind === "MAXIMUM" ? amount : undefined;
+
+    await updateAdminProductIngredientAmount(authorization.accessToken, productId, ingredientId, {
+      kind,
+      minAmount,
+      maxAmount,
+      unit,
+      basis,
+      substanceBasis,
+      rawClaimText: requiredText(formData, "rawClaimText", "공식 원문"),
+      sourceType,
+      sourceUrl: requiredText(formData, "sourceUrl", "출처 URL"),
+      pageTitle: requiredText(formData, "pageTitle", "출처 페이지명"),
+      sourceIngredientName: requiredText(formData, "sourceIngredientName", "출처 성분명"),
+      checkedAt: requiredText(formData, "checkedAt", "확인일"),
+      verificationStatus,
+      reviewNote: String(formData.get("reviewNote") ?? "").trim() || undefined,
+    });
+    revalidateProductPages(productId);
+    return { success: true, message: verificationStatus === "VERIFIED" ? "검증된 함량 근거를 공개했어요." : "함량 근거를 검수 상태로 저장했어요." };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof ApiRequestError || error instanceof Error ? error.message : "함량 근거를 저장하지 못했어요.",
+    };
+  }
+}
+
+export async function deleteProductIngredientAmountAction(
+  productId: string,
+  ingredientId: string,
+  _previousState: ProductIngredientAmountActionState,
+  formData: FormData,
+): Promise<ProductIngredientAmountActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  if (formData.get("confirmation") !== ingredientId) return { success: false, message: "삭제할 성분 함량을 다시 확인해 주세요." };
+  try {
+    await deleteAdminProductIngredientAmount(authorization.accessToken, productId, ingredientId);
+    revalidateProductPages(productId);
+    return { success: true, message: "함량 근거를 삭제했어요. 성분 연결은 유지됩니다." };
+  } catch (error) {
+    return { success: false, message: error instanceof ApiRequestError || error instanceof Error ? error.message : "함량 근거를 삭제하지 못했어요." };
   }
 }
 
@@ -265,6 +346,15 @@ function productInput(formData: FormData): AdminProductInput {
   if (!["peach", "sage", "sand", "rose", "blue"].includes(tone)) {
     throw new Error("대표 색상을 다시 선택해 주세요.");
   }
+  const netContentText = String(formData.get("netContentValue") ?? "").trim();
+  const netContentUnit = String(formData.get("netContentUnit") ?? "").trim();
+  const netContentValue = netContentText ? Number(netContentText) : undefined;
+  if ((netContentText && !["ML", "G"].includes(netContentUnit)) || (!netContentText && netContentUnit)) {
+    throw new Error("본품 순용량의 수치와 단위를 함께 입력해 주세요.");
+  }
+  if (netContentValue !== undefined && (!Number.isFinite(netContentValue) || netContentValue <= 0)) {
+    throw new Error("본품 순용량은 0보다 큰 숫자로 입력해 주세요.");
+  }
   return {
     id: String(formData.get("id") ?? "").trim(),
     brand: String(formData.get("brand") ?? "").trim(),
@@ -274,12 +364,33 @@ function productInput(formData: FormData): AdminProductInput {
     benefit: String(formData.get("benefit") ?? "").trim(),
     subBenefit: String(formData.get("subBenefit") ?? "").trim(),
     price: Number(formData.get("price")),
+    netContentValue,
+    netContentUnit: netContentUnit ? netContentUnit as AdminProductInput["netContentUnit"] : undefined,
     tone: tone as AdminProductInput["tone"],
     tag: String(formData.get("tag") ?? "").trim() || undefined,
     publicationStatus: String(formData.get("publicationStatus") ?? "DRAFT") as AdminProductInput["publicationStatus"],
     sourceUrl: String(formData.get("sourceUrl") ?? "").trim() || undefined,
     sourceCheckedAt: String(formData.get("sourceCheckedAt") ?? "").trim() || undefined,
   };
+}
+
+function oneOf<const T extends readonly string[]>(formData: FormData, name: string, options: T): T[number] {
+  const value = String(formData.get(name) ?? "");
+  if (!options.includes(value)) throw new Error("함량 입력값을 다시 확인해 주세요.");
+  return value as T[number];
+}
+
+function positiveNumber(formData: FormData, name: string, label: string) {
+  const rawValue = String(formData.get(name) ?? "").trim();
+  const value = Number(rawValue);
+  if (!rawValue || !Number.isFinite(value) || value <= 0) throw new Error(`${label}은 0보다 큰 숫자로 입력해 주세요.`);
+  return value;
+}
+
+function requiredText(formData: FormData, name: string, label: string) {
+  const value = String(formData.get(name) ?? "").trim();
+  if (!value) throw new Error(`${label}을 입력해 주세요.`);
+  return value;
 }
 
 async function authorizeAdmin(): Promise<{ accessToken: string } | { error: ProductActionState }> {

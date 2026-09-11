@@ -7,6 +7,7 @@ public record IngredientFirepowerProductResponse(
         int firepowerScore,
         String confidence,
         String concentrationNote,
+        IngredientAmountResponse amount,
         IngredientFirepowerBreakdown breakdown
 ) {
 }

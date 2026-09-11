@@ -2,6 +2,8 @@ package com.hwaryeok.ingredient;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,23 +22,29 @@ public class AdminProductIngredientService {
     private final ProductIngredientRepository productIngredientRepository;
     private final ProductService productService;
     private final ProductIngredientSourceService productIngredientSourceService;
+    private final ProductIngredientAmountService productIngredientAmountService;
 
     public AdminProductIngredientService(
             IngredientRepository ingredientRepository,
             ProductIngredientRepository productIngredientRepository,
             ProductService productService,
-            ProductIngredientSourceService productIngredientSourceService
+            ProductIngredientSourceService productIngredientSourceService,
+            ProductIngredientAmountService productIngredientAmountService
     ) {
         this.ingredientRepository = ingredientRepository;
         this.productIngredientRepository = productIngredientRepository;
         this.productService = productService;
         this.productIngredientSourceService = productIngredientSourceService;
+        this.productIngredientAmountService = productIngredientAmountService;
     }
 
     public ProductIngredientsResponse find(String productId) {
-        productService.getAdminProduct(productId);
+        Product product = productService.getAdminProduct(productId);
         List<ProductIngredient> relations = productIngredientRepository.findByProductId(productId);
-        return ProductIngredientsResponse.from(productId, relations, relations);
+        return ProductIngredientsResponse.from(
+                productId, relations, relations, null, Map.of(),
+                productIngredientAmountService.findAdminResponses(product)
+        );
     }
 
     @Transactional
@@ -59,21 +67,70 @@ public class AdminProductIngredientService {
             throw new ResourceNotFoundException("성분을 찾을 수 없어요: " + missingId);
         }
 
-        productIngredientRepository.deleteAllInBatch(productIngredientRepository.findByProductId(productId));
-        List<ProductIngredient> relations = java.util.stream.IntStream.range(0, requested.size())
-                .mapToObj(index -> {
-                    AdminProductIngredientRequest.Item item = requested.get(index);
-                    return new ProductIngredient(
-                            product,
-                            ingredientsById.get(item.ingredientId().strip()),
-                            index + 1,
-                            normalizeOptional(item.concentrationNote())
-                    );
-                })
+        Map<String, ProductIngredient> existingByIngredientId = productIngredientRepository.findByProductId(productId)
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        relation -> relation.getIngredient().getId(),
+                        relation -> relation,
+                        (first, ignored) -> first,
+                        LinkedHashMap::new
+                ));
+        List<ProductIngredient> removed = existingByIngredientId.entrySet().stream()
+                .filter(entry -> !uniqueIds.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
                 .toList();
-        productIngredientRepository.saveAll(relations);
+        if (!removed.isEmpty()) {
+            productIngredientAmountService.markStale(
+                    productId,
+                    removed.stream().map(relation -> relation.getIngredient().getId()).collect(java.util.stream.Collectors.toSet())
+            );
+            productIngredientRepository.deleteAll(removed);
+            productIngredientRepository.flush();
+        }
+
+        // Move retained rows away from their final positions first so swaps never violate
+        // the unique (product_id, display_order) constraint during a Hibernate flush.
+        List<ProductIngredient> retained = existingByIngredientId.entrySet().stream()
+                .filter(entry -> uniqueIds.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+        int temporaryStart = existingByIngredientId.values().stream()
+                .mapToInt(ProductIngredient::getDisplayOrder)
+                .max()
+                .orElse(0) + requested.size() + 1;
+        for (int index = 0; index < retained.size(); index++) {
+            ProductIngredient relation = retained.get(index);
+            relation.updateDetails(temporaryStart + index, relation.getConcentrationNote(), relation.isKeyIngredient());
+        }
+        if (!retained.isEmpty()) productIngredientRepository.flush();
+
+        List<ProductIngredient> relations = new ArrayList<>();
+        for (int index = 0; index < requested.size(); index++) {
+            AdminProductIngredientRequest.Item item = requested.get(index);
+            String ingredientId = item.ingredientId().strip();
+            ProductIngredient existing = existingByIngredientId.get(ingredientId);
+            boolean keyIngredient = item.isKeyIngredient() == null
+                    ? existing != null && existing.isKeyIngredient()
+                    : item.isKeyIngredient();
+            if (existing == null) {
+                existing = new ProductIngredient(
+                        product,
+                        ingredientsById.get(ingredientId),
+                        index + 1,
+                        normalizeOptional(item.concentrationNote()),
+                        keyIngredient
+                );
+            } else {
+                existing.updateDetails(index + 1, normalizeOptional(item.concentrationNote()), keyIngredient);
+            }
+            relations.add(existing);
+        }
+        productIngredientRepository.saveAllAndFlush(relations);
         productIngredientSourceService.markUnpublished(productId);
-        return ProductIngredientsResponse.from(productId, relations, relations);
+        return ProductIngredientsResponse.from(
+                productId, relations, relations, null, Map.of(),
+                productIngredientAmountService.findAdminResponses(product)
+        );
     }
 
     private String normalizeOptional(String value) {

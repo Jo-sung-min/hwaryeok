@@ -3,7 +3,7 @@ import type { RisingProductRankingPage } from "@/lib/types";
 import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
-import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
+import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -101,7 +101,7 @@ export type ProductMatchInput = {
   routineContexts?: string[];
 };
 
-type ProductQuery = {
+export type ProductQuery = {
   query?: string;
   category?: string;
   grade?: number;
@@ -221,11 +221,30 @@ export type AdminProductInput = {
   benefit: string;
   subBenefit: string;
   price: number;
+  netContentValue?: number;
+  netContentUnit?: Product["netContentUnit"];
   tone: Product["tone"];
   tag?: string;
   publicationStatus: Product["publicationStatus"];
   sourceUrl?: string;
   sourceCheckedAt?: string;
+};
+
+export type AdminIngredientAmountInput = {
+  kind: import("@/lib/types").IngredientAmountKind;
+  minAmount?: number;
+  maxAmount?: number;
+  unit: import("@/lib/types").IngredientAmountUnit;
+  basis: import("@/lib/types").IngredientAmountBasis;
+  substanceBasis: import("@/lib/types").IngredientSubstanceBasis;
+  rawClaimText: string;
+  sourceType: import("@/lib/types").IngredientAmountSourceType;
+  sourceUrl: string;
+  pageTitle: string;
+  sourceIngredientName: string;
+  checkedAt: string;
+  verificationStatus: import("@/lib/types").IngredientAmountVerificationStatus;
+  reviewNote?: string;
 };
 
 export type PromotionInput = {
@@ -419,7 +438,7 @@ export async function getOAuthProviders(): Promise<OAuthProviderStatus[]> {
   }
 }
 
-export function getProductPage(query: ProductQuery = {}): Promise<ProductPage> {
+export function getProductPage(query: ProductQuery = {}, init?: RequestInit): Promise<ProductPage> {
   const search = new URLSearchParams();
   if (query.query) search.set("query", query.query);
   if (query.category && query.category !== "전체") search.set("category", query.category);
@@ -436,7 +455,7 @@ export function getProductPage(query: ProductQuery = {}): Promise<ProductPage> {
   search.set("sort", query.sort ?? "score");
   search.set("direction", query.direction ?? "desc");
 
-  return requestJson<ProductPage>(`/products?${search}`);
+  return requestJson<ProductPage>(`/products?${search}`, init);
 }
 
 export async function getProducts(query: ProductQuery = {}): Promise<Product[]> {
@@ -855,12 +874,36 @@ export function getAdminProductIngredients(accessToken: string, productId: strin
 export function updateAdminProductIngredients(
   accessToken: string,
   productId: string,
-  ingredients: { ingredientId: string; concentrationNote?: string }[],
+  ingredients: { ingredientId: string; concentrationNote?: string; isKeyIngredient: boolean }[],
 ): Promise<ProductIngredients> {
   return requestJson<ProductIngredients>(`/admin/products/${encodeURIComponent(productId)}/ingredients`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ ingredients }),
+  });
+}
+
+export function updateAdminProductIngredientAmount(
+  accessToken: string,
+  productId: string,
+  ingredientId: string,
+  input: AdminIngredientAmountInput,
+): Promise<IngredientAmount> {
+  return requestJson<IngredientAmount>(`/admin/products/${encodeURIComponent(productId)}/ingredients/${encodeURIComponent(ingredientId)}/amount`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteAdminProductIngredientAmount(
+  accessToken: string,
+  productId: string,
+  ingredientId: string,
+): Promise<void> {
+  return requestEmpty(`/admin/products/${encodeURIComponent(productId)}/ingredients/${encodeURIComponent(ingredientId)}/amount`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 

@@ -1,5 +1,6 @@
 export type ProductTone = "peach" | "sage" | "sand" | "rose" | "blue";
 export type ProductPublicationStatus = "DRAFT" | "PUBLISHED" | "HIDDEN";
+export type ProductNetContentUnit = "ML" | "G";
 
 export type Product = {
   id: string;
@@ -12,6 +13,9 @@ export type Product = {
   subBenefit: string;
   priceValue?: number;
   price: string;
+  netContentValue?: number | null;
+  netContentUnit?: ProductNetContentUnit | null;
+  netContent?: string | null;
   tone: ProductTone;
   tag?: string | null;
   imageUrl?: string | null;
@@ -351,6 +355,7 @@ export type IngredientRankingItem = {
   reviewScore: number | null;
   reviewCount: number;
   concentrationNote: string | null;
+  amount?: IngredientAmount | null;
 };
 export type IngredientRankingPage = {
   ingredientId: string | null;
@@ -375,7 +380,37 @@ export type IngredientDetail = Ingredient & {
 export type ProductIngredient = Ingredient & {
   displayOrder: number;
   concentrationNote: string | null;
+  isKeyIngredient?: boolean;
+  amount?: IngredientAmount | null;
   regulations: IngredientRegulation[];
+};
+
+export type IngredientAmountKind = "EXACT" | "RANGE" | "MINIMUM" | "MAXIMUM";
+export type IngredientAmountUnit = "PERCENT" | "PPM" | "PPB" | "MG_PER_G" | "MG_PER_ML";
+export type IngredientAmountBasis = "W_W" | "W_V" | "V_V" | "UNSPECIFIED";
+export type IngredientSubstanceBasis = "PURE_INGREDIENT" | "RAW_MATERIAL_COMPLEX" | "DERIVATIVE_EQUIVALENT";
+export type IngredientAmountSourceType = "BRAND_OFFICIAL" | "PACKAGE_LABEL" | "MFDS_FUNCTIONAL_REPORT" | "TEST_REPORT";
+export type IngredientAmountVerificationStatus = "DRAFT" | "VERIFIED" | "STALE";
+
+export type IngredientAmount = {
+  kind: IngredientAmountKind;
+  minAmount: number | null;
+  maxAmount: number | null;
+  unit: IngredientAmountUnit;
+  basis: IngredientAmountBasis;
+  substanceBasis: IngredientSubstanceBasis;
+  rawClaimText: string;
+  displayValue: string;
+  amountPerContainer: string | null;
+  sourceType: IngredientAmountSourceType;
+  sourceUrl: string;
+  pageTitle: string;
+  sourceIngredientName: string;
+  checkedAt: string;
+  verificationStatus: IngredientAmountVerificationStatus;
+  reviewNote: string | null;
+  reviewedAt?: string | null;
+  comparisonNote: string;
 };
 
 export type IngredientRegulation = {
@@ -412,6 +447,7 @@ export type ProductIngredients = {
   goodCount: number;
   cautionCount: number;
   neutralCount: number;
+  verifiedAmountCount?: number;
   ingredients: ProductIngredient[];
   source: ProductIngredientSource | null;
 };
@@ -528,7 +564,8 @@ export type PreferredIngredients = {
 
 export type IngredientFirepowerBreakdown = {
   match: number;
-  concentration: number;
+  formulationClue: number;
+  amountEvidence: number;
   evidence: number;
   productType: number;
   synergy: number;
@@ -541,6 +578,7 @@ export type IngredientFirepowerProduct = {
   firepowerScore: number;
   confidence: "HIGH" | "MEDIUM" | "LOW";
   concentrationNote: string | null;
+  amount?: IngredientAmount | null;
   breakdown: IngredientFirepowerBreakdown;
 };
 

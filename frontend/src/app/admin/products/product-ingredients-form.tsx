@@ -6,6 +6,7 @@ import {
   saveProductIngredientsAction,
   type ProductIngredientsActionState,
 } from "@/app/admin/products/actions";
+import { ProductIngredientAmountForm } from "@/app/admin/products/product-ingredient-amount-form";
 import type { Ingredient, ProductIngredients } from "@/lib/types";
 
 const initialState: ProductIngredientsActionState = { success: false, message: "" };
@@ -13,6 +14,7 @@ const initialState: ProductIngredientsActionState = { success: false, message: "
 type SelectedIngredient = {
   ingredientId: string;
   concentrationNote: string;
+  isKeyIngredient: boolean;
 };
 
 export function ProductIngredientsForm({
@@ -28,6 +30,7 @@ export function ProductIngredientsForm({
     initialIngredients.ingredients.map((ingredient) => ({
       ingredientId: ingredient.id,
       concentrationNote: ingredient.concentrationNote ?? "",
+      isKeyIngredient: ingredient.isKeyIngredient ?? false,
     })),
   );
   const [ingredientToAdd, setIngredientToAdd] = useState("");
@@ -43,7 +46,7 @@ export function ProductIngredientsForm({
 
   const addIngredient = () => {
     if (!ingredientToAdd) return;
-    setSelected((current) => [...current, { ingredientId: ingredientToAdd, concentrationNote: "" }]);
+    setSelected((current) => [...current, { ingredientId: ingredientToAdd, concentrationNote: "", isKeyIngredient: false }]);
     setIngredientToAdd("");
   };
 
@@ -58,8 +61,9 @@ export function ProductIngredientsForm({
   };
 
   return (
-    <form action={formAction} className="mt-4 space-y-4">
-      <input type="hidden" name="ingredients" value={JSON.stringify(selected)} />
+    <>
+      <form action={formAction} className="mt-4 space-y-4">
+        <input type="hidden" name="ingredients" value={JSON.stringify(selected)} />
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <select
@@ -115,6 +119,18 @@ export function ProductIngredientsForm({
                     className="mt-1.5 min-h-10 w-full rounded-xl border border-[#d9a8b54d] bg-[#fffafc] px-3 text-sm font-normal outline-none focus:border-[#b86178]"
                   />
                 </label>
+                <label className="mt-3 flex min-h-10 items-start gap-2.5 rounded-xl border border-[#e8d6dc] bg-[#fffafc] px-3 py-2.5 text-[11px] font-semibold text-[#66545b]">
+                  <input
+                    type="checkbox"
+                    checked={item.isKeyIngredient}
+                    onChange={(event) => setSelected((current) => current.map((entry) => entry.ingredientId === item.ingredientId ? { ...entry, isKeyIngredient: event.target.checked } : entry))}
+                    className="mt-0.5 h-4 w-4 accent-[#b64768]"
+                  />
+                  <span>
+                    이 제품의 핵심 성분
+                    <span className="mt-0.5 block text-[9px] font-normal leading-4 text-[#97838b]">브랜드가 직접 강조하고 근거를 확인한 성분에만 설정해요.</span>
+                  </span>
+                </label>
               </li>
             );
           })}
@@ -130,7 +146,18 @@ export function ProductIngredientsForm({
           {pending ? "저장 중" : `성분 ${selected.length}개 저장`}
         </button>
       </div>
-    </form>
+      </form>
+
+      <section className="mt-6 border-t border-[#74513f18] pt-5" aria-label="성분별 정량 함량 관리">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div><h3 className="text-xs font-bold text-[#6c535c]">핵심 성분 정량 근거</h3><p className="mt-1 text-[10px] leading-5 text-[#8e7a82]">먼저 위 성분 연결을 저장한 뒤, 공식적으로 공개된 수치만 별도로 검수해 주세요.</p></div>
+          <span className="text-[10px] font-semibold text-[#9a6979]">검증 공개 {initialIngredients.verifiedAmountCount ?? initialIngredients.ingredients.filter((item) => item.amount?.verificationStatus === "VERIFIED").length}건</span>
+        </div>
+        <div className="mt-3 space-y-2">
+          {initialIngredients.ingredients.map((ingredient) => <ProductIngredientAmountForm key={ingredient.id} productId={productId} ingredient={ingredient} />)}
+        </div>
+      </section>
+    </>
   );
 }
 
