@@ -1,0 +1,210 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e2]:
+    - banner [ref=f5e3]:
+      - generic [ref=f5e4]:
+        - link "화력 홈" [ref=f5e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=f5e6]: 화
+          - generic [ref=f5e7]: 화력
+        - navigation "보조 메뉴" [ref=f5e8]:
+          - link "성분 사전" [ref=f5e9] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천 AD" [ref=f5e10] [cursor=pointer]:
+            - /url: /promotions
+            - text: 화력 추천
+            - generic [ref=f5e11]: AD
+        - link "로그인" [ref=f5e13] [cursor=pointer]:
+          - /url: /login
+    - main [ref=f5e14]:
+      - generic [ref=f5e140]:
+        - generic [ref=f5e142]:
+          - paragraph [ref=f5e143]: PRODUCT SEARCH
+          - heading "화장품 찾기" [level=1] [ref=f5e144]
+          - paragraph [ref=f5e145]: 제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.
+          - search [ref=f5e146]:
+            - generic [ref=f5e150]: 제품명, 브랜드 또는 피부 고민 검색
+            - textbox "제품명, 브랜드 또는 피부 고민 검색" [ref=f5e151]:
+              - /placeholder: 제품명·브랜드·피부 고민 검색
+            - button "검색" [ref=f5e152] [cursor=pointer]
+          - group "빠른 상품 필터" [ref=f5e154]:
+            - button "제품 유형 전체" [ref=f5e155] [cursor=pointer]:
+              - generic [ref=f5e156]: 제품 유형
+              - strong [ref=f5e157]: 전체
+            - button "피부 고민 주름·탄력" [ref=f5e405] [cursor=pointer]:
+              - generic [ref=f5e161]: 피부 고민
+              - strong [ref=f5e162]: 주름·탄력
+        - generic [ref=f5e165]:
+          - generic "적용된 상품 필터" [ref=f5e406]:
+            - link "피부 고민 · 탄력·잔주름" [ref=f5e407] [cursor=pointer]:
+              - /url: /products
+          - region [ref=f5e411]:
+            - paragraph [ref=f5e412]: CONCERN SEARCH
+            - heading "주름·탄력 고민에 맞춰 볼 제품" [level=2] [ref=f5e413]
+            - paragraph [ref=f5e414]: 잔주름 외관과 수분 탄력 관리 근거가 연결된 성분이 있는 제품이에요.
+            - generic [ref=f5e415]:
+              - generic [ref=f5e416]: 함께 살펴볼 성분
+              - generic [ref=f5e417]: 레티놀
+              - generic [ref=f5e418]: 나이아신아마이드
+              - generic [ref=f5e419]: 히알루론산
+          - generic [ref=f5e166]:
+            - generic [ref=f5e167]:
+              - paragraph [ref=f5e168]:
+                - strong [ref=f5e169]: "6"
+                - text: 개 제품
+              - generic [ref=f5e170]:
+                - group [ref=f5e171]:
+                  - generic "필터 1" [ref=f5e420]
+                - generic [ref=f5e174]:
+                  - generic [ref=f5e175]: 정렬
+                  - combobox "정렬" [ref=f5e176]:
+                    - option "내 피부 추천순" [selected]
+                    - option "성분 구성 높은 순"
+                    - option "가격 낮은 순"
+                    - option "가격 높은 순"
+                    - option "이름순"
+                  - button "적용" [ref=f5e177] [cursor=pointer]
+            - generic [ref=f5e421]:
+              - list "화장품 검색 결과" [ref=f5e423]:
+                - listitem [ref=f5e424]:
+                  - article [ref=f5e425]:
+                    - link "아누아 어성초 77 진정 토너 아누아 ·토너 어성초 77 진정 토너 25,000원 82 주름·탄력 반영 화력 히알루론산이 탄력·잔주름 고민과 연결돼요." [ref=f5e426] [cursor=pointer]:
+                      - /url: /products/heartleaf-toner
+                      - img "아누아 어성초 77 진정 토너" [ref=f5e428]
+                      - generic [ref=f5e429]:
+                        - paragraph [ref=f5e430]:
+                          - generic [ref=f5e431]: 아누아
+                          - generic [ref=f5e432]: ·토너
+                        - heading "어성초 77 진정 토너" [level=2] [ref=f5e433]
+                        - paragraph [ref=f5e434]: 25,000원
+                        - paragraph [ref=f5e435]:
+                          - strong [ref=f5e436]: "82"
+                          - generic [ref=f5e437]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e438]: 히알루론산이 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e440]:
+                      - button "찜하기" [ref=f5e441] [cursor=pointer]
+                      - status [ref=f5e444]
+                - listitem [ref=f5e445]:
+                  - article [ref=f5e446]:
+                    - link "웰라쥬 리얼 히알루로닉 블루 100 앰플 웰라쥬 ·앰플 리얼 히알루로닉 블루 100 앰플 30,000원 81 주름·탄력 반영 화력 히알루론산이 탄력·잔주름 고민과 연결돼요." [ref=f5e447] [cursor=pointer]:
+                      - /url: /products/hwahae-2153055
+                      - img "웰라쥬 리얼 히알루로닉 블루 100 앰플" [ref=f5e449]
+                      - generic [ref=f5e450]:
+                        - paragraph [ref=f5e451]:
+                          - generic [ref=f5e452]: 웰라쥬
+                          - generic [ref=f5e453]: ·앰플
+                        - heading "리얼 히알루로닉 블루 100 앰플" [level=2] [ref=f5e454]
+                        - paragraph [ref=f5e455]: 30,000원
+                        - paragraph [ref=f5e456]:
+                          - strong [ref=f5e457]: "81"
+                          - generic [ref=f5e458]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e459]: 히알루론산이 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e461]:
+                      - button "찜하기" [ref=f5e462] [cursor=pointer]
+                      - status [ref=f5e465]
+                - listitem [ref=f5e466]:
+                  - article [ref=f5e467]:
+                    - link "믹순 콩 에센스 믹순 ·에센스 콩 에센스 35,000원 81 주름·탄력 반영 화력 나이아신아마이드가 탄력·잔주름 고민과 연결돼요." [ref=f5e468] [cursor=pointer]:
+                      - /url: /products/bean-essence
+                      - img "믹순 콩 에센스" [ref=f5e470]
+                      - generic [ref=f5e471]:
+                        - paragraph [ref=f5e472]:
+                          - generic [ref=f5e473]: 믹순
+                          - generic [ref=f5e474]: ·에센스
+                        - heading "콩 에센스" [level=2] [ref=f5e475]
+                        - paragraph [ref=f5e476]: 35,000원
+                        - paragraph [ref=f5e477]:
+                          - strong [ref=f5e478]: "81"
+                          - generic [ref=f5e479]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e480]: 나이아신아마이드가 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e482]:
+                      - button "찜하기" [ref=f5e483] [cursor=pointer]
+                      - status [ref=f5e486]
+                - listitem [ref=f5e487]:
+                  - article [ref=f5e488]:
+                    - link "조선미녀 맑은 쌀 선크림 조선미녀 ·선케어 맑은 쌀 선크림 20,000원 80 주름·탄력 반영 화력 나이아신아마이드가 탄력·잔주름 고민과 연결돼요." [ref=f5e489] [cursor=pointer]:
+                      - /url: /products/rice-sunscreen
+                      - img "조선미녀 맑은 쌀 선크림" [ref=f5e491]
+                      - generic [ref=f5e492]:
+                        - paragraph [ref=f5e493]:
+                          - generic [ref=f5e494]: 조선미녀
+                          - generic [ref=f5e495]: ·선케어
+                        - heading "맑은 쌀 선크림" [level=2] [ref=f5e496]
+                        - paragraph [ref=f5e497]: 20,000원
+                        - paragraph [ref=f5e498]:
+                          - strong [ref=f5e499]: "80"
+                          - generic [ref=f5e500]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e501]: 나이아신아마이드가 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e503]:
+                      - button "찜하기" [ref=f5e504] [cursor=pointer]
+                      - status [ref=f5e507]
+                - listitem [ref=f5e508]:
+                  - article [ref=f5e509]:
+                    - link "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중 아뜰리에 온 ·세럼 세라마이드 결 세럼 38,000원 77 주름·탄력 반영 화력 히알루론산이 탄력·잔주름 고민과 연결돼요." [ref=f5e510] [cursor=pointer]:
+                      - /url: /products/ceramide-serum
+                      - img "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중" [ref=f5e512]:
+                        - generic [ref=f5e517]: 이미지 준비 중
+                      - generic [ref=f5e518]:
+                        - paragraph [ref=f5e519]:
+                          - generic [ref=f5e520]: 아뜰리에 온
+                          - generic [ref=f5e521]: ·세럼
+                        - heading "세라마이드 결 세럼" [level=2] [ref=f5e522]
+                        - paragraph [ref=f5e523]: 38,000원
+                        - paragraph [ref=f5e524]:
+                          - strong [ref=f5e525]: "77"
+                          - generic [ref=f5e526]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e527]: 히알루론산이 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e529]:
+                      - button "찜하기" [ref=f5e530] [cursor=pointer]
+                      - status [ref=f5e533]
+                - listitem [ref=f5e534]:
+                  - article [ref=f5e535]:
+                    - link "라운드랩 자작나무 수분 크림 라운드랩 ·크림 자작나무 수분 크림 32,000원 77 주름·탄력 반영 화력 히알루론산이 탄력·잔주름 고민과 연결돼요." [ref=f5e536] [cursor=pointer]:
+                      - /url: /products/birch-cream
+                      - img "라운드랩 자작나무 수분 크림" [ref=f5e538]
+                      - generic [ref=f5e539]:
+                        - paragraph [ref=f5e540]:
+                          - generic [ref=f5e541]: 라운드랩
+                          - generic [ref=f5e542]: ·크림
+                        - heading "자작나무 수분 크림" [level=2] [ref=f5e543]
+                        - paragraph [ref=f5e544]: 32,000원
+                        - paragraph [ref=f5e545]:
+                          - strong [ref=f5e546]: "77"
+                          - generic [ref=f5e547]: 주름·탄력 반영 화력
+                        - paragraph [ref=f5e548]: 히알루론산이 탄력·잔주름 고민과 연결돼요.
+                    - generic [ref=f5e550]:
+                      - button "찜하기" [ref=f5e551] [cursor=pointer]
+                      - status [ref=f5e554]
+              - status [ref=f5e557]
+    - contentinfo [ref=f5e89]:
+      - generic [ref=f5e90]:
+        - generic [ref=f5e91]:
+          - link "화력 홈" [ref=f5e92] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f5e93]: 화
+            - strong [ref=f5e94]: 화력
+          - paragraph [ref=f5e96]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=f5e97]:
+          - link "제품 비교" [ref=f5e98] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=f5e99] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=f5e100] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=f5e101] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=f5e102]:
+          - generic "사업자·고객센터 정보" [ref=f5e103] [cursor=pointer]
+        - paragraph [ref=f5e106]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=f5e107]:
+      - generic [ref=f5e108]:
+        - link [ref=f5e109] [cursor=pointer]:
+          - /url: /
+        - link [ref=f5e114] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=f5e118] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=f5e121] [cursor=pointer]
+        - link [ref=f5e126] [cursor=pointer]:
+          - /url: /my
+  - button "Open Next.js Dev Tools" [ref=f5e136] [cursor=pointer]
+  - alert [ref=f5e381]

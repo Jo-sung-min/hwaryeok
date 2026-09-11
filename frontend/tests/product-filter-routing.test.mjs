@@ -47,9 +47,9 @@ function loadProductsPage(captures) {
       };
       if (specifier === "@/lib/product-catalog") return productCatalog;
       if (specifier === "./product-catalog-grid") return { ProductCatalogGrid: passthrough("catalog-grid") };
+      if (specifier === "./product-quick-filters") return { ProductQuickFilters: passthrough("quick-filters") };
       if (specifier === "./product-filters") return {
         AppliedProductFilters: passthrough("applied"),
-        CategoryNavigation: passthrough("categories"),
         MobileFilters: passthrough("mobile"),
         ProductSearch: passthrough("search"),
         ProductSort: passthrough("sort"),
@@ -98,6 +98,7 @@ test("products page sends every catalog filter through the shared state and cata
     },
   );
   assert.equal(captures.applied.filters.ingredientId, "niacinamide");
+  assert.equal(captures["quick-filters"].filters.concern, "붉은기·민감");
   assert.equal(captures.mobile.ingredients[0].name, "나이아신아마이드");
   assert.equal(captures["catalog-grid"].initialPage.size, productCatalog.PRODUCT_PAGE_SIZE);
   assert.deepEqual(captures["catalog-grid"].favoriteIds, ["toner"]);
@@ -131,4 +132,19 @@ test("products page applies the same saved skin profile to the initial personali
 
   assert.deepEqual(captures.query.profile, captures.profile);
   assert.equal(captures["catalog-grid"].scoreLabel, "내 피부 적합도");
+});
+
+test("products page turns a wrinkle search into an evidence-based concern search", async () => {
+  const captures = {};
+  const ProductsPage = loadProductsPage(captures);
+
+  renderToStaticMarkup(await ProductsPage({ searchParams: Promise.resolve({ query: "주름" }) }));
+
+  assert.equal(captures.query.query, undefined);
+  assert.equal(captures.query.concern, "탄력·잔주름");
+  assert.equal(captures.applied.filters.concern, "탄력·잔주름");
+  assert.equal(captures["catalog-grid"].activeConcern, "탄력·잔주름");
+  assert.equal(captures["catalog-grid"].scoreLabel, "주름·탄력 반영 화력");
+  assert.match(captures["catalog-grid"].feedUrl, /concern=/);
+  assert.doesNotMatch(captures["catalog-grid"].feedUrl, /query=/);
 });

@@ -83,8 +83,8 @@ export function BottomNav() {
         <form id="mobile-product-search" role="search" aria-label="화장품 검색" onSubmit={submitSearch} onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }} className={styles.searchForm}>
           <Search size={20} aria-hidden="true" />
           <div className={styles.searchField}>
-            <label htmlFor="mobile-product-query" className="sr-only">검색할 제품명 또는 브랜드</label>
-            <input ref={searchInputRef} id="mobile-product-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} enterKeyHint="search" autoComplete="off" placeholder="제품명·브랜드 검색" />
+            <label htmlFor="mobile-product-query" className="sr-only">검색할 제품명, 브랜드 또는 피부 고민</label>
+            <input ref={searchInputRef} id="mobile-product-query" name="query" value={query} onChange={(event) => setQuery(event.target.value)} enterKeyHint="search" autoComplete="off" placeholder="제품명·브랜드·피부 고민" />
             <button type="submit" aria-label="검색하기" className={styles.searchSubmit}><ArrowRight size={18} /></button>
           </div>
           <button type="button" onClick={closeSearch} aria-label="검색 닫기" className={styles.searchClose}><X size={20} /></button>

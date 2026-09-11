@@ -17,6 +17,7 @@ type ProductCatalogGridProps = {
   returnTo: string;
   feedUrl: string;
   scoreLabel: string;
+  activeConcern?: string;
 };
 
 function nextPageHref(feedUrl: string, pageIndex: number) {
@@ -31,7 +32,7 @@ function feedPageUrl(feedUrl: string, pageIndex: number) {
   return `${url.pathname}?${url.searchParams}`;
 }
 
-export function ProductCatalogGrid({ initialPage, favoriteIds, isAuthenticated, returnTo, feedUrl, scoreLabel }: ProductCatalogGridProps) {
+export function ProductCatalogGrid({ initialPage, favoriteIds, isAuthenticated, returnTo, feedUrl, scoreLabel, activeConcern }: ProductCatalogGridProps) {
   const [products, setProducts] = useState(initialPage.content);
   const [hasNext, setHasNext] = useState(initialPage.hasNext);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,6 +128,7 @@ export function ProductCatalogGrid({ initialPage, favoriteIds, isAuthenticated, 
                 isAuthenticated={isAuthenticated}
                 returnTo={returnTo}
                 scoreLabel={scoreLabel}
+                activeConcern={activeConcern}
               />
             </li>
           ))}
@@ -156,16 +158,21 @@ export function ProductCatalogGrid({ initialPage, favoriteIds, isAuthenticated, 
   );
 }
 
-function CatalogProductCard({ product, eager, favorited, isAuthenticated, returnTo, scoreLabel }: {
+function CatalogProductCard({ product, eager, favorited, isAuthenticated, returnTo, scoreLabel, activeConcern }: {
   product: Product;
   eager: boolean;
   favorited: boolean;
   isAuthenticated: boolean;
   returnTo: string;
   scoreLabel: string;
+  activeConcern?: string;
 }) {
   const imageUrl = resolveProductImageUrl(product.imageUrl);
   const [imageFailed, setImageFailed] = useState(false);
+
+  const concernReason = activeConcern
+    ? product.matchReasons?.find((reason) => reason.includes(activeConcern))
+    : undefined;
 
   return (
     <article className={styles.card}>
@@ -193,7 +200,7 @@ function CatalogProductCard({ product, eager, favorited, isAuthenticated, return
           <h2>{product.name}</h2>
           <p className={styles.price}>{product.price}</p>
           <p className={styles.score}><strong>{product.score}</strong><span>{scoreLabel}</span></p>
-          <p className={styles.benefit}>{product.benefit}</p>
+          <p className={styles.benefit}>{concernReason ?? product.benefit}</p>
         </div>
       </Link>
       <div className={styles.favorite}>

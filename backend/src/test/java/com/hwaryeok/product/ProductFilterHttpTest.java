@@ -37,6 +37,10 @@ class ProductFilterHttpTest {
                     (id, name, english_name, role, description, status, evidence_level, featured, display_order)
                 VALUES (?, '상품 필터 테스트 성분', 'Product filter test ingredient', '진정', '테스트', 'GOOD', 'A', FALSE, 900)
                 """, INGREDIENT_ID);
+        jdbc.update("""
+                INSERT INTO ingredient_concern_features (ingredient_id, concern, feature)
+                VALUES (?, '탄력', '잔주름 외관 관리 테스트 근거')
+                """, INGREDIENT_ID);
         addProduct("product-filter-http-match", "토너", "가 필터 일치 제품");
         addProduct("product-filter-http-other-category", "세럼", "나 다른 종류 제품");
         addProduct("product-filter-http-inactive-review", "토너", "다 비활성 리뷰 제품");
@@ -69,6 +73,33 @@ class ProductFilterHttpTest {
         assertThat(get("/api/v1/products?minReviewScore=-1").statusCode()).isEqualTo(400);
         assertThat(get("/api/v1/products?minFirepowerScore=101").statusCode()).isEqualTo(400);
         assertThat(get("/api/v1/products?ingredientId=" + "x".repeat(65)).statusCode()).isEqualTo(400);
+    }
+
+    @Test
+    void treatsConcernWordsAsConcernSearchAndKeepsTheRemainingTextFilter() throws Exception {
+        HttpResponse<String> response = get("/api/v1/products?query="
+                + java.net.URLEncoder.encode("주름 필터", java.nio.charset.StandardCharsets.UTF_8)
+                + "&page=0&size=50");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("product-filter-http-match", "product-filter-http-other-category",
+                        "product-filter-http-inactive-review", "product-filter-http-no-review",
+                        "탄력·잔주름 고민과 연결돼요")
+                .contains("\"totalElements\":4");
+    }
+
+    @Test
+    void treatsAProductTypeAfterAConcernAsAnExactCategory() throws Exception {
+        HttpResponse<String> response = get("/api/v1/products?query="
+                + java.net.URLEncoder.encode("주름 토너", java.nio.charset.StandardCharsets.UTF_8)
+                + "&page=0&size=50");
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body())
+                .contains("product-filter-http-match", "product-filter-http-inactive-review",
+                        "product-filter-http-no-review")
+                .doesNotContain("product-filter-http-other-category");
     }
 
     private void addProduct(String id, String category, String name) {

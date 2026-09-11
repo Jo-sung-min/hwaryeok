@@ -11,6 +11,7 @@ import {
   PRODUCT_PAGE_SIZE,
   productCatalogBackendFilters,
   readProductCatalogState,
+  resolveProductConcernSearch,
 } from "../src/lib/product-catalog.ts";
 
 const require = createRequire(import.meta.url);
@@ -19,6 +20,9 @@ const gridSource = read("../src/app/products/product-catalog-grid.tsx");
 const gridCss = read("../src/app/products/product-catalog-grid.module.css");
 const loadingSource = read("../src/app/products/loading.tsx");
 const pageSource = read("../src/app/products/page.tsx");
+const filtersSource = read("../src/app/products/product-filters.tsx");
+const quickFiltersSource = read("../src/app/products/product-quick-filters.tsx");
+const navigationSource = read("../src/components/navigation.tsx");
 const routeSource = read("../src/app/api/catalog/products/route.ts");
 const apiSource = read("../src/lib/api.ts");
 
@@ -176,6 +180,42 @@ test("backend filters preserve the selected sort and convert numeric catalog fie
       direction: "asc",
     },
   );
+});
+
+test("concern aliases become canonical filters while ordinary product words stay searchable", () => {
+  const wrinkle = resolveProductConcernSearch("주름 크림");
+  assert.equal(wrinkle.option.value, "탄력·잔주름");
+  assert.equal(wrinkle.remainingQuery, "크림");
+
+  const state = readProductCatalogState({ query: "눈가 주름" });
+  assert.equal(state.filters.query, "");
+  assert.equal(state.filters.concern, "탄력·잔주름");
+  assert.equal(state.concernSearch.option.label, "주름·탄력");
+
+  const categoryState = readProductCatalogState({ query: "주름 크림" });
+  assert.equal(categoryState.filters.query, "");
+  assert.equal(categoryState.filters.category, "크림");
+  assert.equal(categoryState.filters.concern, "탄력·잔주름");
+
+  const multiWordState = readProductCatalogState({ query: "눈가 주름 크림" });
+  assert.equal(multiWordState.concernSearch.matchedKeyword, "눈가 주름");
+  assert.equal(multiWordState.filters.category, "크림");
+
+  const ordinary = readProductCatalogState({ query: "다이브인 토너" });
+  assert.equal(ordinary.filters.query, "다이브인 토너");
+  assert.equal(ordinary.filters.concern, "전체 고민");
+  assert.equal(ordinary.concernSearch, undefined);
+});
+
+test("product search visibly offers concern discovery and explains the matching reason", () => {
+  assert.match(filtersSource, /제품명·브랜드·피부 고민 검색/);
+  assert.match(quickFiltersSource, /피부 고민/);
+  assert.match(quickFiltersSource, /PRODUCT_CONCERN_OPTIONS\.map/);
+  assert.match(filtersSource, /피부 고민 ·/);
+  assert.match(navigationSource, /제품명·브랜드·피부 고민/);
+  assert.match(pageSource, /함께 살펴볼 성분/);
+  assert.match(gridSource, /product\.matchReasons\?\.find/);
+  assert.match(gridSource, /reason\.includes\(activeConcern\)/);
 });
 
 test("continuation pages append in order while removing already rendered products", () => {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { buildProductCatalogHref, PRODUCT_CATEGORIES, PRODUCT_CONCERNS, type ProductFilterValues, type ProductSortOrder } from "@/lib/product-catalog";
+import { buildProductCatalogHref, PRODUCT_CONCERNS, type ProductFilterValues, type ProductSortOrder } from "@/lib/product-catalog";
 import type { IngredientRankingOption } from "@/lib/types";
 
 export type { ProductFilterValues, ProductSortOrder } from "@/lib/product-catalog";
@@ -28,9 +28,10 @@ function HiddenFilters({ filters, includeOrder = true, includeQuery = true }: { 
 }
 
 export function ProductSearch({ filters }: { filters: ProductFilterValues }) {
-  return <form action="/products" className="glass-field mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-full px-3 focus-within:border-[#a54f4970] sm:mt-8 sm:gap-3 sm:px-5">
+  return <form action="/products" role="search" className="glass-field mx-auto mt-7 flex max-w-2xl items-center gap-2 rounded-full px-3 focus-within:border-[#a54f4970] sm:mt-8 sm:gap-3 sm:px-5">
     <Search size={18} className="shrink-0 text-[#8a796d]" />
-    <input name="query" defaultValue={filters.query} placeholder="제품명·브랜드 검색" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8f7d85]" />
+    <label htmlFor="product-search-query" className="sr-only">제품명, 브랜드 또는 피부 고민 검색</label>
+    <input id="product-search-query" name="query" defaultValue={filters.query} placeholder="제품명·브랜드·피부 고민 검색" className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#8f7d85]" />
     <HiddenFilters filters={filters} includeQuery={false} />
     <button type="submit" className="ink-btn !min-h-10 shrink-0 !px-4 text-xs">검색</button>
   </form>;
@@ -49,12 +50,6 @@ export function ProductSort({ filters }: { filters: ProductFilterValues }) {
     </select>
     <button type="submit" className="line-btn !min-h-11 shrink-0 !px-3 text-xs font-semibold sm:!px-4">적용</button>
   </form>;
-}
-
-export function CategoryNavigation({ filters }: { filters: ProductFilterValues }) {
-  return <nav aria-label="제품 카테고리" className="scrollbar-hide -mx-3 flex snap-x snap-mandatory scroll-px-4 gap-2 overflow-x-auto overscroll-x-contain px-4 py-4 sm:mx-0">
-    {PRODUCT_CATEGORIES.map((item) => <Link key={item} href={filterHref(filters, "category", item)} scroll={false} aria-current={filters.category === item ? "page" : undefined} className="glass-choice shrink-0 snap-start rounded-full px-4 py-2.5 text-sm">{item}</Link>)}
-  </nav>;
 }
 
 export function DesktopFilters({ filters, ingredients }: { filters: ProductFilterValues; ingredients: IngredientRankingOption[] }) {
@@ -86,6 +81,7 @@ export function AppliedProductFilters({ filters, ingredients }: { filters: Produ
   const ingredient = ingredients.find((item) => item.id === filters.ingredientId);
   const chips: { key: keyof ProductFilterValues; label: string; active: boolean }[] = [
     { key: "category", label: `제품 유형 · ${filters.category}`, active: filters.category !== "전체" },
+    { key: "concern", label: `피부 고민 · ${filters.concern}`, active: filters.concern !== "전체 고민" },
     { key: "ingredientId", label: `주요 성분 · ${ingredient?.name ?? ""}`, active: Boolean(ingredient) },
     { key: "minReviewScore", label: `리뷰 평점 · ${filters.minReviewScore}점+`, active: Boolean(filters.minReviewScore) },
     { key: "minFirepowerScore", label: `화력 점수 · ${filters.minFirepowerScore}점+`, active: Boolean(filters.minFirepowerScore) },
@@ -93,7 +89,7 @@ export function AppliedProductFilters({ filters, ingredients }: { filters: Produ
   const visible = chips.filter((chip) => chip.active);
   if (!visible.length) return null;
   return <div className="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="적용된 상품 필터">
-    {visible.map((chip) => <Link key={chip.key} href={filterHref(filters, chip.key, chip.key === "category" ? "전체" : "")} scroll={false} className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#d87896] bg-[#fff0f5] px-3 text-xs font-bold text-[#973153]">{chip.label}<X size={13} aria-hidden="true" /></Link>)}
+    {visible.map((chip) => <Link key={chip.key} href={filterHref(filters, chip.key, chip.key === "category" ? "전체" : chip.key === "concern" ? "전체 고민" : "")} scroll={false} className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#d87896] bg-[#fff0f5] px-3 text-xs font-bold text-[#973153]">{chip.label}<X size={13} aria-hidden="true" /></Link>)}
   </div>;
 }
 

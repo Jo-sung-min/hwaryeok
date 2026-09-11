@@ -1,0 +1,252 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "화력 홈" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=e6]: 화
+          - generic [ref=e7]: 화력
+        - navigation "보조 메뉴" [ref=e8]:
+          - link "성분 사전" [ref=e9] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천 AD" [ref=e10] [cursor=pointer]:
+            - /url: /promotions
+            - text: 화력 추천
+            - generic [ref=e11]: AD
+        - link "로그인" [ref=e13] [cursor=pointer]:
+          - /url: /login
+    - main [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e17]:
+          - paragraph [ref=e18]: PRODUCT SEARCH
+          - heading "화장품 찾기" [level=1] [ref=e19]
+          - paragraph [ref=e20]: 제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.
+          - search [ref=e21]:
+            - generic [ref=e25]: 제품명, 브랜드 또는 피부 고민 검색
+            - textbox "제품명, 브랜드 또는 피부 고민 검색" [ref=e26]:
+              - /placeholder: 제품명·브랜드·피부 고민 검색
+            - button "검색" [ref=e27] [cursor=pointer]
+          - group "빠른 상품 필터" [ref=e29]:
+            - button "제품 유형 전체" [ref=e30] [cursor=pointer]:
+              - generic [ref=e31]: 제품 유형
+              - strong [ref=e32]: 전체
+            - button "피부 고민 전체" [ref=e35] [cursor=pointer]:
+              - generic [ref=e36]: 피부 고민
+              - strong [ref=e37]: 전체
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - paragraph [ref=e43]:
+              - strong [ref=e44]: "22"
+              - text: 개 제품
+            - generic [ref=e45]:
+              - group [ref=e46]:
+                - generic "필터" [ref=e47]
+              - generic [ref=e49]:
+                - generic [ref=e50]: 정렬
+                - combobox "정렬" [ref=e51]:
+                  - option "내 피부 추천순" [selected]
+                  - option "성분 구성 높은 순"
+                  - option "가격 낮은 순"
+                  - option "가격 높은 순"
+                  - option "이름순"
+                - button "적용" [ref=e52] [cursor=pointer]
+          - generic [ref=e53]:
+            - list "화장품 검색 결과" [ref=e55]:
+              - listitem [ref=e56]:
+                - article [ref=e57]:
+                  - link "웰라쥬 리얼 히알루로닉 블루 100 앰플 웰라쥬 ·앰플 리얼 히알루로닉 블루 100 앰플 30,000원 80 성분 화력 히알루론산 수분 케어" [ref=e58] [cursor=pointer]:
+                    - /url: /products/hwahae-2153055
+                    - img "웰라쥬 리얼 히알루로닉 블루 100 앰플" [ref=e60]
+                    - generic [ref=e61]:
+                      - paragraph [ref=e62]:
+                        - generic [ref=e63]: 웰라쥬
+                        - generic [ref=e64]: ·앰플
+                      - heading "리얼 히알루로닉 블루 100 앰플" [level=2] [ref=e65]
+                      - paragraph [ref=e66]: 30,000원
+                      - paragraph [ref=e67]:
+                        - strong [ref=e68]: "80"
+                        - generic [ref=e69]: 성분 화력
+                      - paragraph [ref=e70]: 히알루론산 수분 케어
+                  - generic [ref=e72]:
+                    - button "찜하기" [ref=e73] [cursor=pointer]
+                    - status [ref=e76]
+              - listitem [ref=e77]:
+                - article [ref=e78]:
+                  - link "아누아 어성초 77 진정 토너 아누아 ·토너 어성초 77 진정 토너 25,000원 79 성분 화력 붉은기 진정" [ref=e79] [cursor=pointer]:
+                    - /url: /products/heartleaf-toner
+                    - img "아누아 어성초 77 진정 토너" [ref=e81]
+                    - generic [ref=e82]:
+                      - paragraph [ref=e83]:
+                        - generic [ref=e84]: 아누아
+                        - generic [ref=e85]: ·토너
+                      - heading "어성초 77 진정 토너" [level=2] [ref=e86]
+                      - paragraph [ref=e87]: 25,000원
+                      - paragraph [ref=e88]:
+                        - strong [ref=e89]: "79"
+                        - generic [ref=e90]: 성분 화력
+                      - paragraph [ref=e91]: 붉은기 진정
+                  - generic [ref=e93]:
+                    - button "찜하기" [ref=e94] [cursor=pointer]
+                    - status [ref=e97]
+              - listitem [ref=e98]:
+                - article [ref=e99]:
+                  - link "아임프롬 강화 약쑥 앰플 아임프롬 ·앰플 강화 약쑥 앰플 39,000원 77 성분 화력 열감 진정" [ref=e100] [cursor=pointer]:
+                    - /url: /products/mugwort-ampoule
+                    - img "아임프롬 강화 약쑥 앰플" [ref=e102]
+                    - generic [ref=e103]:
+                      - paragraph [ref=e104]:
+                        - generic [ref=e105]: 아임프롬
+                        - generic [ref=e106]: ·앰플
+                      - heading "강화 약쑥 앰플" [level=2] [ref=e107]
+                      - paragraph [ref=e108]: 39,000원
+                      - paragraph [ref=e109]:
+                        - strong [ref=e110]: "77"
+                        - generic [ref=e111]: 성분 화력
+                      - paragraph [ref=e112]: 열감 진정
+                  - generic [ref=e114]:
+                    - button "찜하기" [ref=e115] [cursor=pointer]
+                    - status [ref=e118]
+              - listitem [ref=e119]:
+                - article [ref=e120]:
+                  - link "믹순 콩 에센스 믹순 ·에센스 콩 에센스 35,000원 77 성분 화력 피부결 개선" [ref=e121] [cursor=pointer]:
+                    - /url: /products/bean-essence
+                    - img "믹순 콩 에센스" [ref=e123]
+                    - generic [ref=e124]:
+                      - paragraph [ref=e125]:
+                        - generic [ref=e126]: 믹순
+                        - generic [ref=e127]: ·에센스
+                      - heading "콩 에센스" [level=2] [ref=e128]
+                      - paragraph [ref=e129]: 35,000원
+                      - paragraph [ref=e130]:
+                        - strong [ref=e131]: "77"
+                        - generic [ref=e132]: 성분 화력
+                      - paragraph [ref=e133]: 피부결 개선
+                  - generic [ref=e135]:
+                    - button "찜하기" [ref=e136] [cursor=pointer]
+                    - status [ref=e139]
+              - listitem [ref=e140]:
+                - article [ref=e141]:
+                  - link "조선미녀 맑은 쌀 선크림 조선미녀 ·선케어 맑은 쌀 선크림 20,000원 77 성분 화력 순한 자외선 차단" [ref=e142] [cursor=pointer]:
+                    - /url: /products/rice-sunscreen
+                    - img "조선미녀 맑은 쌀 선크림" [ref=e144]
+                    - generic [ref=e145]:
+                      - paragraph [ref=e146]:
+                        - generic [ref=e147]: 조선미녀
+                        - generic [ref=e148]: ·선케어
+                      - heading "맑은 쌀 선크림" [level=2] [ref=e149]
+                      - paragraph [ref=e150]: 20,000원
+                      - paragraph [ref=e151]:
+                        - strong [ref=e152]: "77"
+                        - generic [ref=e153]: 성분 화력
+                      - paragraph [ref=e154]: 순한 자외선 차단
+                  - generic [ref=e156]:
+                    - button "찜하기" [ref=e157] [cursor=pointer]
+                    - status [ref=e160]
+              - listitem [ref=e161]:
+                - article [ref=e162]:
+                  - link "라운드랩 자작나무 수분 앰플 라운드랩 ·앰플 자작나무 수분 앰플 28,000원 76 성분 화력 자작나무 수분 케어" [ref=e163] [cursor=pointer]:
+                    - /url: /products/hwahae-2079267
+                    - img "라운드랩 자작나무 수분 앰플" [ref=e165]
+                    - generic [ref=e166]:
+                      - paragraph [ref=e167]:
+                        - generic [ref=e168]: 라운드랩
+                        - generic [ref=e169]: ·앰플
+                      - heading "자작나무 수분 앰플" [level=2] [ref=e170]
+                      - paragraph [ref=e171]: 28,000원
+                      - paragraph [ref=e172]:
+                        - strong [ref=e173]: "76"
+                        - generic [ref=e174]: 성분 화력
+                      - paragraph [ref=e175]: 자작나무 수분 케어
+                  - generic [ref=e177]:
+                    - button "찜하기" [ref=e178] [cursor=pointer]
+                    - status [ref=e181]
+              - listitem [ref=e182]:
+                - article [ref=e183]:
+                  - link "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중 아뜰리에 온 ·세럼 세라마이드 결 세럼 38,000원 76 성분 화력 장벽 케어" [ref=e184] [cursor=pointer]:
+                    - /url: /products/ceramide-serum
+                    - img "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중" [ref=e186]:
+                      - generic [ref=e191]: 이미지 준비 중
+                    - generic [ref=e192]:
+                      - paragraph [ref=e193]:
+                        - generic [ref=e194]: 아뜰리에 온
+                        - generic [ref=e195]: ·세럼
+                      - heading "세라마이드 결 세럼" [level=2] [ref=e196]
+                      - paragraph [ref=e197]: 38,000원
+                      - paragraph [ref=e198]:
+                        - strong [ref=e199]: "76"
+                        - generic [ref=e200]: 성분 화력
+                      - paragraph [ref=e201]: 장벽 케어
+                  - generic [ref=e203]:
+                    - button "찜하기" [ref=e204] [cursor=pointer]
+                    - status [ref=e207]
+              - listitem [ref=e208]:
+                - article [ref=e209]:
+                  - link "라운드랩 자작나무 수분 크림 라운드랩 ·크림 자작나무 수분 크림 32,000원 76 성분 화력 수분 장벽 강화" [ref=e210] [cursor=pointer]:
+                    - /url: /products/birch-cream
+                    - img "라운드랩 자작나무 수분 크림" [ref=e212]
+                    - generic [ref=e213]:
+                      - paragraph [ref=e214]:
+                        - generic [ref=e215]: 라운드랩
+                        - generic [ref=e216]: ·크림
+                      - heading "자작나무 수분 크림" [level=2] [ref=e217]
+                      - paragraph [ref=e218]: 32,000원
+                      - paragraph [ref=e219]:
+                        - strong [ref=e220]: "76"
+                        - generic [ref=e221]: 성분 화력
+                      - paragraph [ref=e222]: 수분 장벽 강화
+                  - generic [ref=e224]:
+                    - button "찜하기" [ref=e225] [cursor=pointer]
+                    - status [ref=e228]
+              - listitem [ref=e229]:
+                - article [ref=e230]:
+                  - link "메이크프렘 세이프 미 릴리프 모이스처 클렌징 밀크 메이크프렘 ·클렌저 세이프 미 릴리프 모이스처 클렌징 밀크 24,000원 42 성분 화력 부드러운 세정" [ref=e231] [cursor=pointer]:
+                    - /url: /products/hwahae-1841507
+                    - img "메이크프렘 세이프 미 릴리프 모이스처 클렌징 밀크" [ref=e233]
+                    - generic [ref=e234]:
+                      - paragraph [ref=e235]:
+                        - generic [ref=e236]: 메이크프렘
+                        - generic [ref=e237]: ·클렌저
+                      - heading "세이프 미 릴리프 모이스처 클렌징 밀크" [level=2] [ref=e238]
+                      - paragraph [ref=e239]: 24,000원
+                      - paragraph [ref=e240]:
+                        - strong [ref=e241]: "42"
+                        - generic [ref=e242]: 성분 화력
+                      - paragraph [ref=e243]: 부드러운 세정
+                  - generic [ref=e245]:
+                    - button "찜하기" [ref=e246] [cursor=pointer]
+                    - status [ref=e249]
+            - link "제품 더 보기" [ref=e252] [cursor=pointer]:
+              - /url: /products?page=2
+            - status [ref=e255]
+    - contentinfo [ref=e256]:
+      - generic [ref=e257]:
+        - generic [ref=e258]:
+          - link "화력 홈" [ref=e259] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e260]: 화
+            - strong [ref=e261]: 화력
+          - paragraph [ref=e263]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=e264]:
+          - link "제품 비교" [ref=e265] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=e266] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=e267] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=e268] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=e269]:
+          - generic "사업자·고객센터 정보" [ref=e270] [cursor=pointer]
+        - paragraph [ref=e273]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=e274]:
+      - generic [ref=e275]:
+        - link [ref=e276] [cursor=pointer]:
+          - /url: /
+        - link [ref=e281] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=e285] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=e288] [cursor=pointer]
+        - link [ref=e293] [cursor=pointer]:
+          - /url: /my
+  - button "Open Next.js Dev Tools" [ref=e303] [cursor=pointer]

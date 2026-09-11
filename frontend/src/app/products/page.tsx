@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
-import { buildProductCatalogFeedUrl, buildProductCatalogHref, PRODUCT_PAGE_SIZE, productCatalogBackendFilters, readProductCatalogState } from "@/lib/product-catalog";
+import { buildProductCatalogFeedUrl, buildProductCatalogHref, getProductConcernOption, PRODUCT_PAGE_SIZE, productCatalogBackendFilters, readProductCatalogState } from "@/lib/product-catalog";
 import { ProductCatalogGrid } from "./product-catalog-grid";
-import { AppliedProductFilters, CategoryNavigation, MobileFilters, ProductSearch, ProductSort } from "./product-filters";
+import { AppliedProductFilters, MobileFilters, ProductSearch, ProductSort } from "./product-filters";
+import { ProductQuickFilters } from "./product-quick-filters";
 
 export const metadata: Metadata = {
   title: "화장품 탐색",
-  description: "제품명과 브랜드를 검색하고 카테고리·화력 등급별로 성분, 리뷰, 피부 적합도를 확인하세요.",
+  description: "제품명과 브랜드뿐 아니라 주름, 모공, 트러블 같은 피부 고민으로 성분 근거가 연결된 화장품을 찾아보세요.",
   alternates: { canonical: "/products" },
 };
 
@@ -46,6 +47,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     });
   const currentHref = buildProductCatalogHref(filters, productPage.page);
   const feedUrl = buildProductCatalogFeedUrl(filters);
+  const activeConcern = getProductConcernOption(filters.concern);
 
   return (
     <div className="min-h-screen pb-24">
@@ -53,15 +55,26 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
         <div className="container-page">
           <p className="eyebrow mb-1.5">PRODUCT SEARCH</p>
           <h1 className="font-myeongjo text-[26px] font-semibold leading-tight">화장품 찾기</h1>
-          <p className="mt-2 text-xs leading-6 text-[#756f78]">성분과 내 피부 기준으로 제품을 빠르게 비교해 보세요.</p>
+          <p className="mt-2 text-xs leading-6 text-[#756f78]">제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.</p>
           <ProductSearch filters={filters} />
+          <ProductQuickFilters filters={filters} />
         </div>
       </header>
 
-      <div className="container-page pb-7">
-        <CategoryNavigation filters={filters} />
+      <div className="container-page pb-7 pt-5">
         <AppliedProductFilters filters={filters} ingredients={ingredients} />
         {requestedIngredientId && !filters.ingredientId && <p className="mb-4 text-xs text-[#9d3b5e]" role="status">사용할 수 없는 주요 성분 필터를 제외했어요.</p>}
+        {activeConcern && (
+          <section className="mb-6 border-y border-[#eadde2] bg-[#fff9fb] px-4 py-5" aria-labelledby="concern-result-title">
+            <p className="eyebrow mb-1.5">CONCERN SEARCH</p>
+            <h2 id="concern-result-title" className="font-myeongjo text-xl font-semibold">{activeConcern.label} 고민에 맞춰 볼 제품</h2>
+            <p className="mt-2 text-xs leading-6 text-[#756d75]">{activeConcern.description}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] text-[#8d3657]">
+              <span className="mr-1 font-bold">함께 살펴볼 성분</span>
+              {activeConcern.ingredients.map((ingredient) => <span key={ingredient} className="rounded-full border border-[#edcfd9] bg-white px-2.5 py-1">{ingredient}</span>)}
+            </div>
+          </section>
+        )}
         <section className="mt-2">
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="shrink-0 text-xs text-[#716b74]"><strong className="text-sm text-[#9d385d]">{productPage.totalElements}</strong>개 제품</p>
@@ -78,13 +91,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
               isAuthenticated={favoriteState.isAuthenticated}
               returnTo={currentHref}
               feedUrl={feedUrl}
-              scoreLabel={savedProfile ? "내 피부 적합도" : "성분 화력"}
+              scoreLabel={activeConcern ? `${activeConcern.label} 반영 화력` : savedProfile ? "내 피부 적합도" : "성분 화력"}
+              activeConcern={activeConcern?.value}
             />
           ) : (
             <div className="border-y border-[#ece8eb] py-16 text-center">
               <span className="text-3xl text-[#ca7794]">❀</span>
-              <h2 className="mt-4 font-myeongjo text-xl font-semibold">조건에 맞는 제품이 없어요.</h2>
-              <p className="mt-2 text-xs text-[#817982]">검색어나 필터를 조금 줄여보세요.</p>
+              <h2 className="mt-4 font-myeongjo text-xl font-semibold">{activeConcern ? "아직 근거가 연결된 제품이 없어요." : "조건에 맞는 제품이 없어요."}</h2>
+              <p className="mt-2 text-xs text-[#817982]">{activeConcern ? "무관한 제품을 채우지 않고, 성분 자료가 확인된 제품부터 추가할게요." : "검색어나 필터를 조금 줄여보세요."}</p>
               <Link href="/products" className="line-btn mt-6">조건 초기화</Link>
             </div>
           )}

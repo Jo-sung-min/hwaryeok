@@ -61,13 +61,21 @@ public class ProductController {
             @RequestParam(defaultValue = "score") String sort,
             @RequestParam(defaultValue = "desc") String direction
     ) {
+        ProductConcernSearch.Resolution concernSearch = ProductConcernSearch.resolve(query);
+        String resolvedQuery = concernSearch == null ? query : concernSearch.remainingQuery();
+        String inferredCategory = ProductConcernSearch.resolveCategory(resolvedQuery);
+        String resolvedCategory = category == null || category.isBlank() ? inferredCategory : category;
+        if (inferredCategory != null && (category == null || category.isBlank())) resolvedQuery = null;
+        String resolvedConcern = concern == null || concern.isBlank()
+                ? concernSearch == null ? null : concernSearch.concern()
+                : concern;
         ProductMatchProfile profile = profile(
                 skinType, hydrationLevel, oilinessLevel, sensitivityLevel, breakoutFrequency, cleansingTightness,
                 rednessFrequency, poreLevel, texturePreference, routineComplexity, sunscreenUsage,
-                mergeConcern(concerns, concern), reactionTriggers, breakoutZones, environments, routineContexts
+                mergeConcern(concerns, resolvedConcern), reactionTriggers, breakoutZones, environments, routineContexts
         );
         return productService.findProducts(
-                query, category, grade, concern, maxPrice, confidence,
+                resolvedQuery, resolvedCategory, grade, resolvedConcern, maxPrice, confidence,
                 ingredientId, minReviewScore, minFirepowerScore,
                 page, size, sort, direction, profile
         );
