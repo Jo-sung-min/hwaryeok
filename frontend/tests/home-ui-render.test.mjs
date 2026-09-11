@@ -138,6 +138,15 @@ test("personalized product card renders score, first recommendation reason, and 
   assert.doesNotMatch(text, /두 번째 내부 근거|성분 근거가 충분하지 않아/);
 });
 
+test("home product card keeps brand and product name inside the image card", () => {
+  const html = render(HomeProductCard, { product: product() });
+  const imageCard = html.match(/<div class="productImage">([\s\S]*?)<\/div><div class="productText">/)?.[1] ?? "";
+  assert.notEqual(imageCard, "");
+  assert.match(imageCard, /class="imageInfo"/);
+  assert.match(imageCard, /테스트 브랜드 · 앰플/);
+  assert.match(imageCard, /<h3>수분 앰플<\/h3>/);
+});
+
 test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {
   const rule = homeCatalogCss.match(/(?:^|\n)\.matchReason p \{([^}]*)\}/)?.[1] ?? "";
   assert.notEqual(rule, "");

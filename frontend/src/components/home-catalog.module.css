@@ -80,10 +80,11 @@
 .rankingPreview { padding-block: 30px; }
 .rankingPreview .shelfHeading { margin-bottom: 16px; }
 .rankingPreviewList { min-width: 0; margin: 0; padding: 0; list-style: none; }
-.rankingPreviewList .productImage { padding: 13px; }
+.rankingPreviewList .productVisual { padding: 13px; }
 .rankingPreviewList .productText { padding-top: 11px; }
 .rankingPreviewList .brand { font-size: 11px; }
-.rankingPreviewList .productText h3 { min-height: 40px; margin-bottom: 7px; font-size: 14px; line-height: 1.45; }
+.rankingPreviewList .imageInfo { padding: 9px 11px 10px; }
+.rankingPreviewList .imageInfo h3 { min-height: 40px; font-size: 14px; line-height: 1.45; }
 .rankingPreviewList .price { font-size: 13px; }
 .rankingPreviewList .firepower { margin-block: 5px; font-size: 11px; }
 .rankingPreviewList .firepower strong { font-size: 19px; }
@@ -113,12 +114,14 @@
 .reviewerCard [role="meter"] { max-width: 100%; }
 .product { position: relative; min-width: 0; color: #29272f; }
 .productLink { display: block; height: 100%; border-radius: 12px; }
-.productImage { position: relative; aspect-ratio: 1; padding: 20px; overflow: hidden; border: 1px solid #ecebef; border-radius: 12px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.productImage { position: relative; display: grid; aspect-ratio: 4 / 5; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 1px solid #ecebef; border-radius: 12px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
 .productLink:hover .productImage { border-color: #d6a4b7; }
+.productVisual { min-height: 0; overflow: hidden; padding: 20px; }
+.imageInfo { position: relative; z-index: 15; min-width: 0; padding: 11px 14px 12px; border-top: 1px solid #f0edf0; background: #fff; }
 .productText { padding: 15px 1px 0; }
 .brand { margin: 0 0 5px; color: #706c77; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
-.productText h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 48px; margin: 0 0 10px; font-size: 16px; font-weight: 600; line-height: 1.5; letter-spacing: -.025em; overflow-wrap: anywhere; }
-.productLink:hover h3 { color: #a63861; }
+.imageInfo h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 48px; margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.productLink:hover .imageInfo h3 { color: #a63861; }
 .price { margin: 7px 0 0; font-size: 15px; font-weight: 650; color: #35323b; }
 .firepower { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 7px 0; color: #a43a62; font-size: 13px; font-weight: 600; }
 .firepower strong { font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; }
@@ -207,10 +210,12 @@
   .catalogProducts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .products { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 46%; gap: 14px; overflow-x: auto; padding: 2px 1px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: #dfd2d9 transparent; }
   .product { scroll-snap-align: start; }
-  .productImage { padding: 12px; border-radius: 10px; }
+  .productImage { border-radius: 10px; }
+  .productVisual { padding: 12px; }
+  .imageInfo { padding: 9px 10px 10px; }
   .productText { padding-top: 12px; }
   .brand { font-size: 12px; }
-  .productText h3 { font-size: 14px; min-height: 42px; }
+  .imageInfo h3 { font-size: 14px; min-height: 42px; }
   .price { font-size: 14px; }
   .favorite { right: 3px; top: 3px; }
   .rank { left: 7px; top: 7px; width: 26px; height: 27px; font-size: 14px; }

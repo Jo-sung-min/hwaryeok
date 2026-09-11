@@ -12,11 +12,16 @@ export function HomeProductCard({ product, rank, scoreLabel, favorited = false, 
   return <article className={styles.product}>
     <Link href={`/products/${encodeURIComponent(product.id)}`} className={styles.productLink}>
       <div className={styles.productImage}>
-        <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="catalog" />
+        <div className={styles.productVisual}>
+          <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="catalog" />
+        </div>
         {rank !== undefined && <span className={styles.rank} aria-label={`${rank}위`}>{rank}</span>}
+        <div className={styles.imageInfo}>
+          <p className={styles.brand}>{product.brand} · {product.category}</p>
+          <h3>{product.name}</h3>
+        </div>
       </div>
       <div className={styles.productText}>
-        <p className={styles.brand}>{product.brand} · {product.category}</p><h3>{product.name}</h3>
         {scoreLabel && <p className={styles.firepower}><span>{scoreLabel}</span><strong>{product.score}<small> / 100</small></strong></p>}
         <p className={styles.price}>{product.price}</p>
         {growth && <><p className={styles.growth}><TrendingUp size={14} /><strong>+{growth.reviewGrowth}</strong> 리뷰 증가</p><p className={styles.review}>이전 7일 {growth.previousReviewCount} → 최근 7일 {growth.recentReviewCount}개</p></>}
