@@ -211,7 +211,6 @@ test("product search visibly offers concern discovery and explains the matching 
   assert.match(filtersSource, /제품명·브랜드·피부 고민 검색/);
   assert.match(quickFiltersSource, /피부 고민/);
   assert.match(quickFiltersSource, /PRODUCT_CONCERN_OPTIONS\.map/);
-  assert.match(filtersSource, /피부 고민 ·/);
   assert.match(navigationSource, /제품명·브랜드·피부 고민/);
   assert.match(pageSource, /함께 살펴볼 성분/);
   assert.match(gridSource, /product\.matchReasons\?\.find/);

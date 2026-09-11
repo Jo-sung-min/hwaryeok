@@ -5,7 +5,7 @@ import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 import { buildProductCatalogFeedUrl, buildProductCatalogHref, getProductConcernOption, PRODUCT_PAGE_SIZE, productCatalogBackendFilters, readProductCatalogState } from "@/lib/product-catalog";
 import { ProductCatalogGrid } from "./product-catalog-grid";
-import { AppliedProductFilters, MobileFilters, ProductSearch, ProductSort } from "./product-filters";
+import { AppliedProductFilters, ProductSearch } from "./product-filters";
 import { ProductQuickFilters } from "./product-quick-filters";
 
 export const metadata: Metadata = {
@@ -57,7 +57,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
           <h1 className="font-myeongjo text-[26px] font-semibold leading-tight">화장품 찾기</h1>
           <p className="mt-2 text-xs leading-6 text-[#756f78]">제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.</p>
           <ProductSearch filters={filters} />
-          <ProductQuickFilters filters={filters} />
         </div>
       </header>
 
@@ -76,13 +75,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
           </section>
         )}
         <section className="mt-2">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="shrink-0 text-xs text-[#716b74]"><strong className="text-sm text-[#9d385d]">{productPage.totalElements}</strong>개 제품</p>
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-              <MobileFilters filters={filters} ingredients={ingredients} resultCount={productPage.totalElements} />
-              <ProductSort filters={filters} />
-            </div>
-          </div>
+          <ProductQuickFilters filters={filters} ingredients={ingredients} resultCount={productPage.totalElements} />
           {productPage.content.length > 0 ? (
             <ProductCatalogGrid
               key={`${feedUrl}:${productPage.page}`}

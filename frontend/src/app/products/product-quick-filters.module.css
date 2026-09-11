@@ -1,11 +1,32 @@
 .quickFilters {
-  margin-top: 18px;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.toolbarRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.resultCount {
+  margin: 0;
+  color: #716b74;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.resultCount strong {
+  color: #9d385d;
+  font-size: 14px;
+  font-weight: 750;
 }
 
 .triggerRow {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: auto repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .trigger {
@@ -14,8 +35,8 @@
   min-width: 0;
   min-height: 46px;
   align-items: center;
-  gap: 7px;
-  padding: 0 13px;
+  gap: 5px;
+  padding: 0 10px;
   border: 1px solid #e5e1e5;
   border-radius: 11px;
   color: #5f5962;
@@ -25,8 +46,15 @@
 }
 
 .trigger > span {
+  min-width: 0;
+  overflow: hidden;
   color: #777078;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.shortLabel {
+  display: none;
 }
 
 .trigger > strong {
@@ -44,6 +72,37 @@
   transition: transform .2s ease;
 }
 
+.trigger[data-axis="advanced"] {
+  display: flex;
+  width: auto;
+  min-width: 69px;
+  justify-content: center;
+  gap: 5px;
+  padding-inline: 10px;
+}
+
+.trigger[data-axis="advanced"] > strong {
+  display: grid;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: #b83e69;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.trigger:not([data-has-value="true"]) {
+  grid-template-columns: auto auto;
+  justify-content: center;
+}
+
+.trigger:not([data-has-value="true"]) > strong {
+  display: none;
+}
+
 .trigger:hover,
 .trigger[aria-expanded="true"] {
   border-color: #cf829e;
@@ -56,7 +115,7 @@
   background: #fff5f8;
 }
 
-.trigger[aria-expanded="true"] > svg {
+.trigger:not([data-axis="advanced"])[aria-expanded="true"] > svg {
   transform: rotate(180deg);
 }
 
@@ -67,7 +126,8 @@
 }
 
 .panel {
-  max-height: 420px;
+  --panel-max-height: 420px;
+  max-height: var(--panel-max-height);
   overflow: hidden;
   margin-top: 9px;
   padding: 14px;
@@ -75,6 +135,13 @@
   border-radius: 12px;
   background: #fff;
   animation: quick-filter-open .22s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.advancedPanel {
+  --panel-max-height: min(62dvh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #c9bdc3 transparent;
 }
 
 .panel > p {
@@ -109,6 +176,69 @@
   transition: border-color .16s ease, color .16s ease, background-color .16s ease;
 }
 
+.advancedFilterList {
+  min-height: 0;
+}
+
+.filterSection {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee9ec;
+}
+
+.filterSection:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.filterSection h3 {
+  margin: 0 0 9px;
+  color: #4f4950;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.filterOptionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.filterOptionGrid a {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e9e5e8;
+  border-radius: 9px;
+  color: #5f5961;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  word-break: keep-all;
+  transition: border-color .16s ease, color .16s ease, background-color .16s ease;
+}
+
+.filterOptionGrid a:hover {
+  border-color: #d7a1b4;
+  background: #fff8fa;
+}
+
+.filterOptionGrid a[aria-current="page"] {
+  border-color: #c55e82;
+  color: #973153;
+  background: #fff0f5;
+  font-weight: 750;
+}
+
+.filterOptionGrid a > svg {
+  flex-shrink: 0;
+}
+
 .optionGrid a:hover {
   border-color: #d7a1b4;
   background: #fff8fa;
@@ -132,7 +262,7 @@
     transform: translateY(-4px);
   }
   to {
-    max-height: 420px;
+    max-height: var(--panel-max-height);
     margin-top: 9px;
     padding-top: 14px;
     padding-bottom: 14px;
@@ -148,10 +278,44 @@
   }
 }
 
+@media (max-width: 420px) {
+  .toolbarRow {
+    gap: 7px;
+  }
+
+  .triggerRow {
+    gap: 4px;
+  }
+
+  .trigger {
+    gap: 3px;
+    padding-inline: 6px;
+  }
+
+  .trigger:not([data-axis="advanced"]) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .trigger:not([data-axis="advanced"]) > strong {
+    display: none;
+  }
+}
+
+@media (max-width: 340px) {
+  .fullLabel {
+    display: none;
+  }
+
+  .shortLabel {
+    display: inline;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .trigger,
   .trigger > svg,
-  .optionGrid a {
+  .optionGrid a,
+  .filterOptionGrid a {
     transition: none;
   }
 

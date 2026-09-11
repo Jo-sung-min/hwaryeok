@@ -1,0 +1,234 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "화력 홈" [ref=f2e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=f2e6]: 화
+          - generic [ref=f2e7]: 화력
+        - navigation "보조 메뉴" [ref=f2e8]:
+          - link "성분 사전" [ref=f2e9] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천 AD" [ref=f2e10] [cursor=pointer]:
+            - /url: /promotions
+            - text: 화력 추천
+            - generic [ref=f2e11]: AD
+        - link "로그인" [ref=f2e141] [cursor=pointer]:
+          - /url: /login
+    - main [ref=f2e14]:
+      - generic [ref=f2e142]:
+        - generic [ref=f2e144]:
+          - paragraph [ref=f2e145]: PRODUCT SEARCH
+          - heading "화장품 찾기" [level=1] [ref=f2e146]
+          - paragraph [ref=f2e147]: 제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.
+          - search [ref=f2e148]:
+            - generic [ref=f2e152]: 제품명, 브랜드 또는 피부 고민 검색
+            - textbox "제품명, 브랜드 또는 피부 고민 검색" [ref=f2e153]:
+              - /placeholder: 제품명·브랜드·피부 고민 검색
+            - button "검색" [ref=f2e154] [cursor=pointer]
+        - generic [ref=f2e155]:
+          - region [ref=f2e156]:
+            - paragraph [ref=f2e157]: CONCERN SEARCH
+            - heading "민감·붉은기 고민에 맞춰 볼 제품" [level=2] [ref=f2e158]
+            - paragraph [ref=f2e159]: 붉고 예민하게 느껴지는 피부를 편안하게 돌보는 성분이 연결된 제품이에요.
+            - generic [ref=f2e160]:
+              - generic [ref=f2e161]: 함께 살펴볼 성분
+              - generic [ref=f2e162]: 판테놀
+              - generic [ref=f2e163]: 어성초
+              - generic [ref=f2e164]: 비사보롤
+          - generic [ref=f2e165]:
+            - generic [ref=f2e167]:
+              - paragraph [ref=f2e168]:
+                - strong [ref=f2e169]: "8"
+                - text: 개 제품
+              - group "상품 탐색 필터" [ref=f2e170]:
+                - button "필터 · 1개" [ref=f2e475] [cursor=pointer]:
+                  - generic [ref=f2e172]: 필터
+                  - strong [ref=f2e476]: 1개
+                - button "제품 유형 · 전체" [ref=f2e175] [cursor=pointer]:
+                  - generic [ref=f2e176]: 제품 유형
+                  - strong [ref=f2e177]: 전체
+                - button "피부 고민 · 민감·붉은기" [ref=f2e180] [cursor=pointer]:
+                  - generic [ref=f2e181]: 피부 고민
+                  - strong [ref=f2e182]: 민감·붉은기
+            - generic [ref=f2e477]:
+              - list "화장품 검색 결과" [ref=f2e479]:
+                - listitem [ref=f2e480]:
+                  - article [ref=f2e481]:
+                    - link "조선미녀 맑은 쌀 선크림 조선미녀 ·선케어 맑은 쌀 선크림 20,000원 83 민감·붉은기 반영 화력 나이아신아마이드가 붉은기·민감 고민과 연결돼요." [ref=f2e482] [cursor=pointer]:
+                      - /url: /products/rice-sunscreen
+                      - img "조선미녀 맑은 쌀 선크림" [ref=f2e484]
+                      - generic [ref=f2e485]:
+                        - paragraph [ref=f2e486]:
+                          - generic [ref=f2e487]: 조선미녀
+                          - generic [ref=f2e488]: ·선케어
+                        - heading "맑은 쌀 선크림" [level=2] [ref=f2e489]
+                        - paragraph [ref=f2e490]: 20,000원
+                        - paragraph [ref=f2e491]:
+                          - strong [ref=f2e492]: "83"
+                          - generic [ref=f2e493]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e494]: 나이아신아마이드가 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e496]:
+                      - button "찜하기" [ref=f2e497] [cursor=pointer]
+                      - status [ref=f2e500]
+                - listitem [ref=f2e501]:
+                  - article [ref=f2e502]:
+                    - link "아누아 어성초 77 진정 토너 아누아 ·토너 어성초 77 진정 토너 25,000원 86 민감·붉은기 반영 화력 어성초 추출물이 붉은기·민감 고민과 연결돼요." [ref=f2e503] [cursor=pointer]:
+                      - /url: /products/heartleaf-toner
+                      - img "아누아 어성초 77 진정 토너" [ref=f2e505]
+                      - generic [ref=f2e506]:
+                        - paragraph [ref=f2e507]:
+                          - generic [ref=f2e508]: 아누아
+                          - generic [ref=f2e509]: ·토너
+                        - heading "어성초 77 진정 토너" [level=2] [ref=f2e510]
+                        - paragraph [ref=f2e511]: 25,000원
+                        - paragraph [ref=f2e512]:
+                          - strong [ref=f2e513]: "86"
+                          - generic [ref=f2e514]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e515]: 어성초 추출물이 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e517]:
+                      - button "찜하기" [ref=f2e518] [cursor=pointer]
+                      - status [ref=f2e521]
+                - listitem [ref=f2e522]:
+                  - article [ref=f2e523]:
+                    - link "라운드랩 자작나무 수분 앰플 라운드랩 ·앰플 자작나무 수분 앰플 28,000원 79 민감·붉은기 반영 화력 자작나무 수액이 붉은기·민감 고민과 연결돼요." [ref=f2e524] [cursor=pointer]:
+                      - /url: /products/hwahae-2079267
+                      - img "라운드랩 자작나무 수분 앰플" [ref=f2e526]
+                      - generic [ref=f2e527]:
+                        - paragraph [ref=f2e528]:
+                          - generic [ref=f2e529]: 라운드랩
+                          - generic [ref=f2e530]: ·앰플
+                        - heading "자작나무 수분 앰플" [level=2] [ref=f2e531]
+                        - paragraph [ref=f2e532]: 28,000원
+                        - paragraph [ref=f2e533]:
+                          - strong [ref=f2e534]: "79"
+                          - generic [ref=f2e535]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e536]: 자작나무 수액이 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e538]:
+                      - button "찜하기" [ref=f2e539] [cursor=pointer]
+                      - status [ref=f2e542]
+                - listitem [ref=f2e543]:
+                  - article [ref=f2e544]:
+                    - link "웰라쥬 리얼 히알루로닉 블루 100 앰플 웰라쥬 ·앰플 리얼 히알루로닉 블루 100 앰플 30,000원 81 민감·붉은기 반영 화력 판테놀이 붉은기·민감 고민과 연결돼요." [ref=f2e545] [cursor=pointer]:
+                      - /url: /products/hwahae-2153055
+                      - img "웰라쥬 리얼 히알루로닉 블루 100 앰플" [ref=f2e547]
+                      - generic [ref=f2e548]:
+                        - paragraph [ref=f2e549]:
+                          - generic [ref=f2e550]: 웰라쥬
+                          - generic [ref=f2e551]: ·앰플
+                        - heading "리얼 히알루로닉 블루 100 앰플" [level=2] [ref=f2e552]
+                        - paragraph [ref=f2e553]: 30,000원
+                        - paragraph [ref=f2e554]:
+                          - strong [ref=f2e555]: "81"
+                          - generic [ref=f2e556]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e557]: 판테놀이 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e559]:
+                      - button "찜하기" [ref=f2e560] [cursor=pointer]
+                      - status [ref=f2e563]
+                - listitem [ref=f2e564]:
+                  - article [ref=f2e565]:
+                    - link "라운드랩 자작나무 수분 크림 라운드랩 ·크림 자작나무 수분 크림 32,000원 82 민감·붉은기 반영 화력 자작나무 수액이 붉은기·민감 고민과 연결돼요." [ref=f2e566] [cursor=pointer]:
+                      - /url: /products/birch-cream
+                      - img "라운드랩 자작나무 수분 크림" [ref=f2e568]
+                      - generic [ref=f2e569]:
+                        - paragraph [ref=f2e570]:
+                          - generic [ref=f2e571]: 라운드랩
+                          - generic [ref=f2e572]: ·크림
+                        - heading "자작나무 수분 크림" [level=2] [ref=f2e573]
+                        - paragraph [ref=f2e574]: 32,000원
+                        - paragraph [ref=f2e575]:
+                          - strong [ref=f2e576]: "82"
+                          - generic [ref=f2e577]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e578]: 자작나무 수액이 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e580]:
+                      - button "찜하기" [ref=f2e581] [cursor=pointer]
+                      - status [ref=f2e584]
+                - listitem [ref=f2e585]:
+                  - article [ref=f2e586]:
+                    - link "믹순 콩 에센스 믹순 ·에센스 콩 에센스 35,000원 80 민감·붉은기 반영 화력 나이아신아마이드가 붉은기·민감 고민과 연결돼요." [ref=f2e587] [cursor=pointer]:
+                      - /url: /products/bean-essence
+                      - img "믹순 콩 에센스" [ref=f2e589]
+                      - generic [ref=f2e590]:
+                        - paragraph [ref=f2e591]:
+                          - generic [ref=f2e592]: 믹순
+                          - generic [ref=f2e593]: ·에센스
+                        - heading "콩 에센스" [level=2] [ref=f2e594]
+                        - paragraph [ref=f2e595]: 35,000원
+                        - paragraph [ref=f2e596]:
+                          - strong [ref=f2e597]: "80"
+                          - generic [ref=f2e598]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e599]: 나이아신아마이드가 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e601]:
+                      - button "찜하기" [ref=f2e602] [cursor=pointer]
+                      - status [ref=f2e605]
+                - listitem [ref=f2e606]:
+                  - article [ref=f2e607]:
+                    - link "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중 아뜰리에 온 ·세럼 세라마이드 결 세럼 38,000원 81 민감·붉은기 반영 화력 세라마이드 NP가 붉은기·민감 고민과 연결돼요." [ref=f2e608] [cursor=pointer]:
+                      - /url: /products/ceramide-serum
+                      - img "아뜰리에 온 세라마이드 결 세럼 이미지 준비 중" [ref=f2e610]:
+                        - generic [ref=f2e615]: 이미지 준비 중
+                      - generic [ref=f2e616]:
+                        - paragraph [ref=f2e617]:
+                          - generic [ref=f2e618]: 아뜰리에 온
+                          - generic [ref=f2e619]: ·세럼
+                        - heading "세라마이드 결 세럼" [level=2] [ref=f2e620]
+                        - paragraph [ref=f2e621]: 38,000원
+                        - paragraph [ref=f2e622]:
+                          - strong [ref=f2e623]: "81"
+                          - generic [ref=f2e624]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e625]: 세라마이드 NP가 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e627]:
+                      - button "찜하기" [ref=f2e628] [cursor=pointer]
+                      - status [ref=f2e631]
+                - listitem [ref=f2e632]:
+                  - article [ref=f2e633]:
+                    - link "아임프롬 강화 약쑥 앰플 아임프롬 ·앰플 강화 약쑥 앰플 39,000원 84 민감·붉은기 반영 화력 약쑥 추출물이 붉은기·민감 고민과 연결돼요." [ref=f2e634] [cursor=pointer]:
+                      - /url: /products/mugwort-ampoule
+                      - img "아임프롬 강화 약쑥 앰플" [ref=f2e636]
+                      - generic [ref=f2e637]:
+                        - paragraph [ref=f2e638]:
+                          - generic [ref=f2e639]: 아임프롬
+                          - generic [ref=f2e640]: ·앰플
+                        - heading "강화 약쑥 앰플" [level=2] [ref=f2e641]
+                        - paragraph [ref=f2e642]: 39,000원
+                        - paragraph [ref=f2e643]:
+                          - strong [ref=f2e644]: "84"
+                          - generic [ref=f2e645]: 민감·붉은기 반영 화력
+                        - paragraph [ref=f2e646]: 약쑥 추출물이 붉은기·민감 고민과 연결돼요.
+                    - generic [ref=f2e648]:
+                      - button "찜하기" [ref=f2e649] [cursor=pointer]
+                      - status [ref=f2e652]
+              - status [ref=f2e655]
+    - contentinfo [ref=f2e89]:
+      - generic [ref=f2e90]:
+        - generic [ref=f2e91]:
+          - link "화력 홈" [ref=f2e92] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f2e93]: 화
+            - strong [ref=f2e94]: 화력
+          - paragraph [ref=f2e96]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=f2e97]:
+          - link "제품 비교" [ref=f2e98] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=f2e99] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=f2e100] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=f2e101] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=f2e102]:
+          - generic "사업자·고객센터 정보" [ref=f2e103] [cursor=pointer]
+        - paragraph [ref=f2e106]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=f2e107]:
+      - generic [ref=f2e108]:
+        - link [ref=f2e109] [cursor=pointer]:
+          - /url: /
+        - link [ref=f2e114] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=f2e118] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=f2e121] [cursor=pointer]
+        - link [ref=f2e126] [cursor=pointer]:
+          - /url: /my
+  - button "Open Next.js Dev Tools" [ref=f2e136] [cursor=pointer]
+  - alert [ref=f2e140]: 화장품 찾기

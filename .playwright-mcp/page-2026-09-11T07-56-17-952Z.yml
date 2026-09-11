@@ -1,0 +1,60 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - banner [ref=f4e3]:
+      - generic [ref=f4e4]:
+        - link "화력 홈" [ref=f4e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=f4e6]: 화
+        - navigation "보조 메뉴" [ref=f4e7]:
+          - link "성분 사전" [ref=f4e8] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천" [ref=f4e9] [cursor=pointer]:
+            - /url: /promotions
+        - link "로그인" [ref=f4e11] [cursor=pointer]:
+          - /url: /login
+    - main [ref=f4e12]:
+      - generic "화장품을 불러오는 중" [ref=f4e13]:
+        - list [aria-hidden] [ref=f4e32]:
+          - listitem [ref=f4e33]
+          - listitem [ref=f4e39]
+          - listitem [ref=f4e45]
+          - listitem [ref=f4e51]
+          - listitem [ref=f4e57]
+          - listitem [ref=f4e63]
+          - listitem [ref=f4e69]
+          - listitem [ref=f4e75]
+          - listitem [ref=f4e81]
+    - contentinfo [ref=f4e87]:
+      - generic [ref=f4e88]:
+        - generic [ref=f4e89]:
+          - link "화력 홈" [ref=f4e90] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f4e91]: 화
+            - strong [ref=f4e92]: 화력
+          - paragraph [ref=f4e94]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=f4e95]:
+          - link "제품 비교" [ref=f4e96] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=f4e97] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=f4e98] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=f4e99] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=f4e100]:
+          - generic "사업자·고객센터 정보" [ref=f4e101] [cursor=pointer]
+        - paragraph [ref=f4e104]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=f4e105]:
+      - generic [ref=f4e106]:
+        - link [ref=f4e107] [cursor=pointer]:
+          - /url: /
+        - link [ref=f4e112] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=f4e116] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=f4e119] [cursor=pointer]
+        - link [ref=f4e124] [cursor=pointer]:
+          - /url: /my
+  - text: ·
+  - button "Open Next.js Dev Tools" [ref=f4e134] [cursor=pointer]
+  - alert [ref=f4e138]

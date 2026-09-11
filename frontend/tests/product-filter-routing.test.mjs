@@ -50,9 +50,7 @@ function loadProductsPage(captures) {
       if (specifier === "./product-quick-filters") return { ProductQuickFilters: passthrough("quick-filters") };
       if (specifier === "./product-filters") return {
         AppliedProductFilters: passthrough("applied"),
-        MobileFilters: passthrough("mobile"),
         ProductSearch: passthrough("search"),
-        ProductSort: passthrough("sort"),
       };
       throw new Error("Unexpected products-page dependency: " + specifier);
     },
@@ -99,7 +97,8 @@ test("products page sends every catalog filter through the shared state and cata
   );
   assert.equal(captures.applied.filters.ingredientId, "niacinamide");
   assert.equal(captures["quick-filters"].filters.concern, "붉은기·민감");
-  assert.equal(captures.mobile.ingredients[0].name, "나이아신아마이드");
+  assert.equal(captures["quick-filters"].ingredients[0].name, "나이아신아마이드");
+  assert.equal(captures["quick-filters"].resultCount, 18);
   assert.equal(captures["catalog-grid"].initialPage.size, productCatalog.PRODUCT_PAGE_SIZE);
   assert.deepEqual(captures["catalog-grid"].favoriteIds, ["toner"]);
   assert.equal(captures["catalog-grid"].isAuthenticated, true);
