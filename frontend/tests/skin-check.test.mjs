@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { skinQuestions, canContinue, chooseAnswer, firstMissingAnswer, skinTendency, toQuickProfile, restoreSkinDraft, safeCheckView, DRAFT_MAX_AGE, answerLabel } from "../src/lib/skin-check.ts";
+import { skinQuestions, canContinue, chooseAnswer, firstMissingAnswer, skinTendency, toQuickProfile, restoreSkinDraft, restoreSkinDraftSummary, safeCheckView, DRAFT_MAX_AGE, answerLabel } from "../src/lib/skin-check.ts";
 import { isQuickSkinProfile } from "../src/lib/quick-profile.ts";
 
 const q = key => skinQuestions.find(question => question.key === key);
@@ -78,6 +78,13 @@ test("draft restores a complete report's answers, expires old data and sanitizes
   assert.equal(safeCheckView("NaN", complete()), 1);
   assert.equal(safeCheckView("result", complete()), "result");
   assert.equal(safeCheckView("result", {}), "review");
+});
+test("home summary distinguishes a generated report from complete answers still under review", () => {
+  const now = Date.now();
+  const raw = view => JSON.stringify({ version: 2, answers: complete(), view, updatedAt: now });
+  assert.deepEqual(restoreSkinDraftSummary(raw("result"), now), { skinType: "건성", hasReport: true });
+  assert.deepEqual(restoreSkinDraftSummary(raw("review"), now), { skinType: "건성", hasReport: false });
+  assert.equal(restoreSkinDraftSummary(JSON.stringify({ version: 2, answers: {}, view: "result", updatedAt: now }), now), null);
 });
 test("profile boundary rejects malformed or incomplete request bodies", () => {
   const profile = toQuickProfile(complete());

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, ExternalLink, Leaf, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ExternalLink, Leaf, ShieldAlert, ShieldCheck, TriangleAlert } from "lucide-react";
 import { IngredientRankingCard } from "@/components/ingredient-ranking-card";
 import { ApiRequestError, getIngredient, getIngredientRanking, getIngredientRegulations } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
@@ -38,6 +38,9 @@ export default async function IngredientDetailPage({ params }: { params: Promise
     const favoriteIds = new Set(favoriteState.favoriteIds);
     const skinFeatures = Object.entries(ingredient.skinTypeFeatures);
     const concernFeatures = Object.entries(ingredient.concernFeatures);
+    const benefitLabels = ingredient.tags.length > 0
+      ? ingredient.tags
+      : ingredient.role.split("·").map((item) => item.trim()).filter(Boolean);
     const isCaution = ingredient.status === "CAUTION";
 
     return (
@@ -56,14 +59,59 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-[#a06b5d]">{ingredient.role}</p>
               <h1 className="mt-3 break-keep font-myeongjo text-[34px] font-semibold leading-tight md:text-6xl">{ingredient.name}</h1>
               <p className="mt-3 text-sm text-[#98877b] md:text-base">{ingredient.englishName}</p>
-              <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">{ingredient.description}</p>
+              <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">이 성분이 무엇인지, 피부에 어떻게 도움을 주는지, 어떤 변화를 기대할 수 있는지 순서대로 확인해보세요.</p>
               <div className="mt-7 flex flex-wrap gap-2">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full border border-[#a45a5025] bg-[#fff9f1] px-3 py-1.5 text-xs text-[#91564d]">#{tag}</span>)}</div>
-              <div className="mt-8 flex flex-col items-start gap-3">
-                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="ink-btn">성분 랭킹 탭으로 이동 <ArrowRight size={16} /></Link>
-                <p className="text-xs leading-6 text-[#826f76]">제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 비교해보세요.</p>
+              <div className="mt-8 flex flex-wrap items-center gap-2">
+                <a href="#ingredient-guide" className="ink-btn">성분 핵심 알아보기 <ArrowRight size={16} /></a>
+                <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="line-btn">제품 랭킹 보기</Link>
               </div>
             </div>
           </div>
+        </section>
+
+        <section id="ingredient-guide" className="container-page scroll-mt-5 py-10 md:py-14" aria-labelledby="ingredient-guide-title">
+          <div className="mb-6">
+            <p className="eyebrow mb-3">INGREDIENT GUIDE</p>
+            <h2 id="ingredient-guide-title" className="section-title font-myeongjo">{ingredient.name}, 핵심만 알아보기</h2>
+            <p className="mt-3 text-sm leading-7 text-[#756b72]">제품을 고르기 전에 가장 궁금한 세 가지를 먼저 정리했어요.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-[24px] border border-[#e6dce1] bg-white">
+            <article className="grid gap-4 border-b border-[#eee8eb] p-5 sm:grid-cols-[132px_minmax(0,1fr)] sm:p-7" aria-labelledby="ingredient-identity-title">
+              <div>
+                <span className="text-[11px] font-bold tracking-[.14em] text-[#b13d64]">01 · IDENTITY</span>
+                <h3 id="ingredient-identity-title" className="mt-2 font-myeongjo text-lg font-semibold">어떤 성분인가요?</h3>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-[#9b4160]">주요 역할 · {ingredient.role}</p>
+                <p className="mt-2 break-keep text-sm leading-7 text-[#5f5860]">{ingredient.description}</p>
+              </div>
+            </article>
+
+            <article className="grid gap-4 border-b border-[#eee8eb] p-5 sm:grid-cols-[132px_minmax(0,1fr)] sm:p-7" aria-labelledby="ingredient-benefit-title">
+              <div>
+                <span className="text-[11px] font-bold tracking-[.14em] text-[#b13d64]">02 · BENEFIT</span>
+                <h3 id="ingredient-benefit-title" className="mt-2 font-myeongjo text-lg font-semibold">어떻게 피부에 도움을 주나요?</h3>
+              </div>
+              <div className="min-w-0">
+                <p className="break-keep text-sm leading-7 text-[#5f5860]">{isCaution ? `화장품에서는 ${ingredient.role} 역할로 사용되지만, 피부 상태와 제형에 따라 사용감이 달라질 수 있어요.` : `화장품에서는 ${ingredient.role} 관리를 돕는 목적으로 사용돼요. 아래 관리 포인트가 필요한 제품에서 확인해볼 수 있어요.`}</p>
+                <div className="mt-4 flex flex-wrap gap-2">{benefitLabels.map((label) => <span key={label} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#e1b7c5] bg-[#fff7fa] px-3 text-xs font-semibold text-[#963a5c]"><Check size={13} aria-hidden="true" /> {label}</span>)}</div>
+              </div>
+            </article>
+
+            <article className="grid gap-4 p-5 sm:grid-cols-[132px_minmax(0,1fr)] sm:p-7" aria-labelledby="ingredient-effects-title">
+              <div>
+                <span className="text-[11px] font-bold tracking-[.14em] text-[#b13d64]">03 · EFFECT</span>
+                <h3 id="ingredient-effects-title" className="mt-2 font-myeongjo text-lg font-semibold">어떤 효과를 기대할 수 있나요?</h3>
+              </div>
+              <div className="min-w-0">
+                {concernFeatures.length > 0 ? <dl className="grid gap-3 sm:grid-cols-2">
+                  {concernFeatures.map(([concern, feature]) => <div key={concern} className="rounded-xl border border-[#ece7ea] bg-[#fbfafb] p-4"><dt className="text-xs font-bold text-[#9b3d5f]">{concern}</dt><dd className="mt-2 break-keep text-xs leading-6 text-[#625b63]">{feature}</dd></div>)}
+                </dl> : <p className="rounded-xl bg-[#fbfafb] px-4 py-5 text-sm leading-7 text-[#746d75]">구체적인 피부 고민별 기대 효과를 확인하고 있어요.</p>}
+              </div>
+            </article>
+          </div>
+          <p className="mt-4 text-xs leading-6 text-[#7e747c]">제품을 고를 때는 성분명뿐 아니라 함량, 제형, 함께 들어간 성분과 내 피부 반응도 같이 살펴보세요.</p>
         </section>
 
         <section id="ingredient-ranking" className="mt-10 border-y border-[#dfa6b51f] bg-[#fff7f9] py-10 md:mt-14 md:py-16" aria-labelledby="ingredient-ranking-title">
@@ -90,23 +138,16 @@ export default async function IngredientDetailPage({ params }: { params: Promise
             <p className="eyebrow mb-4">PERSONAL FIT</p>
             <h2 className="section-title font-myeongjo">내 피부에는 어떻게 느껴질까요?</h2>
           </div>
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className={`grid gap-5 ${ingredient.caution ? "lg:grid-cols-2" : ""}`}>
             <div className="rounded-[28px] border border-[#76846d24] bg-[#edf1e84f] p-6 md:p-8">
               <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#7b8973] text-white"><Leaf size={18} /></span><h3 className="font-myeongjo text-xl font-semibold">피부 타입별 특징</h3></div>
               {skinFeatures.length > 0 ? <dl className="mt-7 grid gap-5">{skinFeatures.map(([skinType, feature]) => <div key={skinType} className="border-b border-[#76846d1c] pb-5 last:border-0 last:pb-0"><dt className="text-xs font-bold text-[#667260]">{skinType} 피부</dt><dd className="mt-2 text-sm leading-7 text-[#605e55]">{feature}</dd></div>)}</dl> : <p className="mt-7 text-sm text-[#746d65]">피부 타입별 정보가 준비 중이에요.</p>}
             </div>
-            <div className="rounded-[28px] border border-[#c78e762a] bg-[#f4e4dc69] p-6 md:p-8">
-              <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#c1856f] text-white"><Sparkles size={18} /></span><h3 className="font-myeongjo text-xl font-semibold">피부 고민별 특징</h3></div>
-              {concernFeatures.length > 0 ? <dl className="mt-7 grid gap-5">{concernFeatures.map(([concern, feature]) => <div key={concern} className="border-b border-[#c78e761f] pb-5 last:border-0 last:pb-0"><dt className="text-xs font-bold text-[#9b6553]">{concern}</dt><dd className="mt-2 text-sm leading-7 text-[#685c55]">{feature}</dd></div>)}</dl> : <p className="mt-7 text-sm text-[#746d65]">피부 고민별 정보가 준비 중이에요.</p>}
-            </div>
-          </div>
-
-          {ingredient.caution && (
-            <div className="mt-5 flex gap-4 rounded-[24px] border border-[#b8745d2a] bg-[#fff8ee] p-6 md:p-7">
+            {ingredient.caution && <div className="flex gap-4 rounded-[28px] border border-[#b8745d2a] bg-[#fff8ee] p-6 md:p-8">
               <ShieldAlert className="mt-0.5 shrink-0 text-[#a76551]" size={22} />
               <div><h3 className="font-myeongjo text-lg font-semibold">사용 전에 확인해보세요</h3><p className="mt-2 text-sm leading-7 text-[#716158]">{ingredient.caution}</p></div>
-            </div>
-          )}
+            </div>}
+          </div>
 
           {regulations.length > 0 && (
             <div className="mt-8 rounded-[28px] border border-[#d9a8b54d] bg-white p-6 md:p-8">

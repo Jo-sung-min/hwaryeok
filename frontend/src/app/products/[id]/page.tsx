@@ -1,8 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, ExternalLink, FileSearch, Landmark, MessageCircle, ShieldCheck, ShoppingBag, Sparkles, Store, TriangleAlert } from "lucide-react";
-import { FavoriteButton, GradeSeal, InsightBadge, ProductCard, ProductVisual, ScoreRing } from "@/components/product-ui";
+import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink, ShieldCheck, ShoppingBag, Store } from "lucide-react";
+import { FavoriteButton, ProductVisual } from "@/components/product-ui";
 import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
 import { RecentProductTracker } from "@/components/recent-product-tracker";
@@ -10,8 +10,9 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { ReviewSection } from "./review-section";
 import { ProductUsageVideos } from "@/components/usage-videos/product-usage-videos";
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRegulatorySource, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
-import type { ReviewCriteria } from "@/lib/types";
+import type { Product, ProductRegulatorySource, ProductRetailSnapshot, ReviewCriteria } from "@/lib/types";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
+import styles from "./product-detail.module.css";
 
 const defaultProfile = {
   skinType: "수부지",
@@ -95,126 +96,49 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
     };
 
     return (
-      <div className="pb-24">
+      <div className="pb-10">
         <ScrollToTop />
         <RecentProductTracker productId={product.id} enabled={favoriteState.isAuthenticated} />
-        <div className="container-page py-4 md:py-9">
-          <Link href="/products" className="inline-flex items-center gap-2 text-sm text-[#766960]"><ArrowLeft size={16} /> 화장품 목록</Link>
+        <div className="container-page py-3">
+          <Link href="/products" className="inline-flex min-h-10 items-center gap-1.5 text-xs font-medium text-[#726b74]"><ArrowLeft size={15} /> 화장품 목록</Link>
         </div>
 
         <section className="container-page">
-          <div className="grid overflow-hidden rounded-[26px] border border-[#e4afbb36] bg-white/88 sm:rounded-[32px] lg:grid-cols-[.86fr_1.14fr]">
-            <div className="relative min-h-[270px] sm:min-h-[390px] lg:min-h-[590px]">
+          <div className={styles.hero}>
+            <div className={styles.heroVisual}>
               <div className="absolute inset-0"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="fill" /></div>
-              <div className="absolute right-5 top-5"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
+              <div className="absolute right-3 top-3"><FavoriteButton productId={product.id} initialFavorited={favoriteIds.has(product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} /></div>
             </div>
-            <div className="flex flex-col justify-center p-5 sm:p-6 md:p-10 lg:p-14">
-              <p className="mb-3 inline-flex w-fit items-center gap-2 rounded-full bg-[#a54f4910] px-3 py-1.5 text-[11px] font-bold text-[#944b5e]"><FileSearch size={14} /> 내 피부 제품 리포트</p>
-              <p className="text-xs font-bold uppercase tracking-[.16em] text-[#8e7468]">{product.brand} · {product.category}</p>
-              <h1 className="mt-3 text-balance font-myeongjo text-[28px] font-semibold leading-snug sm:text-3xl md:text-4xl">{product.name}</h1>
-              <p className="mt-3 text-sm text-[#786a61]">{product.price}</p>
-              <div className="my-6 h-px bg-[#75564518] sm:my-8" />
-              <div className="flex items-end justify-between gap-4 sm:items-center sm:gap-7">
-                <div className="min-w-0">
-                  <p className="text-sm text-[#7b6b61]">{analysis.skinType} · {analysis.concerns.join(" · ")} 기준</p>
-                  <h2 className="mt-1 font-myeongjo text-2xl font-semibold">내 피부 맞춤 결과</h2>
-                  <div className="mt-4 flex items-center gap-3 sm:mt-5 sm:gap-4">
-                    <GradeSeal grade={analysis.grade} />
-                    <div><strong className="font-myeongjo text-xl">{analysis.verdict}</strong><p className="mt-1 text-xs text-[#89796e]">성분 근거 {product.confidenceLevel === "HIGH" ? "높음" : product.confidenceLevel === "MEDIUM" ? "보통" : "자료 보강 중"}</p></div>
-                  </div>
-                </div>
-                <ScoreRing score={analysis.score} size="small" />
+            <div className={styles.heroBody}>
+              <p className="text-[11px] font-semibold text-[#837984]">{product.brand} · {product.category}</p>
+              <h1 className="mt-2 text-balance font-myeongjo text-[25px] font-semibold leading-[1.35]">{product.name}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1"><strong className="text-sm">{product.price}</strong><span className="text-[11px] text-[#8a818a]">{product.benefit} · {product.subBenefit}</span></div>
+
+              <div className={styles.scoreSummary}>
+                <div className="min-w-0"><span>{savedProfile?.skinType ? "내 피부 적합도" : "예시 피부 적합도"}</span><strong>{analysis.verdict}</strong><small>{analysis.skinType} 기준 · {analysis.grade}등급</small></div>
+                <p><strong>{analysis.score}</strong><span>/100</span></p>
               </div>
-              <div className="mt-6 rounded-2xl border border-[#e4afbb36] bg-[#fff1f4] p-4 text-sm leading-7 text-[#675a52] sm:mt-8"><Sparkles size={16} className="mr-2 inline text-[#a54f49]" />{analysis.highlights[0]}</div>
-              <a href={coupangPurchaseUrl} target="_blank" rel="noopener noreferrer sponsored nofollow" className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#c94f70] px-5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(151,56,84,.18)] transition hover:bg-[#b84363] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b84363]" aria-label={`${product.brand} ${product.name} ${hasCoupangPartnersLink ? "쿠팡 파트너스 구매 페이지" : "쿠팡 공식판매처 검색"}, 새 창 열림`}><ShoppingBag size={18} /> 제품 구매 <span className="text-white/75">· 쿠팡{hasCoupangPartnersLink ? " 파트너스" : " 공식판매처"}</span><ExternalLink size={15} /></a>
+
+              <p className={styles.primaryReason}>{analysis.highlights[0] ?? "성분 구성과 피부 조건을 함께 확인했어요."}</p>
+              <a href={coupangPurchaseUrl} target="_blank" rel="noopener noreferrer sponsored nofollow" className="ink-btn mt-4 w-full" aria-label={`${product.brand} ${product.name} ${hasCoupangPartnersLink ? "쿠팡 파트너스 구매 페이지" : "쿠팡 공식판매처 검색"}, 새 창 열림`}><ShoppingBag size={17} /> 쿠팡에서 제품 보기 <ExternalLink size={13} /></a>
               {hasCoupangPartnersLink
-                ? <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</p>
-                : <p className="mt-2 text-center text-[10px] leading-5 text-[#8b7a71]">쿠팡의 공식 브랜드·판매자 검색 결과로 이동해요. 주문 전 판매자 표시를 확인해 주세요.</p>}
-              <div className="mt-5 grid grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"><Link href="#report" className="ink-btn min-w-0"><FileSearch size={17} /> 리포트 보기</Link><Link href="#reviews" className="line-btn px-4"><MessageCircle size={16} /> 실사용 리뷰</Link><Link href="#usage-videos" className="line-btn px-4">사용법 영상</Link><Link href={`/compare?left=${product.id}`} className="line-btn px-4">제품 비교</Link></div>
-              <p className="mt-4 text-[11px] leading-5 text-[#8b7a71]">{product.scoreBasis} · 브랜드 인지도와 판매량은 점수에서 제외</p>
+                ? <p className="mt-2 text-center text-[9px] leading-4 text-[#8b8289]">쿠팡 파트너스 활동으로 일정액의 수수료를 제공받습니다.</p>
+                : <p className="mt-2 text-center text-[9px] leading-4 text-[#8b8289]">공식 브랜드·판매자 검색으로 이동하며 주문 전 판매자를 확인해 주세요.</p>}
+
+              <nav className={styles.jumpNav} aria-label="제품 상세 바로가기">
+                <Link href="#report">궁합</Link><Link href="#ingredients">성분</Link><Link href="#reviews">리뷰</Link><Link href="#usage-videos">사용법</Link>
+              </nav>
+              <Link href={`/compare?left=${encodeURIComponent(product.id)}`} className={styles.compareLink}>제품 비교하기 <ChevronRight size={14} /></Link>
             </div>
           </div>
         </section>
 
-        {regulatorySource.matched && (
-          <section className="container-page mt-5 sm:mt-6">
-            <div className="rounded-[24px] border border-[#b9cfbd] bg-white p-5 sm:rounded-[28px] sm:p-7">
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#edf5ee] px-3 py-1.5 text-[11px] font-bold text-[#55735e]"><ShieldCheck size={14} /> {regulatorySource.label}</span>
-                  <h2 className="mt-4 font-myeongjo text-xl font-semibold leading-7 sm:text-2xl">식약처 공개 보고품목에서 확인했어요</h2>
-                  <p className="mt-2 text-sm leading-7 text-[#756b67]">화력 관리자가 제품명과 업체 정보를 직접 대조해 연결한 정보입니다.</p>
-                </div>
-                {regulatorySource.sourceUrl && <a href={regulatorySource.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="line-btn shrink-0"><Landmark size={15} /> 공식 데이터 안내 <ExternalLink size={13} /></a>}
-              </div>
-              <dl className="mt-5 grid gap-3 rounded-2xl bg-[#f7faf7] p-4 text-xs sm:grid-cols-2 sm:p-5">
-                <SourceItem label="식약처 품목명" value={regulatorySource.productName} />
-                <SourceItem label="책임판매업체" value={regulatorySource.companyName} />
-                <SourceItem label="보고일" value={regulatorySource.reportDate ? formatCheckedAt(regulatorySource.reportDate) : null} />
-                <SourceItem label="공개데이터 확인일" value={regulatorySource.checkedAt ? formatCheckedAt(regulatorySource.checkedAt) : null} />
-              </dl>
-              {regulatorySource.disclaimer && <p className="mt-4 text-[10px] leading-5 text-[#8a7d78]">{regulatorySource.disclaimer}</p>}
-            </div>
-          </section>
-        )}
-
-        {retailSnapshot.matched && retailSnapshot.retailerUrl && (
-          <section className="container-page mt-5 sm:mt-6">
-            <div className="grid gap-5 rounded-[24px] border border-[#e4afbb52] bg-white p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-8 sm:rounded-[28px] sm:p-7">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff1f4] px-3 py-1.5 text-[11px] font-bold text-[#a54f64]"><Store size={13} /> 올리브영 확인 정보</span>
-                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${retailSnapshot.availability === "AVAILABLE" ? "bg-[#edf3e9] text-[#67765f]" : "bg-[#f5efed] text-[#89766d]"}`}>{retailSnapshot.availability === "AVAILABLE" ? "판매 중" : "일시품절"}</span>
-                </div>
-                <h2 className="mt-3 text-sm font-bold leading-6 text-[#514842] sm:text-base">{retailSnapshot.retailerProductName}</h2>
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs leading-5 text-[#807168]">
-                  <span>구성 {retailSnapshot.packageInfo}</span>
-                  {retailSnapshot.checkedAt && <span>{formatCheckedAt(retailSnapshot.checkedAt)} 확인</span>}
-                </div>
-                {retailSnapshot.notes && <p className="mt-2 text-[11px] leading-5 text-[#97857b]">{retailSnapshot.notes}</p>}
-              </div>
-              <div className="flex items-end justify-between gap-5 border-t border-[#ead8dc] pt-4 sm:min-w-[210px] sm:flex-col sm:items-end sm:border-l sm:border-t-0 sm:pl-7 sm:pt-0">
-                <div className="text-left sm:text-right">
-                  {retailSnapshot.salePrice !== null && retailSnapshot.salePrice !== retailSnapshot.regularPrice && <p className="text-xs text-[#9a8980] line-through">정가 {formatWon(retailSnapshot.regularPrice)}</p>}
-                  <p className="mt-0.5 font-myeongjo text-xl font-semibold text-[#a64360]">{formatWon(retailSnapshot.salePrice ?? retailSnapshot.regularPrice)}</p>
-                </div>
-                <a href={retailSnapshot.retailerUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#9d4d62] underline decoration-[#d9a4b1] underline-offset-4">원문 보기 <ExternalLink size={13} /></a>
-              </div>
-            </div>
-            <p className="px-2 pt-2 text-[10px] leading-5 text-[#97877e]">공개 판매 정보는 행사와 재고에 따라 달라질 수 있어요. 구매 버튼은 위 쿠팡 링크로 연결됩니다.</p>
-          </section>
-        )}
-
+        <ProductSourceDetails regulatorySource={regulatorySource} retailSnapshot={retailSnapshot} />
         <FirepowerReport analysis={analysis} ingredientData={ingredientData} reviewSummary={reviewSummary} personalized={Boolean(savedProfile?.skinType)} />
-
-        <section id="judgement" className="container-page py-12 md:py-24">
-          <div className="mb-9 max-w-2xl"><InsightBadge /><h2 className="mt-4 section-title font-myeongjo">왜 이 점수가 나왔을까요?</h2><p className="mt-4 text-sm leading-7 text-[#796c63]">연결된 주요 성분의 근거 수준과 내 피부 신호를 함께 계산해 좋은 점과 확인할 점을 구분했어요.</p></div>
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-[24px] border border-[#76846d24] bg-[#edf1e84f] p-5 sm:rounded-[26px] sm:p-6 md:p-8">
-              <div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#7b8973] text-white"><Check size={18} /></span><h3 className="font-myeongjo text-xl font-semibold">잘 맞는 이유</h3></div>
-              <ul className="mt-6 grid gap-4 text-sm leading-7 text-[#605e55]">{analysis.highlights.map((item) => <li key={item}>• {item}</li>)}</ul>
-            </div>
-            <div className="rounded-[24px] border border-[#c78e762a] bg-[#f4e4dc69] p-5 sm:rounded-[26px] sm:p-6 md:p-8">
-              <div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#c1856f] text-white"><TriangleAlert size={17} /></span><h3 className="font-myeongjo text-xl font-semibold">이렇게 사용해보세요</h3></div>
-              <ul className="mt-6 grid gap-4 text-sm leading-7 text-[#685c55]">{analysis.cautions.map((item) => <li key={item}>• {item}</li>)}</ul>
-            </div>
-          </div>
-        </section>
-
-        <div className="container-page pb-12"><ProductUsageVideos productId={product.id} /></div>
-
-        <section className="border-y border-[#dfa6b51f] bg-[#fff1f4] py-12 md:py-24">
-          <div className="container-page grid gap-12 lg:grid-cols-[.72fr_1.28fr]">
-            <div><p className="eyebrow mb-4">FIT DETAILS</p><h2 className="section-title font-myeongjo">피부 궁합을<br />한눈에 봐요</h2><p className="mt-5 text-sm leading-7 text-[#786b62]">좋은 점수는 길게, 부담과 위험 점수는 짧을수록 좋아요.</p></div>
-            <div className="grid gap-6">{analysis.details.map((item) => <div key={item.label}><div className="mb-2 flex items-end justify-between gap-3"><div className="min-w-0"><strong className="font-myeongjo text-lg">{item.label}</strong><span className={`ml-2 text-[11px] sm:ml-3 sm:text-xs ${item.positive ? "text-[#71806b]" : "text-[#a06856]"}`}>{item.note}</span></div><strong className="shrink-0 font-myeongjo text-xl">{item.value}</strong></div><div className="h-2.5 overflow-hidden rounded-full bg-[#f1e5e8]"><div className={`h-full rounded-full ${item.positive ? "bg-[#88967f]" : "bg-[#cf8f78]"}`} style={{ width: `${item.value}%` }} /></div></div>)}</div>
-          </div>
-        </section>
-
         <ProductIngredientsPanel data={ingredientData}/>
-
         <ReviewSection productId={product.id} criteria={reviewCriteria} summary={reviewSummary} isAuthenticated={favoriteState.isAuthenticated} savedSkinType={savedProfile?.skinType ?? null} />
-
-        {relatedProducts.length > 0 && <section className="container-page pb-14 md:pb-20"><h2 className="mb-6 font-myeongjo text-2xl font-semibold sm:mb-8">성분 기준으로 함께 볼 제품</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{relatedProducts.map((item) => <ProductCard key={item.id} product={item} initialFavorited={favoriteIds.has(item.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={`/products/${product.id}`} scoreLabel="성분 기준 점수" />)}</div></section>}
+        <div className="container-page pb-8"><ProductUsageVideos productId={product.id} /></div>
+        <RelatedProducts products={relatedProducts} favoriteIds={favoriteIds} isAuthenticated={favoriteState.isAuthenticated} currentProductId={product.id} />
       </div>
     );
   } catch (error) {
@@ -236,6 +160,63 @@ function formatCheckedAt(value: string) {
   return value.slice(0, 10).replaceAll("-", ".");
 }
 
+function ProductSourceDetails({ regulatorySource, retailSnapshot }: { regulatorySource: ProductRegulatorySource; retailSnapshot: ProductRetailSnapshot }) {
+  const hasRetail = retailSnapshot.matched;
+  const hasRegulatory = regulatorySource.matched;
+  if (!hasRetail && !hasRegulatory) return null;
+
+  return <section className="container-page mt-3">
+    <details className="group overflow-hidden rounded-2xl border border-[#e8e5e9] bg-white">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 text-sm font-semibold text-[#514b53]">
+        <span className="flex min-w-0 items-center gap-2"><Store size={15} className="shrink-0 text-[#b64b70]" /><span>판매·공식 정보</span></span>
+        <span className="ml-auto truncate text-[10px] font-medium text-[#89818a]">{[hasRetail && "올리브영", hasRegulatory && "식약처"].filter(Boolean).join(" · ")} 확인</span>
+        <ChevronDown size={16} className="shrink-0 text-[#8e858e] transition group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="divide-y divide-[#ece9ed] border-t border-[#ece9ed]">
+        {hasRetail && <div className="p-4">
+          <div className="flex items-center justify-between gap-3"><strong className="text-xs">올리브영 판매 정보</strong><span className={`rounded-full px-2 py-1 text-[9px] font-bold ${retailSnapshot.availability === "AVAILABLE" ? "bg-[#edf3e9] text-[#61735f]" : "bg-[#f3f0f2] text-[#7e747c]"}`}>{retailSnapshot.availability === "AVAILABLE" ? "판매 중" : "일시품절"}</span></div>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#4f4850]">{retailSnapshot.retailerProductName || "상품명 확인 중"}</p>
+          <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+            <div>{retailSnapshot.salePrice !== null && retailSnapshot.salePrice !== retailSnapshot.regularPrice && <span className="mr-2 text-[10px] text-[#978f97] line-through">{formatWon(retailSnapshot.regularPrice)}</span>}<strong className="text-sm text-[#a43a60]">{formatWon(retailSnapshot.salePrice ?? retailSnapshot.regularPrice)}</strong></div>
+            {retailSnapshot.retailerUrl && <a href={retailSnapshot.retailerUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-9 items-center gap-1 text-[11px] font-semibold text-[#9d4664] underline underline-offset-4">원문 보기 <ExternalLink size={11} /></a>}
+          </div>
+          <p className="mt-2 text-[10px] leading-5 text-[#8b838a]">{[retailSnapshot.packageInfo && `구성 ${retailSnapshot.packageInfo}`, retailSnapshot.checkedAt && `${formatCheckedAt(retailSnapshot.checkedAt)} 확인`].filter(Boolean).join(" · ")}</p>
+          {retailSnapshot.notes && <p className="mt-1 text-[10px] leading-5 text-[#8b838a]">{retailSnapshot.notes}</p>}
+          <p className="mt-2 text-[9px] leading-4 text-[#999198]">가격과 재고는 달라질 수 있으며 구매는 상단 쿠팡 링크로 연결됩니다.</p>
+        </div>}
+        {hasRegulatory && <div className="p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#526a59]"><ShieldCheck size={14} />{regulatorySource.label || "식약처 공개 정보"}</div>
+          <p className="mt-2 text-sm font-semibold">식약처 공개 보고품목과 대조했어요</p>
+          <dl className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-[#f7faf7] p-3 text-xs">
+            <SourceItem label="품목명" value={regulatorySource.productName} />
+            <SourceItem label="책임판매업체" value={regulatorySource.companyName} />
+            <SourceItem label="보고일" value={regulatorySource.reportDate ? formatCheckedAt(regulatorySource.reportDate) : null} />
+            <SourceItem label="확인일" value={regulatorySource.checkedAt ? formatCheckedAt(regulatorySource.checkedAt) : null} />
+          </dl>
+          {regulatorySource.sourceUrl && <a href={regulatorySource.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="mt-3 inline-flex min-h-9 items-center gap-1 text-[11px] font-semibold text-[#58705e] underline underline-offset-4">공식 데이터 안내 <ExternalLink size={11} /></a>}
+          {regulatorySource.disclaimer && <p className="mt-2 text-[9px] leading-4 text-[#918b8e]">{regulatorySource.disclaimer}</p>}
+        </div>}
+      </div>
+    </details>
+  </section>;
+}
+
+function RelatedProducts({ products, favoriteIds, isAuthenticated, currentProductId }: { products: Product[]; favoriteIds: ReadonlySet<string>; isAuthenticated: boolean; currentProductId: string }) {
+  if (products.length === 0) return null;
+  return <section className="container-page pb-10 pt-2">
+    <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-myeongjo text-xl font-semibold">함께 볼 제품</h2><Link href="/products" className="inline-flex min-h-10 items-center gap-1 text-xs font-semibold text-[#a33f62]">전체보기 <ChevronRight size={13} /></Link></div>
+    <div className="divide-y divide-[#ece9ed] border-y border-[#e8e5e9]">
+      {products.map((item) => <article key={item.id} className="relative">
+        <Link href={`/products/${encodeURIComponent(item.id)}`} className="flex min-h-28 items-center gap-3 py-3 pr-14">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-[#ece9ed] bg-white"><ProductVisual tone={item.tone} imageUrl={item.imageUrl} alt={`${item.brand} ${item.name}`} variant="thumbnail" /></div>
+          <div className="min-w-0"><p className="text-[10px] font-semibold text-[#8b8289]">{item.brand} · {item.category}</p><h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5">{item.name}</h3><p className="mt-2 text-[11px] text-[#817880]"><strong className="text-[#a33f62]">{item.score}점</strong> · 성분 기준 · {item.grade}등급</p></div>
+        </Link>
+        <div className="absolute right-0 top-1/2 -translate-y-1/2"><FavoriteButton productId={item.id} initialFavorited={favoriteIds.has(item.id)} isAuthenticated={isAuthenticated} returnTo={`/products/${currentProductId}`} small /></div>
+      </article>)}
+    </div>
+  </section>;
+}
+
 function SourceItem({ label, value }: { label: string; value: string | null }) {
-  return <div><dt className="text-[10px] font-bold text-[#849087]">{label}</dt><dd className="mt-1 font-semibold leading-5 text-[#4f5d52]">{value || "정보 없음"}</dd></div>;
+  return <div><dt className="text-[9px] font-semibold text-[#78817a]">{label}</dt><dd className="mt-0.5 font-medium leading-5 text-[#4f5d52]">{value || "정보 없음"}</dd></div>;
 }

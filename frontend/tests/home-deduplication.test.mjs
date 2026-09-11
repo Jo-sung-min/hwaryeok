@@ -6,6 +6,7 @@ import vm from "node:vm";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, homeProductListHref, orderHomeCategories } from "../src/lib/home-catalog.ts";
+import { rankingHref } from "../src/lib/ingredient-ranking.ts";
 
 const require = createRequire(import.meta.url);
 function load(path, mocks) {
@@ -48,14 +49,16 @@ test("bottom navigation retains every primary mobile journey", () => {
   assert.match(html, /aria-controls="mobile-product-search"[^>]*>.*탐색/s);
 });
 
-for (const personalized of [false, true]) test(`home removes duplicate ranking without losing primary catalog (${personalized ? "member" : "guest"})`, async () => {
-  let productQuery;
+for (const personalized of [false, true]) test(`home keeps the primary catalog and adds compact ranking previews (${personalized ? "member" : "guest"})`, async () => {
+  const productQueries = [];
   let filterProps;
   const { HomeCatalog } = load("../src/components/home-catalog.tsx", {
     "@/lib/api": {
       getIngredientRankingOptions: async () => ({ categories: [{ name: "앰플", productCount: 1 }], ingredients: [{ id: "hyaluronic", name: "히알루론산", productCount: 1 }, { id: "unused", name: "미사용", productCount: 0 }] }),
-      getProductPage: async query => { productQuery = query; return { content: [], totalElements: 0 }; },
+      getProductPage: async query => { productQueries.push(query); return { content: [], totalElements: 0 }; },
       getRisingProductRanking: async () => ({ content: [] }), getWeeklyRanking: async () => null,
+      getIngredientRanking: async () => ({ content: [], categories: [], totalElements: 0, page: 0, size: 4, totalPages: 0, hasNext: false }),
+      getReviewerRanking: async () => ({ content: [], totalElements: 0, page: 0, size: 4, totalPages: 0, hasNext: false }),
     },
     "@/lib/auth-session": {
       getCurrentSession: async () => personalized ? { nickname: "테스트" } : null,
@@ -63,16 +66,20 @@ for (const personalized of [false, true]) test(`home removes duplicate ranking w
       getFavoriteViewState: async () => ({ favoriteIds: [] }),
     },
     "@/lib/home-catalog": { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, homeProductListHref, orderHomeCategories },
+    "@/lib/ingredient-ranking": { rankingHref },
     "@/components/home-banner": { HomeBanner: () => React.createElement("div", null, "배너 유지") },
+    "@/components/home-ranking-carousel": { HomeRankingCarousel: ({ children }) => React.createElement("div", { "data-ranking-carousel": true }, children) },
     "@/components/home-product-filters": { HomeProductFilters: props => { filterProps = props; return React.createElement("div", null, "상품 필터 유지"); } },
     "@/components/home-personalization": { HomePersonalization: () => React.createElement("div", null, "기존 피부 안내 유지") },
     "@/components/home-product-card": { HomeProductCard: () => null },
+    "@/components/ingredient-ranking-card": { IngredientRankingCard: () => null },
+    "@/components/reviewer-firepower": { ReviewerFirepower: () => null },
   });
   const requestedFilters = { category: "앰플", ingredientId: "hyaluronic", minReviewScore: 80, minFirepowerScore: 65 };
   const html = renderToStaticMarkup(await HomeCatalog({ requestedFilters }));
-  assert.doesNotMatch(html, /id="personal-ranking"|href="#personal-ranking"|내 피부에 맞는 제품 랭킹|내 피부를 알려주면/);
   assert.match(html, /id="home-products"/);
-  assert.match(html, /id="rising-ranking"/);
+  for (const kind of ["personal", "ingredients", "rising", "reviewers"]) assert.match(html, new RegExp(`data-ranking-preview="${kind}"`));
+  for (const href of ["/ranking/personal", "/ranking", "/ranking/rising", "/reviewers"]) assert.match(html, new RegExp(`href="${href.replaceAll("/", "\\/")}`));
   assert.doesNotMatch(html, /aria-label="홈 상품 주제"|href="#home-products"|href="#rising-ranking"/);
   assert.match(html, /배너 유지/);
   assert.match(html, /기존 피부 안내 유지/);
@@ -81,11 +88,10 @@ for (const personalized of [false, true]) test(`home removes duplicate ranking w
   assert.doesNotMatch(html, /role="search"|home-product-search|제품명·브랜드 검색/);
   assert.doesNotMatch(html, /href="\/promotions"|새로운 브랜드를 만나는 화력 추천/);
   assert.match(html, /href="\/principles"/);
-  assert.match(html, /아래 급상승 랭킹/);
-  assert.equal(productQuery.sort, personalized ? "score" : "name");
-  assert.equal(productQuery.ingredientId, "hyaluronic");
-  assert.equal(productQuery.minReviewScore, 80);
-  assert.equal(productQuery.minFirepowerScore, 65);
+  const catalogQuery = productQueries.find(query => query.ingredientId === "hyaluronic" && query.minReviewScore === 80);
+  assert.ok(catalogQuery);
+  assert.equal(catalogQuery.sort, personalized ? "score" : "name");
+  assert.equal(catalogQuery.minFirepowerScore, 65);
   assert.deepEqual(JSON.parse(JSON.stringify(filterProps.filters)), requestedFilters);
   assert.deepEqual(filterProps.ingredients.map(item => item.id), ["hyaluronic"]);
 });
@@ -96,4 +102,10 @@ test("footer does not repeat the two utility destinations owned by the header", 
   assert.doesNotMatch(html, /href="\/(?:ingredients|promotions)"/);
   assert.match(html, /href="\/compare"/);
   assert.match(html, /href="\/principles"/);
+  assert.match(html, /<details/);
+  assert.match(html, /사업자·고객센터 정보/);
+  assert.doesNotMatch(html, /시작하기|알아보기|실제 사용자 리뷰와 함께 비교/);
+  assert.doesNotMatch(html, /href="\/(?:ranking|products|reviewers)/);
+  assert.doesNotMatch(html, /의료적 진단/);
+  assert.equal((html.match(/HWA:RYEOK/g) ?? []).length, 1);
 });

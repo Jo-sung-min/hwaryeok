@@ -3,8 +3,8 @@ import { ArrowRight, ChevronLeft, ChevronRight, FlaskConical, Search, Sparkles }
 import { getIngredientRanking, getIngredientRankingOptions, getUserPreferredIngredients } from "@/lib/api";
 import { getFavoriteViewState, readAuthTokens } from "@/lib/auth-session";
 import { rankingHref, readRankingFilters, type IngredientRankingSearchParams } from "@/lib/ingredient-ranking";
-import { IngredientPicker } from "@/components/ingredient-picker";
 import { IngredientRankingCard } from "@/components/ingredient-ranking-card";
+import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
 
 async function preferredIngredientIds() {
   const { accessToken } = await readAuthTokens();
@@ -37,6 +37,13 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
   const currentHref = rankingHref(basePath, filters);
   const totalForIngredient = result.categories.reduce((sum, category) => sum + category.productCount, 0);
   const categoryNames = [...new Set([...options.categories.map((item) => item.name), ...result.categories.map((item) => item.name), ...(filters.category ? [filters.category] : [])])];
+  const priorityIngredients = [...new Set([...preferredIds, "hyaluronic-acid", "panthenol", "niacinamide", "ceramide-np", "heartleaf", "birch-sap"])];
+  const orderedIngredients = [...options.ingredients].sort((left, right) => {
+    const leftIndex = priorityIngredients.indexOf(left.id);
+    const rightIndex = priorityIngredients.indexOf(right.id);
+    return (leftIndex < 0 ? priorityIngredients.length : leftIndex) - (rightIndex < 0 ? priorityIngredients.length : rightIndex)
+      || left.name.localeCompare(right.name, "ko");
+  });
   const visiblePages = Array.from({ length: Math.min(5, result.totalPages) }, (_, index) => Math.max(0, Math.min(result.page - 2, result.totalPages - 5)) + index);
   const isHome = basePath === "/";
 
@@ -52,27 +59,22 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
       </form>
     </div>
 
-    <section aria-label="성분과 제품 종류 필터" className="mt-5 border-b border-[#f0e1e7] pb-1 sm:mt-6">
-      <IngredientPicker ingredients={options.ingredients} filters={filters} basePath={basePath} preferredIds={preferredIds} />
-      <nav aria-label="제품 종류 선택" className="scrollbar-hide mt-1 flex gap-5 overflow-x-auto sm:gap-6">
-        <Link href={rankingHref(basePath, { ...filters, category: "", page: 0 })} scroll={false} aria-current={!filters.category ? "page" : undefined} className={`shrink-0 border-b-2 pb-3 pt-2 text-xs font-semibold ${!filters.category ? "border-[#cc5b7e] text-[#b84e72]" : "border-transparent text-[#8f7983]"}`}>전체 종류 <span className="ml-1 text-[10px] opacity-65">{totalForIngredient}</span></Link>
-        {categoryNames.map((name) => {
-          const count = result.categories.find((item) => item.name === name)?.productCount ?? 0;
-          const active = name === filters.category;
-          return <Link key={name} href={rankingHref(basePath, { ...filters, category: name, page: 0 })} scroll={false} aria-current={active ? "page" : undefined} className={`shrink-0 border-b-2 pb-3 pt-2 text-xs font-semibold ${active ? "border-[#cc5b7e] text-[#b84e72]" : count > 0 ? "border-transparent text-[#8f7983]" : "border-transparent text-[#bba7b0]"}`}>{name}<span className="ml-1 text-[10px] opacity-65">{count}</span></Link>;
-        })}
-      </nav>
-    </section>
+    <RankingFilterSheet
+      variant="ingredients"
+      basePath={basePath}
+      resultCount={result.totalElements}
+      axes={[
+        { id: "ingredient", param: "ingredient", label: "주요 성분", shortLabel: "성분", value: filters.ingredient, searchable: true, searchPlaceholder: "성분명 또는 역할 검색", options: [{ value: "", label: "전체 성분" }, ...orderedIngredients.map((item) => ({ value: item.id, label: item.name, count: item.productCount, keywords: `${item.englishName} ${item.role} ${item.tags.join(" ")}` }))] },
+        { id: "category", param: "category", label: "제품 유형", shortLabel: "종류", value: filters.category, options: [{ value: "", label: "전체 종류", count: totalForIngredient }, ...categoryNames.map((name) => ({ value: name, label: name, count: result.categories.find((item) => item.name === name)?.productCount ?? 0 }))] },
+        { id: "sort", param: "sort", label: "정렬 기준", shortLabel: "정렬", value: filters.sort, defaultValue: "FIREPOWER", options: [{ value: "FIREPOWER", label: selected ? "성분 화력순" : "기본 진열순" }, { value: "REVIEW", label: "리뷰점수순" }] },
+      ]}
+    />
 
     {unknownIngredient && <p role="status" className="mt-4 rounded-xl bg-[#fff2f6] px-4 py-3 text-xs text-[#a15470]">해당 성분을 찾지 못해 전체 상품을 보여드려요. 위에서 성분을 다시 선택해 주세요.</p>}
     <section id="ranking-products" aria-label="제품 랭킹" className="scroll-mt-28 pt-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex flex-wrap items-center gap-1.5 text-sm font-bold text-[#57414b]"><h2>{selected?.name ?? "전체 성분"}</h2><ChevronRight size={14} className="text-[#d1aaba]" /><span>{filters.category || "모든 제품"}</span><span className="ml-1 text-[11px] font-normal text-[#a08b94]">{result.totalElements}개</span></div>
-        <nav aria-label="랭킹 정렬" className="flex items-center gap-3 text-[11px]">
-          <Link href={rankingHref(basePath, { ...filters, sort: "FIREPOWER", page: 0 })} scroll={false} aria-current={filters.sort === "FIREPOWER" ? "page" : undefined} className={`py-1 ${filters.sort === "FIREPOWER" ? "font-bold text-[#b84d71]" : "text-[#a18b95]"}`}>{selected ? "성분 화력순" : "기본 진열순"}</Link>
-          <span className="h-2.5 w-px bg-[#eedee5]" />
-          <Link href={rankingHref(basePath, { ...filters, sort: "REVIEW", page: 0 })} scroll={false} aria-current={filters.sort === "REVIEW" ? "page" : undefined} className={`py-1 ${filters.sort === "REVIEW" ? "font-bold text-[#b84d71]" : "text-[#a18b95]"}`}>리뷰점수순</Link>
-        </nav>
+        <span className="text-[11px] text-[#8f7983]">{filters.sort === "REVIEW" ? "리뷰점수순" : selected ? "성분 화력순" : "기본 진열순"}</span>
       </div>
       {result.content.length > 0 ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">{result.content.map((item) => <IngredientRankingCard key={item.product.id} item={item} ingredientName={result.ingredientName} sort={filters.sort} favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={currentHref} />)}</div> : <div className="rounded-2xl border border-dashed border-[#e3b9c8] bg-[#fffafb] px-5 py-12 text-center">
         <FlaskConical size={26} className="mx-auto text-[#cc7795]" /><h3 className="mt-4 text-lg font-bold">{selected?.name ? `${selected.name} ${filters.category || "제품"}` : filters.category || "선택한 조건"}의 연결된 제품이 아직 없어요</h3><p className="mx-auto mt-2 max-w-md text-xs leading-6 text-[#947f88]">성분이 확인된 상품이 등록되면 이 목록에 자동으로 모여요. 다른 제품 종류도 살펴보세요.</p><Link href={rankingHref(basePath, { ingredient: filters.ingredient, sort: filters.sort })} className="mt-5 inline-flex min-h-10 items-center gap-1 rounded-full border border-[#e6c1ce] bg-white px-4 text-xs font-semibold text-[#af5674]">{selected?.name ?? "전체 성분"}의 모든 제품 <ArrowRight size={13} /></Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowRight, Droplets, Flame, MessageCircle, UsersRound } from "lucide-react";
+import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { ReviewerFirepower } from "@/components/reviewer-firepower";
 import { getReviewerRanking } from "@/lib/api";
@@ -23,7 +24,7 @@ export default async function ReviewersPage({ searchParams }: { searchParams: Pr
   const data = await getReviewerRanking(skinType, page, 20);
 
   return <div className="container-page pb-24 pt-4 sm:pt-7">
-    <RankingTabs active="reviewers" />
+    <RankingTabs />
     <section className="py-8 sm:py-12">
       <p className="eyebrow">PEOPLE WHO HELP YOUR SKIN</p>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-5">
@@ -40,9 +41,9 @@ export default async function ReviewersPage({ searchParams }: { searchParams: Pr
 
     <section aria-labelledby="reviewers-heading">
       <div className="flex flex-wrap items-end justify-between gap-3"><h2 id="reviewers-heading" className="text-lg font-bold">리뷰어 랭킹 <span className="ml-1 text-sm font-medium text-[#ae8594]">{data.totalElements.toLocaleString("ko-KR")}명</span></h2><span className="text-xs text-[#8e7781]">리뷰 화력순 · 공개 리뷰 기준</span></div>
-      <nav aria-label="리뷰어 피부타입 필터" className="my-5 flex flex-wrap gap-2">
-        {["", ...skinTypes].map((skin) => <Link key={skin} href={rankingHref(skin, 0)} aria-current={skinType === skin ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-full border px-4 text-xs font-bold ${skinType === skin ? "border-[#bd5575] bg-[#bd5575] text-white" : "border-[#efdae2] bg-white text-[#856f78]"}`}>{skin ? `${skin === "민감" ? "민감성" : skin} 피부` : "피부 전체"}</Link>)}
-      </nav>
+      <RankingFilterSheet variant="reviewers" basePath="/reviewers" resultCount={data.totalElements} axes={[
+        { id: "skinType", param: "skinType", label: "피부 타입", shortLabel: "피부타입", value: skinType, options: [{ value: "", label: "피부 전체" }, ...skinTypes.map((skin) => ({ value: skin, label: `${skin === "민감" ? "민감성" : skin} 피부` }))] },
+      ]} />
 
       {data.content.length === 0 ? <div className="rounded-3xl border border-dashed border-[#e6bdcc] bg-[#fffafb] px-5 py-16 text-center">
         <UsersRound className="mx-auto text-[#c76b8a]" size={30} /><h3 className="mt-4 text-xl font-semibold">{page > 0 ? "이 페이지에는 리뷰어가 없어요" : "첫 리뷰어를 기다리고 있어요"}</h3>

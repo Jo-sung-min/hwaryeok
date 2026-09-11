@@ -101,3 +101,51 @@ test("ingredient details render the canonical DB ranking and link to its selecte
   assert.match(html, /data-return-to="\/ingredients\/hyaluronic-acid#ingredient-ranking"/);
   assert.doesNotMatch(html, /INGREDIENT ANALYSIS|성분 분석/);
 });
+
+test("ingredient details explain what the ingredient is, how it helps, and what users can expect without medical overclaim", async () => {
+  const niacinamide = {
+    ...ingredient,
+    id: "niacinamide",
+    name: "나이아신아마이드",
+    englishName: "Niacinamide",
+    role: "피부 톤 · 장벽",
+    description: "피부 톤과 장벽, 유분 균형을 폭넓게 관리하는 비타민 B3 성분이에요.",
+    caution: "고함량 제품은 피부 상태를 살피며 천천히 적응해보세요.",
+    tags: ["피부톤", "장벽", "유분균형"],
+    skinTypeFeatures: {
+      지성: "유분 균형과 피부 톤을 함께 관리하기 좋아요.",
+    },
+    concernFeatures: {
+      칙칙함: "고르지 않은 피부 톤을 맑게 관리하는 데 도움을 줘요.",
+      모공: "유분 균형을 관리해 모공이 도드라져 보이는 것을 줄이는 데 도움을 줘요.",
+    },
+  };
+  const Page = loadIngredientPage({
+    getIngredient: async () => niacinamide,
+    getIngredientRegulations: async () => [],
+    getIngredientRanking: async () => ({
+      ingredientId: niacinamide.id,
+      ingredientName: niacinamide.name,
+      category: null,
+      sort: "FIREPOWER",
+      content: [],
+      page: 0,
+      size: 4,
+      totalElements: 0,
+      totalPages: 0,
+      hasNext: false,
+      categories: [],
+    }),
+  });
+
+  const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ id: niacinamide.id }) }));
+
+  assert.match(html, /어떤 성분인가요\?/);
+  assert.match(html, /비타민 B3 성분/);
+  assert.match(html, /어떻게 피부에 도움을 주나요\?/);
+  assert.match(html, /피부 톤|장벽|유분 균형/);
+  assert.match(html, /어떤 효과를 기대할 수 있나요\?/);
+  assert.match(html, /칙칙함|모공/);
+  assert.match(html, /도움(?:을)? 줄 수|기대할 수/);
+  assert.doesNotMatch(html, /치료합니다|완치|즉시 제거|효과를 보장/);
+});

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleGauge, FlaskConical, Info, MessageCircle, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { Check, ChevronDown, TriangleAlert } from "lucide-react";
 import type { Analysis, ProductIngredients, ProductReviewSummary } from "@/lib/types";
 
 type FirepowerReportProps = {
@@ -10,91 +10,70 @@ type FirepowerReportProps = {
 };
 
 export function FirepowerReport({ analysis, ingredientData, reviewSummary, personalized }: FirepowerReportProps) {
-  const reviewState = getReviewState(reviewSummary);
   const primaryHighlight = analysis.highlights[0] ?? "제품의 성분 구성과 피부 조건을 함께 확인했어요.";
   const primaryCaution = analysis.cautions[0] ?? "처음 사용할 때는 피부 반응을 천천히 확인해 주세요.";
+  const moreHighlights = analysis.highlights.slice(1);
+  const moreCautions = analysis.cautions.slice(1);
+  const hasMoreReasons = moreHighlights.length > 0 || moreCautions.length > 0;
 
-  return (
-    <section id="report" className="container-page py-10 md:py-16" aria-labelledby="report-title">
-      <div className="overflow-hidden rounded-[28px] border border-[#e4afbb42] bg-white/82 shadow-[0_24px_80px_rgba(116,72,64,.08)] sm:rounded-[34px]">
-        <div className="grid gap-8 border-b border-[#efd9df] bg-[#fff8fa] p-6 sm:p-8 lg:grid-cols-[1.1fr_.9fr] lg:p-10">
-          <div>
-            <div className="flex items-center gap-2 text-[#a55468]"><CircleGauge size={18} /><p className="eyebrow">HWA:RYEOK REPORT</p></div>
-            <h2 id="report-title" className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">한 장으로 보는 제품 리포트</h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#71645d]">연결된 성분 근거, 실제 사용 경험, 현재 적용한 피부 조건을 나눠 보여드려요. 많이 팔리는 이유보다 나에게 맞는 이유를 살펴보세요.</p>
-          </div>
-          <div className="rounded-[22px] border border-[#bd8d8233] bg-white/72 p-5">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#91475b]"><Info size={15} /> 한 줄 결론</div>
-            <p className="mt-3 font-myeongjo text-lg leading-8 text-[#463b36]">{primaryHighlight}</p>
-            <p className="mt-2 text-xs leading-6 text-[#8b6d67]">확인할 점: {primaryCaution}</p>
-          </div>
+  return <section id="report" className="container-page scroll-mt-24 py-8" aria-labelledby="report-title">
+    <div className="overflow-hidden rounded-[20px] border border-[#e8e5e9] bg-white">
+      <header className="border-b border-[#ece9ed] px-5 py-5">
+        <p className="text-[10px] font-bold tracking-[.14em] text-[#ad4c6e]">{personalized ? "내 피부 궁합" : "예시 피부 궁합"}</p>
+        <h2 id="report-title" className="mt-1 font-myeongjo text-2xl font-semibold">왜 잘 맞을까요?</h2>
+        <p className="mt-1 text-xs text-[#7f7680]">{analysis.skinType} · {analysis.concerns.join(" · ")}</p>
+      </header>
+
+      <div className="p-5">
+        <div className="grid grid-cols-2 gap-2" aria-label="피부 궁합 세부 점수">
+          {analysis.details.map((item) => <div key={item.label} className="rounded-xl border border-[#ece9ed] p-3">
+            <div className="flex items-center justify-between gap-2"><strong className="text-xs">{item.label}</strong><span className={`text-base font-bold tabular-nums ${item.positive ? "text-[#65745f]" : "text-[#a45d51]"}`}>{item.value}</span></div>
+            <p className="mt-1 text-[9px] leading-4 text-[#8a8189]">{item.note}</p>
+          </div>)}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4">
-          <ReportMetric
-            icon={FlaskConical}
-            label="연결된 주요 성분"
-            value={`${ingredientData.totalCount}개 근거`}
-            description={`좋음 ${ingredientData.goodCount} · 주의 ${ingredientData.cautionCount} · 일반 ${ingredientData.neutralCount}`}
-          />
-          <ReportMetric
-            icon={MessageCircle}
-            label="실사용 데이터"
-            value={reviewState.label}
-            description={reviewState.description}
-          />
-          <ReportMetric
-            icon={UserRoundCheck}
-            label="피부 기준"
-            value={personalized ? "내 프로필 적용" : "예시 프로필 적용"}
-            description={personalized ? `${analysis.skinType} · ${analysis.concerns.join(" · ")}` : "프로필을 등록하면 내 조건으로 다시 계산해요."}
-          />
-          <ReportMetric
-            icon={ShieldCheck}
-            label="정보 상태"
-            value={analysis.product.confidenceLevel === "HIGH" ? "근거 높음" : analysis.product.confidenceLevel === "MEDIUM" ? "근거 보통" : "자료 보강 중"}
-            description={`데이터 신뢰 ${analysis.product.dataConfidenceScore ?? 0}점 · 부족하면 점수를 보수적으로 계산해요.`}
-          />
+        <div className="mt-5 divide-y divide-[#eee9ec] border-y border-[#eee9ec]">
+          <KeyPoint icon="good" label="잘 맞는 이유" text={primaryHighlight} />
+          <KeyPoint icon="caution" label="사용 팁" text={primaryCaution} />
         </div>
 
-        {!personalized && (
-          <div className="flex flex-col gap-4 border-t border-[#75564516] bg-[#fff8f9] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <p className="text-sm leading-6 text-[#705f59]">지금 보이는 적합도는 <strong>수부지·속건조·민감 예시 조건</strong>입니다. 로그인 없이 피부 상태를 체크하면 내 조건으로 다시 볼 수 있어요.</p>
-            <Link href="/skin-check" className="line-btn shrink-0">피부 상태 체크</Link>
+        {hasMoreReasons && <details className="group border-b border-[#eee9ec]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold text-[#6b626a]">근거 더 보기 <ChevronDown size={15} className="transition group-open:rotate-180" /></summary>
+          <div className="grid gap-4 pb-4 text-xs leading-6 text-[#716870]">
+            {moreHighlights.length > 0 && <div><strong className="text-[#5f6e5a]">추가로 잘 맞는 이유</strong><ul className="mt-1">{moreHighlights.map((item) => <li key={item}>· {item}</li>)}</ul></div>}
+            {moreCautions.length > 0 && <div><strong className="text-[#9b5b50]">추가 사용 팁</strong><ul className="mt-1">{moreCautions.map((item) => <li key={item}>· {item}</li>)}</ul></div>}
           </div>
-        )}
+        </details>}
+
+        <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-5 text-[#817880]">
+          <span>연결 성분 {ingredientData.totalCount}개</span>
+          <span>사용자 리뷰 {reviewLabel(reviewSummary)}</span>
+          <span>정보 신뢰 {confidenceLabel(analysis.product.confidenceLevel)}</span>
+        </div>
+
+        {!personalized && <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-[#fff7fa] px-3 py-3"><p className="text-[10px] leading-5 text-[#766a72]">지금은 예시 피부 기준이에요. 내 답변으로 다시 볼 수 있어요.</p><Link href="/skin-check" className="shrink-0 text-[11px] font-bold text-[#a33f62] underline underline-offset-4">피부 체크</Link></div>}
+
+        <details className="group mt-2">
+          <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-3 text-[10px] font-medium text-[#8a8188]">점수 계산 기준 <ChevronDown size={13} className="transition group-open:rotate-180" /></summary>
+          <p className="pb-1 text-[10px] leading-5 text-[#8a8188]">{analysis.product.scoreBasis || "성분, 피부 적합도, 데이터 신뢰를 함께 계산해요."} · 브랜드 인지도와 판매량은 제외합니다.</p>
+        </details>
       </div>
-    </section>
-  );
-}
-
-function ReportMetric({
-  icon: Icon,
-  label,
-  value,
-  description,
-}: {
-  icon: typeof FlaskConical;
-  label: string;
-  value: string;
-  description: string;
-}) {
-  return (
-    <div className="border-b border-[#75564516] p-6 sm:p-7 sm:odd:border-r lg:border-b-0 lg:border-r lg:last:border-r-0">
-      <div className="flex items-center gap-2 text-xs font-bold text-[#8d756b]"><Icon size={16} className="text-[#a65368]" />{label}</div>
-      <strong className="mt-3 block font-myeongjo text-xl text-[#443934]">{value}</strong>
-      <p className="mt-2 text-[11px] leading-5 text-[#81736b]">{description}</p>
     </div>
-  );
+  </section>;
 }
 
-function getReviewState(summary: ProductReviewSummary) {
-  const reviewCount = summary.reviewCount.toLocaleString("ko-KR");
-  if (summary.rankingStatus === "OFFICIAL") {
-    return { label: `${reviewCount}개 · 충분`, description: "공식 리뷰 순위에 반영되는 데이터예요." };
-  }
-  if (summary.rankingStatus === "REFERENCE") {
-    return { label: `${reviewCount}개 · 참고`, description: `${summary.minimumOfficialReviewCount}개부터 공식 순위에 반영해요.` };
-  }
-  return { label: `${reviewCount}개 · 수집 중`, description: "표본이 적어 점수보다 개별 후기를 먼저 확인해 주세요." };
+function KeyPoint({ icon, label, text }: { icon: "good" | "caution"; label: string; text: string }) {
+  const Icon = icon === "good" ? Check : TriangleAlert;
+  return <div className="flex gap-3 py-3"><span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full ${icon === "good" ? "bg-[#eef3ec] text-[#64735f]" : "bg-[#fff0ec] text-[#a76455]"}`}><Icon size={14} aria-hidden="true" /></span><p className="min-w-0 text-xs leading-6 text-[#625a61]"><strong className="mr-2 text-[#3f3940]">{label}</strong>{text}</p></div>;
+}
+
+function reviewLabel(summary: ProductReviewSummary) {
+  if (summary.reviewScore === null) return `${summary.reviewCount.toLocaleString("ko-KR")}개 · 집계 전`;
+  return `${summary.reviewScore.toFixed(1)}점 · ${summary.reviewCount.toLocaleString("ko-KR")}개`;
+}
+
+function confidenceLabel(value: Analysis["product"]["confidenceLevel"]) {
+  if (value === "HIGH") return "높음";
+  if (value === "MEDIUM") return "보통";
+  return "보강 중";
 }

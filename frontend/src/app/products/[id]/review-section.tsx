@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { useActionState, useMemo, useState } from "react";
-import { BarChart3, Check, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, Check, ChevronDown, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { createReviewAction, type ReviewActionState } from "./review-actions";
 import type { ProductReviewSummary, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
@@ -36,95 +36,97 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
   }, [criteria.criteria.length, scores]);
 
   return (
-    <section className="container-page pb-14 md:pb-20" id="reviews">
-      <div className="overflow-hidden rounded-[26px] border border-[#e4afbb42] bg-white/82 shadow-[0_24px_80px_rgba(116,72,64,.08)] sm:rounded-[32px]">
-        <div className="grid border-b border-[#efd9df] bg-[#fff8fa] lg:grid-cols-[.78fr_1.22fr]">
-          <div className="flex min-h-64 flex-col justify-between p-6 sm:p-8 md:p-10">
-            <div>
-              <div className="flex items-center gap-2 text-[#a5545e]"><MessageCircle size={18} /><p className="eyebrow">HWA:RYEOK REVIEW</p></div>
-              <h2 className="mt-4 font-myeongjo text-3xl font-semibold sm:text-4xl">사용자 리뷰점수</h2>
-              <p className="mt-3 max-w-md text-sm leading-7 text-[#796c63]">{criteria.categoryName}에 꼭 맞는 {criteria.criteria.length}개 기준을 같은 방식으로 평가해 제품의 사용 경험을 비교해요.</p>
-              <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/75 px-3 py-1.5 text-[10px] font-bold text-[#98495d]"><ShieldCheck size={13} /> 피부 타입 · 사용 기간까지 함께 보는 리뷰</p>
-            </div>
-            <div className="mt-8 flex items-end gap-4">
-              {summary.rankingStatus === "COLLECTING" ? (
-                <div><strong className="font-myeongjo text-3xl text-[#9b4a45]">데이터 수집 중</strong><p className="mt-2 text-xs text-[#85756b]">{summary.reviewCount === 0 ? "첫 리뷰의 항목별 평가를 기다리고 있어요." : `리뷰 ${summary.reviewCount}개 · 10개부터 참고 점수를 공개해요.`}</p></div>
-              ) : (
-                <><strong className="font-myeongjo text-6xl font-semibold leading-none text-[#9b4a45]">{summary.reviewScore?.toFixed(1) ?? "—"}</strong><div className="pb-1 text-xs leading-5 text-[#85756b]">/ 100점<br />리뷰 {summary.reviewCount.toLocaleString("ko-KR")}개</div></>
-              )}
-            </div>
+    <section className="container-page pb-10" id="reviews">
+      <div className="overflow-hidden rounded-[20px] border border-[#eadde1] bg-white">
+        <header className="flex items-start justify-between gap-4 border-b border-[#eee5e8] px-5 py-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[#ad4f70]"><MessageCircle size={16} /><p className="text-[10px] font-bold tracking-[.14em]">USER REVIEWS</p></div>
+            <h2 className="mt-2 font-myeongjo text-2xl font-semibold">사용자 리뷰점수</h2>
+            <p className="mt-1 text-xs leading-5 text-[#82747a]">{criteria.categoryName} 기준 · 피부 타입과 사용 기간을 함께 확인해요.</p>
           </div>
-          <div className="border-t border-[#75564516] bg-white/55 p-6 sm:p-8 md:p-10 lg:border-l lg:border-t-0">
-            <div className="mb-5 flex items-center justify-between gap-3"><div className="flex items-center gap-2"><BarChart3 size={18} className="text-[#a5545e]" /><h3 className="font-myeongjo text-xl font-semibold">항목별 평균</h3></div><span className="rounded-full bg-[#a54f4910] px-3 py-1 text-[10px] font-bold text-[#934640]">각 5점 기준</span></div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {summary.criteriaAverages.map((item) => (
-                <div key={item.criteriaId}>
-                  <div className="mb-1.5 flex items-center justify-between text-sm"><span className="font-semibold text-[#594d47]">{item.name}</span><strong className="font-myeongjo text-base text-[#9b4a45]">{item.averageScore === null ? "—" : item.averageScore.toFixed(1)}</strong></div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#f0e1e5]"><div className="h-full rounded-full bg-[#cf6682]" style={{ width: `${item.averageScore === null ? 0 : item.averageScore * 20}%` }} /></div>
-                </div>
+          <div className="shrink-0 text-right">
+            <strong className="font-myeongjo text-2xl font-semibold text-[#a24361]">{summary.rankingStatus === "COLLECTING" ? "—" : summary.reviewScore?.toFixed(1) ?? "—"}</strong>
+            <p className="mt-1 text-[10px] text-[#8d7d83]">{summary.reviewCount.toLocaleString("ko-KR")}개 {summary.rankingStatus === "COLLECTING" ? "· 집계 전" : "· 100점 만점"}</p>
+          </div>
+        </header>
+
+        <div className="px-5 py-5">
+          <div className="flex items-end justify-between gap-3"><h3 className="font-myeongjo text-xl font-semibold">최근 사용 후기</h3><span className="text-[11px] text-[#8c7d83]">최대 5개</span></div>
+          {summary.reviews.length === 0 ? (
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-[#dfd2d6] px-4 py-5"><Sparkles className="shrink-0 text-[#c57b94]" size={20} /><div><p className="text-sm font-semibold">아직 등록된 리뷰가 없어요</p><p className="mt-1 text-xs leading-5 text-[#85767c]">첫 번째 리뷰로 실제 사용 경험을 알려주세요.</p></div></div>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {summary.reviews.slice(0, 5).map((review) => (
+                <article key={review.id} className="rounded-2xl border border-[#e9dfe2] bg-white p-4">
+                  <div className="flex items-start justify-between gap-4"><div><Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link><p className="mt-0.5 text-[11px] text-[#8a7c81]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">리뷰점수</p></div></div>
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#655a5e] [overflow-wrap:anywhere]">{review.content}</p>
+                  <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-[#93858a]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
+                  <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />
+                </article>
               ))}
             </div>
-            <p className="mt-6 rounded-2xl bg-[#fff6f7] px-4 py-3 text-xs leading-6 text-[#786961]">{rankingMessage(summary)}</p>
-          </div>
-        </div>
+          )}
 
-        <div className="grid lg:grid-cols-[1.05fr_.95fr]">
-          <div className="p-6 sm:p-8 md:p-10">
-            <div className="flex items-start justify-between gap-4"><div><p className="eyebrow">SCORE YOUR EXPERIENCE</p><h3 className="mt-2 font-myeongjo text-2xl font-semibold">이 제품은 어떠셨나요?</h3></div><div className="shrink-0 rounded-2xl bg-[#a54f49] px-4 py-3 text-center text-white shadow-sm"><strong className="font-myeongjo text-2xl">{previewScore}</strong><span className="ml-1 text-xs">점</span><p className="mt-0.5 text-[9px] text-white/75">예상 리뷰점수</p></div></div>
-
-            {!isAuthenticated ? (
-              <div className="mt-8 rounded-[22px] border border-dashed border-[#bd8d8266] bg-[#fff8f7] p-6 text-center"><Sparkles className="mx-auto text-[#b96872]" size={22} /><p className="mt-3 text-sm leading-7 text-[#6e6159]">로그인하면 내 피부 타입과 함께 항목별 리뷰를 남길 수 있어요.</p><Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="ink-btn mt-5">로그인하고 리뷰 쓰기</Link></div>
-            ) : summary.viewerHasReviewed ? (
-              <div className="mt-8 rounded-[22px] border border-[#efcbd5] bg-[#fff3f6] p-7 text-center text-[#87475b]"><Check className="mx-auto" size={24} /><p className="mt-3 font-semibold">이미 이 제품에 리뷰를 남겼어요.</p><p className="mt-2 text-xs leading-6 text-[#856f76]">화력은 한 사용자가 한 제품에 하나의 리뷰만 남길 수 있도록 운영해요.</p></div>
-            ) : state.success ? (
-              <div className="mt-8 rounded-[22px] bg-[#edf5ef] p-7 text-center text-[#4d7157]"><Check className="mx-auto" size={24} /><p className="mt-3 font-semibold">{state.message}</p></div>
-            ) : (
-              <form action={action} className="mt-8 space-y-7">
-                <p className="rounded-2xl border border-[#efd9df] bg-[#fff8fa] px-4 py-3 text-xs leading-6 text-[#78666c]"><ShieldCheck size={15} className="mr-1.5 inline text-[#b14b69]" />사용자 한 명당 이 제품에는 하나의 리뷰만 등록할 수 있어요.</p>
-                <div className="grid gap-5">
-                  {criteria.criteria.map((item) => (
-                    <fieldset key={item.id} className="rounded-[20px] border border-[#75564518] bg-[#fffdf9] p-4 sm:p-5">
-                      <legend className="sr-only">{item.name}</legend>
-                      <div className="mb-3"><div className="flex items-center justify-between gap-3"><strong className="font-myeongjo text-lg">{item.name}</strong><span className="text-xs font-bold text-[#9b4a45]">{scores[item.id]} / 5</span></div><p className="mt-1 text-xs leading-5 text-[#83756b]">{item.description}</p></div>
-                      <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                        {[1, 2, 3, 4, 5].map((score) => (
-                          <label key={score} className={`grid min-h-11 cursor-pointer place-items-center rounded-xl border text-sm font-bold transition ${scores[item.id] === score ? "border-[#a65362] bg-[#a65362] text-white shadow-sm" : "border-[#cdbeb25e] bg-white text-[#796d65] hover:border-[#b8757f]"}`}>
-                            <input type="radio" name={`score_${item.id}`} value={score} checked={scores[item.id] === score} onChange={() => setScores((current) => ({ ...current, [item.id]: score }))} className="sr-only" aria-label={`${item.name} ${score}점, ${scoreLabels[score]}`} />
-                            {score}
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                  ))}
-                </div>
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="피부 타입" error={state.fieldErrors?.skinType}><select name="skinType" defaultValue={normalizeSkinType(savedSkinType)} className="input" required><option value="">선택해 주세요</option>{["건성", "지성", "복합성", "수부지", "중성", "민감성"].map((value) => <option key={value}>{value}</option>)}</select></Field>
-                  <Field label="사용 기간" error={state.fieldErrors?.usagePeriod}><select name="usagePeriod" defaultValue="ONE_MONTH" className="input" required>{Object.entries(usagePeriodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-                </div>
-                <Field label="재구매 의향" error={state.fieldErrors?.repurchaseYn}><div className="grid grid-cols-2 gap-2">{[["true", "다시 구매할래요"], ["false", "재구매는 고민돼요"]].map(([value, label], index) => <label key={value} className="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-[#cdbeb25e] bg-white px-3 text-center text-sm font-semibold has-[:checked]:border-[#a65362] has-[:checked]:bg-[#fff0f3] has-[:checked]:text-[#963f51]"><input type="radio" name="repurchaseYn" value={value} defaultChecked={index === 0} className="sr-only" />{label}</label>)}</div></Field>
-                <Field label="사용 후기" error={state.fieldErrors?.content}><textarea name="content" minLength={10} maxLength={2000} rows={6} required className="input min-h-36 resize-y py-4" placeholder="어떤 피부에서 얼마나 사용했는지, 좋았던 점과 아쉬웠던 점을 구체적으로 알려주세요." /></Field>
-                {(state.message || state.fieldErrors?.scores) && <p role="alert" className="rounded-2xl bg-[#fff0f2] p-4 text-sm text-[#a2475c]">{state.fieldErrors?.scores ?? state.message}</p>}
-                <button disabled={pending} className="ink-btn w-full disabled:opacity-55">{pending ? "리뷰점수를 계산하는 중…" : <><Send size={17} /> {previewScore}점으로 리뷰 등록하기</>}</button>
-              </form>
-            )}
-          </div>
-
-          <div className="border-t border-[#75564516] bg-[#f8f4ef80] p-6 sm:p-8 md:p-10 lg:border-l lg:border-t-0">
-            <div className="flex items-end justify-between gap-3"><div><p className="eyebrow">RECENT REVIEWS</p><h3 className="mt-2 font-myeongjo text-2xl font-semibold">최근 사용 후기</h3></div><span className="text-xs text-[#86786e]">{summary.reviewCount.toLocaleString("ko-KR")}개</span></div>
-            {summary.reviews.length === 0 ? (
-              <div className="mt-8 rounded-[22px] border border-dashed border-[#bdaea26b] bg-white/65 p-8 text-center"><MessageCircle className="mx-auto text-[#bd8b84]" size={24} /><p className="mt-3 font-myeongjo text-lg font-semibold">아직 등록된 리뷰가 없어요</p><p className="mt-2 text-xs leading-6 text-[#82746a]">첫 번째 리뷰로 이 제품의 사용 경험을 알려주세요.</p></div>
-            ) : (
-              <div className="mt-7 grid gap-4">
-                {summary.reviews.slice(0, 5).map((review) => (
-                  <article key={review.id} className="rounded-[20px] border border-[#75564516] bg-white/82 p-5">
-                    <div className="flex items-start justify-between gap-4"><div><Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link><p className="mt-1 text-[11px] text-[#8a7c72]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-2xl text-[#9b4a45]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d73]">리뷰점수</p></div></div>
-                    <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[#655a53] [overflow-wrap:anywhere]">{review.content}</p>
-                    <div className="mt-4 flex items-center justify-between text-[10px] text-[#93857b]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
-                    <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />
-                  </article>
+          {summary.reviewCount > 0 && (
+            <details className="group mt-4 border-t border-[#eee5e8] pt-1">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-[#665b60]">
+                <span className="flex items-center gap-2"><BarChart3 size={16} className="text-[#ad4f70]" /> 항목별 평균 보기</span>
+                <ChevronDown size={16} className="transition group-open:rotate-180" />
+              </summary>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-x-5 gap-y-4 pb-4 pt-2">
+                {summary.criteriaAverages.map((item) => (
+                  <div key={item.criteriaId}>
+                    <div className="mb-1.5 flex items-center justify-between text-xs"><span className="font-semibold text-[#594d52]">{item.name}</span><strong className="text-[#9b4a61]">{item.averageScore === null ? "—" : item.averageScore.toFixed(1)}</strong></div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-[#f1e8eb]"><div className="h-full rounded-full bg-[#cb6a88]" style={{ width: `${item.averageScore === null ? 0 : item.averageScore * 20}%` }} /></div>
+                  </div>
                 ))}
               </div>
+              <p className="border-t border-[#f0e8ea] py-3 text-[11px] leading-5 text-[#81747a]">{rankingMessage(summary)}</p>
+            </details>
+          )}
+
+          <div className="mt-5 border-t border-[#eee5e8] pt-5">
+            {!isAuthenticated ? (
+              <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#75686e]">로그인하면 내 피부 타입과 함께 리뷰를 남길 수 있어요.</p><Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="line-btn">로그인하고 리뷰 쓰기</Link></div>
+            ) : summary.viewerHasReviewed ? (
+              <div className="flex items-center gap-2 text-sm text-[#765e67]"><Check size={17} className="text-[#a64b6a]" /><div><p className="font-semibold">이미 이 제품에 리뷰를 남겼어요.</p><p className="mt-0.5 text-[11px] text-[#8b7b81]">한 사용자는 한 제품에 하나의 리뷰만 작성할 수 있어요.</p></div></div>
+            ) : state.success ? (
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#52705b]" role="status"><Check size={17} />{state.message}</div>
+            ) : (
+              <details className="group">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-xl border border-[#dfcdd3] px-4 text-sm font-bold text-[#9b405e]">
+                  <span>이 제품은 어떠셨나요? 리뷰 작성하기</span>
+                  <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" />
+                </summary>
+                <form action={action} className="space-y-6 pt-5">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#eee5e8] pb-4"><p className="text-xs leading-5 text-[#786a70]"><ShieldCheck size={14} className="mr-1.5 inline text-[#b14b69]" />한 제품에 하나의 리뷰만 등록할 수 있어요.</p><p className="shrink-0 text-xs"><strong className="font-myeongjo text-xl text-[#9b405e]">{previewScore}</strong>점 예상</p></div>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-x-5 gap-y-2">
+                    {criteria.criteria.map((item) => (
+                      <fieldset key={item.id} className="border-b border-[#f0e8ea] py-3">
+                        <legend className="sr-only">{item.name}</legend>
+                        <div className="mb-3"><div className="flex items-center justify-between gap-3"><strong className="text-sm">{item.name}</strong><span className="text-xs font-bold text-[#9b4a61]">{scores[item.id]} / 5</span></div><p className="mt-1 text-[11px] leading-5 text-[#83767b]">{item.description}</p></div>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {[1, 2, 3, 4, 5].map((score) => (
+                            <label key={score} className={`grid min-h-10 cursor-pointer place-items-center rounded-lg border text-xs font-bold transition ${scores[item.id] === score ? "border-[#a6536c] bg-[#a6536c] text-white" : "border-[#ddd1d5] bg-white text-[#796d72] hover:border-[#b87588]"}`}>
+                              <input type="radio" name={`score_${item.id}`} value={score} checked={scores[item.id] === score} onChange={() => setScores((current) => ({ ...current, [item.id]: score }))} className="sr-only" aria-label={`${item.name} ${score}점, ${scoreLabels[score]}`} />
+                              {score}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+                    <Field label="피부 타입" error={state.fieldErrors?.skinType}><select name="skinType" defaultValue={normalizeSkinType(savedSkinType)} className="input" required><option value="">선택해 주세요</option>{["건성", "지성", "복합성", "수부지", "중성", "민감성"].map((value) => <option key={value}>{value}</option>)}</select></Field>
+                    <Field label="사용 기간" error={state.fieldErrors?.usagePeriod}><select name="usagePeriod" defaultValue="ONE_MONTH" className="input" required>{Object.entries(usagePeriodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+                  </div>
+                  <Field label="재구매 의향" error={state.fieldErrors?.repurchaseYn}><div className="grid grid-cols-2 gap-2">{[["true", "다시 구매할래요"], ["false", "재구매는 고민돼요"]].map(([value, label], index) => <label key={value} className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#ddd1d5] bg-white px-3 text-center text-xs font-semibold has-[:checked]:border-[#a6536c] has-[:checked]:text-[#963f58]"><input type="radio" name="repurchaseYn" value={value} defaultChecked={index === 0} className="sr-only" />{label}</label>)}</div></Field>
+                  <Field label="사용 후기" error={state.fieldErrors?.content}><textarea name="content" minLength={10} maxLength={2000} rows={5} required className="input min-h-32 resize-y py-3" placeholder="어떤 피부에서 얼마나 사용했는지, 좋았던 점과 아쉬웠던 점을 구체적으로 알려주세요." /></Field>
+                  {(state.message || state.fieldErrors?.scores) && <p role="alert" className="rounded-lg border border-[#edd4db] px-4 py-3 text-sm text-[#a2475c]">{state.fieldErrors?.scores ?? state.message}</p>}
+                  <button disabled={pending} className="ink-btn w-full disabled:opacity-55">{pending ? "리뷰점수를 계산하는 중…" : <><Send size={17} /> {previewScore}점으로 리뷰 등록하기</>}</button>
+                </form>
+              </details>
             )}
           </div>
         </div>

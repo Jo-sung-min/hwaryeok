@@ -2,6 +2,11 @@ import type { SkinProfile } from "@/lib/api";
 
 export type HomeSkinProfileChip = { label: string; value: string };
 
+export function homeSkinSummaryHref(hasGeneratedReport: boolean, hasSavedProfile: boolean) {
+  if (hasGeneratedReport) return "/skin-check?step=result";
+  return hasSavedProfile ? "/profile?edit=1" : "/skin-check?step=review";
+}
+
 const hydrationLabels = { LOW: "수분 부족", BALANCED: "수분 균형", HIGH: "수분 높음" };
 const oilinessLabels = { LOW: "유분 적음", BALANCED: "유분 균형", HIGH: "유분 많음" };
 const sensitivityLabels = { LOW: "민감도 낮음", MEDIUM: "민감도 보통", HIGH: "민감도 높음" };

@@ -1,0 +1,49 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "화력 홈" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=e6]: 화
+          - generic [ref=e7]: 화력
+        - navigation "보조 메뉴" [ref=e8]:
+          - link "성분 사전" [ref=e9] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천 AD" [ref=e10] [cursor=pointer]:
+            - /url: /promotions
+            - text: 화력 추천
+            - generic [ref=e11]: AD
+    - main [ref=e14]:
+      - generic "성분 정보를 불러오는 중" [ref=e15]
+    - contentinfo [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]:
+          - link "화력 홈" [ref=e23] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e24]: 화
+            - strong [ref=e25]: 화력
+          - paragraph [ref=e27]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=e28]:
+          - link "제품 비교" [ref=e29] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=e30] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=e31] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=e32] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=e33]:
+          - generic "사업자·고객센터 정보" [ref=e34] [cursor=pointer]
+        - paragraph [ref=e37]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=e38]:
+      - generic [ref=e39]:
+        - link [ref=e40] [cursor=pointer]:
+          - /url: /
+        - link [ref=e45] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=e49] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=e52] [cursor=pointer]
+        - link [ref=e57] [cursor=pointer]:
+          - /url: /my
+  - button "Open Next.js Dev Tools" [ref=e67] [cursor=pointer]

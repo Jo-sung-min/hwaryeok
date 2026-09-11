@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import { ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Search, TriangleAlert } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getIngredients, type IngredientQuery } from "@/lib/api";
 import type { IngredientStatus } from "@/lib/types";
+import styles from "./ingredients.module.css";
 
 export const metadata: Metadata = {
   title: "성분 사전",
@@ -37,6 +38,12 @@ const statusFilters: Array<{ label: string; value?: IngredientStatus }> = [
 ];
 
 const tagFilters = ["보습", "진정", "장벽", "피부톤"];
+const sortOptions: Array<{ label: string; value: PageValues["sort"] }> = [
+  { label: "가나다순", value: "name" },
+  { label: "영문명순", value: "englishName" },
+  { label: "역할순", value: "role" },
+  { label: "상태순", value: "status" },
+];
 
 function first(value?: string | string[]) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -55,10 +62,8 @@ function pageHref(values: PageValues, overrides: Partial<PageValues>) {
   return suffix ? `/ingredients?${suffix}` : "/ingredients";
 }
 
-function statusLabel(status: IngredientStatus) {
-  if (status === "GOOD") return "피부에 도움";
-  if (status === "CAUTION") return "주의해서 보기";
-  return "기본 성분";
+function listHref(href: string) {
+  return `${href}#ingredient-list`;
 }
 
 export default async function IngredientsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -81,113 +86,107 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
   };
 
   const result = await getIngredients({ ...values, size: 12 });
-  const visiblePages = Array.from({ length: result.totalPages }, (_, index) => index)
-    .filter((page) => Math.abs(page - result.page) <= 2);
+  const selectedStatus = statusFilters.find((filter) => filter.value === values.status)?.label ?? "전체 성분";
+  const selectedSort = sortOptions.find((option) => option.value === values.sort)?.label ?? "가나다순";
+  const activeFilterCount = Number(Boolean(values.status)) + Number(Boolean(values.tag)) + Number(values.sort !== "name") + Number(values.direction !== "asc");
 
-  return (
-    <div className="min-h-screen pb-24">
-      <section className="border-b border-[#dfa6b51f] bg-[#fff1f4] py-10 text-center md:py-20">
-        <div className="container-page">
-          <BookOpen className="mx-auto mb-5 text-[#a45a50]" size={30} strokeWidth={1.5} />
-          <p className="eyebrow mb-4">INGREDIENT DICTIONARY</p>
-          <h1 className="text-balance font-myeongjo text-[32px] font-medium leading-tight md:text-5xl">성분을 알아보고, 제품 랭킹까지</h1>
-          <p className="mt-4 text-sm leading-7 text-[#786c63]">성분의 역할과 피부별 특징을 확인한 뒤, 원하는 제품 종류의 랭킹과 사용자 리뷰를 살펴보세요.</p>
+  return <div className={styles.page}>
+    <header className={styles.header}>
+      <div className={`container-page ${styles.headerInner}`}>
+        <h1>성분 사전</h1>
+        <p className={styles.intro}>궁금한 성분을 누르면 역할과 피부별 특징, 해당 성분의 제품 랭킹을 자세히 볼 수 있어요.</p>
+        <form className={styles.searchForm} action="/ingredients#ingredient-list" role="search">
+          <label className={styles.searchField}>
+            <Search size={17} aria-hidden="true" focusable="false" />
+            <span className="sr-only">성분 검색</span>
+            <input type="search" name="query" defaultValue={values.query} placeholder="성분명 또는 영문명 검색" enterKeyHint="search" />
+          </label>
+          {values.status && <input type="hidden" name="status" value={values.status} />}
+          {values.tag && <input type="hidden" name="tag" value={values.tag} />}
+          {values.sort !== "name" && <input type="hidden" name="sort" value={values.sort} />}
+          {values.direction !== "asc" && <input type="hidden" name="direction" value={values.direction} />}
+          <button type="submit">검색</button>
+        </form>
+      </div>
+    </header>
 
-          <form className="mx-auto mt-8 flex max-w-2xl flex-col gap-3 sm:flex-row" action="/ingredients">
-            <label className="glass-field flex h-14 flex-1 items-center gap-3 rounded-full px-5 text-left">
-              <Search size={18} aria-hidden="true" />
-              <span className="sr-only">성분 검색</span>
-              <input name="query" defaultValue={values.query} placeholder="궁금한 성분을 검색해보세요" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
-            </label>
-            {values.status && <input type="hidden" name="status" value={values.status} />}
-            {values.tag && <input type="hidden" name="tag" value={values.tag} />}
-            <button className="ink-btn w-full px-7 sm:w-auto" type="submit">검색하기</button>
-          </form>
-        </div>
-      </section>
-
-      <section className="container-page py-8 md:py-10">
-        <div className="flex flex-col justify-between gap-5 border-b border-[#74513f16] pb-7 lg:flex-row lg:items-end">
-          <div>
-            <p className="mb-3 text-xs font-bold tracking-[.14em] text-[#8e7468]">상태로 보기</p>
-            <div className="flex flex-wrap gap-2">
+    <section className={`container-page ${styles.content}`} aria-labelledby="ingredient-list-title">
+      <details className={styles.filters}>
+        <summary>
+          <span className={styles.filterTitle}><SlidersHorizontal size={15} aria-hidden="true" focusable="false" />필터·정렬</span>
+          <span className={styles.filterValue}>{activeFilterCount > 0 ? `${activeFilterCount}개 적용` : `${selectedStatus} · ${selectedSort}`}</span>
+          <ChevronDown className={styles.filterChevron} size={16} aria-hidden="true" focusable="false" />
+        </summary>
+        <div className={styles.filterBody}>
+          <div className={styles.filterGroup}>
+            <p>상태</p>
+            <nav aria-label="성분 상태 필터">
               {statusFilters.map((filter) => {
                 const active = values.status === filter.value;
-                return <Link key={filter.label} href={pageHref(values, { status: filter.value, page: 0 })} aria-current={active ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">{filter.label}</Link>;
+                return <Link key={filter.label} href={listHref(pageHref(values, { status: filter.value, page: 0 }))} aria-current={active ? "page" : undefined} className={styles.chip}>{filter.label}</Link>;
               })}
-            </div>
+            </nav>
           </div>
-          <div>
-            <p className="mb-3 text-xs font-bold tracking-[.14em] text-[#8e7468] lg:text-right">기능으로 보기</p>
-            <div className="flex flex-wrap gap-2 lg:justify-end">
-              <Link href={pageHref(values, { tag: "", page: 0 })} aria-current={!values.tag ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">전체 기능</Link>
-              {tagFilters.map((tag) => <Link key={tag} href={pageHref(values, { tag, page: 0 })} aria-current={values.tag === tag ? "page" : undefined} className="glass-choice rounded-full px-4 py-2.5 text-xs">{tag}</Link>)}
-            </div>
+          <div className={styles.filterGroup}>
+            <p>기능</p>
+            <nav aria-label="성분 기능 필터">
+              <Link href={listHref(pageHref(values, { tag: "", page: 0 }))} aria-current={!values.tag ? "page" : undefined} className={styles.chip}>전체 기능</Link>
+              {tagFilters.map((tag) => <Link key={tag} href={listHref(pageHref(values, { tag, page: 0 }))} aria-current={values.tag === tag ? "page" : undefined} className={styles.chip}>{tag}</Link>)}
+            </nav>
+          </div>
+          <div className={styles.filterGroup}>
+            <p>정렬</p>
+            <nav aria-label="성분 목록 정렬">
+              {sortOptions.map((option) => <Link key={option.value} href={listHref(pageHref(values, { sort: option.value, page: 0 }))} aria-current={values.sort === option.value ? "page" : undefined} className={styles.chip}>{option.label}</Link>)}
+            </nav>
+          </div>
+          <div className={styles.filterGroup}>
+            <p>방향</p>
+            <nav aria-label="성분 정렬 방향">
+              {[{ label: "오름차순", value: "asc" }, { label: "내림차순", value: "desc" }].map((option) => <Link key={option.value} href={listHref(pageHref(values, { direction: option.value as PageValues["direction"], page: 0 }))} aria-current={values.direction === option.value ? "page" : undefined} className={styles.chip}>{option.label}</Link>)}
+            </nav>
           </div>
         </div>
+      </details>
 
-        <div className="my-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <p className="text-sm text-[#7a6c63]"><strong className="text-[#a54f49]">{result.totalElements}</strong>개의 성분을 찾았어요</p>
-          <form action="/ingredients" className="flex min-w-0 items-center gap-2">
-            {values.query && <input type="hidden" name="query" value={values.query} />}
-            {values.status && <input type="hidden" name="status" value={values.status} />}
-            {values.tag && <input type="hidden" name="tag" value={values.tag} />}
-            <label htmlFor="ingredient-sort" className="sr-only sm:not-sr-only sm:text-xs sm:text-[#766960]">정렬</label>
-            <select id="ingredient-sort" name="sort" defaultValue={values.sort} className="glass-select min-w-0 flex-1 rounded-full px-4 py-2.5 text-xs outline-none sm:flex-none">
-              <option value="name">가나다순</option>
-              <option value="role">역할순</option>
-              <option value="status">상태순</option>
-            </select>
-            <button type="submit" className="line-btn !min-h-10 !px-4 text-xs font-semibold">적용</button>
-          </form>
+      <div id="ingredient-list" className={styles.resultHeading}>
+        <div>
+          <h2 id="ingredient-list-title">{values.query ? `‘${values.query}’ 검색 결과` : "전체 성분"}</h2>
+          <p>{result.totalElements.toLocaleString("ko-KR")}개 · {selectedSort} · {values.direction === "asc" ? "오름차순" : "내림차순"}</p>
         </div>
+        {values.query && <Link href={listHref(pageHref(values, { query: "", page: 0 }))} className={styles.clearSearch}><X size={13} aria-hidden="true" focusable="false" />검색어 지우기</Link>}
+      </div>
 
-        {result.content.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {result.content.map((ingredient) => {
-              const caution = ingredient.status === "CAUTION";
-              return (
-                <article key={ingredient.id} className="paper-card group rounded-[24px] p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(78,56,43,.11)] sm:p-6">
-                  <Link href={`/ingredients/${ingredient.id}`} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e5a8b9]">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-myeongjo text-xl font-semibold group-hover:text-[#9b4a45]">{ingredient.name}</h2>
-                          {caution ? <TriangleAlert size={16} className="text-[#b47460]" /> : <Check size={16} className="text-[#72806b]" />}
-                        </div>
-                        <p className="mt-1 text-[11px] text-[#9a8a7e]">{ingredient.englishName}</p>
-                        <p className="mt-3 text-xs font-semibold text-[#9a6556]">{ingredient.role}</p>
-                      </div>
-                      <span className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] ${caution ? "bg-[#d3957d1c] text-[#a1614c]" : "bg-[#84917a1a] text-[#65715f]"}`}>{statusLabel(ingredient.status)}</span>
-                    </div>
-                    <p className="mt-5 line-clamp-2 text-sm leading-7 text-[#71655d]">{ingredient.description}</p>
-                    <div className="mt-5 flex flex-wrap gap-1.5">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full bg-[#a54f490b] px-2.5 py-1 text-[10px] text-[#8e5a50]">#{tag}</span>)}</div>
-                  </Link>
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#efd9df] pt-3">
-                    <Link href={`/ingredients/${ingredient.id}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#88757c]">성분 자세히 보기</Link>
-                    <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[#fff0f4] px-4 text-xs font-bold text-[#a44765]" aria-label={`${ingredient.name} 제품 랭킹 보기`}>이 성분 제품 랭킹 <ArrowRight size={14} /></Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="paper-card rounded-[28px] py-20 text-center">
-            <span className="text-4xl text-[#d08f7c]">花</span>
-            <h2 className="mt-5 font-myeongjo text-2xl">조건에 맞는 성분이 없어요</h2>
-            <p className="mt-2 text-sm text-[#81736a]">검색어나 필터를 조금 줄여보세요.</p>
-            <Link href="/ingredients" className="line-btn mt-6">조건 초기화</Link>
-          </div>
-        )}
+      {result.content.length > 0 ? <ul className={styles.list} data-ingredient-list>
+        {result.content.map((ingredient) => {
+          const caution = ingredient.status === "CAUTION";
+          return <li key={ingredient.id} className={styles.listItem}>
+            <Link href={`/ingredients/${encodeURIComponent(ingredient.id)}`} className={styles.ingredientLink} data-ingredient-detail-link>
+              <div className={styles.ingredientCopy}>
+                <div className={styles.nameLine}>
+                  <h3>{ingredient.name}</h3>
+                  {caution && <span className={styles.caution}>주의</span>}
+                </div>
+                <p className={styles.secondaryLine}>
+                  {ingredient.englishName && <span lang="en" className={styles.englishName}>{ingredient.englishName}</span>}
+                  <span className={styles.role}>{ingredient.role || "역할 정보 확인 중"}</span>
+                </p>
+              </div>
+              <span className={styles.openDetail}><ChevronRight size={18} aria-hidden="true" focusable="false" /></span>
+            </Link>
+          </li>;
+        })}
+      </ul> : <div className={styles.empty} role="status">
+        <h2>조건에 맞는 성분이 없어요</h2>
+        <p>검색어나 필터를 조금 줄여보세요.</p>
+        <Link href="/ingredients#ingredient-list">전체 성분 보기</Link>
+      </div>}
 
-        {result.totalPages > 1 && (
-          <nav aria-label="성분 목록 페이지" className="mt-10 flex items-center justify-center gap-2">
-            {result.page > 0 && <Link href={pageHref(values, { page: result.page - 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="이전 페이지"><ChevronLeft size={16} /></Link>}
-            {visiblePages.map((page) => <Link key={page} href={pageHref(values, { page })} aria-current={page === result.page ? "page" : undefined} className={`grid h-11 w-11 place-items-center rounded-full text-xs ${page === result.page ? "bg-[#cf5b7d] text-white" : "border border-[#edced7] bg-white"}`}>{page + 1}</Link>)}
-            {result.hasNext && <Link href={pageHref(values, { page: result.page + 1 })} className="grid h-11 w-11 place-items-center rounded-full border border-[#74513f20] bg-[#fffaf3]" aria-label="다음 페이지"><ChevronRight size={16} /></Link>}
-          </nav>
-        )}
-      </section>
-    </div>
-  );
+      {result.totalPages > 1 && <nav aria-label="성분 목록 페이지" className={styles.pagination}>
+        {result.page > 0 ? <Link href={listHref(pageHref(values, { page: result.page - 1 }))} aria-label="이전 페이지"><ChevronLeft size={16} aria-hidden="true" focusable="false" />이전</Link> : <span className={styles.disabledPage} aria-hidden="true"><ChevronLeft size={16} />이전</span>}
+        <p><strong>{result.page + 1}</strong> / {result.totalPages}</p>
+        {result.hasNext ? <Link href={listHref(pageHref(values, { page: result.page + 1 }))} aria-label="다음 페이지">다음<ChevronRight size={16} aria-hidden="true" focusable="false" /></Link> : <span className={styles.disabledPage} aria-hidden="true">다음<ChevronRight size={16} /></span>}
+      </nav>}
+    </section>
+  </div>;
 }

@@ -77,6 +77,40 @@
 .catalogNote { margin: 0 0 22px; color: #6a6672; font-size: 14px; line-height: 1.8; }
 .filterNote { margin: 0 0 18px; font-size: 13px; line-height: 1.7; color: #a13f61; }
 .catalogProducts, .products { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 24px; }
+.rankingPreview { padding-block: 30px; }
+.rankingPreview .shelfHeading { margin-bottom: 16px; }
+.rankingPreviewList { min-width: 0; margin: 0; padding: 0; list-style: none; }
+.rankingPreviewList .productImage { padding: 13px; }
+.rankingPreviewList .productText { padding-top: 11px; }
+.rankingPreviewList .brand { font-size: 11px; }
+.rankingPreviewList .productText h3 { min-height: 40px; margin-bottom: 7px; font-size: 14px; line-height: 1.45; }
+.rankingPreviewList .price { font-size: 13px; }
+.rankingPreviewList .firepower { margin-block: 5px; font-size: 11px; }
+.rankingPreviewList .firepower strong { font-size: 19px; }
+.rankingPreviewList .growth { margin-top: 6px; font-size: 11px; }
+.rankingPreviewList .growth strong { font-size: 18px; }
+.rankingPreviewList .review { font-size: 11px; }
+.rankingPreviewList .review strong { font-size: 13px; }
+.rankingPreviewList .matchReason { margin-top: 8px; padding: 8px; }
+.rankingPreviewList .matchReason > span { display: none; }
+.rankingPreviewList .matchReason p { font-size: 11px; line-height: 1.55; }
+.rankingPreviewList .matchReason small { display: none; }
+.previewState { display: flex; min-height: 92px; align-items: center; gap: 14px; padding: 18px; border: 1px solid #e9e5eb; border-radius: 12px; color: #9f4a69; background: #fff; }
+.previewState > svg { flex: 0 0 auto; }
+.previewState > div { min-width: 0; flex: 1; }
+.previewState h3 { margin: 0; color: #3c3740; font-size: 15px; font-weight: 700; line-height: 1.55; word-break: keep-all; }
+.previewState p { margin: 4px 0 0; color: #77717b; font-size: 12px; line-height: 1.65; }
+.previewState > a { display: inline-flex; min-height: 42px; flex: 0 0 auto; align-items: center; gap: 4px; padding-inline: 13px; border: 1px solid #e4c8d3; border-radius: 9px; color: #993c5e; font-size: 12px; font-weight: 650; }
+.reviewerItems { align-items: stretch; }
+.reviewerCard { min-width: 0; overflow: hidden; border: 1px solid #e9e4e8; border-radius: 12px; background: #fff; }
+.reviewerCard > a { display: flex; min-height: 100%; flex-direction: column; padding: 14px; }
+.reviewerTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.reviewerRank { color: #a83d63; font-size: 18px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.reviewerAvatar { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #efd7e0; border-radius: 999px; color: #ac4a6c; background: #fff4f7; font-size: 16px; font-weight: 700; }
+.reviewerCard h3 { overflow: hidden; margin: 0; color: #37323a; font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.reviewerSkin { display: flex; align-items: center; gap: 4px; margin: 6px 0 0; color: #9b6279; font-size: 11px; }
+.reviewerMeta { margin: 8px 0 15px; color: #827981; font-size: 10px; line-height: 1.55; }
+.reviewerCard [role="meter"] { max-width: 100%; }
 .product { position: relative; min-width: 0; color: #29272f; }
 .productLink { display: block; height: 100%; border-radius: 12px; }
 .productImage { position: relative; aspect-ratio: 1; padding: 20px; overflow: hidden; border: 1px solid #ecebef; border-radius: 12px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
@@ -190,6 +224,11 @@
   .trendEmpty { flex-wrap: wrap; gap: 14px; padding: 22px 20px; }
   .trendEmpty > div { flex-basis: 70%; }
   .trendEmpty > a { margin-left: 43px; font-size: 13px; }
+}
+@media (max-width: 639px) {
+  .rankingPreview { padding-block: 25px; }
+  .previewState { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; padding: 16px; }
+  .previewState > a { grid-column: 2; justify-self: start; }
 }
 @media (prefers-reduced-motion: reduce) {
   .home > *,

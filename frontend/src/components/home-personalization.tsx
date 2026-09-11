@@ -5,29 +5,33 @@ import { ArrowRight, Droplets, Flower2, Pencil, SlidersHorizontal } from "lucide
 import { useEffect, useState } from "react";
 import type { AuthUser, SkinProfile } from "@/lib/api";
 import { homeDisplayMode } from "@/lib/home-catalog";
-import { SKIN_CHECK_DRAFT_KEY, restoreSkinDraft, toQuickProfile } from "@/lib/skin-check";
+import { homeSkinSummaryHref } from "@/lib/home-personalization";
+import { SKIN_CHECK_DRAFT_KEY, restoreSkinDraftSummary } from "@/lib/skin-check";
 import styles from "./home-personalization.module.css";
+
+type QuickSkinSummary = { skinType: string; hasReport: boolean };
 
 export function HomePersonalization({ user, profile }: { user: AuthUser | null; profile: SkinProfile | null }) {
   const mode = homeDisplayMode(Boolean(user), Boolean(profile?.configured));
   const personalized = mode === "personalized";
   const savedSkinType = personalized ? profile?.skinType?.trim() || null : null;
-  const [quickSkinType, setQuickSkinType] = useState<string | null>(null);
+  const [quickSummary, setQuickSummary] = useState<QuickSkinSummary | null>(null);
 
   useEffect(() => {
-    if (personalized) return;
     try {
-      const draft = restoreSkinDraft(window.sessionStorage.getItem(SKIN_CHECK_DRAFT_KEY));
-      setQuickSkinType(draft ? toQuickProfile(draft.answers)?.skinType ?? null : null);
+      setQuickSummary(restoreSkinDraftSummary(window.sessionStorage.getItem(SKIN_CHECK_DRAFT_KEY)));
     } catch {
-      setQuickSkinType(null);
+      setQuickSummary(null);
     }
-  }, [personalized]);
+  }, []);
 
-  const skinType = savedSkinType ?? quickSkinType;
-  const hasSkinResult = personalized || Boolean(quickSkinType);
-  const displayMode = quickSkinType && !personalized ? "quick-result" : mode;
-  const editHref = personalized ? "/profile?edit=1" : "/skin-check?step=review";
+  const hasQuickSummary = Boolean(quickSummary);
+  const hasGeneratedReport = quickSummary?.hasReport === true;
+  const showQuickSummary = hasGeneratedReport || (!personalized && hasQuickSummary);
+  const skinType = showQuickSummary ? quickSummary?.skinType ?? null : savedSkinType;
+  const hasSkinResult = personalized || hasQuickSummary;
+  const displayMode = showQuickSummary ? "quick-result" : mode;
+  const editHref = homeSkinSummaryHref(hasGeneratedReport, personalized);
 
   return (
     <section className={styles.panel} aria-labelledby="home-personalization-title" data-personalization={displayMode}>
@@ -45,14 +49,16 @@ export function HomePersonalization({ user, profile }: { user: AuthUser | null; 
         <Link
           href={editHref}
           className={styles.profileSummary}
-          aria-label={`${skinType ? `${skinType} 경향` : "내 피부"} 설정 수정`}
+          aria-label={hasGeneratedReport
+            ? `${skinType ? `${skinType} 경향` : "내 피부"} 리포트 보기, 리포트에서 답변 수정 가능`
+            : `${skinType ? `${skinType} 경향` : "내 피부"} 설정 수정`}
         >
           <span className={styles.emblem} aria-hidden="true">
             <Flower2 size={29} strokeWidth={1.45} />
             <span><Droplets size={13} /></span>
           </span>
           <span className={styles.profileCopy}>
-            <small>{personalized ? "저장된 피부 타입" : "이번 피부 체크"}</small>
+            <small>{showQuickSummary ? "이번 피부 체크" : "저장된 피부 타입"}</small>
             <strong>{skinType ? `${skinType} 경향` : "피부 설정 완료"}</strong>
           </span>
           <span className={styles.editLabel}><Pencil size={12} aria-hidden="true" />수정</span>

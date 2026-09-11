@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { BookmarkCheck, LogIn, Plus, Trash2 } from "lucide-react";
+import { comparisonSearch } from "@/lib/compare-products";
 import type { Product } from "@/lib/types";
 import { saveComparisonAction } from "./actions";
-import { comparisonSearch } from "./compare-selectors";
 
 export function ComparisonToolbar({
   products,

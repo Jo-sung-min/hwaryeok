@@ -1,0 +1,126 @@
+.nav {
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1e7eb;
+}
+
+.rail {
+  position: relative;
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 2px;
+  padding: 4px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 1px solid #ebe6e9;
+  border-radius: 999px;
+  background: #f6f4f5;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #69646f;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  scroll-snap-align: center;
+  transition: color .18s ease, border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.tab[aria-current="page"] {
+  border-color: #c15a7b;
+  color: #a43b60;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(86, 55, 66, .08);
+}
+
+.tab:focus-visible {
+  outline: 2px solid #a43b60;
+  outline-offset: -3px;
+}
+
+.tab:active {
+  transform: scale(.98);
+}
+
+.pending {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  opacity: 0;
+  background: #bb4b70;
+  transform: scale(.6);
+}
+
+.pending[data-pending="true"] {
+  animation: pending-pulse .8s ease-in-out .1s infinite alternate both;
+}
+
+@keyframes pending-pulse {
+  to {
+    opacity: .85;
+    transform: scale(1);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tab:not([aria-current="page"]):hover {
+    color: #97435f;
+    background: #fffafb;
+  }
+}
+
+@media (max-width: 430px) {
+  .nav {
+    justify-content: flex-start;
+  }
+
+  .rail {
+    width: 100%;
+  }
+
+  .tab {
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    scroll-behavior: auto;
+  }
+
+  .tab {
+    transition: none;
+  }
+
+  .pending[data-pending="true"] {
+    opacity: .85;
+    transform: none;
+    animation: none;
+  }
+}

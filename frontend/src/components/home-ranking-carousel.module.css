@@ -1,0 +1,103 @@
+.carousel {
+  min-width: 0;
+}
+
+.viewport {
+  --carousel-gap: 14px;
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - var(--carousel-gap)) / 2);
+  gap: var(--carousel-gap);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.viewport:focus-visible {
+  outline: 2px solid #a93e64;
+  outline-offset: 4px;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.viewport > * {
+  min-width: 0;
+  scroll-snap-align: none;
+}
+
+.viewport > :nth-child(odd) {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.controls {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.controls button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #e4dfe5;
+  border-radius: 999px;
+  color: #5e5963;
+  background: #fff;
+  transition: color .18s ease, border-color .18s ease, background-color .18s ease;
+}
+
+.controls button:disabled {
+  border-color: #f0edf0;
+  color: #c9c4ca;
+  background: #faf9fa;
+  cursor: default;
+}
+
+.controls p {
+  min-width: 42px;
+  margin: 0;
+  color: #8a838d;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.controls strong {
+  color: #a33a60;
+  font-size: 13px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .controls button:not(:disabled):hover {
+    border-color: #d99bb1;
+    color: #983356;
+    background: #fff6f8;
+  }
+}
+
+@media (max-width: 430px) {
+  .viewport {
+    --carousel-gap: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    scroll-behavior: auto;
+  }
+
+  .controls button {
+    transition: none;
+  }
+}

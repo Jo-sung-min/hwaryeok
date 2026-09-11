@@ -2,11 +2,12 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, SlidersHorizontal, Sparkles } from "lucide-react";
 import { HomeProductCard } from "@/components/home-product-card";
+import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 import { buildSkinCareGuide } from "@/lib/skin-care-guide";
-import { catalogRankingHref, firstSearchValue, RankingCategories, RankingPagination, requestedRankingPage, type CatalogRankingSearch } from "../_components/catalog-ranking-controls";
+import { catalogRankingHref, RankingPagination, readCatalogRankingFilters, requestedRankingPage, type CatalogRankingSearch } from "../_components/catalog-ranking-controls";
 
 export const metadata: Metadata = {
   title: "내 피부에 맞는 제품 랭킹",
@@ -20,13 +21,13 @@ const basePath = "/ranking/personal";
 export default async function PersonalRankingPage({ searchParams }: { searchParams: Promise<CatalogRankingSearch> }) {
   const [search, user, profile] = await Promise.all([searchParams, getCurrentSession(), getOptionalSkinProfile()]);
   const hasProfile = Boolean(user && profile?.configured);
-  const requestedCategory = firstSearchValue(search.category).trim().slice(0, 80);
+  const requestedFilters = readCatalogRankingFilters(search);
   const page = requestedRankingPage(search.page);
-  const loginReturnTo = catalogRankingHref(basePath, requestedCategory, page);
+  const loginReturnTo = catalogRankingHref(basePath, requestedFilters, page);
 
   if (!user || !profile || !hasProfile) {
     return <div className="container-page pb-24 pt-4 sm:pt-7">
-      <RankingTabs active="personal" />
+      <RankingTabs />
       <section className="py-8 sm:py-12">
         <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-xs text-[#947982]"><ArrowLeft size={14} />메인으로</Link>
         <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">내 피부에 맞는 제품 랭킹</h1>
@@ -46,14 +47,44 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
   }
 
   const [options, favorites] = await Promise.all([getIngredientRankingOptions(), getFavoriteViewState()]);
-  const category = options.categories.some((item) => item.name === requestedCategory) ? requestedCategory : "";
-  const data = await getProductPage({ profile, category: category || undefined, page, size: 12, sort: "score", direction: "desc" });
+  const categories = options.categories.filter((item) => item.productCount > 0);
+  const ingredients = options.ingredients.filter((item) => item.productCount > 0);
+  const filters = {
+    ...requestedFilters,
+    category: categories.some((item) => item.name === requestedFilters.category) ? requestedFilters.category : "",
+    ingredientId: ingredients.some((item) => item.id === requestedFilters.ingredientId) ? requestedFilters.ingredientId : "",
+  };
+  let data = await getProductPage({
+    profile,
+    category: filters.category || undefined,
+    ingredientId: filters.ingredientId || undefined,
+    minReviewScore: filters.minReviewScore ? Number(filters.minReviewScore) : undefined,
+    minFirepowerScore: filters.minFirepowerScore ? Number(filters.minFirepowerScore) : undefined,
+    page,
+    size: 12,
+    sort: "score",
+    direction: "desc",
+  });
+  if (data.totalPages > 0 && page >= data.totalPages) {
+    data = await getProductPage({
+      profile,
+      category: filters.category || undefined,
+      ingredientId: filters.ingredientId || undefined,
+      minReviewScore: filters.minReviewScore ? Number(filters.minReviewScore) : undefined,
+      minFirepowerScore: filters.minFirepowerScore ? Number(filters.minFirepowerScore) : undefined,
+      page: data.totalPages - 1,
+      size: 12,
+      sort: "score",
+      direction: "desc",
+    });
+  }
   const favoriteIds = new Set(favorites.favoriteIds);
-  const returnTo = catalogRankingHref(basePath, category, data.page);
+  const returnTo = catalogRankingHref(basePath, filters, data.page);
   const care = buildSkinCareGuide(profile);
+  const invalidFilter = filters.category !== requestedFilters.category || filters.ingredientId !== requestedFilters.ingredientId;
 
   return <div className="container-page pb-24 pt-4 sm:pt-7">
-    <RankingTabs active="personal" />
+    <RankingTabs />
     <section className="py-7 sm:py-10">
       <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-xs text-[#947982]"><ArrowLeft size={14} />메인으로</Link>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
@@ -64,12 +95,23 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
       <Link href="/principles#skin-guide" className="mt-3 inline-flex min-h-9 items-center text-xs text-[#897581]">맞춤 화력·추천 기준 안내 →</Link>
     </section>
     <section aria-labelledby="personal-products-heading">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h2 id="personal-products-heading" className="text-lg font-bold">{category || "전체상품"} <span className="ml-1 text-sm font-normal text-[#69646f]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2><span className="text-sm text-[#69646f]">맞춤 화력 높은 순</span></div>
-      <RankingCategories basePath={basePath} category={category} categories={options.categories} />
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 id="personal-products-heading" className="text-lg font-bold">{filters.category || "전체상품"} <span className="ml-1 text-sm font-normal text-[#69646f]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2><span className="text-sm text-[#69646f]">맞춤 화력 높은 순</span></div>
+      <RankingFilterSheet
+        variant="personal"
+        basePath={basePath}
+        resultCount={data.totalElements}
+        axes={[
+          { id: "ingredient", param: "ingredientId", label: "주요 성분", shortLabel: "성분", value: filters.ingredientId, searchable: true, searchPlaceholder: "성분 이름 검색", options: [{ value: "", label: "전체 성분" }, ...ingredients.map((item) => ({ value: item.id, label: item.name, count: item.productCount, keywords: `${item.englishName} ${item.role} ${item.tags.join(" ")}` }))] },
+          { id: "category", param: "category", label: "제품 유형", shortLabel: "종류", value: filters.category, options: [{ value: "", label: "전체 상품" }, ...categories.map((item) => ({ value: item.name, label: item.name, count: item.productCount }))] },
+          { id: "review", param: "minReviewScore", label: "리뷰 점수", shortLabel: "리뷰", value: filters.minReviewScore, note: "실제 사용자 리뷰 평균이 선택한 점수 이상인 제품만 보여드려요.", options: [{ value: "", label: "전체 점수" }, ...[70, 80, 90].map((score) => ({ value: String(score), label: `${score}점 이상`, chipLabel: `${score}점+` }))] },
+          { id: "firepower", param: "minFirepowerScore", label: "맞춤 화력", shortLabel: "맞춤화력", value: filters.minFirepowerScore, note: "저장한 피부 설정으로 계산한 맞춤 화력이 선택한 점수 이상인 제품만 보여드려요.", options: [{ value: "", label: "전체 점수" }, ...[50, 65, 80, 90].map((score) => ({ value: String(score), label: `${score}점 이상`, chipLabel: `${score}점+` }))] },
+        ]}
+      />
+      {invalidFilter && <p role="status" className="mb-5 text-xs text-[#a13f61]">사용할 수 없는 필터를 제외하고 보여드려요.</p>}
       {data.content.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 xl:grid-cols-4">
         {data.content.map((product, index) => <HomeProductCard key={product.id} product={product} rank={data.page * data.size + index + 1} scoreLabel="맞춤 화력" favorited={favoriteIds.has(product.id)} isAuthenticated={favorites.isAuthenticated} returnTo={returnTo} />)}
-      </div> : <div className="rounded-3xl border border-dashed border-[#e6bdcc] px-5 py-14 text-center"><Sparkles className="mx-auto text-[#bd5575]" size={28} /><h3 className="mt-4 text-lg font-semibold">{page > 0 ? "이 페이지에는 제품이 없어요" : "이 카테고리에는 아직 제품이 없어요"}</h3><p className="mt-3 text-sm leading-7 text-[#8a727d]">다른 카테고리나 첫 페이지에서 제품을 살펴보세요.</p><Link href={catalogRankingHref(basePath, page > 0 ? category : "")} className="line-btn mt-5">{page > 0 ? "첫 페이지 보기" : "전체상품 보기"}</Link></div>}
-      <RankingPagination basePath={basePath} category={category} page={data.page} totalPages={data.totalPages} hasNext={data.hasNext} />
+      </div> : <div className="rounded-3xl border border-dashed border-[#e6bdcc] px-5 py-14 text-center"><Sparkles className="mx-auto text-[#bd5575]" size={28} /><h3 className="mt-4 text-lg font-semibold">조건에 맞는 제품이 없어요</h3><p className="mt-3 text-sm leading-7 text-[#8a727d]">필터 조건을 조금 줄여서 다시 살펴보세요.</p><Link href={basePath} className="line-btn mt-5">필터 초기화</Link></div>}
+      <RankingPagination basePath={basePath} filters={filters} page={data.page} totalPages={data.totalPages} hasNext={data.hasNext} />
     </section>
   </div>;
 }

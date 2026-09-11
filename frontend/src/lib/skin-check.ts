@@ -91,6 +91,13 @@ export function restoreSkinDraft(raw: string | null, now = Date.now()): { answer
     return { answers, view: safeCheckView(draft.view, answers) };
   } catch { return null; }
 }
+
+export function restoreSkinDraftSummary(raw: string | null, now = Date.now()): { skinType: string; hasReport: boolean } | null {
+  const draft = restoreSkinDraft(raw, now);
+  const profile = draft ? toQuickProfile(draft.answers) : null;
+  return profile ? { skinType: profile.skinType, hasReport: draft?.view === "result" } : null;
+}
+
 export function safeCheckView(value: unknown, answers: SkinAnswers): CheckView {
   if (value === "result") return firstMissingAnswer(answers) === -1 ? "result" : "review";
   if (value === "review") return "review";

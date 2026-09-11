@@ -1,6 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { homeSkinProfileChips } from "../src/lib/home-personalization.ts";
+import { homeSkinProfileChips, homeSkinSummaryHref } from "../src/lib/home-personalization.ts";
+
+test("a generated skin report opens before either profile editing or answer review", () => {
+  assert.equal(homeSkinSummaryHref(true, false), "/skin-check?step=result");
+  assert.equal(homeSkinSummaryHref(true, true), "/skin-check?step=result");
+  assert.equal(homeSkinSummaryHref(false, true), "/profile?edit=1");
+  assert.equal(homeSkinSummaryHref(false, false), "/skin-check?step=review");
+});
 
 test("unconfigured or missing profiles have no assumed skin traits", () => {
   assert.deepEqual(homeSkinProfileChips(null), []);
