@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hwaryeok.common.error.ResourceNotFoundException;
+import com.hwaryeok.review.ProductSampleReviewService;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +22,15 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMatchEngine productMatchEngine;
     private final ProductFilterQuery productFilterQuery;
+    private final ProductSampleReviewService productSampleReviewService;
 
     public ProductService(ProductRepository productRepository, ProductMatchEngine productMatchEngine,
-                          ProductFilterQuery productFilterQuery) {
+                          ProductFilterQuery productFilterQuery,
+                          ProductSampleReviewService productSampleReviewService) {
         this.productRepository = productRepository;
         this.productMatchEngine = productMatchEngine;
         this.productFilterQuery = productFilterQuery;
+        this.productSampleReviewService = productSampleReviewService;
     }
 
     public ProductPageResponse findProducts(String query, String category, Integer grade, int page, int size,
@@ -150,7 +154,9 @@ public class ProductService {
         if (productRepository.existsById(request.id())) {
             throw new ProductAlreadyExistsException(request.id());
         }
-        return ProductResponse.from(productRepository.save(request.toProduct()));
+        Product product = productRepository.save(request.toProduct());
+        productSampleReviewService.createFor(product);
+        return ProductResponse.from(product);
     }
 
     @Transactional

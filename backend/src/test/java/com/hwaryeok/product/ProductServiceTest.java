@@ -9,6 +9,7 @@ import java.util.Set;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.hwaryeok.review.ProductSampleReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,6 +19,7 @@ class ProductServiceTest {
     private ProductRepository repository;
     private ProductMatchEngine matchEngine;
     private ProductFilterQuery filterQuery;
+    private ProductSampleReviewService sampleReviewService;
     private ProductService service;
 
     @BeforeEach
@@ -25,6 +27,7 @@ class ProductServiceTest {
         repository = Mockito.mock(ProductRepository.class);
         matchEngine = Mockito.mock(ProductMatchEngine.class);
         filterQuery = Mockito.mock(ProductFilterQuery.class);
+        sampleReviewService = Mockito.mock(ProductSampleReviewService.class);
         when(matchEngine.scoreBasis()).thenReturn("성분 55% · 피부 적합 35% · 데이터 신뢰 10%");
         when(matchEngine.evaluateAll(Mockito.anyList(), Mockito.any(ProductMatchProfile.class))).thenAnswer(invocation -> {
             List<Product> products = invocation.getArgument(0);
@@ -37,7 +40,7 @@ class ProductServiceTest {
             }
             return results;
         });
-        service = new ProductService(repository, matchEngine, filterQuery);
+        service = new ProductService(repository, matchEngine, filterQuery, sampleReviewService);
     }
 
     @Test
@@ -150,6 +153,7 @@ class ProductServiceTest {
         assertThat(result.tag()).isEqualTo("성분 정보 확인");
         assertThat(result.publicationStatus()).isEqualTo(ProductPublicationStatus.DRAFT);
         assertThat(result.sourceUrl()).isEqualTo("https://example.com/product");
+        Mockito.verify(sampleReviewService).createFor(Mockito.argThat(product -> "new-cream".equals(product.getId())));
     }
 
     @Test

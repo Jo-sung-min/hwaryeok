@@ -35,6 +35,7 @@ public class ReviewService {
     private final ReviewCriterionRepository criterionRepository;
     private final ProductReviewRepository reviewRepository;
     private final ProductReviewScoreRepository reviewScoreRepository;
+    private final ProductSampleReviewRepository sampleReviewRepository;
     private final UserRepository userRepository;
     private final ReviewReputationService reputationService;
 
@@ -45,6 +46,7 @@ public class ReviewService {
             ReviewCriterionRepository criterionRepository,
             ProductReviewRepository reviewRepository,
             ProductReviewScoreRepository reviewScoreRepository,
+            ProductSampleReviewRepository sampleReviewRepository,
             UserRepository userRepository,
             ReviewReputationService reputationService
     ) {
@@ -54,6 +56,7 @@ public class ReviewService {
         this.criterionRepository = criterionRepository;
         this.reviewRepository = reviewRepository;
         this.reviewScoreRepository = reviewScoreRepository;
+        this.sampleReviewRepository = sampleReviewRepository;
         this.userRepository = userRepository;
         this.reputationService = reputationService;
     }
@@ -86,6 +89,14 @@ public class ReviewService {
                 .toList();
         List<ProductReview> recentReviews = reviewRepository.findPublicByProductId(productId, PageRequest.of(0, 5));
         Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(recentReviews, viewerId);
+        List<ReviewDetailResponse> displayedReviews = recentReviews.isEmpty()
+                ? sampleReviewRepository.findByProductId(productId)
+                        .map(ReviewDetailResponse::from)
+                        .map(List::of)
+                        .orElseGet(List::of)
+                : recentReviews.stream()
+                        .map(review -> ReviewDetailResponse.from(review, communityRatings.get(review.getId())))
+                        .toList();
 
         return new ProductReviewSummaryResponse(
                 productId,
@@ -99,7 +110,7 @@ public class ReviewService {
                 rankingStatus(reviewCount),
                 MINIMUM_OFFICIAL_REVIEW_COUNT,
                 averages,
-                recentReviews.stream().map(review -> ReviewDetailResponse.from(review, communityRatings.get(review.getId()))).toList()
+                displayedReviews
         );
     }
 

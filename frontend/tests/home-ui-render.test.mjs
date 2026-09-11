@@ -12,6 +12,7 @@ const { transformSync } = require("next/dist/compiled/babel/core");
 const typescript = require("next/dist/compiled/babel/preset-typescript").default;
 const react = require("next/dist/compiled/babel/preset-react").default;
 const commonjs = require("next/dist/compiled/babel/plugin-transform-modules-commonjs").default;
+const homeCatalogCss = readFileSync(new URL("../src/components/home-catalog.module.css", import.meta.url), "utf8");
 const moduleCache = new Map();
 const realModules = new Map([
   ["@/lib/home-catalog", "../src/lib/home-catalog.ts"],
@@ -135,6 +136,14 @@ test("personalized product card renders score, first recommendation reason, and 
   assert.match(text, /추천 이유부족한 수분을 고려한 성분 조합이에요/);
   assert.match(text, /23,000원/);
   assert.doesNotMatch(text, /두 번째 내부 근거|성분 근거가 충분하지 않아/);
+});
+
+test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {
+  const rule = homeCatalogCss.match(/(?:^|\n)\.matchReason p \{([^}]*)\}/)?.[1] ?? "";
+  assert.notEqual(rule, "");
+  assert.match(rule, /-webkit-line-clamp:\s*2/);
+  assert.match(rule, /min-height:\s*3\.3em/);
+  assert.match(rule, /overflow:\s*hidden/);
 });
 
 test("LOW and LEGACY confidence show a caution and missing reasons use honest fallback copy", () => {

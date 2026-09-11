@@ -1,0 +1,352 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e2]:
+    - banner [ref=f5e3]:
+      - generic [ref=f5e4]:
+        - link "화력 홈" [ref=f5e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=f5e6]: 화
+        - navigation "보조 메뉴" [ref=f5e7]:
+          - link "성분 사전" [ref=f5e8] [cursor=pointer]:
+            - /url: /ingredients
+          - link "화력 추천" [ref=f5e9] [cursor=pointer]:
+            - /url: /promotions
+        - link "로그인" [ref=f5e11] [cursor=pointer]:
+          - /url: /login
+    - main [ref=f5e12]:
+      - generic [ref=f5e13]:
+        - region [ref=f5e14]:
+          - generic [ref=f5e15]:
+            - generic [ref=f5e16]: 나를 기준으로, 화력
+            - heading "다른 사람의 1위보다, 내 피부에 맞는 1위" [level=2] [ref=f5e19]
+          - link "나의 성분 찾기" [ref=f5e21] [cursor=pointer]:
+            - /url: /skin-check
+        - generic [ref=f5e24]:
+          - paragraph [ref=f5e25]: 나만의 성분, 나만의 랭킹
+          - heading "화장품의 기준을, 내 피부로." [level=1] [ref=f5e26]
+        - region "이주의 화력 랭킹" [ref=f5e27]:
+          - generic [ref=f5e29]:
+            - group [aria-hidden] [ref=f5e30]:
+              - link [ref=f5e31] [cursor=pointer]:
+                - /url: /products/hwahae-1920665
+                - generic [ref=f5e36]: "10"
+                - generic [aria-hidden] [ref=f5e43]: 10 / 10
+                - generic [ref=f5e44]:
+                  - generic [ref=f5e45]: 라운드랩 · 이주의 화력 랭킹 · 평가 0개
+                  - heading [level=2] [ref=f5e46]: 자작나무 수분 선크림 [SPF50+/PA++++]
+                  - paragraph [ref=f5e47]:
+                    - generic [ref=f5e48]: 라운드랩 · 첫 평가를 기다리고 있어요
+            - group "10개 중 1번째" [ref=f5e52]:
+              - link "이주의 화력 랭킹 · 평가 0개 · 콩 에센스 제품 보기" [ref=f5e53] [cursor=pointer]:
+                - /url: /products/bean-essence
+                - img "믹순 콩 에센스" [ref=f5e57]
+                - generic "1번째 배너" [ref=f5e58]: "1"
+                - generic [aria-hidden] [ref=f5e65]: 01 / 10
+                - generic [ref=f5e66]:
+                  - generic [ref=f5e67]: 믹순 · 이주의 화력 랭킹 · 평가 0개
+                  - heading "콩 에센스" [level=2] [ref=f5e68]
+                  - paragraph [ref=f5e69]:
+                    - generic [ref=f5e70]: 믹순 · 첫 평가를 기다리고 있어요
+            - group [aria-hidden] [ref=f5e74]:
+              - link [ref=f5e75] [cursor=pointer]:
+                - /url: /products/birch-cream
+                - generic [ref=f5e80]: "2"
+                - generic [aria-hidden] [ref=f5e87]: 02 / 10
+                - generic [ref=f5e88]:
+                  - generic [ref=f5e89]: 라운드랩 · 이주의 화력 랭킹 · 평가 0개
+                  - heading [level=2] [ref=f5e90]: 자작나무 수분 크림
+                  - paragraph [ref=f5e91]:
+                    - generic [ref=f5e92]: 라운드랩 · 첫 평가를 기다리고 있어요
+          - status [ref=f5e96]
+        - region [ref=f5e97]:
+          - generic [ref=f5e98]:
+            - generic [ref=f5e99]:
+              - paragraph [ref=f5e100]: 궁금한 제품부터 가볍게 둘러보세요
+              - heading "전체 상품 22" [level=2] [ref=f5e101]:
+                - text: 전체 상품
+                - generic [ref=f5e102]: "22"
+            - link "전체보기" [ref=f5e103] [cursor=pointer]:
+              - /url: /products?order=name-asc
+          - group "상품 필터" [ref=f5e106]:
+            - generic [ref=f5e107]:
+              - button "상품 필터 열기" [ref=f5e108] [cursor=pointer]
+              - button "제품 유형" [ref=f5e110] [cursor=pointer]:
+                - generic [ref=f5e111]: 종류
+              - button "주요 성분" [ref=f5e114] [cursor=pointer]:
+                - generic [ref=f5e115]: 성분
+              - button "리뷰 평점" [ref=f5e118] [cursor=pointer]:
+                - generic [ref=f5e119]: 리뷰
+              - button "화력 점수" [ref=f5e122] [cursor=pointer]:
+                - generic [ref=f5e123]: 화력
+          - generic [ref=f5e126]:
+            - paragraph [ref=f5e127]: 피부 설정을 저장하면 나에게 맞는 순서로 바뀌어요.
+            - generic [ref=f5e128]: 제품명순
+          - generic [ref=f5e130]:
+            - article [ref=f5e131]:
+              - link [ref=f5e132] [cursor=pointer]:
+                - /url: /products/mugwort-ampoule
+                - img "아임프롬 강화 약쑥 앰플" [ref=f5e135]
+                - generic [ref=f5e136]:
+                  - paragraph [ref=f5e137]: 아임프롬 · 앰플
+                  - heading "강화 약쑥 앰플" [level=3] [ref=f5e138]
+                  - paragraph [ref=f5e139]: 39,000원
+              - generic [ref=f5e141]:
+                - button "찜하기" [ref=f5e142] [cursor=pointer]
+                - status [ref=f5e145]
+            - article [ref=f5e146]:
+              - link [ref=f5e147] [cursor=pointer]:
+                - /url: /products/hwahae-2097676
+                - img "닥터지 그린 딥 포어 클렌징 밤" [ref=f5e150]
+                - generic [ref=f5e151]:
+                  - paragraph [ref=f5e152]: 닥터지 · 클렌저
+                  - heading "그린 딥 포어 클렌징 밤" [level=3] [ref=f5e153]
+                  - paragraph [ref=f5e154]: 24,000원
+              - generic [ref=f5e156]:
+                - button "찜하기" [ref=f5e157] [cursor=pointer]
+                - status [ref=f5e160]
+            - article [ref=f5e161]:
+              - link [ref=f5e162] [cursor=pointer]:
+                - /url: /products/hwahae-1918760
+                - img "비플레인 녹두 약산성 클렌징폼" [ref=f5e165]
+                - generic [ref=f5e166]:
+                  - paragraph [ref=f5e167]: 비플레인 · 클렌저
+                  - heading "녹두 약산성 클렌징폼" [level=3] [ref=f5e168]
+                  - paragraph [ref=f5e169]: 13,800원
+              - generic [ref=f5e171]:
+                - button "찜하기" [ref=f5e172] [cursor=pointer]
+                - status [ref=f5e175]
+            - article [ref=f5e176]:
+              - link [ref=f5e177] [cursor=pointer]:
+                - /url: /products/hwahae-1984011
+                - img "토리든 다이브인 저분자 히알루론산 세럼" [ref=f5e180]
+                - generic [ref=f5e181]:
+                  - paragraph [ref=f5e182]: 토리든 · 세럼
+                  - heading "다이브인 저분자 히알루론산 세럼" [level=3] [ref=f5e183]
+                  - paragraph [ref=f5e184]: 22,000원
+              - generic [ref=f5e186]:
+                - button "찜하기" [ref=f5e187] [cursor=pointer]
+                - status [ref=f5e190]
+            - article [ref=f5e191]:
+              - link [ref=f5e192] [cursor=pointer]:
+                - /url: /products/hwahae-1890897
+                - img "토리든 다이브인 저분자 히알루론산 토너" [ref=f5e195]
+                - generic [ref=f5e196]:
+                  - paragraph [ref=f5e197]: 토리든 · 토너
+                  - heading "다이브인 저분자 히알루론산 토너" [level=3] [ref=f5e198]
+                  - paragraph [ref=f5e199]: 21,000원
+              - generic [ref=f5e201]:
+                - button "찜하기" [ref=f5e202] [cursor=pointer]
+                - status [ref=f5e205]
+            - article [ref=f5e206]:
+              - link [ref=f5e207] [cursor=pointer]:
+                - /url: /products/hwahae-2153055
+                - img "웰라쥬 리얼 히알루로닉 블루 100 앰플" [ref=f5e210]
+                - generic [ref=f5e211]:
+                  - paragraph [ref=f5e212]: 웰라쥬 · 앰플
+                  - heading "리얼 히알루로닉 블루 100 앰플" [level=3] [ref=f5e213]
+                  - paragraph [ref=f5e214]: 30,000원
+              - generic [ref=f5e216]:
+                - button "찜하기" [ref=f5e217] [cursor=pointer]
+                - status [ref=f5e220]
+            - article [ref=f5e221]:
+              - link [ref=f5e222] [cursor=pointer]:
+                - /url: /products/rice-sunscreen
+                - img "조선미녀 맑은 쌀 선크림" [ref=f5e225]
+                - generic [ref=f5e226]:
+                  - paragraph [ref=f5e227]: 조선미녀 · 선케어
+                  - heading "맑은 쌀 선크림" [level=3] [ref=f5e228]
+                  - paragraph [ref=f5e229]: 20,000원
+              - generic [ref=f5e231]:
+                - button "찜하기" [ref=f5e232] [cursor=pointer]
+                - status [ref=f5e235]
+            - article [ref=f5e236]:
+              - link [ref=f5e237] [cursor=pointer]:
+                - /url: /products/ceramide-serum
+                - generic [ref=f5e238]: 花力SKIN RITUAL
+                - generic [ref=f5e244]:
+                  - paragraph [ref=f5e245]: 아뜰리에 온 · 세럼
+                  - heading "세라마이드 결 세럼" [level=3] [ref=f5e246]
+                  - paragraph [ref=f5e247]: 38,000원
+              - generic [ref=f5e249]:
+                - button "찜하기" [ref=f5e250] [cursor=pointer]
+                - status [ref=f5e253]
+          - link "전체 상품 더 보기" [ref=f5e254] [cursor=pointer]:
+            - /url: /products?order=name-asc
+        - region [ref=f5e257]:
+          - generic [ref=f5e258]:
+            - generic [ref=f5e259]:
+              - paragraph [ref=f5e260]: 나를 기준으로
+              - heading "내 피부 랭킹" [level=2] [ref=f5e264]
+            - link "전체보기" [ref=f5e265] [cursor=pointer]:
+              - /url: /ranking/personal
+          - generic [ref=f5e268]:
+            - generic [ref=f5e272]:
+              - heading "내 피부 기준을 만들면 순위가 달라져요" [level=3] [ref=f5e273]
+              - paragraph [ref=f5e274]: 피부 답변을 저장하면 내 기준에 맞춘 순위를 보여드려요.
+            - link "피부 체크하기" [ref=f5e275] [cursor=pointer]:
+              - /url: /skin-check
+        - region [ref=f5e278]:
+          - generic [ref=f5e279]:
+            - generic [ref=f5e280]:
+              - paragraph [ref=f5e281]: 성분을 기준으로
+              - heading "판테놀 랭킹" [level=2] [ref=f5e284]
+            - link "전체보기" [ref=f5e285] [cursor=pointer]:
+              - /url: /ranking?ingredient=panthenol
+          - region "판테놀 랭킹" [ref=f5e288]:
+            - list [ref=f5e289]:
+              - article [ref=f5e290]:
+                - 'link "아임프롬 강화 약쑥 앰플 1위 아임프롬 · 앰플 강화 약쑥 앰플 39,000원 정확 함량 미공개 · 전성분 순서는 실제 함량이 아니에요 78 성분 화력 / 100 첫 리뷰를 기다려요 #판테놀" [ref=f5e291] [cursor=pointer]':
+                  - /url: /products/mugwort-ampoule
+                  - generic [ref=f5e292]:
+                    - img "아임프롬 강화 약쑥 앰플" [ref=f5e294]
+                    - generic "1위" [ref=f5e295]: "1"
+                  - generic [ref=f5e296]:
+                    - paragraph [ref=f5e297]: 아임프롬 · 앰플
+                    - heading "강화 약쑥 앰플" [level=3] [ref=f5e298]
+                    - paragraph [ref=f5e299]: 39,000원
+                    - paragraph [ref=f5e301]:
+                      - strong [ref=f5e302]: 정확 함량 미공개
+                      - text: · 전성분 순서는 실제 함량이 아니에요
+                    - generic [ref=f5e303]:
+                      - generic [ref=f5e304]:
+                        - strong [ref=f5e305]: "78"
+                        - generic [ref=f5e306]: 성분 화력 / 100
+                      - paragraph [ref=f5e307]: 첫 리뷰를 기다려요
+                    - generic [ref=f5e310]: "#판테놀"
+                - generic [ref=f5e312]:
+                  - button "찜하기" [ref=f5e313] [cursor=pointer]
+                  - status [ref=f5e316]
+              - article [ref=f5e317]:
+                - 'link "花力 SKIN RITUAL 2위 아뜰리에 온 · 세럼 세라마이드 결 세럼 38,000원 정확 함량 미공개 · 전성분 순서는 실제 함량이 아니에요 78 성분 화력 / 100 첫 리뷰를 기다려요 #판테놀" [ref=f5e318] [cursor=pointer]':
+                  - /url: /products/ceramide-serum
+                  - generic [ref=f5e319]:
+                    - generic [ref=f5e320]: 花力SKIN RITUAL
+                    - generic "2위" [ref=f5e325]: "2"
+                  - generic [ref=f5e326]:
+                    - paragraph [ref=f5e327]: 아뜰리에 온 · 세럼
+                    - heading "세라마이드 결 세럼" [level=3] [ref=f5e328]
+                    - paragraph [ref=f5e329]: 38,000원
+                    - paragraph [ref=f5e331]:
+                      - strong [ref=f5e332]: 정확 함량 미공개
+                      - text: · 전성분 순서는 실제 함량이 아니에요
+                    - generic [ref=f5e333]:
+                      - generic [ref=f5e334]:
+                        - strong [ref=f5e335]: "78"
+                        - generic [ref=f5e336]: 성분 화력 / 100
+                      - paragraph [ref=f5e337]: 첫 리뷰를 기다려요
+                    - generic [ref=f5e340]: "#판테놀"
+                - generic [ref=f5e342]:
+                  - button "찜하기" [ref=f5e343] [cursor=pointer]
+                  - status [ref=f5e346]
+              - article [ref=f5e347]:
+                - 'link "아누아 어성초 77 진정 토너 3위 아누아 · 토너 어성초 77 진정 토너 25,000원 정확 함량 미공개 · 전성분 순서는 실제 함량이 아니에요 78 성분 화력 / 100 첫 리뷰를 기다려요 #판테놀" [ref=f5e348] [cursor=pointer]':
+                  - /url: /products/heartleaf-toner
+                  - generic [ref=f5e349]:
+                    - img "아누아 어성초 77 진정 토너" [ref=f5e351]
+                    - generic "3위" [ref=f5e352]: "3"
+                  - generic [ref=f5e353]:
+                    - paragraph [ref=f5e354]: 아누아 · 토너
+                    - heading "어성초 77 진정 토너" [level=3] [ref=f5e355]
+                    - paragraph [ref=f5e356]: 25,000원
+                    - paragraph [ref=f5e358]:
+                      - strong [ref=f5e359]: 정확 함량 미공개
+                      - text: · 전성분 순서는 실제 함량이 아니에요
+                    - generic [ref=f5e360]:
+                      - generic [ref=f5e361]:
+                        - strong [ref=f5e362]: "78"
+                        - generic [ref=f5e363]: 성분 화력 / 100
+                      - paragraph [ref=f5e364]: 첫 리뷰를 기다려요
+                    - generic [ref=f5e367]: "#판테놀"
+                - generic [ref=f5e369]:
+                  - button "찜하기" [ref=f5e370] [cursor=pointer]
+                  - status [ref=f5e373]
+              - article [ref=f5e374]:
+                - 'link "라운드랩 자작나무 수분 크림 4위 라운드랩 · 크림 자작나무 수분 크림 32,000원 정확 함량 미공개 · 전성분 순서는 실제 함량이 아니에요 76 성분 화력 / 100 첫 리뷰를 기다려요 #판테놀" [ref=f5e375] [cursor=pointer]':
+                  - /url: /products/birch-cream
+                  - generic [ref=f5e376]:
+                    - img "라운드랩 자작나무 수분 크림" [ref=f5e378]
+                    - generic "4위" [ref=f5e379]: "4"
+                  - generic [ref=f5e380]:
+                    - paragraph [ref=f5e381]: 라운드랩 · 크림
+                    - heading "자작나무 수분 크림" [level=3] [ref=f5e382]
+                    - paragraph [ref=f5e383]: 32,000원
+                    - paragraph [ref=f5e385]:
+                      - strong [ref=f5e386]: 정확 함량 미공개
+                      - text: · 전성분 순서는 실제 함량이 아니에요
+                    - generic [ref=f5e387]:
+                      - generic [ref=f5e388]:
+                        - strong [ref=f5e389]: "76"
+                        - generic [ref=f5e390]: 성분 화력 / 100
+                      - paragraph [ref=f5e391]: 첫 리뷰를 기다려요
+                    - generic [ref=f5e394]: "#판테놀"
+                - generic [ref=f5e396]:
+                  - button "찜하기" [ref=f5e397] [cursor=pointer]
+                  - status [ref=f5e400]
+            - generic "판테놀 랭킹 슬라이드 이동" [ref=f5e401]:
+              - button "판테놀 랭킹 이전 2개" [disabled] [ref=f5e402]
+              - paragraph [ref=f5e405]:
+                - generic [aria-hidden] [ref=f5e406]:
+                  - strong [ref=f5e407]: "1"
+                  - text: / 2
+                - generic [ref=f5e408]: 총 2페이지 중 1페이지
+              - button "판테놀 랭킹 다음 2개" [ref=f5e409] [cursor=pointer]
+        - region [ref=f5e412]:
+          - generic [ref=f5e413]:
+            - generic [ref=f5e414]:
+              - paragraph [ref=f5e415]: 실제 사용자의 리뷰로
+              - heading "급상승 랭킹" [level=2] [ref=f5e418]
+            - link "전체보기" [ref=f5e419] [cursor=pointer]:
+              - /url: /ranking/rising
+          - generic [ref=f5e422]:
+            - generic [ref=f5e426]:
+              - heading "새로운 리뷰가 모이면 순위가 생겨요" [level=3] [ref=f5e427]
+              - paragraph [ref=f5e428]: 이전 7일보다 리뷰가 늘어난 제품이 아직 없어요.
+            - link "급상승 랭킹 보기" [ref=f5e429] [cursor=pointer]:
+              - /url: /ranking/rising
+        - region [ref=f5e432]:
+          - generic [ref=f5e433]:
+            - generic [ref=f5e434]:
+              - paragraph [ref=f5e435]: 도움이 된 리뷰로
+              - heading "리뷰어 랭킹" [level=2] [ref=f5e440]
+            - link "전체보기" [ref=f5e441] [cursor=pointer]:
+              - /url: /reviewers
+          - generic [ref=f5e444]:
+            - generic [ref=f5e449]:
+              - heading "첫 리뷰어를 기다리고 있어요" [level=3] [ref=f5e450]
+              - paragraph [ref=f5e451]: 솔직한 리뷰에 다른 사용자의 평가가 모이면 리뷰 화력 순위가 생겨요.
+            - link "리뷰할 제품 찾기" [ref=f5e452] [cursor=pointer]:
+              - /url: /products
+        - region "화력 집계 원칙" [ref=f5e455]:
+          - group [ref=f5e456]:
+            - generic "맞춤 화력·사용자 리뷰·광고, 어떻게 다를까요?" [ref=f5e457] [cursor=pointer]
+    - contentinfo [ref=f5e458]:
+      - generic [ref=f5e459]:
+        - generic [ref=f5e460]:
+          - link "화력 홈" [ref=f5e461] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f5e462]: 화
+            - strong [ref=f5e463]: 화력
+          - paragraph [ref=f5e465]: 화장품의 기준을, 내 피부로.
+        - navigation "푸터 메뉴" [ref=f5e466]:
+          - link "제품 비교" [ref=f5e467] [cursor=pointer]:
+            - /url: /compare
+          - link "추천 기준" [ref=f5e468] [cursor=pointer]:
+            - /url: /principles
+          - link "이용약관" [ref=f5e469] [cursor=pointer]:
+            - /url: /terms
+          - link "개인정보처리방침" [ref=f5e470] [cursor=pointer]:
+            - /url: /privacy
+        - group [ref=f5e471]:
+          - generic "사업자·고객센터 정보" [ref=f5e472] [cursor=pointer]
+        - paragraph [ref=f5e475]: © 2026 HWA:RYEOK
+    - navigation "모바일 메뉴" [ref=f5e476]:
+      - generic [ref=f5e477]:
+        - link [ref=f5e478] [cursor=pointer]:
+          - /url: /
+        - link [ref=f5e483] [cursor=pointer]:
+          - /url: /ranking
+        - link [ref=f5e487] [cursor=pointer]:
+          - /url: /skin-check
+        - button [ref=f5e490] [cursor=pointer]
+        - link [ref=f5e495] [cursor=pointer]:
+          - /url: /my
+  - button "Open Next.js Dev Tools" [ref=f5e505] [cursor=pointer]

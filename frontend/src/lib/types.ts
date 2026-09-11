@@ -167,8 +167,9 @@ export type ReviewCriteria = {
 
 export type ReviewDetail = {
   id: string;
-  authorId: string;
+  authorId: string | null;
   authorNickname: string;
+  sampleReview: boolean;
   communityRating: ReviewCommunityRating;
   totalScore: number;
   content: string;
@@ -234,6 +235,35 @@ export type ReviewerReviewList = {
   content: ReviewerReview[];
   page: number;
   size: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
+export type AdminReviewKind = "ALL" | "USER" | "SAMPLE";
+
+export type AdminReviewListItem = {
+  id: string;
+  product: Pick<Product, "id" | "brand" | "name" | "category" | "publicationStatus">;
+  author: {
+    id: string | null;
+    nickname: string;
+  };
+  totalScore: number;
+  content: string;
+  skinType: string;
+  usagePeriod: ReviewDetail["usagePeriod"];
+  repurchaseYn: boolean;
+  createdAt: string;
+  sampleReview: boolean;
+  communityAverageScore: number | null;
+  communityRatingCount: number;
+};
+
+export type AdminReviewPage = {
+  content: AdminReviewListItem[];
+  page: number;
+  size: number;
+  totalElements: number;
   totalPages: number;
   hasNext: boolean;
 };

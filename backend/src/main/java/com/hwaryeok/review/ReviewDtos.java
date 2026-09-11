@@ -69,6 +69,7 @@ record ReviewDetailResponse(
         String skinType,
         String usagePeriod,
         boolean repurchaseYn,
+        boolean sampleReview,
         Instant createdAt,
         ReviewCommunityRatingResponse communityRating
 ) {
@@ -82,8 +83,25 @@ record ReviewDetailResponse(
                 review.getSkinType(),
                 review.getUsagePeriod(),
                 review.isRepurchase(),
+                false,
                 review.getCreatedAt(),
                 communityRating
+        );
+    }
+
+    static ReviewDetailResponse from(ProductSampleReview review) {
+        return new ReviewDetailResponse(
+                review.getId(),
+                null,
+                "화력 샘플",
+                review.getTotalScore(),
+                review.getContent(),
+                review.getSkinType(),
+                review.getUsagePeriod(),
+                review.isRepurchase(),
+                true,
+                review.getCreatedAt(),
+                new ReviewCommunityRatingResponse(null, 0, null, false)
         );
     }
 }

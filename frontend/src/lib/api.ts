@@ -3,7 +3,7 @@ import type { RisingProductRankingPage } from "@/lib/types";
 import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 
-import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
+import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, AdminReviewKind, AdminReviewPage, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
 const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
 
@@ -643,6 +643,28 @@ export async function uploadAdminProductImage(accessToken: string, productId: st
 
 export function getAdminProducts(accessToken: string): Promise<Product[]> {
   return requestJson<Product[]>("/admin/products", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function getAdminReviews(
+  accessToken: string,
+  query: { q?: string; kind?: AdminReviewKind; page?: number; size?: number } = {},
+): Promise<AdminReviewPage> {
+  const search = new URLSearchParams({
+    kind: query.kind ?? "ALL",
+    page: String(query.page ?? 0),
+    size: String(query.size ?? 20),
+  });
+  if (query.q) search.set("q", query.q);
+  return requestJson<AdminReviewPage>(`/admin/reviews?${search}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function deleteAdminReview(accessToken: string, reviewId: string): Promise<void> {
+  return requestEmpty(`/admin/reviews/${encodeURIComponent(reviewId)}`, {
+    method: "DELETE",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }

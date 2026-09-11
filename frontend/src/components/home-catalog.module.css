@@ -93,7 +93,7 @@
 .rankingPreviewList .review strong { font-size: 13px; }
 .rankingPreviewList .matchReason { margin-top: 8px; padding: 8px; }
 .rankingPreviewList .matchReason > span { display: none; }
-.rankingPreviewList .matchReason p { font-size: 11px; line-height: 1.55; }
+.rankingPreviewList .matchReason p { min-height: 3.1em; font-size: 11px; line-height: 1.55; }
 .rankingPreviewList .matchReason small { display: none; }
 .previewState { display: flex; min-height: 92px; align-items: center; gap: 14px; padding: 18px; border: 1px solid #e9e5eb; border-radius: 12px; color: #9f4a69; background: #fff; }
 .previewState > svg { flex: 0 0 auto; }
@@ -125,7 +125,7 @@
 .firepower small { color: #76717d; font-size: 12px; font-weight: 450; }
 .matchReason { margin-top: 13px; padding: 11px 12px; border-radius: 8px; background: #fbf7f9; color: #615963; }
 .matchReason > span { display: block; margin-bottom: 4px; color: #994362; font-size: 12px; font-weight: 700; }
-.matchReason p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.matchReason p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 3.3em; overflow: hidden; margin: 0; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
 .matchReason small { display: block; margin-top: 5px; font-size: 12px; line-height: 1.6; color: #736b64; }
 .rank { position: absolute; top: 10px; left: 10px; z-index: 20; display: grid; place-items: center; width: 29px; height: 30px; border-radius: 6px; background: #a63e65; color: white; font-size: 15px; font-weight: 700; }
 .favorite { position: absolute; right: 8px; top: 8px; z-index: 20; }

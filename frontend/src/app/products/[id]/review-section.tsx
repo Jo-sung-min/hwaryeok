@@ -58,10 +58,23 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
             <div className="mt-4 grid gap-3">
               {summary.reviews.slice(0, 5).map((review) => (
                 <article key={review.id} className="rounded-2xl border border-[#e9dfe2] bg-white p-4">
-                  <div className="flex items-start justify-between gap-4"><div><Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link><p className="mt-0.5 text-[11px] text-[#8a7c81]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p></div><div className="text-right"><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">리뷰점수</p></div></div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      {review.sampleReview && <span className="mb-2 inline-flex rounded-full bg-[#fff0f5] px-2.5 py-1 text-[10px] font-bold text-[#a84a6c]">화면 예시 · 점수 집계 제외</span>}
+                      <div>
+                        {!review.sampleReview && review.authorId ? (
+                          <Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link>
+                        ) : (
+                          <span className="inline-flex min-h-7 items-center text-sm font-bold text-[#765f68]">{review.authorNickname}</span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-[#8a7c81]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p>
+                    </div>
+                    <div className="shrink-0 text-right"><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">{review.sampleReview ? "예시 점수" : "리뷰점수"}</p></div>
+                  </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#655a5e] [overflow-wrap:anywhere]">{review.content}</p>
                   <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-[#93858a]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
-                  <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />
+                  {!review.sampleReview && review.authorId && <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />}
                 </article>
               ))}
             </div>
