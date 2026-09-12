@@ -7,9 +7,12 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.hwaryeok.auth.DuplicateEmailException;
+import com.hwaryeok.auth.CurrentPasswordMismatchException;
 import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
 import com.hwaryeok.auth.InvalidRefreshTokenException;
+import com.hwaryeok.auth.PasswordChangeUnavailableException;
+import com.hwaryeok.auth.PasswordUnchangedException;
 import com.hwaryeok.auth.TooManyLoginAttemptsException;
 import com.hwaryeok.review.ReviewAlreadyExistsException;
 import com.hwaryeok.product.ProductAlreadyExistsException;
@@ -104,6 +107,48 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException exception, HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(CurrentPasswordMismatchException.class)
+    public ResponseEntity<ApiError> handleCurrentPasswordMismatch(
+            CurrentPasswordMismatchException exception,
+            HttpServletRequest request
+    ) {
+        return build(
+                HttpStatus.BAD_REQUEST,
+                "CURRENT_PASSWORD_MISMATCH",
+                exception.getMessage(),
+                request,
+                Map.of("currentPassword", exception.getMessage())
+        );
+    }
+
+    @ExceptionHandler(PasswordUnchangedException.class)
+    public ResponseEntity<ApiError> handlePasswordUnchanged(
+            PasswordUnchangedException exception,
+            HttpServletRequest request
+    ) {
+        return build(
+                HttpStatus.BAD_REQUEST,
+                "NEW_PASSWORD_UNCHANGED",
+                exception.getMessage(),
+                request,
+                Map.of("newPassword", exception.getMessage())
+        );
+    }
+
+    @ExceptionHandler(PasswordChangeUnavailableException.class)
+    public ResponseEntity<ApiError> handlePasswordChangeUnavailable(
+            PasswordChangeUnavailableException exception,
+            HttpServletRequest request
+    ) {
+        return build(
+                HttpStatus.CONFLICT,
+                "PASSWORD_CHANGE_UNAVAILABLE",
+                exception.getMessage(),
+                request,
+                Map.of()
+        );
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)

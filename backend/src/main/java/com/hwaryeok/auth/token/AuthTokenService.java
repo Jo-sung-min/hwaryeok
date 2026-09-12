@@ -84,6 +84,13 @@ public class AuthTokenService {
                 .ifPresent(token -> refreshTokenRepository.revokeFamily(token.getFamilyId(), Instant.now()));
     }
 
+    @Transactional
+    public AuthTokenResponse replaceAllSessions(User user, String authMethod) {
+        Instant now = Instant.now();
+        refreshTokenRepository.revokeAllByUserId(user.getId(), now);
+        return issue(user, authMethod, UUID.randomUUID().toString(), now);
+    }
+
     private AuthTokenResponse issue(User user, String authMethod, String familyId, Instant now) {
         String rawRefreshToken = tokenHashService.createOpaqueToken();
         RefreshToken refreshToken = new RefreshToken(

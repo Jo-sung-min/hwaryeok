@@ -13,11 +13,14 @@ const typescript = require("next/dist/compiled/babel/preset-typescript").default
 const react = require("next/dist/compiled/babel/preset-react").default;
 const commonjs = require("next/dist/compiled/babel/plugin-transform-modules-commonjs").default;
 const homeCatalogCss = readFileSync(new URL("../src/components/home-catalog.module.css", import.meta.url), "utf8");
+const homePersonalizationCss = readFileSync(new URL("../src/components/home-personalization.module.css", import.meta.url), "utf8");
 const moduleCache = new Map();
 const realModules = new Map([
   ["@/lib/home-catalog", "../src/lib/home-catalog.ts"],
   ["@/lib/home-personalization", "../src/lib/home-personalization.ts"],
   ["@/lib/skin-check", "../src/lib/skin-check.ts"],
+  ["@/lib/skin-tendency-assets", "../src/lib/skin-tendency-assets.ts"],
+  ["@/components/review-petal-rating", "../src/components/review-petal-rating.tsx"],
 ]);
 
 // Render the actual component JSX and pure helpers without a Next server or account.
@@ -113,6 +116,71 @@ test("personalized panel shows a compact saved skin type and opens editing direc
   assert.doesNotMatch(html, /private-user-id|private@example|private-concern|private-trigger|private-created-at/);
 });
 
+test("personalized panel selects the watercolor board asset for every saved skin tendency", () => {
+  const tendencies = [
+    ["건성", "dry"],
+    ["지성", "oily"],
+    ["복합성", "combination"],
+    ["수부지", "dehydrated-oily"],
+    ["중성", "balanced"],
+    ["민감", "sensitive"],
+  ];
+
+  for (const [skinType, asset] of tendencies) {
+    const html = render(HomePersonalization, { user, profile: { ...savedProfile, skinType } });
+    assert.match(html, new RegExp(`data-skin-asset="${asset}"`), skinType);
+    assert.match(visibleText(html), new RegExp(`${skinType} 경향`), skinType);
+    assert.match(html, new RegExp(`<span class="emblem" aria-hidden="true"><span class="tendencyAsset" data-skin-asset="${asset}"></span></span>`), skinType);
+    assert.doesNotMatch(html, /data-icon="(?:Flower2|Droplets)"/, skinType);
+  }
+});
+
+test("skin tendency asset aliases and unknown values resolve without a broken board cell", () => {
+  const { skinTendencyAssetKey } = loadSource("../src/lib/skin-tendency-assets.ts");
+  assert.equal(skinTendencyAssetKey("민감성"), "sensitive");
+  assert.equal(skinTendencyAssetKey(" 민감성 "), "sensitive");
+  assert.equal(skinTendencyAssetKey("알 수 없음"), "default");
+  assert.equal(skinTendencyAssetKey(null), "default");
+  assert.equal(skinTendencyAssetKey(undefined), "default");
+
+  const alias = render(HomePersonalization, { user, profile: { ...savedProfile, skinType: "민감성" } });
+  assert.match(alias, /data-skin-asset="sensitive"/);
+  assert.match(visibleText(alias), /민감성 경향/);
+
+  const unknown = render(HomePersonalization, { user, profile: { ...savedProfile, skinType: "알 수 없음" } });
+  assert.match(unknown, /data-skin-asset="default"/);
+  assert.match(visibleText(unknown), /알 수 없음 경향/);
+});
+
+test("skin tendency board CSS keeps every sprite position, fallback, and mobile motion rules", () => {
+  const { SKIN_TENDENCY_ASSET_BOARD_SRC } = loadSource("../src/lib/skin-tendency-assets.ts");
+  assert.equal(SKIN_TENDENCY_ASSET_BOARD_SRC, "/skin/skin-tendency-board.png");
+  const assetRule = homePersonalizationCss.match(/(?:^|\n)\.tendencyAsset\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.notEqual(assetRule, "");
+  assert.ok(assetRule.includes(`url("${SKIN_TENDENCY_ASSET_BOARD_SRC}")`));
+  assert.match(assetRule, /background-repeat:\s*no-repeat/);
+  assert.match(assetRule, /background-size:\s*300%\s+200%/);
+
+  for (const [asset, position] of [
+    ["dry", "0% 0%"],
+    ["oily", "50% 0%"],
+    ["combination", "100% 0%"],
+    ["dehydrated-oily", "0% 100%"],
+    ["balanced", "50% 100%"],
+    ["sensitive", "100% 100%"],
+  ]) {
+    const escapedPosition = position.replaceAll("%", "\\%").replace(" ", "\\s+");
+    assert.match(homePersonalizationCss, new RegExp(`\\.tendencyAsset\\[data-skin-asset="${asset}"\\]\\s*\\{[^}]*background-position:\\s*${escapedPosition}`), asset);
+  }
+
+  const fallbackRule = homePersonalizationCss.match(/\.tendencyAsset\[data-skin-asset="default"\]\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(fallbackRule, /url\("\/brand\/hwaryeok-flower-mark\.png"\)/);
+  assert.match(fallbackRule, /background-position:\s*center/);
+  assert.match(fallbackRule, /background-size:\s*contain/);
+  assert.match(homePersonalizationCss, /@media\s*\(max-width:\s*430px\)[\s\S]*?\.tendencyAsset\s*\{[^}]*width:\s*34px;[^}]*height:\s*34px;/);
+  assert.match(homePersonalizationCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.profileSummary,\s*\.tendencyAsset\s*\{[^}]*transition:\s*none;/);
+});
+
 test("incomplete saved settings do not invent a missing skin type", () => {
   const partial = render(HomePersonalization, { user, profile: { configured: true, oilinessLevel: "BALANCED" } });
   assert.match(partial, /피부 설정 완료/);
@@ -189,6 +257,7 @@ test("rising cards distinguish recent review score and count growth from persona
   assert.match(text, /\+3 리뷰 증가/);
   assert.match(text, /이전 7일 2 → 최근 7일 5개/);
   assert.match(text, /최근 7일 리뷰 82\.3 \/ 100 \(5\)/);
+  assert.match(html, /data-petal-count="4"/);
   assert.doesNotMatch(text, /맞춤 화력|추천 이유/);
   const pending = render(HomeProductCard, { product: product(), review: { score: null, count: 0 } });
   assert.match(visibleText(pending), /리뷰 0개 · 점수 집계 중/);

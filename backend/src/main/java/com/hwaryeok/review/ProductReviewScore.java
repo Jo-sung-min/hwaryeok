@@ -43,6 +43,10 @@ class ProductReviewScore {
         this.createdAt = createdAt;
     }
 
+    void updateScore(int score) {
+        this.score = score;
+    }
+
     ReviewCriterion getCriterion() { return criterion; }
     int getScore() { return score; }
 }

@@ -13,14 +13,67 @@ test("personal dashboard renders actual metrics and text-only product lists", as
   assert.match(html, /찜 해제/);
   assert.match(html, /href="\/my\/reviewer-profile"/);
   assert.match(html, /내 리뷰어 소개/);
+  assert.match(html, /회원정보/);
+  assert.match(html, /qa@example\.invalid/);
+  assert.match(html, /data-password-change-form="true"/);
+  assert.match(html, /로그아웃/);
   assert.match(html, /left=qa-ampoule&amp;right=qa-cream/);
   assert.doesNotMatch(html, /GPT|OpenAI/);
   assert.doesNotMatch(html, /<img|must-not-render|나의 추천 제품|수부지 기준/);
 });
-test("missing profile is not treated as a measured normal profile", async () => {
+test("Kakao accounts keep logout but direct password management to Kakao", async () => {
+  const html = await dashboard({
+    auth: {
+      requireSession: async () => ({
+        id: "qa-kakao-user",
+        email: null,
+        nickname: "카카오 피부기록",
+        role: "USER",
+        authMethod: "kakao",
+        passwordChangeAvailable: false,
+      }),
+    },
+  });
+  assert.match(html, /카카오 계정/);
+  assert.match(html, /비밀번호는 카카오에서 관리해요/);
+  assert.match(html, /로그아웃/);
+  assert.doesNotMatch(html, /data-password-change-form/);
+});
+test("an unconfigured profile stays neutral while the browser draft is being checked", async () => {
   const html = await dashboard({ getUserSkinProfile: async () => ({ ...profile, configured: false }) });
-  assert.match(html, /나의 피부 체크 시작/);
+  assert.match(html, /피부 체크 기록을 확인하고 있어요/);
+  assert.doesNotMatch(html, /나의 피부 체크 시작/);
   assert.doesNotMatch(html, /복합성 경향/);
+});
+test("skin summary resolver distinguishes saved profiles, review drafts and generated reports", () => {
+  const { resolveMySkinSummaryState } = harness().load("../src/app/my/my-skin-summary.tsx");
+  const unconfigured = { ...profile, configured: false };
+  const generatedReport = { skinType: "건성", hasReport: true };
+  const reviewDraft = { skinType: "건성", hasReport: false };
+
+  const unconfiguredResult = resolveMySkinSummaryState(unconfigured, generatedReport);
+  assert.equal(unconfiguredResult.kind, "result");
+  assert.equal(unconfiguredResult.href, "/skin-check?step=result");
+  assert.notEqual(unconfiguredResult.action, "나의 피부 체크 시작");
+
+  const unconfiguredReview = resolveMySkinSummaryState(unconfigured, reviewDraft);
+  assert.equal(unconfiguredReview.kind, "review");
+  assert.equal(unconfiguredReview.href, "/skin-check?step=review");
+
+  const configuredResult = resolveMySkinSummaryState(profile, generatedReport);
+  assert.equal(configuredResult.kind, "result");
+  assert.equal(configuredResult.href, "/skin-check?step=result");
+  assert.equal(configuredResult.title, "건성 경향");
+
+  const configuredReview = resolveMySkinSummaryState(profile, reviewDraft);
+  assert.equal(configuredReview.kind, "saved");
+  assert.equal(configuredReview.href, "/skin-check");
+  assert.equal(configuredReview.title, "복합성 경향");
+
+  const unavailable = resolveMySkinSummaryState(null, generatedReport);
+  assert.equal(unavailable.kind, "unavailable");
+  assert.equal(unavailable.href, "/my");
+  assert.equal(unavailable.action, "다시 불러오기");
 });
 test("partial API failures remain distinct from empty records", async () => {
   const fail = async () => { throw new Error("unavailable"); };

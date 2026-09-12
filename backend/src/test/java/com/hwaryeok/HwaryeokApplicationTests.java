@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariDataSource;
 import com.hwaryeok.product.ProductRepository;
+import com.hwaryeok.auth.token.AuthTokenService;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class HwaryeokApplicationTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AuthTokenService authTokenService;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -419,6 +423,177 @@ class HwaryeokApplicationTests {
                 HttpResponse.BodyHandlers.ofString()
         );
         assertThat(revokedFamilyResponse.statusCode()).isEqualTo(401);
+    }
+
+    @Test
+    void logsOutTheCurrentRefreshFamilyIdempotently() throws Exception {
+        Instant now = Instant.now();
+        String email = "logout-" + UUID.randomUUID() + "@example.com";
+        userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                email,
+                passwordEncoder.encode("Flower!123"),
+                "로그아웃봄",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        ));
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> login = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String refreshToken = jsonString(login.body(), "refreshToken");
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            HttpResponse<String> logout = client.send(
+                    jsonPost("/api/v1/auth/logout", "{\"refreshToken\":\"" + refreshToken + "\"}"),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+            assertThat(logout.statusCode()).isEqualTo(200);
+            assertThat(logout.body()).contains("\"loggedOut\":true");
+        }
+
+        HttpResponse<String> revoked = client.send(
+                jsonPost("/api/v1/auth/refresh", "{\"refreshToken\":\"" + refreshToken + "\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(revoked.statusCode()).isEqualTo(401);
+    }
+
+    @Test
+    void changesPasswordAndReplacesEveryRefreshSession() throws Exception {
+        Instant now = Instant.now();
+        String email = "password-change-" + UUID.randomUUID() + "@example.com";
+        User user = userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                email,
+                passwordEncoder.encode("Flower!123"),
+                "비밀번호봄",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        ));
+        HttpClient client = HttpClient.newHttpClient();
+
+        HttpResponse<String> firstLogin = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> secondLogin = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        String accessToken = jsonString(firstLogin.body(), "accessToken");
+        String firstRefreshToken = jsonString(firstLogin.body(), "refreshToken");
+        String secondRefreshToken = jsonString(secondLogin.body(), "refreshToken");
+
+        HttpResponse<String> mismatch = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", accessToken, """
+                        {"currentPassword":"Wrong!123","newPassword":"Petal!456","newPasswordConfirm":"Petal!456"}
+                        """),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(mismatch.statusCode()).isEqualTo(400);
+        assertThat(mismatch.body()).contains("CURRENT_PASSWORD_MISMATCH", "currentPassword");
+        assertThat(passwordEncoder.matches("Flower!123", userRepository.findById(user.getId()).orElseThrow().getPasswordHash()))
+                .isTrue();
+
+        HttpResponse<String> stillUsableRefresh = client.send(
+                jsonPost("/api/v1/auth/refresh", "{\"refreshToken\":\"" + firstRefreshToken + "\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(stillUsableRefresh.statusCode()).isEqualTo(200);
+        String rotatedFirstRefreshToken = jsonString(stillUsableRefresh.body(), "refreshToken");
+
+        HttpResponse<String> unchanged = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", accessToken, """
+                        {"currentPassword":"Flower!123","newPassword":"Flower!123","newPasswordConfirm":"Flower!123"}
+                        """),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unchanged.statusCode()).isEqualTo(400);
+        assertThat(unchanged.body()).contains("NEW_PASSWORD_UNCHANGED", "newPassword");
+
+        HttpResponse<String> invalid = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", accessToken, """
+                        {"currentPassword":"Flower!123","newPassword":"too-short","newPasswordConfirm":"different"}
+                        """),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(invalid.statusCode()).isEqualTo(400);
+        assertThat(invalid.body()).contains("VALIDATION_FAILED", "새 비밀번호");
+
+        HttpResponse<String> changed = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", accessToken, """
+                        {"currentPassword":"Flower!123","newPassword":"Petal!456","newPasswordConfirm":"Petal!456"}
+                        """),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(changed.statusCode()).isEqualTo(200);
+        assertThat(changed.body()).contains("\"passwordChangeAvailable\":true", "\"authMethod\":\"password\"")
+                .doesNotContain("Flower!123", "Petal!456", "passwordHash");
+        String replacementRefreshToken = jsonString(changed.body(), "refreshToken");
+        assertThat(passwordEncoder.matches("Petal!456", userRepository.findById(user.getId()).orElseThrow().getPasswordHash()))
+                .isTrue();
+
+        HttpResponse<String> oldPasswordLogin = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Flower!123\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> newPasswordLogin = client.send(
+                jsonPost("/api/v1/auth/login", "{\"email\":\"" + email + "\",\"password\":\"Petal!456\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(oldPasswordLogin.statusCode()).isEqualTo(401);
+        assertThat(newPasswordLogin.statusCode()).isEqualTo(200);
+
+        for (String revokedToken : List.of(rotatedFirstRefreshToken, secondRefreshToken)) {
+            HttpResponse<String> revoked = client.send(
+                    jsonPost("/api/v1/auth/refresh", "{\"refreshToken\":\"" + revokedToken + "\"}"),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+            assertThat(revoked.statusCode()).isEqualTo(401);
+        }
+        HttpResponse<String> replacementRefresh = client.send(
+                jsonPost("/api/v1/auth/refresh", "{\"refreshToken\":\"" + replacementRefreshToken + "\"}"),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(replacementRefresh.statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void rejectsUnauthenticatedAndKakaoOnlyPasswordChanges() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String payload = """
+                {"currentPassword":"Flower!123","newPassword":"Petal!456","newPasswordConfirm":"Petal!456"}
+                """;
+        HttpResponse<String> unauthenticated = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", "not-a-token", payload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unauthenticated.statusCode()).isEqualTo(401);
+
+        Instant now = Instant.now();
+        User kakaoUser = userRepository.saveAndFlush(new User(
+                UUID.randomUUID().toString(),
+                null,
+                null,
+                "카카오봄",
+                "USER",
+                "ACTIVE",
+                now,
+                now
+        ));
+        String kakaoAccessToken = authTokenService.issue(kakaoUser, "kakao").accessToken();
+        HttpResponse<String> unavailable = client.send(
+                bearerRequest("PUT", "/api/v1/users/me/password", kakaoAccessToken, payload),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertThat(unavailable.statusCode()).isEqualTo(409);
+        assertThat(unavailable.body()).contains("PASSWORD_CHANGE_UNAVAILABLE", "카카오에서 관리");
     }
 
     @Test

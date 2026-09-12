@@ -7,6 +7,7 @@ import { ApiRequestError, getReviewerProfile, getReviewerReviews } from "@/lib/a
 import { getCurrentSession, readAuthTokens } from "@/lib/auth-session";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { ReviewerFirepower } from "@/components/reviewer-firepower";
+import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { resolveProductImageUrl } from "@/lib/media";
 import { hasMeaningfulReviewerBio, normalizeReviewerBioBlocks } from "@/lib/reviewer-profile";
 import type { ProductTone, ReviewerReview } from "@/lib/types";
@@ -81,7 +82,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
                   <p className="text-[11px] font-bold text-[#96737e]">제품에 매긴 평균 리뷰점수</p>
                   <p className="mt-1 text-xs text-[#9a8990]">작성 리뷰 {data.reviewCount.toLocaleString("ko-KR")}개 기준</p>
                 </div>
-                <div className="text-right"><strong className="font-myeongjo text-4xl font-semibold text-[#bd4d6f]">{averageScore}</strong><span className="ml-1 text-xs text-[#8d7c82]">/ 100</span></div>
+                <div className="text-right"><ReviewPetalRating score={data.averageReviewScore} className="mb-1 justify-end" /><div><strong className="font-myeongjo text-4xl font-semibold text-[#bd4d6f]">{averageScore}</strong><span className="ml-1 text-xs text-[#8d7c82]">/ 100</span></div></div>
               </div>
             </div>
             <div className="mt-6 grid gap-5 rounded-2xl border border-[#edd5df] bg-white p-5 sm:grid-cols-[minmax(180px,1fr)_2fr] sm:items-center sm:gap-8 sm:p-6">
@@ -168,7 +169,7 @@ function ReviewCard({ review, authorId, isAuthenticated }: { review: ReviewerRev
       <div className="min-w-0 p-5 sm:p-6 md:p-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a56a7b]">{review.product.brand} · {review.product.category}</p><Link href={`/products/${review.product.id}`} className="mt-1 block font-myeongjo text-lg font-semibold leading-snug hover:text-[#b54768] sm:text-xl">{review.product.name}</Link></div>
-          <div className="shrink-0 rounded-2xl bg-[#fff0f4] px-3 py-2 text-right"><strong className="font-myeongjo text-2xl text-[#b94769]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] font-semibold text-[#98737e]">리뷰점수</p></div>
+          <div className="shrink-0 rounded-2xl bg-[#fff0f4] px-3 py-2 text-right"><ReviewPetalRating score={Number(review.totalScore)} compact className="mb-0.5 justify-end" /><strong className="font-myeongjo text-2xl text-[#b94769]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] font-semibold text-[#98737e]">리뷰점수</p></div>
         </div>
         <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#61555a] [overflow-wrap:anywhere]">{review.content}</p>
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#f0dfe4] pt-4 text-[11px] text-[#88787d]">

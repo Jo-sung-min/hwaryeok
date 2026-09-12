@@ -41,6 +41,9 @@ function loadReviewSection() {
   const ReviewFirepowerVote = ({ reviewId }) => React.createElement("span", {
     "data-review-firepower-vote": reviewId,
   });
+  const ReviewPetalRating = ({ score }) => score == null ? null : React.createElement("span", {
+    "data-petal-count": Math.floor(Number(score) / 20),
+  });
 
   vm.runInNewContext(code, {
     module: localModule,
@@ -49,6 +52,7 @@ function loadReviewSection() {
       if (specifier === "react" || specifier === "react/jsx-runtime") return require(specifier);
       if (specifier === "next/link") return { __esModule: true, default: Link };
       if (specifier === "@/components/review-firepower-vote") return { ReviewFirepowerVote };
+      if (specifier === "@/components/review-petal-rating") return { ReviewPetalRating };
       if (specifier === "./review-actions") return { createReviewAction: () => undefined };
       if (specifier === "lucide-react") return new Proxy({ __esModule: true }, {
         get: (target, name) => name in target
@@ -192,5 +196,6 @@ test("ordinary user reviews retain the reviewer profile and firepower vote journ
 
   assert.match(html, /href="\/reviewers\/member-1"/);
   assert.match(html, /data-review-firepower-vote="review-1"/);
+  assert.match(html, /data-petal-count="4"/);
   assert.doesNotMatch(html, /화면 예시 · 점수 집계 제외/);
 });

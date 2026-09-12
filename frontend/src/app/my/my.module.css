@@ -40,6 +40,39 @@
 .photoLink small { display:block; margin-top:4px; color:#847783; font-size:11px; }
 .photoLink > svg { color:#ac7a90; flex-shrink:0; }
 .cameraIcon { padding:10px; border-radius:12px; background:#fff0f6; color:#b3446d; }
+.accountCard { margin-bottom:8px; overflow:hidden; border:1px solid #eee4eb; border-radius:16px; background:#fffbfd; }
+.accountHead { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px 9px; }
+.accountHead h3 { font-size:13px; font-weight:700; }
+.accountHead > span { padding:4px 8px; border-radius:999px; background:#faeaf1; color:#a33e66; font-size:10px; font-weight:700; }
+.accountIdentity { display:flex; align-items:center; gap:11px; min-width:0; padding:0 14px 14px; }
+.accountIcon { width:36px; height:36px; display:grid; place-items:center; flex-shrink:0; border-radius:11px; background:#fff0f6; color:#ae426a; }
+.accountIdentity > span:last-child { min-width:0; }
+.accountIdentity small { display:block; margin-bottom:2px; color:#837985; font-size:10px; }
+.accountIdentity strong { display:block; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.passwordDetails { border-top:1px solid #f0e9ee; background:#fff; }
+.passwordDetails summary { min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 14px; cursor:pointer; list-style:none; color:#4c454e; font-size:13px; font-weight:650; }
+.passwordDetails summary::-webkit-details-marker { display:none; }
+.passwordDetails summary > span { display:inline-flex; align-items:center; gap:9px; }
+.passwordDetails summary > span svg { color:#aa4b70; }
+.passwordDetails summary > svg { flex-shrink:0; color:#938894; transition:transform .2s ease; }
+.passwordDetails[open] summary > svg { transform:rotate(180deg); }
+.passwordForm { display:grid; gap:13px; padding:14px; border-top:1px solid #f3edf1; background:#fffafd; }
+.passwordFormHead { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.passwordFormHead p { color:#7c727d; font-size:11px; line-height:1.6; }
+.passwordVisibility { min-width:68px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:5px; flex-shrink:0; border:1px solid #e6dce3; border-radius:10px; background:#fff; color:#766b76; font-size:11px; font-weight:650; }
+.passwordField { display:grid; gap:6px; }
+.passwordField label { color:#5e555f; font-size:11px; font-weight:700; }
+.passwordField input { width:100%; min-height:48px; padding:0 13px; border:1px solid #e4dce2; border-radius:12px; background:#fff; color:#30313a; font-size:16px; outline:none; transition:border-color .2s ease,box-shadow .2s ease; }
+.passwordField input:focus { border-color:#bb7590; box-shadow:0 0 0 3px #f8e9ef; }
+.passwordField input[aria-invalid=true] { border-color:#cf877c; }
+.passwordField small,.accountError { color:#a9554e; font-size:11px; line-height:1.6; }
+.accountSuccess { color:#61755e; font-size:11px; line-height:1.6; }
+.passwordSubmit { width:100%; min-height:48px; margin-top:1px; }
+.oauthPasswordNotice { min-height:52px; display:flex; align-items:center; gap:9px; padding:11px 14px; border-top:1px solid #f0e9ee; background:#fff; color:#746a75; font-size:12px; line-height:1.6; }
+.oauthPasswordNotice svg { flex-shrink:0; color:#aa4b70; }
+.logoutForm { border-top:1px solid #f0e9ee; background:#fff; }
+.logoutButton { width:100%; min-height:52px; display:flex; align-items:center; justify-content:center; gap:8px; padding:0 14px; background:transparent; color:#a34b68; font-size:13px; font-weight:650; transition:background .2s ease; }
+.logoutButton:hover { background:#fff5f8; }
 .menuRow,.productRow { display:flex; gap:12px; align-items:center; justify-content:space-between; min-height:58px; border-bottom:1px solid #f2eef2; padding:10px 0; }
 .menuRow:last-child,.productRow:last-child { border-bottom:0; }
 .menuRow strong,.productRow strong { display:block; font-size:13px; font-weight:600; line-height:1.6; overflow-wrap:anywhere; }
@@ -53,5 +86,5 @@
 .details { margin-top:12px; }
 .details summary { cursor:pointer; color:#95687d; font-size:12px; padding:10px 0; }
 .details[open] summary { margin-bottom:8px; }
-.page a:focus-visible,.page summary:focus-visible { outline:2px solid #b74472; outline-offset:3px; border-radius:4px; }
-@media(max-width:380px) { .page { padding:18px 14px 32px; } .header h1 { font-size:18px; } .metrics { gap:12px; } .skinCard { padding:14px; } .tabs a { font-size:12px; gap:5px; } }
+.page a:focus-visible,.page button:focus-visible,.page summary:focus-visible { outline:2px solid #b74472; outline-offset:3px; border-radius:4px; }
+@media(max-width:380px) { .page { padding:18px 14px 32px; } .header h1 { font-size:18px; } .metrics { gap:12px; } .skinCard { padding:14px; } .tabs a { font-size:12px; gap:5px; } .passwordFormHead { align-items:flex-start; } }

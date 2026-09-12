@@ -93,6 +93,25 @@ public class AuthService {
         return new LogoutResponse(true);
     }
 
+    @Transactional
+    public AuthTokenResponse changePassword(String userId, ChangePasswordRequest request) {
+        User user = userRepository.findByIdForUpdate(userId)
+                .filter(candidate -> "ACTIVE".equals(candidate.getStatus()))
+                .orElseThrow(InvalidCredentialsException::new);
+        if (user.getPasswordHash() == null) {
+            throw new PasswordChangeUnavailableException();
+        }
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new CurrentPasswordMismatchException();
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new PasswordUnchangedException();
+        }
+
+        user.changePassword(passwordEncoder.encode(request.newPassword()), Instant.now());
+        return authTokenService.replaceAllSessions(user, "password");
+    }
+
     public AuthTokenResponse exchangeOAuthCode(OAuthExchangeRequest request) {
         return oauthExchangeCodeService.exchange(request.code(), request.attemptVerifier());
     }

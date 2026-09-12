@@ -19,6 +19,8 @@ export type HomeCatalogSearchValues = {
   minFirepowerScore?: string | string[];
 };
 
+export type HomeCatalogPath = "/" | "/indextest";
+
 export const EMPTY_HOME_CATALOG_FILTERS: HomeCatalogFilters = {
   category: "",
   ingredientId: "",
@@ -62,13 +64,17 @@ export function readHomeCatalogFilters(params: HomeCatalogSearchValues): HomeCat
   };
 }
 
-export function homeCatalogHref(filters: Partial<HomeCatalogFilters> = {}, anchor = "") {
+export function homeCatalogHref(
+  filters: Partial<HomeCatalogFilters> = {},
+  anchor = "",
+  basePath: HomeCatalogPath = "/",
+) {
   const search = new URLSearchParams();
   if (filters.category) search.set("category", filters.category);
   if (filters.ingredientId) search.set("ingredientId", filters.ingredientId);
   if (filters.minReviewScore != null) search.set("minReviewScore", String(filters.minReviewScore));
   if (filters.minFirepowerScore != null) search.set("minFirepowerScore", String(filters.minFirepowerScore));
-  return `/${search.size ? `?${search}` : ""}${anchor ? `#${anchor}` : ""}`;
+  return `${basePath}${search.size ? `?${search}` : ""}${anchor ? `#${anchor}` : ""}`;
 }
 
 export function homeProductListHref(filters: HomeCatalogFilters, personalized: boolean) {
@@ -95,6 +101,7 @@ export function buildWeeklyRankingSlides(ranking: WeeklyRanking | null, fallback
           : `${item.product.brand} · 평가점수 ${item.reviewScore.toFixed(1)} / 100`,
         href: `/products/${encodeURIComponent(item.product.id)}`,
         product: item.product,
+        reviewScore: item.reviewScore,
       }));
   }
 
@@ -108,5 +115,6 @@ export function buildWeeklyRankingSlides(ranking: WeeklyRanking | null, fallback
       description: `${product.brand} · 평가 데이터가 준비되면 순위가 반영돼요`,
       href: `/products/${encodeURIComponent(product.id)}`,
       product,
+      reviewScore: null,
     }));
 }

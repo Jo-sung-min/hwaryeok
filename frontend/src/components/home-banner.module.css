@@ -16,7 +16,7 @@
 .label { display: block; overflow: hidden; margin-bottom: 5px; color: #716c74; font-size: 12px; font-weight: 600; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .copy h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: 0; color: #222126; font-size: clamp(21px, 4.7vw, 27px); font-weight: 780; line-height: 1.35; letter-spacing: -.04em; overflow-wrap: anywhere; }
 .copy p { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 0; color: #625e66; font-size: 12px; line-height: 18px; }
-.descriptionText { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.descriptionText { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .copy p svg { flex-shrink: 0; color: #994364; }
 .cardLink:hover .copy h2 { color: #994364; }
 .rankBadge { position: absolute; top: 16px; left: 16px; z-index: 3; display: inline-flex; min-width: 36px; min-height: 34px; align-items: center; justify-content: center; gap: 4px; padding: 6px 9px; border-radius: 999px; background: rgba(255,255,255,.9); color: #a43d62; font-size: 13px; font-weight: 800; box-shadow: 0 4px 16px rgba(50,35,43,.08); }

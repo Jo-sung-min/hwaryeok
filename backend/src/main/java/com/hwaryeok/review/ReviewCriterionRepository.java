@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 interface ReviewCriterionRepository extends JpaRepository<ReviewCriterion, String> {
     List<ReviewCriterion> findByTemplateIdAndActiveTrueOrderByDisplayOrderAsc(String templateId);
+    List<ReviewCriterion> findByTemplateIdOrderByDisplayOrderAsc(String templateId);
 }

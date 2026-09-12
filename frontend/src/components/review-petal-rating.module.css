@@ -1,0 +1,23 @@
+.rating {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.petal {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  background: url("/ratings/review-petal.png") center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(166, 62, 101, .08));
+}
+
+.compact .petal {
+  width: 14px;
+  height: 14px;
+  flex-basis: 14px;
+}

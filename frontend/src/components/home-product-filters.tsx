@@ -11,6 +11,7 @@ import {
   HOME_REVIEW_SCORE_OPTIONS,
   homeCatalogHref,
   type HomeCatalogFilters,
+  type HomeCatalogPath,
 } from "@/lib/home-catalog";
 import styles from "./home-catalog.module.css";
 
@@ -21,6 +22,7 @@ type Props = {
   categories: IngredientRankingCategory[];
   ingredients: IngredientRankingOption[];
   resultCount: number;
+  homePath?: HomeCatalogPath;
 };
 
 const tabs: { id: FilterTab; label: string }[] = [
@@ -37,7 +39,7 @@ function equalFilters(left: HomeCatalogFilters, right: HomeCatalogFilters) {
     && left.minFirepowerScore === right.minFirepowerScore;
 }
 
-export function HomeProductFilters({ filters, categories, ingredients, resultCount }: Props) {
+export function HomeProductFilters({ filters, categories, ingredients, resultCount, homePath = "/" }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>("category");
@@ -129,7 +131,7 @@ export function HomeProductFilters({ filters, categories, ingredients, resultCou
   }
 
   function apply() {
-    router.push(homeCatalogHref(draft, "home-products"), { scroll: false });
+    router.push(homeCatalogHref(draft, "home-products", homePath), { scroll: false });
     setOpen(false);
   }
 

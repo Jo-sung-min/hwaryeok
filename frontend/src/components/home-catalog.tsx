@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, BarChart3, ChevronRight, Droplets, FlaskConical, MessageCircle, SlidersHorizontal, Sparkles, TrendingUp, UsersRound } from "lucide-react";
 import { getIngredientRanking, getIngredientRankingOptions, getProductPage, getReviewerRanking, getRisingProductRanking, getWeeklyRanking } from "@/lib/api";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
-import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, homeProductListHref, orderHomeCategories, type HomeCatalogFilters } from "@/lib/home-catalog";
+import { buildWeeklyRankingSlides, homeCatalogHref, homeDisplayMode, homeProductListHref, orderHomeCategories, type HomeCatalogFilters, type HomeCatalogPath } from "@/lib/home-catalog";
 import { rankingHref } from "@/lib/ingredient-ranking";
 import { HomeBanner } from "@/components/home-banner";
 import { HomeRankingCarousel } from "@/components/home-ranking-carousel";
@@ -24,7 +24,11 @@ async function safelyLoad<T>(request: Promise<T>) {
   }
 }
 
-export async function HomeCatalog({ requestedFilters }: { requestedFilters: HomeCatalogFilters }) {
+export async function HomeCatalog({ requestedFilters, homePath = "/", intro }: {
+  requestedFilters: HomeCatalogFilters;
+  homePath?: HomeCatalogPath;
+  intro?: ReactNode;
+}) {
   const [options, user, savedProfile, favoriteState, weeklyRanking] = await Promise.all([
     getIngredientRankingOptions(), getCurrentSession(), getOptionalSkinProfile(), getFavoriteViewState(),
     getWeeklyRanking().catch(() => null),
@@ -39,7 +43,7 @@ export async function HomeCatalog({ requestedFilters }: { requestedFilters: Home
   const personalized = mode === "personalized";
   const profile = personalized && savedProfile ? savedProfile : undefined;
   const favoriteIds = new Set(favoriteState.favoriteIds);
-  const returnTo = homeCatalogHref(filters, "home-products");
+  const returnTo = homeCatalogHref(filters, "home-products", homePath);
   const categoryQuery = category ? `?${new URLSearchParams({ category })}` : "";
   const catalogHref = homeProductListHref(filters, personalized);
   const hasNonCategoryFilters = Boolean(ingredientId || filters.minReviewScore != null || filters.minFirepowerScore != null);
@@ -74,32 +78,32 @@ export async function HomeCatalog({ requestedFilters }: { requestedFilters: Home
 
   return <div className={`container-page ${styles.home}`}>
     <HomePersonalization user={user} profile={savedProfile} />
-    <div className={styles.pageIntro}><p className={styles.eyebrow}>나만의 성분, 나만의 랭킹</p><h1>화장품의 기준을, <span>내 피부로.</span></h1></div>
+    {intro ?? <div className={styles.pageIntro}><p className={styles.eyebrow}>나만의 성분, 나만의 랭킹</p><h1>화장품의 기준을, <span>내 피부로.</span></h1></div>}
     <HomeBanner slides={slides} />
 
     <section id="home-products" className={styles.shelf} aria-labelledby="home-products-title">
       <div className={styles.shelfHeading}><div><p>{personalized ? "내 피부 설정을 반영한 상품 진열" : "궁금한 제품부터 가볍게 둘러보세요"}</p><h2 id="home-products-title">{personalized ? `${user?.nickname}님의 맞춤 상품` : "전체 상품"}<span>{catalog.totalElements}</span></h2></div><Link href={catalogHref}>전체보기 <ChevronRight size={17} /></Link></div>
-      <HomeProductFilters filters={filters} categories={categories} ingredients={ingredients} resultCount={catalog.totalElements} />
+      <HomeProductFilters filters={filters} categories={categories} ingredients={ingredients} resultCount={catalog.totalElements} homePath={homePath} />
       {discardedInvalidFilter && <p className={styles.filterNote} role="status">사용할 수 없는 필터를 제외하고 상품을 보여드려요.</p>}
       <div className={styles.catalogMeta}><p>{personalized ? "같은 제품도, 피부 설정에 따라 순위가 달라져요." : "피부 설정을 저장하면 나에게 맞는 순서로 바뀌어요."}</p><span><SlidersHorizontal size={14} />{personalized ? "맞춤 화력 높은 순" : "제품명순"}</span></div>
       {category && <p className={styles.filterNote}>‘{category}’ 제품 유형은 아래 제품 랭킹 미리보기에도 적용돼요.</p>}
-      {catalog.content.length > 0 ? <div className={styles.catalogProducts}>{catalog.content.map((product, index) => <HomeProductCard key={product.id} product={product} rank={personalized ? index + 1 : undefined} scoreLabel={personalized ? "맞춤 화력" : undefined} favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={returnTo} />)}</div> : <div className={styles.empty} role="status"><FlaskConical size={25} /><h3>선택한 조건에 맞는 제품이 없어요</h3><p>필터 조건을 조금 줄여서 다시 살펴보세요.</p><Link href={homeCatalogHref({}, "home-products")} className="line-btn">필터 초기화</Link></div>}
+      {catalog.content.length > 0 ? <div className={styles.catalogProducts}>{catalog.content.map((product, index) => <HomeProductCard key={product.id} product={product} rank={personalized ? index + 1 : undefined} scoreLabel={personalized ? "맞춤 화력" : undefined} favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={returnTo} />)}</div> : <div className={styles.empty} role="status"><FlaskConical size={25} /><h3>선택한 조건에 맞는 제품이 없어요</h3><p>필터 조건을 조금 줄여서 다시 살펴보세요.</p><Link href={homeCatalogHref({}, "home-products", homePath)} className="line-btn">필터 초기화</Link></div>}
       <Link href={catalogHref} className={styles.seeAll}>{hasNonCategoryFilters ? "필터 결과" : category || "전체"} 상품 더 보기 <ChevronRight size={16} /></Link>
     </section>
 
     <section id="personal-ranking" className={`${styles.shelf} ${styles.rankingPreview}`} aria-labelledby="personal-ranking-title" data-ranking-preview="personal">
       <PreviewHeading eyebrow={<><Sparkles size={14} /> 나를 기준으로</>} title="내 피부 랭킹" href={personalRankingHref} id="personal-ranking-title" />
-      {profile ? personalResult.failed ? <PreviewState icon={<Sparkles size={22} />} title="맞춤 랭킹을 잠시 불러오지 못했어요" href={personalRankingHref} linkLabel="랭킹에서 다시 보기" /> : personalResult.data?.content.length ? <HomeRankingCarousel label="내 피부 랭킹" itemCount={personalResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{personalResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((product, index) => <HomeProductCard key={product.id} product={product} rank={index + 1} scoreLabel="맞춤 화력" favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={homeCatalogHref(filters, "personal-ranking")} />)}</HomeRankingCarousel> : <PreviewState icon={<Sparkles size={22} />} title="선택한 제품 유형에는 아직 맞춤 상품이 없어요" href={personalRankingHref} linkLabel="전체 랭킹 보기" /> : <PreviewState icon={<Sparkles size={22} />} title={user ? "피부 체크를 마치면 내 순위가 보여요" : "내 피부 기준을 만들면 순위가 달라져요"} description="피부 답변을 저장하면 내 기준에 맞춘 순위를 보여드려요." href="/skin-check" linkLabel="피부 체크하기" />}
+      {profile ? personalResult.failed ? <PreviewState icon={<Sparkles size={22} />} title="맞춤 랭킹을 잠시 불러오지 못했어요" href={personalRankingHref} linkLabel="랭킹에서 다시 보기" /> : personalResult.data?.content.length ? <HomeRankingCarousel label="내 피부 랭킹" itemCount={personalResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{personalResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((product, index) => <HomeProductCard key={product.id} product={product} rank={index + 1} scoreLabel="맞춤 화력" favorited={favoriteIds.has(product.id)} isAuthenticated={Boolean(user)} returnTo={homeCatalogHref(filters, "personal-ranking", homePath)} />)}</HomeRankingCarousel> : <PreviewState icon={<Sparkles size={22} />} title="선택한 제품 유형에는 아직 맞춤 상품이 없어요" href={personalRankingHref} linkLabel="전체 랭킹 보기" /> : <PreviewState icon={<Sparkles size={22} />} title={user ? "피부 체크를 마치면 내 순위가 보여요" : "내 피부 기준을 만들면 순위가 달라져요"} description="피부 답변을 저장하면 내 기준에 맞춘 순위를 보여드려요." href="/skin-check" linkLabel="피부 체크하기" />}
     </section>
 
     <section id="ingredient-ranking" className={`${styles.shelf} ${styles.rankingPreview}`} aria-labelledby="ingredient-ranking-title" data-ranking-preview="ingredients">
       <PreviewHeading eyebrow={<><BarChart3 size={14} /> 성분을 기준으로</>} title={`${previewIngredient?.name ?? "성분별"} 랭킹`} href={ingredientRankingHref} id="ingredient-ranking-title" />
-      {ingredientResult.failed ? <PreviewState icon={<BarChart3 size={22} />} title="성분 랭킹을 잠시 불러오지 못했어요" href={ingredientRankingHref} linkLabel="랭킹에서 다시 보기" /> : ingredientResult.data?.content.length ? <HomeRankingCarousel label={`${previewIngredient?.name ?? "성분별"} 랭킹`} itemCount={ingredientResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{ingredientResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((item) => <IngredientRankingCard key={item.product.id} item={item} ingredientName={ingredientResult.data?.ingredientName ?? previewIngredient?.name ?? null} sort="FIREPOWER" favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={homeCatalogHref(filters, "ingredient-ranking")} />)}</HomeRankingCarousel> : <PreviewState icon={<BarChart3 size={22} />} title={previewIngredient ? `${previewIngredient.name} 제품을 준비하고 있어요` : "연결된 성분 제품을 준비하고 있어요"} href={ingredientRankingHref} linkLabel="성분 랭킹 보기" />}
+      {ingredientResult.failed ? <PreviewState icon={<BarChart3 size={22} />} title="성분 랭킹을 잠시 불러오지 못했어요" href={ingredientRankingHref} linkLabel="랭킹에서 다시 보기" /> : ingredientResult.data?.content.length ? <HomeRankingCarousel label={`${previewIngredient?.name ?? "성분별"} 랭킹`} itemCount={ingredientResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{ingredientResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((item) => <IngredientRankingCard key={item.product.id} item={item} ingredientName={ingredientResult.data?.ingredientName ?? previewIngredient?.name ?? null} sort="FIREPOWER" favorited={favoriteIds.has(item.product.id)} isAuthenticated={favoriteState.isAuthenticated} returnTo={homeCatalogHref(filters, "ingredient-ranking", homePath)} />)}</HomeRankingCarousel> : <PreviewState icon={<BarChart3 size={22} />} title={previewIngredient ? `${previewIngredient.name} 제품을 준비하고 있어요` : "연결된 성분 제품을 준비하고 있어요"} href={ingredientRankingHref} linkLabel="성분 랭킹 보기" />}
     </section>
 
     <section id="rising-ranking" className={`${styles.shelf} ${styles.rankingPreview}`} aria-labelledby="rising-ranking-title" data-ranking-preview="rising">
       <PreviewHeading eyebrow={<><MessageCircle size={14} /> 실제 사용자의 리뷰로</>} title="급상승 랭킹" href={risingRankingHref} id="rising-ranking-title" />
-      {risingResult.failed ? <PreviewState icon={<TrendingUp size={22} />} title="급상승 랭킹을 잠시 불러오지 못했어요" href={risingRankingHref} linkLabel="랭킹에서 다시 보기" /> : risingResult.data?.content.length ? <HomeRankingCarousel label="급상승 랭킹" itemCount={risingResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{risingResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((item) => <HomeProductCard key={item.product.id} product={item.product} rank={item.rank} growth={item} review={{ score: item.recentReviewScore, count: item.recentReviewCount }} favorited={favoriteIds.has(item.product.id)} isAuthenticated={Boolean(user)} returnTo={homeCatalogHref(filters, "rising-ranking")} />)}</HomeRankingCarousel> : <PreviewState icon={<TrendingUp size={22} />} title="새로운 리뷰가 모이면 순위가 생겨요" description={`${category ? `${category} 중 ` : ""}이전 7일보다 리뷰가 늘어난 제품이 아직 없어요.`} href={risingRankingHref} linkLabel="급상승 랭킹 보기" />}
+      {risingResult.failed ? <PreviewState icon={<TrendingUp size={22} />} title="급상승 랭킹을 잠시 불러오지 못했어요" href={risingRankingHref} linkLabel="랭킹에서 다시 보기" /> : risingResult.data?.content.length ? <HomeRankingCarousel label="급상승 랭킹" itemCount={risingResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={styles.rankingPreviewList}>{risingResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((item) => <HomeProductCard key={item.product.id} product={item.product} rank={item.rank} growth={item} review={{ score: item.recentReviewScore, count: item.recentReviewCount }} favorited={favoriteIds.has(item.product.id)} isAuthenticated={Boolean(user)} returnTo={homeCatalogHref(filters, "rising-ranking", homePath)} />)}</HomeRankingCarousel> : <PreviewState icon={<TrendingUp size={22} />} title="새로운 리뷰가 모이면 순위가 생겨요" description={`${category ? `${category} 중 ` : ""}이전 7일보다 리뷰가 늘어난 제품이 아직 없어요.`} href={risingRankingHref} linkLabel="급상승 랭킹 보기" />}
     </section>
 
     <section id="reviewer-ranking" className={`${styles.shelf} ${styles.rankingPreview}`} aria-labelledby="reviewer-ranking-title" data-ranking-preview="reviewers">

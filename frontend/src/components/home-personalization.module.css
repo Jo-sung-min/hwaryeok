@@ -30,7 +30,27 @@
 }
 .profileSummary:hover { border-color: #dca8ba; background: #fff; }
 .emblem { grid-area: emblem; position: relative; display: grid; width: 46px; height: 46px; place-items: center; border: 1px solid #efcad7; border-radius: 15px; background: #fff1f5; color: #b4476d; }
-.emblem > span { position: absolute; right: -4px; bottom: -3px; display: grid; width: 21px; height: 21px; place-items: center; border: 2px solid #fff; border-radius: 7px; background: #eef6f7; color: #688e99; }
+.tendencyAsset {
+  display: block;
+  width: 38px;
+  height: 38px;
+  background-image: url("/skin/skin-tendency-board.png");
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  transition: transform .18s ease;
+}
+.tendencyAsset[data-skin-asset="dry"] { background-position: 0% 0%; }
+.tendencyAsset[data-skin-asset="oily"] { background-position: 50% 0%; }
+.tendencyAsset[data-skin-asset="combination"] { background-position: 100% 0%; }
+.tendencyAsset[data-skin-asset="dehydrated-oily"] { background-position: 0% 100%; }
+.tendencyAsset[data-skin-asset="balanced"] { background-position: 50% 100%; }
+.tendencyAsset[data-skin-asset="sensitive"] { background-position: 100% 100%; }
+.tendencyAsset[data-skin-asset="default"] {
+  background-image: url("/brand/hwaryeok-flower-mark.png");
+  background-position: center;
+  background-size: contain;
+}
+.profileSummary:hover .tendencyAsset { transform: scale(1.06) rotate(-2deg); }
 .profileCopy { grid-area: copy; min-width: 0; }
 .profileCopy small { display: block; color: #8b7980; font-size: 9px; font-weight: 650; line-height: 1.3; }
 .profileCopy strong { display: block; margin-top: 2px; color: #a13b61; font-size: 14px; line-height: 1.35; white-space: nowrap; }
@@ -48,7 +68,7 @@
   .panel h2 { font-size: 17px; }
   .profileSummary { grid-template-columns: 41px minmax(68px, auto); min-width: 137px; min-height: 58px; padding: 6px 7px 6px 6px; column-gap: 7px; }
   .emblem { width: 40px; height: 40px; border-radius: 13px; }
-  .emblem > svg { width: 25px; }
+  .tendencyAsset { width: 34px; height: 34px; }
   .profileCopy small { display: none; }
   .profileCopy strong { margin-top: 0; font-size: 13px; }
   .setup { width: min(148px, 40vw); }
@@ -62,5 +82,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .profileSummary { transition: none; }
+  .profileSummary, .tendencyAsset { transition: none; }
 }

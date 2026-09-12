@@ -36,6 +36,7 @@ function compile(path, imports) {
 }
 
 const Link = ({ href, children, ...props }) => React.createElement("a", { ...props, href }, children);
+const ReviewPetalRating = ({ score }) => score == null ? null : React.createElement("span", { "data-petal-count": Math.floor(Number(score) / 20) });
 
 const ingredient = {
   id: "test-active",
@@ -103,6 +104,7 @@ function loadIngredientRankingCard() {
       ProductVisual: ({ alt }) => React.createElement("span", null, alt),
       FavoriteButton: () => React.createElement("button", { type: "button" }, "찜"),
     },
+    "@/components/review-petal-rating": { ReviewPetalRating },
   }).IngredientRankingCard;
 }
 
@@ -161,6 +163,7 @@ test("public ingredient surfaces hide DRAFT amount claims and free-text concentr
     assert.match(html, /순서는 실제 함량이 아니/);
   }
   assert.match(panelHtml, /미공개 함량을 0으로 보지 않아요/);
+  assert.match(cardHtml, /data-petal-count="4"/);
 });
 
 test("verified 0.001ppb remains precise and exposes its official evidence link", () => {

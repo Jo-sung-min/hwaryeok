@@ -202,6 +202,7 @@ export type AuthUser = {
   nickname: string;
   role: string;
   authMethod: string;
+  passwordChangeAvailable: boolean;
 };
 
 export type AuthTokenResult = {
@@ -320,6 +321,17 @@ export function logoutSession(refreshToken: string): Promise<{ loggedOut: boolea
   return requestJson<{ loggedOut: boolean }>("/auth/logout", {
     method: "POST",
     body: JSON.stringify({ refreshToken }),
+  });
+}
+
+export function changePassword(
+  accessToken: string,
+  input: { currentPassword: string; newPassword: string; newPasswordConfirm: string },
+): Promise<AuthTokenResult> {
+  return requestJson<AuthTokenResult>("/users/me/password", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
   });
 }
 

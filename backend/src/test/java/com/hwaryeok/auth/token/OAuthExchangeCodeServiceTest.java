@@ -64,7 +64,7 @@ class OAuthExchangeCodeServiceTest {
                 "Bearer",
                 900,
                 2_592_000,
-                new AuthUserResponse("user-id", null, "카카오 회원", "USER", "kakao")
+                new AuthUserResponse("user-id", null, "카카오 회원", "USER", "kakao", false)
         );
     }
 

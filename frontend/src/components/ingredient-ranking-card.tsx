@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { FlaskConical, Star } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import { FavoriteButton, ProductVisual } from "@/components/product-ui";
+import { ReviewPetalRating } from "@/components/review-petal-rating";
 import type { IngredientRankingItem, IngredientRankingSort } from "@/lib/types";
 
 export function IngredientRankingCard({ item, ingredientName, sort, favorited, isAuthenticated, returnTo }: {
@@ -30,8 +31,8 @@ export function IngredientRankingCard({ item, ingredientName, sort, favorited, i
           {item.amount?.verificationStatus === "VERIFIED" ? <><p className="flex items-center gap-1 font-bold text-[#a04464]"><FlaskConical size={10} /> 공개 함량 {item.amount.displayValue}</p><p>{item.amount.amountPerContainer ?? item.amount.comparisonNote}</p></> : <p><strong className="text-[#76666e]">정확 함량 미공개</strong> · 전성분 순서는 실제 함량이 아니에요</p>}
         </div>}
         <div className="mt-3 border-t border-[#f4e9ed] pt-3">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><strong className="text-xl font-bold tabular-nums text-[#bb4b70] sm:text-2xl">{score === null ? "—" : Number.isInteger(score) ? score : score.toFixed(1)}</strong><span className="text-[10px] text-[#8d7580]">{showReviewScore ? "리뷰점수 / 100" : "성분 화력 / 100"}</span></div>
-          <p className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-[#9a838d]"><Star size={11} className="text-[#cf7893]" />{item.reviewCount > 0 ? `리뷰 ${item.reviewCount}개${!showReviewScore && item.reviewScore !== null ? ` · ${item.reviewScore}점` : ""}` : "첫 리뷰를 기다려요"}</p>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1"><strong className="text-xl font-bold tabular-nums text-[#bb4b70] sm:text-2xl">{score === null ? "—" : Number.isInteger(score) ? score : score.toFixed(1)}</strong><span className="text-[10px] text-[#8d7580]">{showReviewScore ? "리뷰점수 / 100" : "성분 화력 / 100"}</span>{showReviewScore && <ReviewPetalRating score={item.reviewScore} compact />}</div>
+          <p className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-[#9a838d]">{item.reviewCount > 0 ? <>{!showReviewScore && <ReviewPetalRating score={item.reviewScore} compact />}<span>{`리뷰 ${item.reviewCount}개${!showReviewScore && item.reviewScore !== null ? ` · ${item.reviewScore}점` : ""}`}</span></> : "첫 리뷰를 기다려요"}</p>
         </div>
         {ingredientName && <span className="mt-3 inline-block max-w-full truncate rounded-md bg-[#fff2f6] px-2 py-1 text-[10px] font-semibold text-[#af5976]">#{ingredientName}</span>}
       </div>

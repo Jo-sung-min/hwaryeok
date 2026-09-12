@@ -51,6 +51,11 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
+    public void changePassword(String passwordHash, Instant updatedAt) {
+        this.passwordHash = passwordHash;
+        this.updatedAt = updatedAt;
+    }
+
     public String getId() { return id; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }

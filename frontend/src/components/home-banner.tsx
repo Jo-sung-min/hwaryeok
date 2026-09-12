@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { ArrowUpRight, Medal } from "lucide-react";
 import { ProductVisual } from "@/components/product-ui";
+import { ReviewPetalRating } from "@/components/review-petal-rating";
 import type { Product } from "@/lib/types";
 import styles from "./home-banner.module.css";
 
@@ -15,6 +16,7 @@ export type HomeBannerSlide = {
   description: string;
   href: string;
   product: Product;
+  reviewScore: number | null;
 };
 
 const MAX_BANNERS = 10;
@@ -291,7 +293,11 @@ export function HomeBanner({ slides }: { slides: HomeBannerSlide[] }) {
                   <div className={styles.copy}>
                     <span className={styles.label}>{slide.product.brand} · {slide.label}</span>
                     <h2>{slide.product.name}</h2>
-                    <p><span className={styles.descriptionText}>{slide.description}</span><ArrowUpRight size={15} aria-hidden="true" /></p>
+                    <p>
+                      {slide.reviewScore !== null && <ReviewPetalRating score={slide.reviewScore} label="이주의 리뷰점수" compact />}
+                      <span className={styles.descriptionText}>{slide.description}</span>
+                      <ArrowUpRight size={15} aria-hidden="true" />
+                    </p>
                   </div>
                 </Link>
               </article>

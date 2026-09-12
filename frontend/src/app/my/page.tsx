@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { Camera, ChevronRight, Settings, Flame, Heart, MessageSquare, Scale } from "lucide-react";
+import { ChevronDown, ChevronRight, Settings, Flame, Heart, KeyRound, LogOut, Mail, MessageSquare, Scale } from "lucide-react";
+import { logoutAction } from "@/app/login/actions";
 import { IngredientPreferencesForm } from "./ingredient-preferences-form";
+import { MySkinSummary } from "./my-skin-summary";
 import { MyTabs } from "./my-tabs";
+import { PasswordChangeForm } from "./password-change-form";
 import { FavoriteButton } from "@/components/product-ui";
 import { getFeaturedIngredients, getReviewerProfile, getUserComparisonProducts, getUserFavorites, getUserPreferredIngredients, getUserRecentProducts, getUserSkinProfile } from "@/lib/api";
 import { readAuthTokens, requireSession } from "@/lib/auth-session";
@@ -26,12 +29,6 @@ export default async function MyPage() {
     { label: "찜한 제품", value: favorites?.totalElements, icon: Heart, href: "#favorites" },
     { label: "비교 저장", value: comparison?.totalElements, icon: Scale, href: "#comparison" },
   ];
-  const details = [
-    ["수분감", label(profile?.hydrationLevel, { LOW: "부족한 편", BALANCED: "보통", HIGH: "충분한 편" })],
-    ["유분감", label(profile?.oilinessLevel, { LOW: "적은 편", BALANCED: "보통", HIGH: "많은 편" })],
-    ["민감 반응", label(profile?.sensitivityLevel, { LOW: "드문 편", MEDIUM: "가끔", HIGH: "잦은 편" })],
-    ["트러블", label(profile?.breakoutFrequency, { RARE: "드문 편", OCCASIONAL: "가끔", FREQUENT: "잦은 편" })],
-  ];
   const compareSearch = new URLSearchParams();
   comparison?.content.slice(0, 3).forEach(({ product }, index) => compareSearch.set(["left", "right", "third"][index], product.id));
   const editableIngredients = [...new Map([...ingredients, ...(preferred?.content.map(row => row.ingredient) ?? [])].map(item => [item.id, item])).values()];
@@ -45,15 +42,7 @@ export default async function MyPage() {
     <MyTabs active="overview" />
     <div className={styles.stats}>{stats.map(({ label, value, icon: Icon, href }) => <Link href={href} key={label}><Icon size={16} /><strong>{value == null ? "—" : Number.isInteger(value) ? value : value.toFixed(1)}</strong><span>{label}</span></Link>)}</div>
 
-    <section className={styles.section}>
-      <div className={styles.sectionHead}><h2>내 피부 요약</h2><Link href="/skin-check">{profile?.configured ? "다시 체크" : "피부 체크"}<ChevronRight size={14} /></Link></div>
-      <div className={styles.skinCard}>
-        <div className={styles.sectionHead}><strong className={styles.skinTitle}>{profile === null ? "피부 정보를 불러오지 못했어요" : profile.configured ? `${profile.skinType ?? "등록된 피부"} 경향` : "아직 나의 피부를 모르겠다면"}</strong><span className={styles.badge}>답변 기반</span></div>
-        <p className={styles.muted}>{profile?.configured ? "직접 알려주신 피부 상태를 맞춤 순위에 반영해요." : "피부 체크를 완료하고 계정에 저장하면 여기에 정리돼요."}</p>
-        {profile?.configured ? <><dl className={styles.metrics}>{details.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl><div className={styles.tags}>{profile.concerns.map(concern => <span key={concern}>{concern}</span>)}</div>{profile.updatedAt && <p className={styles.note}>최근 저장 {new Date(profile.updatedAt).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })} · 측정·의료 진단이 아닌 자가 체크예요.</p>}</> : <Link className={styles.primaryLink} href={profile === null ? "/my" : "/skin-check"}>{profile === null ? "다시 불러오기" : "나의 피부 체크 시작"}<ChevronRight size={15} /></Link>}
-      </div>
-      <Link href="/my/photo-analysis" className={styles.photoLink}><span className={styles.cameraIcon}><Camera size={22} /></span><span><strong>사진으로 피부 살펴보기</strong><small>사진으로 확인하는 피부 표면 관찰 리포트</small></span><ChevronRight size={18} /></Link>
-    </section>
+    <MySkinSummary profile={profile} userId={user.id} />
 
     <section className={styles.section}>
       <div className={styles.sectionHead}><h2>나의 관심 성분</h2><span className={styles.muted}>{preferred?.totalElements ?? "—"}개</span></div>
@@ -73,6 +62,24 @@ export default async function MyPage() {
     <ProductList id="recent" title="최근 본 제품" items={recent?.content} count={recent?.totalElements} />
 
     <section className={styles.section}><div className={styles.sectionHead}><h2>설정과 도움말</h2></div>
+      <div className={styles.accountCard} role="group" aria-labelledby="my-account-heading">
+        <div className={styles.accountHead}><h3 id="my-account-heading">회원정보</h3><span>{user.authMethod.toLowerCase() === "kakao" ? "카카오" : "이메일"}</span></div>
+        <div className={styles.accountIdentity}>
+          <span className={styles.accountIcon} aria-hidden="true"><Mail size={17} /></span>
+          <span><small>로그인 계정</small><strong>{user.email ?? "카카오 계정"}</strong></span>
+        </div>
+        {user.passwordChangeAvailable ? (
+          <details className={styles.passwordDetails}>
+            <summary><span><KeyRound size={16} aria-hidden="true" />비밀번호 변경</span><ChevronDown size={16} aria-hidden="true" /></summary>
+            <PasswordChangeForm />
+          </details>
+        ) : (
+          <p className={styles.oauthPasswordNotice}><KeyRound size={16} aria-hidden="true" /><span>비밀번호는 카카오에서 관리해요.</span></p>
+        )}
+        <form action={logoutAction} className={styles.logoutForm}>
+          <button type="submit" className={styles.logoutButton}><LogOut size={16} aria-hidden="true" />로그아웃</button>
+        </form>
+      </div>
       <MenuRow href="/skin-check" title="나의 성분찾기" detail="피부 정보 확인·수정" />
       <MenuRow href="/experts/apply" title="전문가 인증" />
       {user.role === "ADMIN" && <MenuRow href="/admin" title="관리자 센터" />}
@@ -81,7 +88,6 @@ export default async function MyPage() {
   </div>;
 }
 
-function label(value: string | null | undefined, labels: Record<string, string>) { return value ? labels[value] ?? "미등록" : "미등록"; }
 function MenuRow({ href, title, detail }: { href: string; title: string; detail?: string }) {
   return <Link href={href} className={styles.menuRow}><span><strong>{title}</strong>{detail && <small>{detail}</small>}</span><ChevronRight size={16} /></Link>;
 }

@@ -65,6 +65,7 @@ function reviewerPage({ profile = publicProfile, session = { id: "reviewer-1" },
     "@/lib/auth-session": { getCurrentSession: async () => session, readAuthTokens: async () => ({ accessToken: session ? "token" : null }) },
     "@/components/review-firepower-vote": { ReviewFirepowerVote: () => null },
     "@/components/reviewer-firepower": { ReviewerFirepower: ({ score }) => React.createElement("span", { "data-firepower": score }) },
+    "@/components/review-petal-rating": { ReviewPetalRating: ({ score }) => score == null ? null : React.createElement("span", { "data-petal-count": Math.floor(Number(score) / 20) }) },
     "@/lib/media": { resolveProductImageUrl: () => null },
     "@/lib/reviewer-profile": reviewerProfileHelpers,
     "@/app/my/reviewer-profile/dynamic-blocknote": { DynamicBlockNote: ({ initialContent, editable }) => React.createElement("div", { "data-blocknote": JSON.stringify(initialContent), "data-editable": String(editable) }) },
@@ -83,6 +84,7 @@ test("public reviewer page shows introduction tabs, owner edit link, and safe pr
   assert.match(html, /href="https:\/\/www\.instagram\.com\/moisture"/);
   assert.match(html, /target="_blank"/);
   assert.match(html, /rel="noopener noreferrer ugc nofollow"/);
+  assert.match(html, /data-petal-count="4"/);
 });
 
 test("public reviewer page renders a useful empty state and hides edit link from visitors", async () => {

@@ -24,16 +24,12 @@
 }
 
 .brandMark {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  place-items: center;
-  border-radius: 9px;
-  background: #b83e69;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 800;
-  transition: background-color .18s ease, transform .18s ease;
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  background: url("/brand/hwaryeok-flower-mark.png") center / contain no-repeat;
+  transition: transform .18s ease;
 }
 
 .brandName {

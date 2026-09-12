@@ -95,14 +95,32 @@ class ProductReview {
         scores.add(score);
     }
 
+    void update(
+            BigDecimal totalScore,
+            String content,
+            String skinType,
+            String usagePeriod,
+            boolean repurchase,
+            Instant updatedAt
+    ) {
+        this.totalScore = totalScore;
+        this.content = content;
+        this.skinType = skinType;
+        this.usagePeriod = usagePeriod;
+        this.repurchase = repurchase;
+        this.updatedAt = updatedAt;
+    }
+
     String getId() { return id; }
     Product getProduct() { return product; }
     User getUser() { return user; }
+    ReviewTemplate getTemplate() { return template; }
     BigDecimal getTotalScore() { return totalScore; }
     String getContent() { return content; }
     String getSkinType() { return skinType; }
     String getUsagePeriod() { return usagePeriod; }
     boolean isRepurchase() { return repurchase; }
     Instant getCreatedAt() { return createdAt; }
+    Instant getUpdatedAt() { return updatedAt; }
     List<ProductReviewScore> getScores() { return scores; }
 }

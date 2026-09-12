@@ -2,6 +2,7 @@ package com.hwaryeok.review;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 import com.hwaryeok.product.Product;
@@ -60,6 +61,15 @@ record CreateReviewRequest(
 ) {
 }
 
+record ReviewScoreResponse(
+        String criteriaId,
+        int score
+) {
+    static ReviewScoreResponse from(ProductReviewScore score) {
+        return new ReviewScoreResponse(score.getCriterion().getId(), score.getScore());
+    }
+}
+
 record ReviewDetailResponse(
         String id,
         String authorId,
@@ -71,6 +81,8 @@ record ReviewDetailResponse(
         boolean repurchaseYn,
         boolean sampleReview,
         Instant createdAt,
+        Instant updatedAt,
+        List<ReviewScoreResponse> scores,
         ReviewCommunityRatingResponse communityRating
 ) {
     static ReviewDetailResponse from(ProductReview review, ReviewCommunityRatingResponse communityRating) {
@@ -85,6 +97,11 @@ record ReviewDetailResponse(
                 review.isRepurchase(),
                 false,
                 review.getCreatedAt(),
+                review.getUpdatedAt(),
+                review.getScores().stream()
+                        .sorted(Comparator.comparingInt(score -> score.getCriterion().getDisplayOrder()))
+                        .map(ReviewScoreResponse::from)
+                        .toList(),
                 communityRating
         );
     }
@@ -101,6 +118,8 @@ record ReviewDetailResponse(
                 review.isRepurchase(),
                 true,
                 review.getCreatedAt(),
+                review.getUpdatedAt(),
+                List.of(),
                 new ReviewCommunityRatingResponse(null, 0, null, false)
         );
     }
@@ -193,6 +212,7 @@ record ProductReviewSummaryResponse(
         BigDecimal reviewScore,
         long reviewCount,
         boolean viewerHasReviewed,
+        ReviewDetailResponse viewerReview,
         String rankingStatus,
         int minimumOfficialReviewCount,
         List<ReviewCriterionAverageResponse> criteriaAverages,

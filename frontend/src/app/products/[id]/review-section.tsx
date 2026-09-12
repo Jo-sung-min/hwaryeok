@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
+import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { useActionState, useMemo, useState } from "react";
 import { BarChart3, Check, ChevronDown, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { createReviewAction, type ReviewActionState } from "./review-actions";
@@ -45,6 +46,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
             <p className="mt-1 text-xs leading-5 text-[#82747a]">{criteria.categoryName} 기준 · 피부 타입과 사용 기간을 함께 확인해요.</p>
           </div>
           <div className="shrink-0 text-right">
+            {summary.rankingStatus !== "COLLECTING" && <ReviewPetalRating score={summary.reviewScore} className="mb-1 justify-end" />}
             <strong className="font-myeongjo text-2xl font-semibold text-[#a24361]">{summary.rankingStatus === "COLLECTING" ? "—" : summary.reviewScore?.toFixed(1) ?? "—"}</strong>
             <p className="mt-1 text-[10px] text-[#8d7d83]">{summary.reviewCount.toLocaleString("ko-KR")}개 {summary.rankingStatus === "COLLECTING" ? "· 집계 전" : "· 100점 만점"}</p>
           </div>
@@ -70,7 +72,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
                       </div>
                       <p className="mt-0.5 text-[11px] text-[#8a7c81]">{review.skinType} · {usagePeriodLabels[review.usagePeriod]}</p>
                     </div>
-                    <div className="shrink-0 text-right"><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">{review.sampleReview ? "예시 점수" : "리뷰점수"}</p></div>
+                    <div className="shrink-0 text-right"><ReviewPetalRating score={Number(review.totalScore)} compact className="mb-0.5 justify-end" /><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">{review.sampleReview ? "예시 점수" : "리뷰점수"}</p></div>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#655a5e] [overflow-wrap:anywhere]">{review.content}</p>
                   <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-[#93858a]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
@@ -112,7 +114,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
                   <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" />
                 </summary>
                 <form action={action} className="space-y-6 pt-5">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#eee5e8] pb-4"><p className="text-xs leading-5 text-[#786a70]"><ShieldCheck size={14} className="mr-1.5 inline text-[#b14b69]" />한 제품에 하나의 리뷰만 등록할 수 있어요.</p><p className="shrink-0 text-xs"><strong className="font-myeongjo text-xl text-[#9b405e]">{previewScore}</strong>점 예상</p></div>
+                  <div className="flex items-center justify-between gap-3 border-b border-[#eee5e8] pb-4"><p className="text-xs leading-5 text-[#786a70]"><ShieldCheck size={14} className="mr-1.5 inline text-[#b14b69]" />한 제품에 하나의 리뷰만 등록할 수 있어요.</p><p className="grid shrink-0 justify-items-end text-xs"><ReviewPetalRating score={previewScore} compact className="mb-0.5" /><span><strong className="font-myeongjo text-xl text-[#9b405e]">{previewScore}</strong>점 예상</span></p></div>
                   <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-x-5 gap-y-2">
                     {criteria.criteria.map((item) => (
                       <fieldset key={item.id} className="border-b border-[#f0e8ea] py-3">

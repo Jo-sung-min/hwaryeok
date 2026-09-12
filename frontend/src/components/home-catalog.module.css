@@ -133,7 +133,7 @@
 .rank { position: absolute; top: 10px; left: 10px; z-index: 20; display: grid; place-items: center; width: 29px; height: 30px; border-radius: 6px; background: #a63e65; color: white; font-size: 15px; font-weight: 700; }
 .favorite { position: absolute; right: 8px; top: 8px; z-index: 20; }
 .favorite button { min-height: 44px; width: 44px; height: 44px; box-shadow: none; }
-.review { margin: 6px 0 0; font-size: 13px; color: #6b6470; line-height: 1.65; }
+.review { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; font-size: 13px; color: #6b6470; line-height: 1.65; }
 .review strong { color: #a43d63; font-size: 15px; }
 .growth { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 8px 0 0; color: #a33c61; font-size: 13px; }
 .growth strong { font-size: 21px; }

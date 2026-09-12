@@ -76,4 +76,5 @@ class ProductSampleReview {
     String getUsagePeriod() { return usagePeriod; }
     boolean isRepurchase() { return repurchase; }
     Instant getCreatedAt() { return createdAt; }
+    Instant getUpdatedAt() { return updatedAt; }
 }

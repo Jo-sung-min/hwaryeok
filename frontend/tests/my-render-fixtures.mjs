@@ -33,11 +33,15 @@ export function harness(overrides = {}) {
       if (specifier === "next/link") return ({ children, ...props }) => React.createElement("a", props, children);
       if (specifier === "lucide-react") return require(specifier);
       if (specifier === "@/lib/api") return api;
-      if (specifier === "@/lib/auth-session") return { requireSession: async () => ({ id: "qa-user", nickname: "가상 피부기록", role: "USER" }), readAuthTokens: async () => ({ accessToken: "test-only" }), getActionAccessToken: async () => "test-only", ...overrides.auth };
+      if (specifier === "@/lib/skin-check") return { SKIN_CHECK_DRAFT_KEY: "test-skin-check-draft", restoreSkinDraftSummary: () => null };
+      if (specifier === "@/lib/auth-session") return { requireSession: async () => ({ id: "qa-user", email: "qa@example.invalid", nickname: "가상 피부기록", role: "USER", authMethod: "password", passwordChangeAvailable: true }), readAuthTokens: async () => ({ accessToken: "test-only" }), getActionAccessToken: async () => "test-only", ...overrides.auth };
+      if (specifier === "@/app/login/actions") return { logoutAction: "/test-logout" };
       if (specifier.endsWith(".module.css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (specifier === "./ingredient-preferences-form") return { IngredientPreferencesForm: () => React.createElement("p", {}, "관심 성분 편집 폼") };
       if (specifier === "@/components/product-ui") return { FavoriteButton: () => React.createElement("button", { "aria-label": "찜 해제", style: { padding: "10px", color: "#b43f6a" } }, "♥") };
+      if (specifier === "./my-skin-summary") return load("../src/app/my/my-skin-summary.tsx");
       if (specifier === "./my-tabs") return load("../src/app/my/my-tabs.tsx");
+      if (specifier === "./password-change-form") return { PasswordChangeForm: () => React.createElement("div", { "data-password-change-form": true }, "비밀번호 입력 폼") };
       if (specifier === "@/lib/skin-photo") return load("../src/lib/skin-photo.ts");
       if (specifier === "./actions") return { analyzePhotoAction: () => { throw new Error("Fixture must never submit"); } };
       throw new Error(`Unexpected dependency: ${specifier}`);

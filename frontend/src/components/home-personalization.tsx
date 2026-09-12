@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Droplets, Flower2, Pencil, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Pencil, SlidersHorizontal } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AuthUser, SkinProfile } from "@/lib/api";
 import { homeDisplayMode } from "@/lib/home-catalog";
 import { homeSkinSummaryHref } from "@/lib/home-personalization";
 import { SKIN_CHECK_DRAFT_KEY, restoreSkinDraftSummary } from "@/lib/skin-check";
+import { skinTendencyAssetKey } from "@/lib/skin-tendency-assets";
 import styles from "./home-personalization.module.css";
 
 type QuickSkinSummary = { skinType: string; hasReport: boolean };
@@ -37,6 +38,7 @@ export function HomePersonalization({ user, profile }: { user: AuthUser | null; 
   const hasSkinResult = personalized || hasQuickSummary;
   const displayMode = showQuickSummary ? "quick-result" : mode;
   const editHref = homeSkinSummaryHref(hasGeneratedReport, personalized);
+  const skinAsset = skinTendencyAssetKey(skinType);
 
   return (
     <section className={styles.panel} aria-labelledby="home-personalization-title" data-personalization={displayMode}>
@@ -59,8 +61,7 @@ export function HomePersonalization({ user, profile }: { user: AuthUser | null; 
             : `${skinType ? `${skinType} 경향` : "내 피부"} 설정 수정`}
         >
           <span className={styles.emblem} aria-hidden="true">
-            <Flower2 size={29} strokeWidth={1.45} />
-            <span><Droplets size={13} /></span>
+            <span className={styles.tendencyAsset} data-skin-asset={skinAsset} />
           </span>
           <span className={styles.profileCopy}>
             <small>{showQuickSummary ? "이번 성분찾기 결과" : "저장된 피부 타입"}</small>

@@ -1,6 +1,7 @@
 package com.hwaryeok.review;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 interface ProductReviewRepository extends JpaRepository<ProductReview, String> {
 
     boolean existsByProductIdAndUserId(String productId, String userId);
+
+    @EntityGraph(attributePaths = {"user", "template", "scores", "scores.criterion"})
+    Optional<ProductReview> findByProductIdAndUserId(String productId, String userId);
 
     @Query("""
             select count(review) from ProductReview review where review.product.id = :productId

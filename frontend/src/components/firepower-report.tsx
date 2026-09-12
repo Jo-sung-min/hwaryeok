@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check, ChevronDown, TriangleAlert } from "lucide-react";
+import { ReviewPetalRating } from "@/components/review-petal-rating";
 import type { Analysis, ProductIngredients, ProductReviewSummary } from "@/lib/types";
 
 type FirepowerReportProps = {
@@ -47,7 +48,7 @@ export function FirepowerReport({ analysis, ingredientData, reviewSummary, perso
 
         <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-5 text-[#817880]">
           <span>연결 성분 {ingredientData.totalCount}개</span>
-          <span>사용자 리뷰 {reviewLabel(reviewSummary)}</span>
+          <span className="inline-flex flex-wrap items-center gap-1">사용자 리뷰 {reviewLabel(reviewSummary)} <ReviewPetalRating score={reviewSummary.reviewScore} compact /></span>
           <span>정보 신뢰 {confidenceLabel(analysis.product.confidenceLevel)}</span>
         </div>
 

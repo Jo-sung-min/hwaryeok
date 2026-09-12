@@ -21,7 +21,7 @@ export function Header({ authSlot }: { authSlot?: ReactNode }) {
     <header className={styles.header}>
       <div className={`container-page ${styles.headerInner}`}>
         <Link href="/" className={styles.brand} aria-label="화력 홈">
-          <span className={styles.brandMark} aria-hidden="true">화</span>
+          <span className={styles.brandMark} aria-hidden="true" />
           <span className={styles.brandName}>화력</span>
           <span className={styles.brandDescription}>나에게 맞는 성분의 발견</span>
         </Link>

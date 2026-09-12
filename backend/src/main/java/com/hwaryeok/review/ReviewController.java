@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -44,5 +45,14 @@ public class ReviewController {
             @Valid @RequestBody CreateReviewRequest request
     ) {
         return reviewService.create(jwt.getSubject(), productId, request);
+    }
+
+    @PutMapping("/reviews/me")
+    public ReviewDetailResponse update(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @Valid @RequestBody CreateReviewRequest request
+    ) {
+        return reviewService.update(jwt.getSubject(), productId, request);
     }
 }

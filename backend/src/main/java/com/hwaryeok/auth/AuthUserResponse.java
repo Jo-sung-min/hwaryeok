@@ -7,7 +7,8 @@ public record AuthUserResponse(
         String email,
         String nickname,
         String role,
-        String authMethod
+        String authMethod,
+        boolean passwordChangeAvailable
 ) {
     public static AuthUserResponse from(User user, String authMethod) {
         return new AuthUserResponse(
@@ -15,7 +16,8 @@ public record AuthUserResponse(
                 user.getEmail(),
                 user.getNickname(),
                 user.getRole(),
-                authMethod
+                authMethod,
+                user.getPasswordHash() != null
         );
     }
 }

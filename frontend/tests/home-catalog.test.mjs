@@ -13,6 +13,7 @@ test('category href retains home and safely encodes user input', () => {
   assert.equal(homeCatalogHref(), '/');
   assert.equal(homeCatalogHref({ category: '앰플' }, 'home-products'), '/?category=%EC%95%B0%ED%94%8C#home-products');
   assert.equal(homeCatalogHref({ category: 'a&b' }), '/?category=a%26b');
+  assert.equal(homeCatalogHref({ category: '앰플' }, 'home-products', '/indextest'), '/indextest?category=%EC%95%B0%ED%94%8C#home-products');
 });
 test('home filter parser accepts only supported thresholds and bounds identifiers', () => {
   assert.deepEqual(readHomeCatalogFilters({ category: ['토너', '크림'], ingredientId: 'niacinamide', minReviewScore: '80', minFirepowerScore: '65' }), {
@@ -42,6 +43,7 @@ test('weekly banner uses ranked products and their review metrics', () => {
   assert.equal(slides[0].id, '2026-09-07-0');
   assert.match(slides[0].label, /이주의 화력 랭킹 · 평가 20개/);
   assert.match(slides[0].description, /평가점수 90\.0 \/ 100/);
+  assert.equal(slides[0].reviewScore, 90);
   assert.ok(slides.every(s => s.product.imageUrl && s.product.publicationStatus === 'PUBLISHED'));
 });
 test('weekly banner falls back safely while ranking data is unavailable', () => {
@@ -49,4 +51,5 @@ test('weekly banner falls back safely while ranking data is unavailable', () => 
   const slides = buildWeeklyRankingSlides(null, [product('a'), product('hidden', { publicationStatus: 'HIDDEN' }), product('noimage', { imageUrl: null }), product('b')]);
   assert.deepEqual(slides.map(s => s.product.id), ['a', 'b']);
   assert.ok(slides.every(s => s.label.includes('집계 준비 중')));
+  assert.ok(slides.every(s => s.reviewScore === null));
 });
