@@ -28,6 +28,7 @@ class ProductServiceTest {
         matchEngine = Mockito.mock(ProductMatchEngine.class);
         filterQuery = Mockito.mock(ProductFilterQuery.class);
         sampleReviewService = Mockito.mock(ProductSampleReviewService.class);
+        when(filterQuery.findActiveReviewMetrics(Mockito.anySet())).thenReturn(Map.of());
         when(matchEngine.scoreBasis()).thenReturn("성분 55% · 피부 적합 35% · 데이터 신뢰 10%");
         when(matchEngine.evaluateAll(Mockito.anyList(), Mockito.any(ProductMatchProfile.class))).thenAnswer(invocation -> {
             List<Product> products = invocation.getArgument(0);
@@ -85,8 +86,8 @@ class ProductServiceTest {
         ));
         when(filterQuery.findProductIdsContainingIngredient("panthenol"))
                 .thenReturn(Set.of("cream", "toner"));
-        when(filterQuery.findActiveReviewAverageScores(Set.of("cream")))
-                .thenReturn(Map.of("cream", new BigDecimal("90.0")));
+        when(filterQuery.findActiveReviewMetrics(Set.of("cream")))
+                .thenReturn(Map.of("cream", new ProductFilterQuery.ReviewMetrics(new BigDecimal("90.0"), 2)));
 
         ProductPageResponse result = service.findProducts(
                 null, null, null, null, null, null,
@@ -95,8 +96,11 @@ class ProductServiceTest {
         );
 
         assertThat(result.content()).extracting(ProductResponse::id).containsExactly("cream");
+        assertThat(result.content().getFirst().reviewScore()).isEqualByComparingTo("90.0");
+        assertThat(result.content().getFirst().reviewCount()).isEqualTo(2);
         assertThat(result.totalElements()).isEqualTo(1);
         assertThat(result.totalPages()).isEqualTo(1);
+        Mockito.verify(filterQuery).findActiveReviewMetrics(Set.of("cream"));
     }
 
     @Test
@@ -107,8 +111,8 @@ class ProductServiceTest {
                 new Product("cream", "화력", "수분 크림", "크림", 94, "수분", "보습", 30000, "blue", null),
                 new Product("toner", "화력", "진정 토너", "토너", 82, "진정", "민감", 20000, "sage", null)
         ));
-        when(filterQuery.findActiveReviewAverageScores(Set.of("cream", "toner")))
-                .thenReturn(Map.of("cream", BigDecimal.ZERO));
+        when(filterQuery.findActiveReviewMetrics(Set.of("cream", "toner")))
+                .thenReturn(Map.of("cream", new ProductFilterQuery.ReviewMetrics(BigDecimal.ZERO, 1)));
 
         ProductPageResponse result = service.findProducts(
                 null, null, null, null, null, null,
@@ -117,6 +121,27 @@ class ProductServiceTest {
         );
 
         assertThat(result.content()).extracting(ProductResponse::id).containsExactly("cream");
+        assertThat(result.content().getFirst().reviewCount()).isEqualTo(1);
+    }
+
+    @Test
+    void comparesTheUnroundedReviewAverageAtTheMinimumScoreBoundary() {
+        when(repository.findAllByPublicationStatus(
+                Mockito.eq(ProductPublicationStatus.PUBLISHED), Mockito.any(org.springframework.data.domain.Sort.class)
+        )).thenReturn(List.of(
+                new Product("cream", "화력", "수분 크림", "크림", 94, "수분", "보습", 30000, "blue", null)
+        ));
+        when(filterQuery.findActiveReviewMetrics(Set.of("cream")))
+                .thenReturn(Map.of("cream", new ProductFilterQuery.ReviewMetrics(new BigDecimal("89.95"), 1)));
+
+        ProductPageResponse result = service.findProducts(
+                null, null, null, null, null, null,
+                null, 90, null,
+                0, 12, "score", "desc", ProductMatchProfile.neutral()
+        );
+
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalElements()).isZero();
     }
 
     @Test

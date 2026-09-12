@@ -37,7 +37,7 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
           <h2 className="mt-5 text-xl font-bold">{user ? "피부 조사를 먼저 완료해 주세요" : "로그인하고 나만의 랭킹을 확인해요"}</h2>
           <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#69646f]">{user ? "피부타입, 고민, 사용 취향을 저장하면 맞춤 화력이 높은 순서로 제품을 보여드려요." : "저장한 피부 설정이 있을 때 개인 맞춤 랭킹을 제공해요. 피부 체크는 가입 없이 먼저 해볼 수 있어요."}</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link href={user ? "/skin-check" : `/login?returnTo=${encodeURIComponent(loginReturnTo)}`} className="ink-btn">{user ? "나의 성분찾기" : "로그인하기"}<ArrowRight size={15} /></Link>
+            <Link href={user ? "/skin-check?step=result" : `/login?returnTo=${encodeURIComponent(loginReturnTo)}`} className="ink-btn">{user ? "나의 성분찾기" : "로그인하기"}<ArrowRight size={15} /></Link>
             <Link href="/products" className="line-btn">전체상품 보기</Link>
             {!user && <Link href="/skin-check" className="line-btn">가입 없이 피부 체크</Link>}
           </div>

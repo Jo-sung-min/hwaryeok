@@ -8,6 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.UUID;
 
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +47,8 @@ class ProductFilterHttpTest {
         addProduct("product-filter-http-inactive-review", "토너", "다 비활성 리뷰 제품");
         addProduct("product-filter-http-no-review", "토너", "라 리뷰 없는 제품");
 
-        addReview("product-filter-http-match", "ACTIVE", 90);
+        addReview("product-filter-http-match", "ACTIVE", 80);
+        addReview("product-filter-http-match", "ACTIVE", 100);
         addReview("product-filter-http-other-category", "ACTIVE", 95);
         addReview("product-filter-http-inactive-review", "SUSPENDED", 100);
     }
@@ -58,7 +60,8 @@ class ProductFilterHttpTest {
 
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body())
-                .contains("product-filter-http-match", "\"totalElements\":1", "\"totalPages\":1")
+                .contains("product-filter-http-match", "\"reviewScore\":90.0", "\"reviewCount\":2",
+                        "\"totalElements\":1", "\"totalPages\":1")
                 .doesNotContain("product-filter-http-other-category", "product-filter-http-inactive-review",
                         "product-filter-http-no-review");
 
@@ -66,6 +69,21 @@ class ProductFilterHttpTest {
                 + "&minFirepowerScore=100");
         assertThat(aboveMaximumFirepower.statusCode()).isEqualTo(200);
         assertThat(aboveMaximumFirepower.body()).contains("\"content\":[]", "\"totalElements\":0");
+    }
+
+    @Test
+    void includesReviewMetricsWithoutAReviewFilterAndIgnoresInactiveAuthors() throws Exception {
+        HttpResponse<String> reviewed = get("/api/v1/products?query="
+                + java.net.URLEncoder.encode("가 필터 일치", java.nio.charset.StandardCharsets.UTF_8));
+
+        assertThat(reviewed.statusCode()).isEqualTo(200);
+        assertThat(reviewed.body()).contains("\"reviewScore\":90.0", "\"reviewCount\":2");
+
+        HttpResponse<String> inactiveOnly = get("/api/v1/products?query="
+                + java.net.URLEncoder.encode("다 비활성 리뷰", java.nio.charset.StandardCharsets.UTF_8));
+
+        assertThat(inactiveOnly.statusCode()).isEqualTo(200);
+        assertThat(inactiveOnly.body()).contains("\"reviewScore\":null", "\"reviewCount\":0");
     }
 
     @Test
@@ -116,11 +134,12 @@ class ProductFilterHttpTest {
 
     private void addReview(String productId, String userStatus, int score) {
         String userId = UUID.randomUUID().toString();
-        String email = productId + "-" + userStatus.toLowerCase() + "@example.com";
+        String email = productId + "-" + userStatus.toLowerCase() + "-" + userId.substring(0, 8) + "@example.com";
+        String nickname = "필터" + score + " " + userId.substring(0, 8);
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, 'unused-test-password', ?, 'USER', ?)
-                """, userId, email, "필터" + score, userStatus);
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, 'unused-test-password', ?, ?, 'USER', ?)
+                """, userId, email, nickname, ActivityNickname.key(ActivityNickname.normalize(nickname)), userStatus);
         jdbc.update("""
                 INSERT INTO reviews
                     (id, product_id, user_id, template_id, total_score, content, skin_type, usage_period, repurchase_yn)

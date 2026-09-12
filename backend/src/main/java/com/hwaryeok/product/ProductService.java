@@ -1,6 +1,7 @@
 package com.hwaryeok.product;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -108,13 +109,20 @@ public class ProductService {
         Set<String> matchedProductIds = matchedProducts.stream()
                 .map(ProductResponse::id)
                 .collect(java.util.stream.Collectors.toSet());
-        Map<String, BigDecimal> reviewAverages = minReviewScore == null
-                ? Map.of()
-                : productFilterQuery.findActiveReviewAverageScores(matchedProductIds);
+        Map<String, ProductFilterQuery.ReviewMetrics> reviewMetrics =
+                productFilterQuery.findActiveReviewMetrics(matchedProductIds);
         List<ProductResponse> results = matchedProducts.stream()
                 .filter(product -> minReviewScore == null
-                        || reviewAverages.getOrDefault(product.id(), BigDecimal.valueOf(-1))
+                        || reviewMetrics.containsKey(product.id())
+                        && reviewMetrics.get(product.id()).averageScore()
                                 .compareTo(BigDecimal.valueOf(minReviewScore)) >= 0)
+                .map(product -> {
+                    ProductFilterQuery.ReviewMetrics metrics = reviewMetrics.get(product.id());
+                    return product.withReviewMetrics(
+                            metrics == null ? null : metrics.averageScore().setScale(1, RoundingMode.HALF_UP),
+                            metrics == null ? 0 : metrics.reviewCount()
+                    );
+                })
                 .sorted(productComparator(sort, direction))
                 .toList();
 

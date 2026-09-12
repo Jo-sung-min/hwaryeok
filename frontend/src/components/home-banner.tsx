@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { ArrowUpRight, Medal } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { ProductVisual } from "@/components/product-ui";
+import { RankingPetalIcon } from "@/components/ranking-petal-icon";
 import { ReviewPetalRating } from "@/components/review-petal-rating";
 import type { Product } from "@/lib/types";
 import styles from "./home-banner.module.css";
@@ -288,7 +289,7 @@ export function HomeBanner({ slides }: { slides: HomeBannerSlide[] }) {
                       <ProductVisual tone={slide.product.tone} imageUrl={slide.product.imageUrl} alt={`${slide.product.brand} ${slide.product.name}`} variant="fill" />
                     </div>
                   </div>
-                  <span className={styles.rankBadge} aria-label={`${position}번째 배너`}><Medal size={15} aria-hidden="true" />{position}</span>
+                  <span className={styles.rankBadge} role="img" aria-label={`${position}번째 배너`}><RankingPetalIcon rank={position} /></span>
                   <span className={styles.slideCounter} aria-hidden="true">{String(position).padStart(2, "0")} / {String(total).padStart(2, "0")}</span>
                   <div className={styles.copy}>
                     <span className={styles.label}>{slide.product.brand} · {slide.label}</span>

@@ -71,6 +71,15 @@ export function normalizeReviewerUrl(value: FormDataEntryValue | null, kind: "bl
   return normalized;
 }
 
+export function normalizeActivityNickname(value: FormDataEntryValue | null): string {
+  const normalized = (typeof value === "string" ? value : "").normalize("NFKC").trim().replace(/\s+/g, " ");
+  const length = Array.from(normalized).length;
+  if (length < 2 || length > 20 || /[\p{Cc}\p{Cf}]/u.test(normalized)) {
+    throw new Error("활동명은 2~20자로 입력해 주세요.");
+  }
+  return normalized;
+}
+
 export function hasMeaningfulReviewerBio(blocks: ReviewerBioBlock[]): boolean {
   return blocks.some((block) => hasContent(block.content) || hasContent(block.children));
 }

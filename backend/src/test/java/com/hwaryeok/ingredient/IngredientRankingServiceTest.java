@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.UUID;
 
 import com.hwaryeok.common.error.ResourceNotFoundException;
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -173,10 +174,12 @@ class IngredientRankingServiceTest {
 
     private void addReview(String productId, String status, int score) {
         String userId = UUID.randomUUID().toString();
+        String nickname = "랭킹" + userId.substring(0, 8);
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, 'test-unused', ?, 'USER', ?)
-                """, userId, userId + "@example.com", "랭킹" + userId.substring(0, 8), status);
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, 'test-unused', ?, ?, 'USER', ?)
+                """, userId, userId + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)), status);
         jdbc.update("""
                 INSERT INTO reviews (id, product_id, user_id, template_id, total_score, content, skin_type, usage_period, repurchase_yn)
                 VALUES (?, ?, ?, 'review-essence-serum-v1', ?, '직접 작성한 테스트 리뷰입니다.', '건성', 'ONE_MONTH', TRUE)

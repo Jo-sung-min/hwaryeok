@@ -3,6 +3,7 @@ import { Droplets, Flower2, Leaf, ShieldCheck, Sparkles, Users } from "lucide-re
 import { answerLabel, skinQuestions, type SkinAnswers } from "@/lib/skin-check";
 import { buildSkinReport, populationShare, type SkinTypeStatistics } from "@/lib/skin-report";
 import { buildSkinCareGuide } from "@/lib/skin-care-guide";
+import { skinTendencyAssetKey } from "@/lib/skin-tendency-assets";
 import type { IngredientRecommendation } from "@/lib/types";
 import styles from "./skin-report.module.css";
 
@@ -61,6 +62,7 @@ export function SkinReport({ answers, statistics, ingredientRecommendations = []
   const { profile, tendency, archetype, axes, details } = report;
   const share = populationShare(statistics, tendency.type);
   const care = buildSkinCareGuide(profile);
+  const skinAsset = skinTendencyAssetKey(tendency.type);
   const recommendedIngredients = ingredientRecommendations.length > 0
     ? ingredientRecommendations.map(({ ingredient, reason, matchedBy, preferred }) => ({
         id: ingredient.id,
@@ -76,7 +78,7 @@ export function SkinReport({ answers, statistics, ingredientRecommendations = []
   return <article className={styles.report}>
     <div className={styles.hero}>
       <span className={styles.kicker}>HWARYEOK · MY SKIN REPORT</span>
-      <div className={styles.emblem} aria-hidden="true"><Flower2 size={42} strokeWidth={1.25} /><span><Droplets size={19} /></span></div>
+      <div className={styles.emblem} aria-hidden="true"><span className={styles.tendencyAsset} data-skin-asset={skinAsset} /></div>
       <p className={styles.type}>{tendency.type} 경향</p>
       <h2 id="skin-step-title" tabIndex={-1}>{archetype.name}</h2>
       <p className={styles.lead}>{archetype.focus}</p>

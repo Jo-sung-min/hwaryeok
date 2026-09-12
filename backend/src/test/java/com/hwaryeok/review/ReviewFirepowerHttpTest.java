@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ class ReviewFirepowerHttpTest {
         var profile = send("GET", "/api/v1/reviewers/" + author + "/profile", null, null);
         assertThat(profile.statusCode()).isEqualTo(200);
         assertThat(profile.body()).contains("\"reviewCount\":1", "\"reviewFirepower\":null");
-        assertThat(send("PUT", ratingPath, null, "{\"score\":5}").statusCode()).isEqualTo(401);
+        assertThat(send("PUT", ratingPath, null, "{\"score\":10}").statusCode()).isEqualTo(401);
         assertThat(send("DELETE", ratingPath, null, null).statusCode()).isEqualTo(401);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM review_firepower_ratings WHERE review_id = ?", Integer.class, review)).isZero();
     }
@@ -81,28 +82,39 @@ class ReviewFirepowerHttpTest {
         String authorToken = token(author, "USER");
         String voterToken = token(voter, "USER");
         String adminToken = token(admin, "ADMIN");
-        assertThat(send("PUT", ratingPath, authorToken, "{\"score\":5}").statusCode()).isEqualTo(403);
+        assertThat(send("PUT", ratingPath, authorToken, "{\"score\":10}").statusCode()).isEqualTo(403);
         assertThat(send("DELETE", ratingPath, authorToken, null).statusCode()).isEqualTo(403);
         assertThat(send("PUT", ratingPath, voterToken, "{\"score\":0}").statusCode()).isEqualTo(400);
-        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":6}").statusCode()).isEqualTo(400);
+        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":11}").statusCode()).isEqualTo(400);
         assertThat(send("PUT", ratingPath, voterToken, "{}").statusCode()).isEqualTo(400);
 
-        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":2}").statusCode()).isEqualTo(200);
-        var updated = send("PUT", ratingPath, voterToken, "{\"score\":4}");
+        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":4}").statusCode()).isEqualTo(200);
+        var updated = send("PUT", ratingPath, voterToken, "{\"score\":8}");
         assertThat(updated.statusCode()).isEqualTo(200);
-        assertThat(updated.body()).contains("\"ratingCount\":1", "\"viewerScore\":4");
-        assertThat(send("PUT", ratingPath, adminToken, "{\"score\":5}").statusCode()).isEqualTo(200);
+        assertThat(updated.body()).contains("\"ratingCount\":1", "\"viewerScore\":8");
+        assertThat(send("PUT", ratingPath, adminToken, "{\"score\":10}").statusCode()).isEqualTo(200);
         var summary = mapper.readTree(send("GET", ratingPath, voterToken, null).body());
-        assertThat(summary.get("averageScore").asDouble()).isEqualTo(4.5);
+        assertThat(summary.get("averageScore").asDouble()).isEqualTo(9.0);
         assertThat(summary.get("ratingCount").asLong()).isEqualTo(2);
-        assertThat(summary.get("viewerScore").asInt()).isEqualTo(4);
+        assertThat(summary.get("viewerScore").asInt()).isEqualTo(8);
+
+        var profile = mapper.readTree(send("GET", "/api/v1/reviewers/" + author + "/profile", null, null).body());
+        assertThat(profile.get("averageReceivedRating").asDouble()).isEqualTo(9.0);
+        assertThat(profile.get("receivedRatingCount").asLong()).isEqualTo(2);
+        assertThat(profile.get("uniqueRaterCount").asLong()).isEqualTo(2);
+        assertThat(profile.get("reviewFirepower").asDouble()).isEqualTo(61.4);
+        var ranking = mapper.readTree(send("GET", "/api/v1/reviewers/ranking", null, null).body());
+        var rankedAuthor = ranking.get("content").get(0);
+        assertThat(rankedAuthor.get("userId").asString()).isEqualTo(author);
+        assertThat(rankedAuthor.get("rank").asInt()).isEqualTo(1);
+        assertThat(rankedAuthor.get("reviewFirepower").asDouble()).isEqualTo(61.4);
 
         String adminReviewPath = "/api/v1/reviews/" + review(admin) + "/firepower";
-        assertThat(send("PUT", adminReviewPath, adminToken, "{\"score\":5}").statusCode()).isEqualTo(403);
+        assertThat(send("PUT", adminReviewPath, adminToken, "{\"score\":10}").statusCode()).isEqualTo(403);
         var removed = send("DELETE", ratingPath, voterToken, null);
         assertThat(removed.statusCode()).isEqualTo(200);
         assertThat(removed.body()).contains("\"ratingCount\":1", "\"viewerScore\":null");
-        assertThat(send("GET", ratingPath, adminToken, null).body()).contains("\"viewerScore\":5");
+        assertThat(send("GET", ratingPath, adminToken, null).body()).contains("\"viewerScore\":10");
         assertThat(jdbc.queryForObject("SELECT total_score FROM reviews WHERE id = ?", Integer.class, review)).isEqualTo(80);
     }
 
@@ -110,9 +122,9 @@ class ReviewFirepowerHttpTest {
     void staleTokensCannotWriteAndHiddenOrInactiveAuthorsDoNotLeakThroughPublicRoutes() throws Exception {
         String voter = user("USER");
         String voterToken = token(voter, "USER");
-        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":5}").statusCode()).isEqualTo(200);
+        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":10}").statusCode()).isEqualTo(200);
         jdbc.update("UPDATE users SET status = 'SUSPENDED' WHERE id = ?", voter);
-        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":4}").statusCode()).isEqualTo(401);
+        assertThat(send("PUT", ratingPath, voterToken, "{\"score\":8}").statusCode()).isEqualTo(401);
         assertThat(send("DELETE", ratingPath, voterToken, null).statusCode()).isEqualTo(401);
         assertThat(send("GET", ratingPath, voterToken, null).body())
                 .contains("\"ratingCount\":0", "\"viewerScore\":null", "\"canRate\":false");
@@ -126,8 +138,9 @@ class ReviewFirepowerHttpTest {
 
     private String user(String role) {
         String id = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, role, status) VALUES (?, ?, 'unused', '화력 HTTP 테스트', ?, 'ACTIVE')",
-                id, id + "@example.com", role);
+        String nickname = "화력 HTTP " + id.substring(0, 8);
+        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status) VALUES (?, ?, 'unused', ?, ?, ?, 'ACTIVE')",
+                id, id + "@example.com", nickname, ActivityNickname.key(ActivityNickname.normalize(nickname)), role);
         users.add(id);
         return id;
     }

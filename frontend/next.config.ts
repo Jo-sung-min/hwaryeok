@@ -19,14 +19,17 @@ function normalizePublicBaseUrl(value: string | undefined): URL | null {
   return url;
 }
 
-function remoteImagePattern(baseUrl: URL): URL {
+function remoteImagePattern(baseUrl: URL, directory: "products" | "profiles"): URL {
   const pattern = new URL(baseUrl);
-  pattern.pathname = `${pattern.pathname}/products/**`.replace(/^\/\//, "/");
+  pattern.pathname = `${pattern.pathname}/${directory}/**`.replace(/^\/\//, "/");
   return pattern;
 }
 
 const remotePatterns = [new URL("/api/v1/media/products/**", publicApiUrl)];
-if (s3PublicBaseUrl) remotePatterns.push(remoteImagePattern(s3PublicBaseUrl));
+if (s3PublicBaseUrl) {
+  remotePatterns.push(remoteImagePattern(s3PublicBaseUrl, "products"));
+  remotePatterns.push(remoteImagePattern(s3PublicBaseUrl, "profiles"));
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import com.hwaryeok.auth.token.AuthTokenService;
 import com.hwaryeok.auth.token.OAuthExchangeCodeService;
+import com.hwaryeok.user.ActivityNickname;
+import com.hwaryeok.user.DuplicateNicknameException;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,14 +46,16 @@ public class AuthService {
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         String email = request.email().strip().toLowerCase(Locale.ROOT);
+        String nickname = ActivityNickname.normalize(request.nickname());
         if (userRepository.existsByEmail(email)) throw new DuplicateEmailException();
+        if (userRepository.existsByNicknameKey(ActivityNickname.key(nickname))) throw new DuplicateNicknameException();
 
         Instant now = Instant.now();
         User user = new User(
                 UUID.randomUUID().toString(),
                 email,
                 passwordEncoder.encode(request.password()),
-                request.nickname().strip(),
+                nickname,
                 adminEmailPolicy.roleFor(email),
                 "ACTIVE",
                 now,
@@ -62,8 +66,17 @@ public class AuthService {
             return SignupResponse.from(userRepository.saveAndFlush(user));
         } catch (DataIntegrityViolationException exception) {
             // PostgreSQL은 무결성 위반 뒤 같은 트랜잭션의 추가 쿼리를 거부하므로 바로 충돌로 변환합니다.
+            if (isNicknameConflict(exception)) throw new DuplicateNicknameException();
             throw new DuplicateEmailException();
         }
+    }
+
+    private static boolean isNicknameConflict(Throwable exception) {
+        for (Throwable current = exception; current != null; current = current.getCause()) {
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase(Locale.ROOT).contains("ux_users_nickname_key")) return true;
+        }
+        return false;
     }
 
     @Transactional

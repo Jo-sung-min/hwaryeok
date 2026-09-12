@@ -31,6 +31,7 @@ export function harness(overrides = {}) {
     const isolatedRequire = specifier => {
       if (specifier === "react" || specifier === "react/jsx-runtime") return require(specifier);
       if (specifier === "next/link") return ({ children, ...props }) => React.createElement("a", props, children);
+      if (specifier === "next/image") return ({ fill: _fill, priority: _priority, unoptimized: _unoptimized, ...props }) => React.createElement("img", props);
       if (specifier === "lucide-react") return require(specifier);
       if (specifier === "@/lib/api") return api;
       if (specifier === "@/lib/skin-check") return { SKIN_CHECK_DRAFT_KEY: "test-skin-check-draft", restoreSkinDraftSummary: () => null };

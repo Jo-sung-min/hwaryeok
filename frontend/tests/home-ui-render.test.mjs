@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -12,14 +13,17 @@ const { transformSync } = require("next/dist/compiled/babel/core");
 const typescript = require("next/dist/compiled/babel/preset-typescript").default;
 const react = require("next/dist/compiled/babel/preset-react").default;
 const commonjs = require("next/dist/compiled/babel/plugin-transform-modules-commonjs").default;
+const homeBannerCss = readFileSync(new URL("../src/components/home-banner.module.css", import.meta.url), "utf8");
 const homeCatalogCss = readFileSync(new URL("../src/components/home-catalog.module.css", import.meta.url), "utf8");
 const homePersonalizationCss = readFileSync(new URL("../src/components/home-personalization.module.css", import.meta.url), "utf8");
+const rankingPetalIconCss = readFileSync(new URL("../src/components/ranking-petal-icon.module.css", import.meta.url), "utf8");
 const moduleCache = new Map();
 const realModules = new Map([
   ["@/lib/home-catalog", "../src/lib/home-catalog.ts"],
   ["@/lib/home-personalization", "../src/lib/home-personalization.ts"],
   ["@/lib/skin-check", "../src/lib/skin-check.ts"],
   ["@/lib/skin-tendency-assets", "../src/lib/skin-tendency-assets.ts"],
+  ["@/components/ranking-petal-icon", "../src/components/ranking-petal-icon.tsx"],
   ["@/components/review-petal-rating", "../src/components/review-petal-rating.tsx"],
 ]);
 
@@ -56,6 +60,7 @@ function loadSource(relativePath) {
         "data-favorited": initialFavorited,
         "data-authenticated": isAuthenticated,
         "data-return-to": returnTo,
+        "data-artwork": "watercolor",
       }),
     };
     throw new Error(`Unapproved render-test dependency: ${specifier}`);
@@ -70,10 +75,14 @@ function loadSource(relativePath) {
   return localModule.exports;
 }
 
+const { HomeBanner } = loadSource("../src/components/home-banner.tsx");
 const { HomePersonalization } = loadSource("../src/components/home-personalization.tsx");
 const { HomeProductCard } = loadSource("../src/components/home-product-card.tsx");
+const { rankingPetalTone } = loadSource("../src/components/ranking-petal-icon.tsx");
 const render = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 const visibleText = (html) => html.replace(/<[^>]+>/g, "");
+const elementsWithClass = (html, tag, className) => [...html.matchAll(new RegExp(`<${tag}[^>]*class="[^"]*\\b${className}\\b[^"]*"[^>]*>([\\s\\S]*?)<\\/${tag}>`, "g"))].map((match) => match[1]);
+const elementWithClass = (html, tag, className) => elementsWithClass(html, tag, className)[0] ?? "";
 const user = { id: "private-user-id", email: "private@example.invalid", nickname: "테스트 사용자", role: "USER", authMethod: "LOCAL" };
 const savedProfile = {
   configured: true, skinType: "수부지", hydrationLevel: "LOW", oilinessLevel: "HIGH", sensitivityLevel: "MEDIUM",
@@ -81,8 +90,135 @@ const savedProfile = {
 };
 const product = (extra = {}) => ({
   id: "ampoule", brand: "테스트 브랜드", name: "수분 앰플", category: "앰플", tone: "blue",
-  score: 87, price: "23,000원", publicationStatus: "PUBLISHED", confidenceLevel: "HIGH",
+  score: 87, price: "23,000원", reviewScore: 92.2, reviewCount: 85_829,
+  publicationStatus: "PUBLISHED", confidenceLevel: "HIGH",
   matchReasons: ["부족한 수분을 고려한 성분 조합이에요.", "두 번째 내부 근거"], ...extra,
+});
+
+const bannerSlides = (count) => Array.from({ length: count }, (_, index) => {
+  const position = index + 1;
+  return {
+    id: `banner-${position}`,
+    label: "이주의 화력 랭킹",
+    title: `배너 ${position}`,
+    description: "테스트 배너 설명",
+    href: `/products/banner-${position}`,
+    product: product({ id: `banner-${position}`, name: `제품 ${position}` }),
+    reviewScore: null,
+  };
+});
+
+test("weekly ranking badge maps podium petals while keeping its visible and accessible position", () => {
+  for (const [position, tone] of [
+    [1, "gold"],
+    [2, "silver"],
+    [3, "bronze"],
+    [4, "pink"],
+    [10, "pink"],
+  ]) {
+    assert.equal(rankingPetalTone(position), tone);
+    const html = render(HomeBanner, { slides: bannerSlides(position) });
+    const badge = new RegExp(
+      `<span class="rankBadge" role="img" aria-label="${position}번째 배너">`
+      + `<span class="petal ${tone}" data-rank-petal="${tone}" aria-hidden="true">`
+      + `<span class="number">${position}</span></span></span>`,
+    );
+    assert.match(html, badge, `${position}위 배지`);
+    assert.doesNotMatch(html, /data-icon="Medal"/, `${position}위에 기존 Medal 아이콘이 남아 있어요`);
+
+    const productCard = render(HomeProductCard, { product: product(), rank: position });
+    const productBadge = new RegExp(
+      `<span class="rank" role="img" aria-label="${position}위">`
+      + `<span class="petal ${tone}" data-rank-petal="${tone}" aria-hidden="true">`
+      + `<span class="number">${position}</span></span></span>`,
+    );
+    assert.match(productCard, productBadge, `상품 카드 ${position}위 배지`);
+  }
+});
+
+test("ranking petal sprite keeps four frames without moving the banner badge out of its overlay", () => {
+  const petalRule = rankingPetalIconCss.match(/(?:^|\n)\.petal\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.notEqual(petalRule, "");
+  assert.match(petalRule, /position:\s*relative/);
+  assert.match(petalRule, /display:\s*grid/);
+  assert.match(petalRule, /place-items:\s*center/);
+  assert.match(petalRule, /width:\s*36px/);
+  assert.match(petalRule, /height:\s*38px/);
+  assert.match(petalRule, /flex:\s*0\s+0\s+36px/);
+  assert.match(petalRule, /background-image:\s*url\("\/ratings\/ranking-petals\.png"\)/);
+  assert.match(petalRule, /background-repeat:\s*no-repeat/);
+  assert.match(petalRule, /background-size:\s*400%\s+auto/);
+
+  const numberRule = rankingPetalIconCss.match(/(?:^|\n)\.number\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.notEqual(numberRule, "");
+  assert.match(numberRule, /z-index:\s*1/);
+  assert.match(numberRule, /font-size:\s*12px/);
+  assert.match(numberRule, /font-weight:\s*850/);
+  assert.match(numberRule, /text-align:\s*center/);
+
+  for (const [tone, position] of [
+    ["gold", "0 50%"],
+    ["silver", "33.333333% 50%"],
+    ["bronze", "66.666667% 50%"],
+    ["pink", "100% 50%"],
+  ]) {
+    assert.match(
+      rankingPetalIconCss,
+      new RegExp(`\\.${tone}\\s*\\{[^}]*background-position:\\s*${position.replace(".", "\\.")}`),
+      tone,
+    );
+  }
+
+  const badgeRule = homeBannerCss.match(/(?:^|\n)\.rankBadge\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.notEqual(badgeRule, "");
+  assert.match(badgeRule, /position:\s*absolute/);
+  assert.match(badgeRule, /top:\s*14px/);
+  assert.match(badgeRule, /left:\s*14px/);
+  assert.match(badgeRule, /z-index:\s*3/);
+  assert.match(badgeRule, /display:\s*block/);
+  assert.match(badgeRule, /width:\s*36px/);
+  assert.match(badgeRule, /height:\s*38px/);
+  assert.match(badgeRule, /padding:\s*0/);
+  assert.match(badgeRule, /border:\s*0/);
+  assert.match(badgeRule, /background:\s*transparent/);
+  assert.doesNotMatch(badgeRule, /border-radius|box-shadow|backdrop-filter/);
+
+  const productRankRule = homeCatalogCss.match(/(?:^|\n)\.rank\s*\{([^}]*)\}/)?.[1] ?? "";
+  const favoriteRule = homeCatalogCss.match(/(?:^|\n)\.favorite\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(productRankRule, /position:\s*absolute/);
+  assert.match(productRankRule, /top:\s*8px/);
+  assert.match(productRankRule, /left:\s*8px/);
+  assert.match(productRankRule, /z-index:\s*20/);
+  assert.match(productRankRule, /display:\s*block/);
+  assert.match(productRankRule, /width:\s*36px/);
+  assert.match(productRankRule, /height:\s*38px/);
+  assert.match(productRankRule, /padding:\s*0/);
+  assert.match(productRankRule, /border:\s*0/);
+  assert.match(productRankRule, /background:\s*transparent/);
+  assert.doesNotMatch(productRankRule, /border-radius|box-shadow|backdrop-filter/);
+  assert.match(favoriteRule, /position:\s*absolute/);
+  assert.match(favoriteRule, /top:\s*8px/);
+  assert.match(favoriteRule, /right:\s*8px/);
+  assert.match(favoriteRule, /z-index:\s*20/);
+  assert.doesNotMatch(homeCatalogCss, /\.favorite\s*\{[^}]*right:\s*3px;[^}]*top:\s*3px;/s);
+});
+
+test("ranking petals use the supplied four-frame RGBA PNG sprite", () => {
+  const png = readFileSync(new URL("../public/ratings/ranking-petals.png", import.meta.url));
+  assert.deepEqual(Array.from(png.subarray(0, 8)), [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(png.subarray(12, 16).toString("ascii"), "IHDR");
+  assert.equal(png.readUInt32BE(16), 1672);
+  assert.equal(png.readUInt32BE(20), 941);
+  assert.equal(png.readUInt32BE(16) / 4, 418, "sprite should contain four equal-width frames");
+  assert.equal(png[24], 8, "sprite should use 8-bit channels");
+  assert.equal(png[25], 6, "sprite should include an RGBA alpha channel");
+  assert.equal(
+    createHash("sha256").update(png).digest("hex"),
+    "262c5d84d414990ae45ccf2dcc808eef4283da53a2eb8d98f39e6fe16ea76ecf",
+    "ranking sprite should be the supplied replacement asset",
+  );
+  assert.ok(png.byteLength > 100_000);
+  assert.ok(png.byteLength < 2_500_000);
 });
 
 test("guest panel keeps the main message and a single skin-check action without revealing orphaned profile answers", () => {
@@ -199,20 +335,38 @@ test("saved text remains escaped text instead of executable markup", () => {
 test("personalized product card renders score, first recommendation reason, and rank", () => {
   const html = render(HomeProductCard, { product: product(), rank: 2, scoreLabel: "맞춤 화력" });
   const text = visibleText(html);
+  const firepower = elementWithClass(html, "p", "firepower");
+  const review = elementsWithClass(html, "p", "review").at(-1) ?? "";
   assert.match(html, /aria-label="2위"/);
   assert.match(text, /맞춤 화력87 \/ 100/);
+  assert.match(firepower, /data-petal-count="4"/);
+  assert.match(firepower, /aria-label="맞춤 화력 87\.0 \/ 100[^\"]*꽃잎 4개"/);
+  assert.match(review, /data-icon="Star"/);
+  assert.match(visibleText(review), /리뷰 4\.6 \(85,829\)/);
+  assert.doesNotMatch(review, /data-petal-count/);
   assert.match(text, /추천 이유부족한 수분을 고려한 성분 조합이에요/);
-  assert.match(text, /23,000원/);
+  assert.doesNotMatch(text, /23,000원/);
   assert.doesNotMatch(text, /두 번째 내부 근거|성분 근거가 충분하지 않아/);
 });
 
-test("home product card keeps brand and product name inside the image card", () => {
+test("home product card overlays brand and product name on the product image", () => {
   const html = render(HomeProductCard, { product: product() });
   const imageCard = html.match(/<div class="productImage">([\s\S]*?)<\/div><div class="productText">/)?.[1] ?? "";
+  const productImageRule = homeCatalogCss.match(/(?:^|\n)\.productImage\s*\{([^}]*)\}/)?.[1] ?? "";
+  const imageInfoRule = homeCatalogCss.match(/(?:^|\n)\.imageInfo\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.notEqual(imageCard, "");
   assert.match(imageCard, /class="imageInfo"/);
   assert.match(imageCard, /테스트 브랜드 · 앰플/);
   assert.match(imageCard, /<h3>수분 앰플<\/h3>/);
+  assert.doesNotMatch(elementWithClass(html, "div", "productText"), /테스트 브랜드|수분 앰플/);
+  assert.match(productImageRule, /position:\s*relative/);
+  assert.match(productImageRule, /overflow:\s*hidden/);
+  assert.match(imageInfoRule, /position:\s*absolute/);
+  assert.match(imageInfoRule, /z-index:\s*\d+/);
+  assert.ok(
+    /bottom:\s*0/.test(imageInfoRule) || /inset:\s*(?:auto\s+)?0(?:\s+0(?:\s+0)?)?/.test(imageInfoRule),
+    "The product identity overlay must be anchored to the bottom of the image",
+  );
 });
 
 test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {
@@ -232,10 +386,19 @@ test("LOW and LEGACY confidence show a caution and missing reasons use honest fa
   }
 });
 
-test("ordinary product cards do not present a personalized score or reason", () => {
-  const html = render(HomeProductCard, { product: product({ confidenceLevel: "LOW" }) });
+test("ordinary product cards show flower firepower and star review facts without a personalized claim", () => {
+  const html = render(HomeProductCard, {
+    product: product({ confidenceLevel: "LOW", reviewScore: 84, reviewCount: 1_234 }),
+  });
+  const text = visibleText(html);
+  const firepower = elementWithClass(html, "p", "firepower");
+  const review = elementWithClass(html, "p", "review");
   assert.match(html, /수분 앰플/);
-  assert.doesNotMatch(visibleText(html), /맞춤 화력|87 \/ 100|추천 이유|부족한 수분|성분 근거가 충분하지 않아/);
+  assert.match(firepower, /data-petal-count="4"/);
+  assert.match(review, /data-icon="Star"/);
+  assert.match(visibleText(review), /리뷰 4\.2 \(1,234\)/);
+  assert.doesNotMatch(review, /data-petal-count/);
+  assert.doesNotMatch(text, /23,000원|맞춤 화력|추천 이유|부족한 수분|성분 근거가 충분하지 않아/);
 });
 
 test("product details are safely encoded and favorite state and return location are forwarded", () => {
@@ -247,6 +410,7 @@ test("product details are safely encoded and favorite state and return location 
   assert.match(html, /data-favorited="true"/);
   assert.match(html, /data-authenticated="true"/);
   assert.match(html, /data-return-to="\/\?category=앰플"/);
+  assert.match(html, /data-artwork="watercolor"/);
 });
 
 test("rising cards distinguish recent review score and count growth from personalized score", () => {
@@ -254,11 +418,16 @@ test("rising cards distinguish recent review score and count growth from persona
     product: product(), growth: { recentReviewCount: 5, previousReviewCount: 2, reviewGrowth: 3 }, review: { score: 82.25, count: 5 },
   });
   const text = visibleText(html);
+  const review = elementsWithClass(html, "p", "review").at(-1) ?? "";
   assert.match(text, /\+3 리뷰 증가/);
   assert.match(text, /이전 7일 2 → 최근 7일 5개/);
-  assert.match(text, /최근 7일 리뷰 82\.3 \/ 100 \(5\)/);
-  assert.match(html, /data-petal-count="4"/);
+  assert.match(review, /data-icon="Star"/);
+  assert.match(visibleText(review), /최근 7일 리뷰 4\.1 \(5\)/);
+  assert.doesNotMatch(review, /data-petal-count|82\.3 \/ 100|4\.6|85,829/);
+  assert.doesNotMatch(text, /23,000원/);
   assert.doesNotMatch(text, /맞춤 화력|추천 이유/);
-  const pending = render(HomeProductCard, { product: product(), review: { score: null, count: 0 } });
-  assert.match(visibleText(pending), /리뷰 0개 · 점수 집계 중/);
+  const pending = render(HomeProductCard, { product: product({ reviewScore: null, reviewCount: 0 }) });
+  const pendingReview = elementWithClass(pending, "p", "review");
+  assert.match(visibleText(pendingReview), /리뷰 0개 · 점수 집계 중/);
+  assert.doesNotMatch(pendingReview, /data-icon="Star"|data-petal-count/);
 });

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { OAuthProviderStatus } from "@/lib/api";
 
 const providerStyles = {
@@ -31,9 +30,9 @@ export function SocialLoginButtons({ providers, returnTo }: { providers: OAuthPr
         );
 
         return provider.configured ? (
-          <Link key={provider.id} href={`/api/auth/oauth/${provider.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`} className={`relative flex min-h-13 min-w-0 items-center justify-center rounded-2xl border px-12 text-[13px] font-semibold transition hover:-translate-y-0.5 hover:shadow-md sm:text-sm ${style.className}`}>
+          <a key={provider.id} href={`/api/auth/oauth/${provider.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`} className={`relative flex min-h-13 min-w-0 items-center justify-center rounded-2xl border px-12 text-[13px] font-semibold transition hover:-translate-y-0.5 hover:shadow-md sm:text-sm ${style.className}`}>
             {content}
-          </Link>
+          </a>
         ) : (
           <span key={provider.id} aria-disabled="true" className={`relative flex min-h-13 min-w-0 cursor-not-allowed items-center justify-center rounded-2xl border px-12 text-[13px] font-semibold opacity-75 sm:text-sm ${style.className}`}>
             {content}

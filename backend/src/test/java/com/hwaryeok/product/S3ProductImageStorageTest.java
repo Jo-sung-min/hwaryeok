@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Clock;
@@ -18,6 +20,8 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.imageio.ImageIO;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -32,6 +36,7 @@ import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -44,9 +49,7 @@ class S3ProductImageStorageTest {
 
     private static final Instant NOW = Instant.parse("2026-09-11T00:00:00Z");
     private static final Duration FIVE_MINUTES = Duration.ofMinutes(5);
-    private static final byte[] PNG = new byte[] {
-            (byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4
-    };
+    private static final byte[] PNG = png(2, 2);
 
     @Test
     void uploadsToPrefixedS3KeyButKeepsPrefixOutOfPublicCdnUrl() throws IOException {
@@ -217,6 +220,228 @@ class S3ProductImageStorageTest {
                 .containsEntry("x-amz-meta-declared-size", Integer.toString(PNG.length))
                 .doesNotContainKeys("Content-Length", "Host");
         verifyNoInteractions(s3Client);
+    }
+
+    @Test
+    void profileUploadTicketAndCompletionStayBoundToTheAuthenticatedUser() throws Exception {
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+        long expiresEpoch = NOW.plus(FIVE_MINUTES).getEpochSecond();
+        S3Client s3Client = mock(S3Client.class);
+        S3Presigner presigner = mock(S3Presigner.class);
+        PresignedPutObjectRequest presigned = mock(PresignedPutObjectRequest.class);
+        when(presigned.url()).thenReturn(URI.create("https://fatell-aws-s3.s3.ap-northeast-2.amazonaws.com/profile-signed").toURL());
+        when(presigned.signedHeaders()).thenReturn(signedProfileHeaders(userId, PNG.length, expiresEpoch));
+        when(presigner.presignPutObject(org.mockito.ArgumentMatchers.any(PutObjectPresignRequest.class)))
+                .thenReturn(presigned);
+        S3ProductImageStorage storage = storage(s3Client, presigner, NOW);
+
+        ProductImageUploadUrlResponse ticket = storage.createProfileUploadUrl(
+                userId, "avatar.png", "image/png", PNG.length
+        );
+        String expectedPendingKey = "hwaryeok/pending/profile-images/" + userId + "/"
+                + expiresEpoch + "-" + PNG.length + "-fixed-object-id.png";
+        assertThat(ticket.objectKey()).isEqualTo(expectedPendingKey);
+        assertThat(ticket.imageUrl()).isEqualTo(
+                "https://cdn.hwaryeok.co.kr/profiles/" + userId + "/fixed-object-id.png"
+        );
+        assertThat(ticket.headers()).containsEntry("x-amz-meta-profile-user-id", userId);
+
+        String publishedKey = "hwaryeok/profiles/" + userId + "/fixed-object-id.png";
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ))).thenThrow(missingObject());
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(expectedPendingKey)
+        ))).thenReturn(validProfileHead(userId, expiresEpoch, PNG.length, "image/png"));
+        when(s3Client.getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class)))
+                .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), PNG));
+
+        assertThat(storage.confirmProfileUpload(userId, ticket.objectKey())).isEqualTo(ticket.imageUrl());
+        ArgumentCaptor<PutObjectRequest> published = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(published.capture(), org.mockito.ArgumentMatchers.any(RequestBody.class));
+        assertThat(published.getValue().key())
+                .isEqualTo("hwaryeok/profiles/" + userId + "/fixed-object-id.png");
+        assertThat(published.getValue().metadata())
+                .containsEntry(S3ProductImageStorage.META_PROFILE_USER_ID, userId)
+                .containsKey(S3ProductImageStorage.META_STORED_SIZE);
+        assertThat(published.getValue().cacheControl()).isEqualTo(S3ProductImageStorage.PROFILE_CACHE_CONTROL);
+        assertThat(published.getValue().ifNoneMatch()).isEqualTo("*");
+
+        assertThatThrownBy(() -> storage.confirmProfileUpload(
+                "7e63d468-c128-4ae8-94c3-0d003db8acfb", ticket.objectKey()
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("이 회원용");
+    }
+
+    @Test
+    void profileImagesRequireACompleteDecodablePngOrJpegWithinDimensionLimits() {
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+        long expiresEpoch = NOW.plus(FIVE_MINUTES).getEpochSecond();
+        S3Client s3Client = mock(S3Client.class);
+        S3ProductImageStorage storage = storage(s3Client, mock(S3Presigner.class), NOW);
+
+        byte[] truncated = new byte[] {
+                (byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4
+        };
+        String truncatedKey = profileObjectKey(userId, expiresEpoch, truncated.length, "png");
+        String publishedKey = "hwaryeok/profiles/" + userId + "/fixed-object-id.png";
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ))).thenThrow(missingObject());
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(truncatedKey)
+        ))).thenReturn(validProfileHead(userId, expiresEpoch, truncated.length, "image/png"));
+        when(s3Client.getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class)))
+                .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), truncated));
+
+        assertThatThrownBy(() -> storage.confirmProfileUpload(userId, truncatedKey))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("손상되지 않은");
+        verify(s3Client, never()).putObject(
+                org.mockito.ArgumentMatchers.any(PutObjectRequest.class),
+                org.mockito.ArgumentMatchers.any(RequestBody.class)
+        );
+
+        byte[] oversized = png(S3ProductImageStorage.PROFILE_MAX_WIDTH + 1, 1);
+        String oversizedKey = profileObjectKey(userId, expiresEpoch, oversized.length, "png");
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(oversizedKey)
+        ))).thenReturn(validProfileHead(userId, expiresEpoch, oversized.length, "image/png"));
+        when(s3Client.getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class)))
+                .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), oversized));
+
+        assertThatThrownBy(() -> storage.confirmProfileUpload(userId, oversizedKey))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("2,048px");
+    }
+
+    @Test
+    void repeatedProfileCompletionUsesThePublishedHeadFastPath() {
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+        long expiresEpoch = NOW.plus(FIVE_MINUTES).getEpochSecond();
+        String pendingKey = profileObjectKey(userId, expiresEpoch, PNG.length, "png");
+        String publishedKey = "hwaryeok/profiles/" + userId + "/fixed-object-id.png";
+        S3Client s3Client = mock(S3Client.class);
+        S3ProductImageStorage storage = storage(s3Client, mock(S3Presigner.class), NOW);
+        AtomicReference<PutObjectRequest> published = new AtomicReference<>();
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ))).thenAnswer(ignored -> {
+            PutObjectRequest request = published.get();
+            if (request == null) throw missingObject();
+            return validPublishedProfileHead(
+                    userId, expiresEpoch, PNG.length, request.contentLength(), "image/png"
+            );
+        });
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(pendingKey)
+        ))).thenReturn(validProfileHead(userId, expiresEpoch, PNG.length, "image/png"));
+        when(s3Client.getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class)))
+                .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), PNG));
+        when(s3Client.putObject(
+                org.mockito.ArgumentMatchers.any(PutObjectRequest.class),
+                org.mockito.ArgumentMatchers.any(RequestBody.class)
+        )).thenAnswer(invocation -> {
+            published.set(invocation.getArgument(0, PutObjectRequest.class));
+            return null;
+        });
+
+        String first = storage.confirmProfileUpload(userId, pendingKey);
+        String retry = storage.confirmProfileUpload(userId, pendingKey);
+
+        assertThat(retry).isEqualTo(first);
+        verify(s3Client, times(1)).getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class));
+        verify(s3Client, times(1)).putObject(
+                org.mockito.ArgumentMatchers.any(PutObjectRequest.class),
+                org.mockito.ArgumentMatchers.any(RequestBody.class)
+        );
+        verify(s3Client, times(1)).headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(pendingKey)
+        ));
+        verify(s3Client, times(2)).headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ));
+    }
+
+    @Test
+    void concurrentProfilePublishConflictFinishesWithHeadValidationOnly() {
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+        long expiresEpoch = NOW.plus(FIVE_MINUTES).getEpochSecond();
+        String pendingKey = profileObjectKey(userId, expiresEpoch, PNG.length, "png");
+        String publishedKey = "hwaryeok/profiles/" + userId + "/fixed-object-id.png";
+        S3Client s3Client = mock(S3Client.class);
+        S3ProductImageStorage storage = storage(s3Client, mock(S3Presigner.class), NOW);
+        AtomicReference<PutObjectRequest> attempted = new AtomicReference<>();
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ))).thenAnswer(ignored -> {
+            PutObjectRequest request = attempted.get();
+            if (request == null) throw missingObject();
+            return validPublishedProfileHead(
+                    userId, expiresEpoch, PNG.length, request.contentLength(), "image/png"
+            );
+        });
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(pendingKey)
+        ))).thenReturn(validProfileHead(userId, expiresEpoch, PNG.length, "image/png"));
+        when(s3Client.getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class)))
+                .thenReturn(ResponseBytes.fromByteArray(GetObjectResponse.builder().build(), PNG));
+        when(s3Client.putObject(
+                org.mockito.ArgumentMatchers.any(PutObjectRequest.class),
+                org.mockito.ArgumentMatchers.any(RequestBody.class)
+        )).thenAnswer(invocation -> {
+            attempted.set(invocation.getArgument(0, PutObjectRequest.class));
+            throw S3Exception.builder().statusCode(412).message("already published").build();
+        });
+
+        assertThat(storage.confirmProfileUpload(userId, pendingKey))
+                .isEqualTo("https://cdn.hwaryeok.co.kr/profiles/" + userId + "/fixed-object-id.png");
+        verify(s3Client, times(1)).getObjectAsBytes(org.mockito.ArgumentMatchers.any(GetObjectRequest.class));
+        verify(s3Client, times(2)).headObject(org.mockito.ArgumentMatchers.argThat(
+                (HeadObjectRequest request) -> request != null && request.key().equals(publishedKey)
+        ));
+    }
+
+    @Test
+    void profileTicketsRejectWebpWithoutChangingProductWebpSupport() {
+        S3ProductImageStorage storage = storage(mock(S3Client.class), mock(S3Presigner.class), NOW);
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+
+        assertThatThrownBy(() -> storage.createProfileUploadUrl(userId, "avatar.webp", "image/webp", 128))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("PNG", "JPG");
+    }
+
+    @Test
+    void deletesOnlyAnOwnerBoundPublishedProfileObject() {
+        String userId = "72f525cb-d18e-4cf5-a3d3-ea05a4ed4197";
+        S3Client s3Client = mock(S3Client.class);
+        S3ProductImageStorage storage = storage(s3Client, mock(S3Presigner.class), NOW);
+        String imageUrl = "https://cdn.hwaryeok.co.kr/profiles/" + userId + "/fixed-object-id.png";
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
+                .thenReturn(HeadObjectResponse.builder()
+                        .metadata(Map.of(S3ProductImageStorage.META_PROFILE_USER_ID, userId))
+                        .build());
+
+        storage.deleteProfileImage(userId, imageUrl);
+
+        ArgumentCaptor<DeleteObjectRequest> deleted = ArgumentCaptor.forClass(DeleteObjectRequest.class);
+        verify(s3Client).deleteObject(deleted.capture());
+        assertThat(deleted.getValue().key()).isEqualTo("hwaryeok/profiles/" + userId + "/fixed-object-id.png");
+
+        assertThatThrownBy(() -> storage.deleteProfileImage(
+                userId, "https://cdn.hwaryeok.co.kr/profiles/another-user/fixed-object-id.png"
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("소유");
+        assertThatThrownBy(() -> storage.deleteProfileImage(
+                userId, imageUrl + "?attacker=1"
+        )).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("소유");
+
+        when(s3Client.headObject(org.mockito.ArgumentMatchers.any(HeadObjectRequest.class)))
+                .thenReturn(HeadObjectResponse.builder()
+                        .metadata(Map.of(S3ProductImageStorage.META_PROFILE_USER_ID, "another-user"))
+                        .build());
+        assertThatThrownBy(() -> storage.deleteProfileImage(userId, imageUrl))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("객체");
     }
 
     @Test
@@ -451,6 +676,23 @@ class S3ProductImageStorageTest {
                 + "-fixed-object-id." + extension;
     }
 
+    private String profileObjectKey(String userId, long expiresEpoch, long size, String extension) {
+        return "hwaryeok/pending/profile-images/" + userId + "/" + expiresEpoch + "-" + size
+                + "-fixed-object-id." + extension;
+    }
+
+    private static byte[] png(int width, int height) {
+        try {
+            BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            try (var output = new ByteArrayOutputStream()) {
+                if (!ImageIO.write(image, "png", output)) throw new AssertionError("PNG writer unavailable");
+                return output.toByteArray();
+            }
+        } catch (IOException exception) {
+            throw new AssertionError(exception);
+        }
+    }
+
     private HeadObjectResponse validPendingHead(
             String productId,
             long expiresEpoch,
@@ -467,6 +709,50 @@ class S3ProductImageStorageTest {
             String contentType
     ) {
         return validHead(productId, expiresEpoch, size, contentType, S3ProductImageStorage.IMMUTABLE_CACHE_CONTROL);
+    }
+
+    private HeadObjectResponse validProfileHead(
+            String userId,
+            long expiresEpoch,
+            long size,
+            String contentType
+    ) {
+        return HeadObjectResponse.builder()
+                .contentLength(size)
+                .contentType(contentType)
+                .cacheControl(S3ProductImageStorage.PENDING_CACHE_CONTROL)
+                .eTag("fixed-etag")
+                .metadata(Map.of(
+                        S3ProductImageStorage.META_PROFILE_USER_ID, userId,
+                        S3ProductImageStorage.META_UPLOAD_EXPIRES_AT, Long.toString(expiresEpoch),
+                        S3ProductImageStorage.META_DECLARED_SIZE, Long.toString(size)
+                ))
+                .build();
+    }
+
+    private HeadObjectResponse validPublishedProfileHead(
+            String userId,
+            long expiresEpoch,
+            long declaredSize,
+            long storedSize,
+            String contentType
+    ) {
+        return HeadObjectResponse.builder()
+                .contentLength(storedSize)
+                .contentType(contentType)
+                .cacheControl(S3ProductImageStorage.PROFILE_CACHE_CONTROL)
+                .eTag("published-etag")
+                .metadata(Map.of(
+                        S3ProductImageStorage.META_PROFILE_USER_ID, userId,
+                        S3ProductImageStorage.META_UPLOAD_EXPIRES_AT, Long.toString(expiresEpoch),
+                        S3ProductImageStorage.META_DECLARED_SIZE, Long.toString(declaredSize),
+                        S3ProductImageStorage.META_STORED_SIZE, Long.toString(storedSize)
+                ))
+                .build();
+    }
+
+    private S3Exception missingObject() {
+        return (S3Exception) S3Exception.builder().statusCode(404).message("not found").build();
     }
 
     private HeadObjectResponse validHead(
@@ -497,6 +783,20 @@ class S3ProductImageStorageTest {
                 "cache-control", List.of(S3ProductImageStorage.PENDING_CACHE_CONTROL),
                 "if-none-match", List.of("*"),
                 "x-amz-meta-product-id", List.of(productId),
+                "x-amz-meta-upload-expires-at", List.of(Long.toString(expiresEpoch)),
+                "x-amz-meta-declared-size", List.of(Long.toString(size))
+        );
+    }
+
+
+    private Map<String, List<String>> signedProfileHeaders(String userId, long size, long expiresEpoch) {
+        return Map.of(
+                "host", List.of("fatell-aws-s3.s3.ap-northeast-2.amazonaws.com"),
+                "content-type", List.of("image/png"),
+                "content-length", List.of(Long.toString(size)),
+                "cache-control", List.of(S3ProductImageStorage.PENDING_CACHE_CONTROL),
+                "if-none-match", List.of("*"),
+                "x-amz-meta-profile-user-id", List.of(userId),
                 "x-amz-meta-upload-expires-at", List.of(Long.toString(expiresEpoch)),
                 "x-amz-meta-declared-size", List.of(Long.toString(size))
         );

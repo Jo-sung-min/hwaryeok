@@ -8,6 +8,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,4 +38,28 @@ public class ReviewerProfileController {
     ) {
         return reviewerProfileService.save(jwt.getSubject(), request);
     }
+
+    @PostMapping("/image-upload-url")
+    public ImageUploadUrlResponse createImageUploadUrl(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ImageUploadUrlRequest request,
+            HttpServletResponse response
+    ) {
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        return reviewerProfileService.createImageUploadUrl(jwt.getSubject(), request);
+    }
+
+    @PostMapping("/image-upload-complete")
+    public EditorResponse completeImageUpload(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ImageUploadCompleteRequest request
+    ) {
+        return reviewerProfileService.completeImageUpload(jwt.getSubject(), request);
+    }
+
+    @DeleteMapping("/image")
+    public EditorResponse deleteImage(@AuthenticationPrincipal Jwt jwt) {
+        return reviewerProfileService.deleteImage(jwt.getSubject());
+    }
+
 }

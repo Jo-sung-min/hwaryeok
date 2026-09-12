@@ -15,7 +15,9 @@ import com.hwaryeok.auth.PasswordChangeUnavailableException;
 import com.hwaryeok.auth.PasswordUnchangedException;
 import com.hwaryeok.auth.TooManyLoginAttemptsException;
 import com.hwaryeok.review.ReviewAlreadyExistsException;
+import com.hwaryeok.review.ProfileImageUploadQuotaExceededException;
 import com.hwaryeok.product.ProductAlreadyExistsException;
+import com.hwaryeok.user.DuplicateNicknameException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
@@ -109,6 +111,20 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", exception.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(DuplicateNicknameException.class)
+    public ResponseEntity<ApiError> handleDuplicateNickname(
+            DuplicateNicknameException exception,
+            HttpServletRequest request
+    ) {
+        return build(
+                HttpStatus.CONFLICT,
+                "NICKNAME_ALREADY_EXISTS",
+                exception.getMessage(),
+                request,
+                Map.of("nickname", exception.getMessage())
+        );
+    }
+
     @ExceptionHandler(CurrentPasswordMismatchException.class)
     public ResponseEntity<ApiError> handleCurrentPasswordMismatch(
             CurrentPasswordMismatchException exception,
@@ -169,6 +185,23 @@ public class GlobalExceptionHandler {
         ApiError error = error(
                 HttpStatus.TOO_MANY_REQUESTS,
                 "TOO_MANY_LOGIN_ATTEMPTS",
+                exception.getMessage(),
+                request,
+                Map.of()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", Long.toString(exception.getRetryAfterSeconds()))
+                .body(error);
+    }
+
+    @ExceptionHandler(ProfileImageUploadQuotaExceededException.class)
+    public ResponseEntity<ApiError> handleProfileImageUploadQuota(
+            ProfileImageUploadQuotaExceededException exception,
+            HttpServletRequest request
+    ) {
+        ApiError error = error(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "PROFILE_IMAGE_DAILY_LIMIT",
                 exception.getMessage(),
                 request,
                 Map.of()

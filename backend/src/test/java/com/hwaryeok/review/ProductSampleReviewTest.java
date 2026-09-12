@@ -10,6 +10,7 @@ import com.hwaryeok.common.error.ResourceNotFoundException;
 import com.hwaryeok.product.AdminProductRequest;
 import com.hwaryeok.product.ProductPublicationStatus;
 import com.hwaryeok.product.ProductService;
+import com.hwaryeok.user.ActivityNickname;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +54,12 @@ class ProductSampleReviewTest {
     @Test
     void aRealReviewReplacesTheSampleInPublicResultsButDoesNotDeleteIt() {
         String userId = UUID.randomUUID().toString();
+        String nickname = "실사용 리뷰어";
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, NULL, '실사용 리뷰어', 'USER', 'ACTIVE')
-                """, userId, userId + "@example.com");
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, NULL, ?, ?, 'USER', 'ACTIVE')
+                """, userId, userId + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)));
         jdbc.update("""
                 INSERT INTO reviews
                     (id, product_id, user_id, template_id, total_score, content, skin_type, usage_period, repurchase_yn)

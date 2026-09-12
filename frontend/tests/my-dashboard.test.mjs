@@ -12,7 +12,10 @@ test("personal dashboard renders actual metrics and text-only product lists", as
   assert.match(html, /나머지 1개 펼쳐보기/);
   assert.match(html, /찜 해제/);
   assert.match(html, /href="\/my\/reviewer-profile"/);
-  assert.match(html, /내 리뷰어 소개/);
+  assert.match(html, /내 활동 프로필/);
+  assert.match(html, /활동명·프로필 사진·소개·외부 채널 관리/);
+  assert.match(html, /href="\/reviewers\/qa-user#reviews"/);
+  assert.match(html, /작성 리뷰 관리/);
   assert.match(html, /회원정보/);
   assert.match(html, /qa@example\.invalid/);
   assert.match(html, /data-password-change-form="true"/);

@@ -1,6 +1,7 @@
 .page { padding: 24px 20px 44px; background: #fff; color: #30313a; }
 .header { display:flex; align-items:center; gap:12px; margin-bottom:22px; }
-.avatar { width:46px; height:46px; display:grid; place-items:center; background:#fcecf2; border:1px solid #f3d5e0; color:#ae3e67; border-radius:16px; font-size:22px; font-weight:700; flex-shrink:0; }
+.avatar { position:relative; width:46px; height:46px; display:grid; overflow:hidden; place-items:center; background:#fcecf2; border:1px solid #f3d5e0; color:#ae3e67; border-radius:16px; font-size:22px; font-weight:700; flex-shrink:0; }
+.avatar img { object-fit:cover; }
 .identity { flex:1; min-width:0; }
 .eyebrow { color:#ad4168!important; font-size:10px!important; letter-spacing:.1em; font-weight:700; }
 .header h1 { font-size:20px; line-height:1.5; font-weight:750; overflow-wrap:anywhere; }

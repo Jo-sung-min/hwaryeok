@@ -75,6 +75,7 @@ test("Next image config retains API media and adds the normalized CDN path", () 
     [
       "http://localhost:8081/api/v1/media/products/**",
       "https://cdn.hwaryeok.co.kr/hwaryeok/products/**",
+      "https://cdn.hwaryeok.co.kr/hwaryeok/profiles/**",
     ],
   );
 });

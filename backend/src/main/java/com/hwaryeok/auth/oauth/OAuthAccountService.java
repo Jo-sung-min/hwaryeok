@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.hwaryeok.auth.AdminEmailPolicy;
+import com.hwaryeok.user.ActivityNickname;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -53,11 +54,14 @@ public class OAuthAccountService {
         }
 
         Instant now = Instant.now();
+        String activityNickname = ActivityNickname.uniqueCandidate(
+                profile.nickname(), userRepository::existsByNicknameKey
+        );
         User user = new User(
                 UUID.randomUUID().toString(),
                 userEmail,
                 null,
-                profile.nickname(),
+                activityNickname,
                 userEmail == null ? "USER" : adminEmailPolicy.roleFor(userEmail),
                 "ACTIVE",
                 now,

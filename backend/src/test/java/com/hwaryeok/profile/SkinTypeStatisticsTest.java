@@ -37,7 +37,7 @@ class SkinTypeStatisticsTest {
     private void add(String type, String role, String status, boolean saved) {
         String id = UUID.randomUUID().toString();
         Instant now = Instant.now();
-        users.saveAndFlush(new User(id, id + "@example.test", "unused", "통계 테스트", role, status, now, now));
+        users.saveAndFlush(new User(id, id + "@example.test", "unused", "통계 " + id.substring(0, 6), role, status, now, now));
         UserSkinProfile profile = new UserSkinProfile(id, type, now, now);
         if (saved) profile.update(type, "BALANCED", "BALANCED", "MEDIUM", "RARE", "NONE", "RARE", "LOW", "LIGHT", "MINIMAL", "DAILY", now);
         profiles.saveAndFlush(profile);

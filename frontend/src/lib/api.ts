@@ -2,7 +2,7 @@ import "server-only";
 import type { RisingProductRankingPage } from "@/lib/types";
 import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
-import type { ProductImageUploadMetadata, ProductImageUploadTicket } from "@/lib/product-image-upload";
+import type { ProductImageUploadMetadata, ProductImageUploadTicket, ProfileImageUploadMetadata } from "@/lib/product-image-upload";
 
 import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, AdminReviewKind, AdminReviewPage, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRecommendation, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
@@ -537,19 +537,54 @@ export function rateReviewFirepower(accessToken: string, reviewId: string, score
   });
 }
 
-export function createProductReview(
-  accessToken: string,
-  productId: string,
-  input: {
-    content: string;
-    skinType: string;
-    usagePeriod: ReviewDetail["usagePeriod"];
-    repurchaseYn: boolean;
-    scores: { criteriaId: string; score: number }[];
-  },
-): Promise<ReviewDetail> {
+export type ReviewInput = {
+  content: string;
+  skinType: string;
+  usagePeriod: ReviewDetail["usagePeriod"];
+  repurchaseYn: boolean;
+  scores: { criteriaId: string; score: number }[];
+};
+
+export function createProductReview(accessToken: string, productId: string, input: ReviewInput): Promise<ReviewDetail> {
   return requestJson<ReviewDetail>(`/products/${encodeURIComponent(productId)}/reviews`, {
     method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function createMyReviewerProfileImageUploadUrl(
+  accessToken: string,
+  input: ProfileImageUploadMetadata,
+): Promise<ProductImageUploadTicket> {
+  return requestJson<ProductImageUploadTicket>("/users/me/reviewer-profile/image-upload-url", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteMyReviewerProfileImage(accessToken: string): Promise<MyReviewerProfile> {
+  return requestJson<MyReviewerProfile>("/users/me/reviewer-profile/image", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function completeMyReviewerProfileImageUpload(
+  accessToken: string,
+  objectKey: string,
+): Promise<MyReviewerProfile> {
+  return requestJson<MyReviewerProfile>("/users/me/reviewer-profile/image-upload-complete", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ objectKey }),
+  });
+}
+
+export function updateProductReview(accessToken: string, productId: string, input: ReviewInput): Promise<ReviewDetail> {
+  return requestJson<ReviewDetail>(`/products/${encodeURIComponent(productId)}/reviews/me`, {
+    method: "PUT",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify(input),
   });

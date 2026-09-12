@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { ArrowRight, BarChart3, ChevronRight, Droplets, FlaskConical, MessageCircle, SlidersHorizontal, Sparkles, TrendingUp, UsersRound } from "lucide-react";
 import { getIngredientRanking, getIngredientRankingOptions, getProductPage, getReviewerRanking, getRisingProductRanking, getWeeklyRanking } from "@/lib/api";
@@ -76,7 +77,7 @@ export async function HomeCatalog({ requestedFilters, homePath = "/", intro }: {
   ]);
   const slides = buildWeeklyRankingSlides(weeklyRanking, catalog.content);
 
-  return <div className={`container-page ${styles.home}`}>
+  return <div className={`container-page ${styles.home}`} data-home-page={homePath === "/" ? "true" : undefined}>
     <HomePersonalization user={user} profile={savedProfile} />
     {intro ?? <div className={styles.pageIntro}><p className={styles.eyebrow}>나만의 성분, 나만의 랭킹</p><h1>화장품의 기준을, <span>내 피부로.</span></h1></div>}
     <HomeBanner slides={slides} />
@@ -108,7 +109,7 @@ export async function HomeCatalog({ requestedFilters, homePath = "/", intro }: {
 
     <section id="reviewer-ranking" className={`${styles.shelf} ${styles.rankingPreview}`} aria-labelledby="reviewer-ranking-title" data-ranking-preview="reviewers">
       <PreviewHeading eyebrow={<><UsersRound size={14} /> 도움이 된 리뷰로</>} title="리뷰어 랭킹" href="/reviewers" id="reviewer-ranking-title" />
-      {reviewerResult.failed ? <PreviewState icon={<UsersRound size={22} />} title="리뷰어 랭킹을 잠시 불러오지 못했어요" href="/reviewers" linkLabel="랭킹에서 다시 보기" /> : reviewerResult.data?.content.length ? <HomeRankingCarousel label="리뷰어 랭킹" itemCount={reviewerResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={`${styles.rankingPreviewList} ${styles.reviewerItems}`} ordered>{reviewerResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((reviewer) => <li key={reviewer.userId} className={styles.reviewerCard}><Link href={`/reviewers/${encodeURIComponent(reviewer.userId)}`}><div className={styles.reviewerTop}><span className={styles.reviewerRank} aria-label={reviewer.rank === null ? "순위 집계 전" : `${reviewer.rank}위`}>{reviewer.rank ?? "—"}</span><span className={styles.reviewerAvatar} aria-hidden="true">{Array.from(reviewer.nickname)[0]}</span></div><h3>{reviewer.nickname}</h3><p className={styles.reviewerSkin}><Droplets size={12} />{reviewer.skinType ? `${reviewer.skinType === "민감" ? "민감성" : reviewer.skinType} 피부` : "피부타입 미등록"}</p><p className={styles.reviewerMeta}>작성 리뷰 {reviewer.reviewCount}개 · 평가자 {reviewer.uniqueRaterCount}명</p><ReviewerFirepower score={reviewer.reviewFirepower} compact /></Link></li>)}</HomeRankingCarousel> : <PreviewState icon={<UsersRound size={22} />} title="첫 리뷰어를 기다리고 있어요" description="솔직한 리뷰에 다른 사용자의 평가가 모이면 리뷰 화력 순위가 생겨요." href="/products" linkLabel="리뷰할 제품 찾기" />}
+      {reviewerResult.failed ? <PreviewState icon={<UsersRound size={22} />} title="리뷰어 랭킹을 잠시 불러오지 못했어요" href="/reviewers" linkLabel="랭킹에서 다시 보기" /> : reviewerResult.data?.content.length ? <HomeRankingCarousel label="리뷰어 랭킹" itemCount={reviewerResult.data.content.length} previewLimit={HOME_RANKING_PREVIEW_LIMIT} listClassName={`${styles.rankingPreviewList} ${styles.reviewerItems}`} ordered>{reviewerResult.data.content.slice(0, HOME_RANKING_PREVIEW_LIMIT).map((reviewer) => <li key={reviewer.userId} className={styles.reviewerCard}><Link href={`/reviewers/${encodeURIComponent(reviewer.userId)}`}><div className={styles.reviewerTop}><span className={styles.reviewerRank} aria-label={reviewer.rank === null ? "순위 집계 전" : `${reviewer.rank}위`}>{reviewer.rank ?? "—"}</span><span className={styles.reviewerAvatar} aria-hidden="true">{reviewer.profileImageUrl ? <Image src={reviewer.profileImageUrl} alt="" fill sizes="38px" /> : Array.from(reviewer.nickname)[0]}</span></div><h3>{reviewer.nickname}</h3><p className={styles.reviewerSkin}><Droplets size={12} />{reviewer.skinType ? `${reviewer.skinType === "민감" ? "민감성" : reviewer.skinType} 피부` : "피부타입 미등록"}</p><p className={styles.reviewerMeta}>작성 리뷰 {reviewer.reviewCount}개 · 평가자 {reviewer.uniqueRaterCount}명</p><ReviewerFirepower score={reviewer.reviewFirepower} compact /></Link></li>)}</HomeRankingCarousel> : <PreviewState icon={<UsersRound size={22} />} title="첫 리뷰어를 기다리고 있어요" description="솔직한 리뷰에 다른 사용자의 평가가 모이면 리뷰 화력 순위가 생겨요." href="/products" linkLabel="리뷰할 제품 찾기" />}
     </section>
 
     <section className={styles.bottomGuide} aria-label="화력 집계 원칙">

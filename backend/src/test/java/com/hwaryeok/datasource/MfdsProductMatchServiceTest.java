@@ -28,12 +28,13 @@ class MfdsProductMatchServiceTest {
     @BeforeEach
     void setUp() {
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, 'ADMIN', 'ACTIVE', ?, ?)
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 'ADMIN', 'ACTIVE', ?, ?)
                 """,
                 REVIEWER_ID,
                 "mfds-reviewer@example.com",
                 "not-used-in-this-test",
+                "식약처검수자",
                 "식약처검수자",
                 Instant.now(),
                 Instant.now()

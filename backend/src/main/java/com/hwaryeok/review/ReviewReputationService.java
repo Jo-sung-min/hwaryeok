@@ -36,8 +36,8 @@ public class ReviewReputationService {
 
     @Transactional
     public ReviewCommunityRatingResponse rate(String reviewId, String voterId, Integer score) {
-        if (score == null || score < 1 || score > 5) {
-            throw new IllegalArgumentException("리뷰 화력은 1점부터 5점까지 선택해 주세요.");
+        if (score == null || score < 1 || score > 10) {
+            throw new IllegalArgumentException("리뷰 도움 평가는 1점부터 10점까지 선택해 주세요.");
         }
         // Every write from a voter takes the same row lock, including the first rating.
         // Together with the composite primary key this makes repeated/concurrent PUTs idempotent.
@@ -120,10 +120,12 @@ public class ReviewReputationService {
     public ReviewerProfileResponse profile(String userId) {
         return rankedProfiles(null).stream().filter(profile -> profile.userId().equals(userId)).findFirst()
                 .orElseGet(() -> jdbc.query("""
-                        SELECT u.id, u.nickname, s.skin_type FROM users u
+                        SELECT u.id, u.nickname, p.profile_image_url, s.skin_type FROM users u
                         LEFT JOIN user_skin_profiles s ON s.user_id = u.id
+                        LEFT JOIN reviewer_profiles p ON p.user_id = u.id
                         WHERE u.id = ? AND u.status = 'ACTIVE'
                         """, (rs, rowNum) -> new ReviewerProfileResponse(rs.getString("id"), rs.getString("nickname"),
+                        rs.getString("profile_image_url"),
                         rs.getString("skin_type"), null, null, 0, 0, 0, null, null), userId)
                         .stream().findFirst().orElseThrow(() -> new ResourceNotFoundException("리뷰 사용자를 찾을 수 없어요.")));
     }
@@ -153,15 +155,18 @@ public class ReviewReputationService {
                            SUM(vote_count) AS received_count, COUNT(*) AS evaluator_count
                     FROM evaluator_means GROUP BY user_id
                 )
-                SELECT t.*, q.received_mean, q.received_count, q.evaluator_count
-                FROM review_totals t LEFT JOIN reputation q ON q.user_id = t.user_id
+                SELECT t.*, q.received_mean, q.received_count, q.evaluator_count, p.profile_image_url
+                FROM review_totals t
+                LEFT JOIN reputation q ON q.user_id = t.user_id
+                LEFT JOIN reviewer_profiles p ON p.user_id = t.user_id
                 """, (rs, rowNum) -> {
             BigDecimal receivedMean = rs.getBigDecimal("received_mean");
             long evaluatorCount = rs.getLong("evaluator_count");
             BigDecimal firepower = receivedMean == null ? null : BigDecimal.valueOf(
-                    50 + (receivedMean.doubleValue() * 20 - 50) * evaluatorCount / (evaluatorCount + 5.0))
+                    50 + (receivedMean.doubleValue() * 10 - 50) * evaluatorCount / (evaluatorCount + 5.0))
                     .setScale(1, RoundingMode.HALF_UP);
             return new ReviewerProfileResponse(rs.getString("user_id"), rs.getString("nickname"),
+                    rs.getString("profile_image_url"),
                     rs.getString("skin_type"), firepower, rounded(receivedMean), rs.getLong("received_count"),
                     evaluatorCount, rs.getLong("review_count"), rounded(rs.getBigDecimal("average_review_score")), null);
         });

@@ -13,12 +13,20 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.hwaryeok.product.ProductImageUploadUrlResponse;
+import com.hwaryeok.product.S3ProductImageStorage;
 import com.hwaryeok.user.ActiveUserService;
+import com.hwaryeok.user.ActivityNickname;
+import com.hwaryeok.user.DuplicateNicknameException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.StringUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -74,21 +82,27 @@ public class ReviewerProfileService {
     private final JdbcTemplate jdbc;
     private final ActiveUserService activeUserService;
     private final ObjectMapper objectMapper;
+    private final S3ProductImageStorage imageStorage;
+    private final ProfileImageUploadQuota imageUploadQuota;
 
     public ReviewerProfileService(
             JdbcTemplate jdbc,
             ActiveUserService activeUserService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            S3ProductImageStorage imageStorage,
+            ProfileImageUploadQuota imageUploadQuota
     ) {
         this.jdbc = jdbc;
         this.activeUserService = activeUserService;
         this.objectMapper = objectMapper;
+        this.imageStorage = imageStorage;
+        this.imageUploadQuota = imageUploadQuota;
     }
 
     public EditorResponse mine(String userId) {
         activeUserService.requireActive(userId);
         return jdbc.query("""
-                SELECT u.id, u.nickname, p.introduction_json, p.blog_url, p.instagram_url, p.updated_at
+                SELECT u.id, u.nickname, p.profile_image_url, p.introduction_json, p.blog_url, p.instagram_url, p.updated_at
                 FROM users u LEFT JOIN reviewer_profiles p ON p.user_id = u.id
                 WHERE u.id = ? AND u.status = 'ACTIVE'
                 """, (rs, rowNum) -> editor(rs), userId).stream().findFirst()
@@ -102,10 +116,21 @@ public class ReviewerProfileService {
         activeUserService.requireActiveForUpdate(userId);
         if (request == null) throw new IllegalArgumentException("소개 정보를 입력해 주세요.");
 
+        String nickname = ActivityNickname.normalize(request.nickname());
         String introduction = normalizeBioBlocks(request.bioBlocks());
         String blogUrl = normalizeExternalUrl(request.blogUrl(), "블로그", null);
         String instagramUrl = normalizeExternalUrl(request.instagramUrl(), "Instagram", INSTAGRAM_HOSTS);
         Instant now = Instant.now();
+        try {
+            jdbc.update("UPDATE users SET nickname = ?, nickname_key = ?, updated_at = ? WHERE id = ?",
+                    nickname, ActivityNickname.key(nickname), Timestamp.from(now), userId);
+        } catch (DataIntegrityViolationException exception) {
+            throw new DuplicateNicknameException();
+        }
+        jdbc.update(
+                "UPDATE expert_questions SET author_nickname = ?, updated_at = ? WHERE user_id = ?",
+                nickname, Timestamp.from(now), userId
+        );
         int updated = jdbc.update("""
                 UPDATE reviewer_profiles
                 SET introduction_json = ?, blog_url = ?, instagram_url = ?, updated_at = ?
@@ -119,6 +144,83 @@ public class ReviewerProfileService {
                     """, userId, introduction, blogUrl, instagramUrl, Timestamp.from(now), Timestamp.from(now));
         }
         return mine(userId);
+    }
+
+    @Transactional
+    public ImageUploadUrlResponse createImageUploadUrl(String userId, ImageUploadUrlRequest request) {
+        if (request == null) throw new IllegalArgumentException("업로드할 이미지 정보를 입력해 주세요.");
+        imageUploadQuota.reserve(userId);
+        ProductImageUploadUrlResponse ticket = imageStorage.createProfileUploadUrl(
+                userId, request.fileName(), request.contentType(), request.size()
+        );
+        return new ImageUploadUrlResponse(
+                ticket.uploadUrl(), ticket.objectKey(), ticket.imageUrl(), ticket.headers(), ticket.expiresAt()
+        );
+    }
+
+    @Transactional
+    public EditorResponse completeImageUpload(String userId, ImageUploadCompleteRequest request) {
+        activeUserService.requireActiveForUpdate(userId);
+        if (request == null) throw new IllegalArgumentException("업로드한 이미지 정보를 입력해 주세요.");
+        String previousImageUrl = currentProfileImageUrl(userId);
+        String imageUrl = imageStorage.confirmProfileUpload(userId, request.objectKey());
+        upsertProfileImage(userId, imageUrl);
+        if (StringUtils.hasText(previousImageUrl) && !previousImageUrl.equals(imageUrl)) {
+            deleteAfterCommit(userId, previousImageUrl);
+        }
+        return mine(userId);
+    }
+
+    @Transactional
+    public EditorResponse deleteImage(String userId) {
+        activeUserService.requireActiveForUpdate(userId);
+        String currentImageUrl = currentProfileImageUrl(userId);
+        if (!StringUtils.hasText(currentImageUrl)) return mine(userId);
+        jdbc.update(
+                "UPDATE reviewer_profiles SET profile_image_url = NULL, updated_at = ? WHERE user_id = ?",
+                Timestamp.from(Instant.now()), userId
+        );
+        deleteAfterCommit(userId, currentImageUrl);
+        return mine(userId);
+    }
+
+    private void upsertProfileImage(String userId, String imageUrl) {
+        Instant now = Instant.now();
+        int updated = jdbc.update(
+                "UPDATE reviewer_profiles SET profile_image_url = ?, updated_at = ? WHERE user_id = ?",
+                imageUrl, Timestamp.from(now), userId
+        );
+        if (updated == 0) {
+            jdbc.update("""
+                    INSERT INTO reviewer_profiles (user_id, introduction_json, profile_image_url, created_at, updated_at)
+                    VALUES (?, '[]', ?, ?, ?)
+                    """, userId, imageUrl, Timestamp.from(now), Timestamp.from(now));
+        }
+    }
+
+    private String currentProfileImageUrl(String userId) {
+        return jdbc.query(
+                "SELECT profile_image_url FROM reviewer_profiles WHERE user_id = ?",
+                rs -> rs.next() ? rs.getString("profile_image_url") : null,
+                userId
+        );
+    }
+
+    private void deleteAfterCommit(String userId, String imageUrl) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            throw new IllegalStateException("프로필 이미지 삭제는 커밋 이후에만 실행할 수 있어요.");
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    imageStorage.deleteProfileImage(userId, imageUrl);
+                } catch (RuntimeException exception) {
+                    log.warn("Committed profile image change but could not delete previous object for user {}: {}",
+                            userId, exception.getMessage());
+                }
+            }
+        });
     }
 
     public PublicResponse publicProfile(ReviewerProfileResponse stats) {
@@ -139,6 +241,7 @@ public class ReviewerProfileService {
         return new EditorResponse(
                 rs.getString("id"),
                 rs.getString("nickname"),
+                rs.getString("profile_image_url"),
                 parseBioBlocks(stored, rs.getString("id")),
                 rs.getString("blog_url"),
                 rs.getString("instagram_url"),

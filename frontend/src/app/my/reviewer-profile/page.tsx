@@ -23,7 +23,7 @@ export default async function MyReviewerProfilePage() {
         <div className={styles.headerIcon} aria-hidden="true"><Megaphone size={25} /></div>
         <div className={styles.headerCopy}>
           <p>MY REVIEWER PAGE</p>
-          <h1>{user.nickname}님의 리뷰어 소개</h1>
+          <h1>{safeProfile.nickname}님의 리뷰어 소개</h1>
           <span>좋은 리뷰가 내 채널과 취향을 알리는 포트폴리오가 되도록 꾸며보세요.</span>
         </div>
         <Link href={`/reviewers/${encodeURIComponent(user.id)}`} className={styles.publicLink}>공개페이지 <ArrowUpRight size={14} /></Link>

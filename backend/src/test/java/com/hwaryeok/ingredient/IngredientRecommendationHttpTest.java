@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.UUID;
 
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,10 +112,12 @@ class IngredientRecommendationHttpTest {
     @Test
     void roundTripsOptionalCheekOilinessAndStoresExpandedConcernLabels() throws Exception {
         userId = UUID.randomUUID().toString();
+        String nickname = "볼 유분 테스트";
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, 'unused', '볼 유분 테스트', 'USER', 'ACTIVE')
-                """, userId, userId + "@example.com");
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, 'unused', ?, ?, 'USER', 'ACTIVE')
+                """, userId, userId + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)));
         String token = token(userId);
         String profile = """
                 {

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { useActionState, useMemo, useState } from "react";
-import { BarChart3, Check, ChevronDown, MessageCircle, Send, ShieldCheck, Sparkles } from "lucide-react";
-import { createReviewAction, type ReviewActionState } from "./review-actions";
+import { BarChart3, Check, ChevronDown, MessageCircle, PencilLine, Save, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { createReviewAction, updateReviewAction, type ReviewActionState } from "./review-actions";
 import type { ProductReviewSummary, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
 const scoreLabels = ["", "매우 아쉬워요", "아쉬워요", "보통이에요", "만족해요", "매우 만족해요"];
@@ -23,18 +23,18 @@ type ReviewSectionProps = {
   summary: ProductReviewSummary;
   isAuthenticated: boolean;
   savedSkinType: string | null;
+  initialEditing?: boolean;
 };
 
-export function ReviewSection({ productId, criteria, summary, isAuthenticated, savedSkinType }: ReviewSectionProps) {
-  const initialScores = Object.fromEntries(criteria.criteria.map((item) => [item.id, 3]));
-  const [scores, setScores] = useState<Record<string, number>>(initialScores);
-  const initialState: ReviewActionState = { success: false, message: "" };
-  const reviewAction = createReviewAction.bind(null, productId, criteria.criteria.map((item) => item.id));
-  const [state, action, pending] = useActionState(reviewAction, initialState);
-  const previewScore = useMemo(() => {
-    const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    return Math.round((total / (criteria.criteria.length * 5)) * 100);
-  }, [criteria.criteria.length, scores]);
+export function ReviewSection({ productId, criteria, summary, isAuthenticated, savedSkinType, initialEditing = false }: ReviewSectionProps) {
+  const viewerReview = summary.viewerReview ?? null;
+  const viewerReviewCriteria = summary.viewerReviewCriteria ?? criteria;
+  const [editing, setEditing] = useState(initialEditing && Boolean(viewerReview));
+
+  function openEditor() {
+    setEditing(true);
+    window.requestAnimationFrame(() => document.getElementById("my-review-editor")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   return (
     <section className="container-page pb-10" id="reviews">
@@ -75,7 +75,13 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
                     <div className="shrink-0 text-right"><ReviewPetalRating score={Number(review.totalScore)} compact className="mb-0.5 justify-end" /><strong className="font-myeongjo text-xl text-[#9b4a61]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#8d7d83]">{review.sampleReview ? "예시 점수" : "리뷰점수"}</p></div>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#655a5e] [overflow-wrap:anywhere]">{review.content}</p>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-[10px] text-[#93858a]"><span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span><time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time></div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[10px] text-[#93858a]">
+                    <span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span>
+                    <span className="ml-auto flex items-center gap-3">
+                      <time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium" }).format(new Date(review.createdAt))}</time>
+                      {!review.sampleReview && viewerReview?.id === review.id && <button type="button" onClick={openEditor} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-[#dfcdd3] px-3 font-bold text-[#9b405e] transition hover:bg-[#fff4f7]"><PencilLine size={12} />내 리뷰 수정</button>}
+                    </span>
+                  </div>
                   {!review.sampleReview && review.authorId && <ReviewFirepowerVote reviewId={review.id} productId={productId} authorId={review.authorId} rating={review.communityRating} isAuthenticated={isAuthenticated} returnTo={`/products/${productId}#reviews`} />}
                 </article>
               ))}
@@ -103,44 +109,23 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
           <div className="mt-5 border-t border-[#eee5e8] pt-5">
             {!isAuthenticated ? (
               <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#75686e]">로그인하면 내 피부 타입과 함께 리뷰를 남길 수 있어요.</p><Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="line-btn">로그인하고 리뷰 쓰기</Link></div>
+            ) : viewerReview ? (
+              <div id="my-review-editor" className="scroll-mt-24">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ead3da] bg-[#fff9fb] px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-[#765e67]"><Check size={17} className="text-[#a64b6a]" /><div><p className="font-semibold">내가 작성한 리뷰가 있어요.</p><p className="mt-0.5 text-[11px] text-[#8b7b81]">내용과 항목별 점수를 언제든 다시 수정할 수 있어요.</p></div></div>
+                  <button type="button" onClick={() => setEditing((current) => !current)} aria-expanded={editing} aria-controls="my-review-form" className="line-btn !min-h-10 text-xs"><PencilLine size={14} />{editing ? "수정 닫기" : "내 리뷰 수정"}</button>
+                </div>
+                {editing && <div id="my-review-form" className="mt-5 border-t border-[#eee5e8] pt-5"><ReviewForm productId={productId} criteria={viewerReviewCriteria} savedSkinType={savedSkinType} review={viewerReview} /></div>}
+              </div>
             ) : summary.viewerHasReviewed ? (
               <div className="flex items-center gap-2 text-sm text-[#765e67]"><Check size={17} className="text-[#a64b6a]" /><div><p className="font-semibold">이미 이 제품에 리뷰를 남겼어요.</p><p className="mt-0.5 text-[11px] text-[#8b7b81]">한 사용자는 한 제품에 하나의 리뷰만 작성할 수 있어요.</p></div></div>
-            ) : state.success ? (
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#52705b]" role="status"><Check size={17} />{state.message}</div>
             ) : (
               <details className="group">
                 <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 rounded-xl border border-[#dfcdd3] px-4 text-sm font-bold text-[#9b405e]">
                   <span>이 제품은 어떠셨나요? 리뷰 작성하기</span>
                   <ChevronDown size={17} className="shrink-0 transition group-open:rotate-180" />
                 </summary>
-                <form action={action} className="space-y-6 pt-5">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#eee5e8] pb-4"><p className="text-xs leading-5 text-[#786a70]"><ShieldCheck size={14} className="mr-1.5 inline text-[#b14b69]" />한 제품에 하나의 리뷰만 등록할 수 있어요.</p><p className="grid shrink-0 justify-items-end text-xs"><ReviewPetalRating score={previewScore} compact className="mb-0.5" /><span><strong className="font-myeongjo text-xl text-[#9b405e]">{previewScore}</strong>점 예상</span></p></div>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-x-5 gap-y-2">
-                    {criteria.criteria.map((item) => (
-                      <fieldset key={item.id} className="border-b border-[#f0e8ea] py-3">
-                        <legend className="sr-only">{item.name}</legend>
-                        <div className="mb-3"><div className="flex items-center justify-between gap-3"><strong className="text-sm">{item.name}</strong><span className="text-xs font-bold text-[#9b4a61]">{scores[item.id]} / 5</span></div><p className="mt-1 text-[11px] leading-5 text-[#83767b]">{item.description}</p></div>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {[1, 2, 3, 4, 5].map((score) => (
-                            <label key={score} className={`grid min-h-10 cursor-pointer place-items-center rounded-lg border text-xs font-bold transition ${scores[item.id] === score ? "border-[#a6536c] bg-[#a6536c] text-white" : "border-[#ddd1d5] bg-white text-[#796d72] hover:border-[#b87588]"}`}>
-                              <input type="radio" name={`score_${item.id}`} value={score} checked={scores[item.id] === score} onChange={() => setScores((current) => ({ ...current, [item.id]: score }))} className="sr-only" aria-label={`${item.name} ${score}점, ${scoreLabels[score]}`} />
-                              {score}
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
-                    <Field label="피부 타입" error={state.fieldErrors?.skinType}><select name="skinType" defaultValue={normalizeSkinType(savedSkinType)} className="input" required><option value="">선택해 주세요</option>{["건성", "지성", "복합성", "수부지", "중성", "민감성"].map((value) => <option key={value}>{value}</option>)}</select></Field>
-                    <Field label="사용 기간" error={state.fieldErrors?.usagePeriod}><select name="usagePeriod" defaultValue="ONE_MONTH" className="input" required>{Object.entries(usagePeriodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-                  </div>
-                  <Field label="재구매 의향" error={state.fieldErrors?.repurchaseYn}><div className="grid grid-cols-2 gap-2">{[["true", "다시 구매할래요"], ["false", "재구매는 고민돼요"]].map(([value, label], index) => <label key={value} className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#ddd1d5] bg-white px-3 text-center text-xs font-semibold has-[:checked]:border-[#a6536c] has-[:checked]:text-[#963f58]"><input type="radio" name="repurchaseYn" value={value} defaultChecked={index === 0} className="sr-only" />{label}</label>)}</div></Field>
-                  <Field label="사용 후기" error={state.fieldErrors?.content}><textarea name="content" minLength={10} maxLength={2000} rows={5} required className="input min-h-32 resize-y py-3" placeholder="어떤 피부에서 얼마나 사용했는지, 좋았던 점과 아쉬웠던 점을 구체적으로 알려주세요." /></Field>
-                  {(state.message || state.fieldErrors?.scores) && <p role="alert" className="rounded-lg border border-[#edd4db] px-4 py-3 text-sm text-[#a2475c]">{state.fieldErrors?.scores ?? state.message}</p>}
-                  <button disabled={pending} className="ink-btn w-full disabled:opacity-55">{pending ? "리뷰점수를 계산하는 중…" : <><Send size={17} /> {previewScore}점으로 리뷰 등록하기</>}</button>
-                </form>
+                <div className="pt-5"><ReviewForm productId={productId} criteria={criteria} savedSkinType={savedSkinType} /></div>
               </details>
             )}
           </div>
@@ -148,6 +133,62 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
       </div>
     </section>
   );
+}
+
+function ReviewForm({ productId, criteria, savedSkinType, review }: {
+  productId: string;
+  criteria: ReviewCriteria;
+  savedSkinType: string | null;
+  review?: ReviewDetail;
+}) {
+  const [scores, setScores] = useState<Record<string, number>>(() => {
+    const savedScores = new Map((review?.scores ?? []).map((item) => [item.criteriaId, item.score]));
+    return Object.fromEntries(criteria.criteria.map((item) => [item.id, savedScores.get(item.id) ?? 3]));
+  });
+  const criteriaIds = criteria.criteria.map((item) => item.id);
+  const reviewAction = review
+    ? updateReviewAction.bind(null, productId, criteriaIds)
+    : createReviewAction.bind(null, productId, criteriaIds);
+  const initialState: ReviewActionState = { success: false, message: "" };
+  const [state, action, pending] = useActionState(reviewAction, initialState);
+  const previewScore = useMemo(() => {
+    if (criteria.criteria.length === 0) return 0;
+    const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    return Math.round((total / (criteria.criteria.length * 5)) * 100);
+  }, [criteria.criteria.length, scores]);
+
+  if (state.success && !review) {
+    return <div className="flex items-center gap-2 text-sm font-semibold text-[#52705b]" role="status"><Check size={17} />{state.message}</div>;
+  }
+
+  return <form action={action} className="space-y-6">
+    <div className="flex items-center justify-between gap-3 border-b border-[#eee5e8] pb-4"><p className="text-xs leading-5 text-[#786a70]"><ShieldCheck size={14} className="mr-1.5 inline text-[#b14b69]" />{review ? "수정한 항목으로 리뷰점수를 다시 계산해요." : "한 제품에 하나의 리뷰만 등록할 수 있어요."}</p><p className="grid shrink-0 justify-items-end text-xs"><ReviewPetalRating score={previewScore} compact className="mb-0.5" /><span><strong className="font-myeongjo text-xl text-[#9b405e]">{previewScore}</strong>점 예상</span></p></div>
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-x-5 gap-y-2">
+      {criteria.criteria.map((item) => (
+        <fieldset key={item.id} className="border-b border-[#f0e8ea] py-3">
+          <legend className="sr-only">{item.name}</legend>
+          <div className="mb-3"><div className="flex items-center justify-between gap-3"><strong className="text-sm">{item.name}</strong><span className="text-xs font-bold text-[#9b4a61]">{scores[item.id]} / 5</span></div><p className="mt-1 text-[11px] leading-5 text-[#83767b]">{item.description}</p></div>
+          <div className="grid grid-cols-5 gap-1.5">
+            {[1, 2, 3, 4, 5].map((score) => (
+              <label key={score} className={`grid min-h-10 cursor-pointer place-items-center rounded-lg border text-xs font-bold transition ${scores[item.id] === score ? "border-[#a6536c] bg-[#a6536c] text-white" : "border-[#ddd1d5] bg-white text-[#796d72] hover:border-[#b87588]"}`}>
+                <input type="radio" name={`score_${item.id}`} value={score} checked={scores[item.id] === score} onChange={() => setScores((current) => ({ ...current, [item.id]: score }))} className="sr-only" aria-label={`${item.name} ${score}점, ${scoreLabels[score]}`} />
+                {score}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ))}
+    </div>
+
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+      <Field label="피부 타입" error={state.fieldErrors?.skinType}><select name="skinType" defaultValue={normalizeSkinType(review?.skinType ?? savedSkinType)} className="input" required><option value="">선택해 주세요</option>{["건성", "지성", "복합성", "수부지", "중성", "민감성"].map((value) => <option key={value}>{value}</option>)}</select></Field>
+      <Field label="사용 기간" error={state.fieldErrors?.usagePeriod}><select name="usagePeriod" defaultValue={review?.usagePeriod ?? "ONE_MONTH"} className="input" required>{Object.entries(usagePeriodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
+    </div>
+    <Field label="재구매 의향" error={state.fieldErrors?.repurchaseYn}><div className="grid grid-cols-2 gap-2">{[["true", "다시 구매할래요"], ["false", "재구매는 고민돼요"]].map(([value, label], index) => <label key={value} className="flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#ddd1d5] bg-white px-3 text-center text-xs font-semibold has-[:checked]:border-[#a6536c] has-[:checked]:text-[#963f58]"><input type="radio" name="repurchaseYn" value={value} defaultChecked={review ? review.repurchaseYn === (value === "true") : index === 0} className="sr-only" />{label}</label>)}</div></Field>
+    <Field label="사용 후기" error={state.fieldErrors?.content}><textarea name="content" minLength={10} maxLength={2000} rows={5} required defaultValue={review?.content ?? ""} className="input min-h-32 resize-y py-3" placeholder="어떤 피부에서 얼마나 사용했는지, 좋았던 점과 아쉬웠던 점을 구체적으로 알려주세요." /></Field>
+    {(state.message || state.fieldErrors?.scores) && <p role={state.success ? "status" : "alert"} className={`rounded-lg border px-4 py-3 text-sm ${state.success ? "border-[#cfe2d5] bg-[#f6fbf7] text-[#52705b]" : "border-[#edd4db] text-[#a2475c]"}`}>{state.fieldErrors?.scores ?? state.message}</p>}
+    <button disabled={pending} className="ink-btn w-full disabled:opacity-55">{pending ? (review ? "리뷰를 수정하는 중…" : "리뷰점수를 계산하는 중…") : review ? <><Save size={17} />수정 내용 저장</> : <><Send size={17} /> {previewScore}점으로 리뷰 등록하기</>}</button>
+  </form>;
 }
 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {

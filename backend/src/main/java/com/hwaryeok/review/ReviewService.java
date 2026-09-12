@@ -3,6 +3,7 @@ package com.hwaryeok.review;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +89,20 @@ public class ReviewService {
                 .map(criterion -> average(criterion, scoreAggregates.get(criterion.getId())))
                 .toList();
         List<ProductReview> recentReviews = reviewRepository.findPublicByProductId(productId, PageRequest.of(0, 5));
-        Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(recentReviews, viewerId);
+        ProductReview viewerReview = viewerId == null
+                ? null
+                : reviewRepository.findByProductIdAndUserId(productId, viewerId).orElse(null);
+        ReviewCriteriaResponse viewerReviewCriteria = viewerReview == null
+                ? null
+                : criteriaResponse(
+                        viewerReview.getTemplate(),
+                        criterionRepository.findByTemplateIdOrderByDisplayOrderAsc(viewerReview.getTemplate().getId())
+                );
+        List<ProductReview> ratedReviews = new ArrayList<>(recentReviews);
+        if (viewerReview != null && recentReviews.stream().noneMatch(review -> review.getId().equals(viewerReview.getId()))) {
+            ratedReviews.add(viewerReview);
+        }
+        Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(ratedReviews, viewerId);
         List<ReviewDetailResponse> displayedReviews = recentReviews.isEmpty()
                 ? sampleReviewRepository.findByProductId(productId)
                         .map(ReviewDetailResponse::from)
@@ -106,7 +120,12 @@ public class ReviewService {
                 context.template().getVersion(),
                 reviewScore,
                 reviewCount,
-                viewerId != null && reviewRepository.existsByProductIdAndUserId(productId, viewerId),
+                viewerReview != null,
+                viewerReview == null ? null : ReviewDetailResponse.from(
+                        viewerReview,
+                        communityRatings.get(viewerReview.getId())
+                ),
+                viewerReviewCriteria,
                 rankingStatus(reviewCount),
                 MINIMUM_OFFICIAL_REVIEW_COUNT,
                 averages,
@@ -198,6 +217,54 @@ public class ReviewService {
         }
     }
 
+    @Transactional
+    public ReviewDetailResponse update(String userId, String productId, CreateReviewRequest request) {
+        activeUserService.requireActiveForUpdate(userId);
+        productService.getProduct(productId);
+        ProductReview review = reviewRepository.findByProductIdAndUserId(productId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("수정할 리뷰를 찾을 수 없어요."));
+        List<ReviewCriterion> criteria = criterionRepository.findByTemplateIdOrderByDisplayOrderAsc(
+                review.getTemplate().getId()
+        );
+        if (criteria.isEmpty()) throw new ResourceNotFoundException("리뷰 평가 항목을 찾을 수 없어요.");
+
+        validateMetadata(request);
+        Map<String, Integer> submittedScores = validateScores(criteria, request.scores());
+        BigDecimal totalScore = calculateTotalScore(criteria, submittedScores);
+        Instant now = Instant.now();
+
+        Set<String> expectedCriteriaIds = criteria.stream().map(ReviewCriterion::getId).collect(Collectors.toSet());
+        Map<String, ProductReviewScore> existingScores = review.getScores().stream()
+                .collect(Collectors.toMap(score -> score.getCriterion().getId(), score -> score));
+        review.getScores().removeIf(score -> !expectedCriteriaIds.contains(score.getCriterion().getId()));
+        criteria.forEach(criterion -> {
+            ProductReviewScore existing = existingScores.get(criterion.getId());
+            if (existing == null) {
+                review.addScore(new ProductReviewScore(
+                        UUID.randomUUID().toString(),
+                        review,
+                        criterion,
+                        submittedScores.get(criterion.getId()),
+                        now
+                ));
+            } else {
+                existing.updateScore(submittedScores.get(criterion.getId()));
+            }
+        });
+        review.update(
+                totalScore,
+                request.content().trim(),
+                request.skinType(),
+                request.usagePeriod(),
+                request.repurchaseYn(),
+                now
+        );
+        ProductReview saved = reviewRepository.saveAndFlush(review);
+        ReviewCommunityRatingResponse communityRating = reputationService.summaries(List.of(saved), userId)
+                .get(saved.getId());
+        return ReviewDetailResponse.from(saved, communityRating);
+    }
+
     private TemplateContext templateFor(Product product) {
         String categoryId = switch (product.getCategory()) {
             case "크림", "젤" -> "MOISTURIZER";
@@ -215,12 +282,16 @@ public class ReviewService {
     }
 
     private ReviewCriteriaResponse criteriaResponse(TemplateContext context) {
+        return criteriaResponse(context.template(), context.criteria());
+    }
+
+    private ReviewCriteriaResponse criteriaResponse(ReviewTemplate template, List<ReviewCriterion> criteria) {
         return new ReviewCriteriaResponse(
-                context.template().getCategory().getId(),
-                context.template().getCategory().getName(),
-                context.template().getId(),
-                context.template().getVersion(),
-                context.criteria().stream().map(ReviewCriterionResponse::from).toList()
+                template.getCategory().getId(),
+                template.getCategory().getName(),
+                template.getId(),
+                template.getVersion(),
+                criteria.stream().map(ReviewCriterionResponse::from).toList()
         );
     }
 

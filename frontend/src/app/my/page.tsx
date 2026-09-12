@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, ChevronRight, Settings, Flame, Heart, KeyRound, LogOut, Mail, MessageSquare, Scale } from "lucide-react";
 import { logoutAction } from "@/app/login/actions";
 import { IngredientPreferencesForm } from "./ingredient-preferences-form";
@@ -29,14 +30,15 @@ export default async function MyPage() {
     { label: "찜한 제품", value: favorites?.totalElements, icon: Heart, href: "#favorites" },
     { label: "비교 저장", value: comparison?.totalElements, icon: Scale, href: "#comparison" },
   ];
+  const displayNickname = reviewer?.nickname ?? user.nickname;
   const compareSearch = new URLSearchParams();
   comparison?.content.slice(0, 3).forEach(({ product }, index) => compareSearch.set(["left", "right", "third"][index], product.id));
   const editableIngredients = [...new Map([...ingredients, ...(preferred?.content.map(row => row.ingredient) ?? [])].map(item => [item.id, item])).values()];
 
   return <div className={styles.page}>
     <header className={styles.header}>
-      <div className={styles.avatar} aria-hidden="true">{user.nickname.slice(0, 1)}</div>
-      <div className={styles.identity}><p className={styles.eyebrow}>MY HWA:RYEOK</p><h1>{user.nickname}님의 마이화력</h1><p>내 피부와 나의 기록, 한눈에.</p></div>
+      <div className={styles.avatar} aria-hidden="true">{reviewer?.profileImageUrl ? <Image src={reviewer.profileImageUrl} alt="" fill sizes="46px" /> : displayNickname.slice(0, 1)}</div>
+      <div className={styles.identity}><p className={styles.eyebrow}>MY HWA:RYEOK</p><h1>{displayNickname}님의 마이화력</h1><p>내 피부와 나의 기록, 한눈에.</p></div>
       <Link href="/skin-check" className={styles.iconButton} aria-label="나의 성분찾기 설정"><Settings size={19} /></Link>
     </header>
     <MyTabs active="overview" />
@@ -52,8 +54,8 @@ export default async function MyPage() {
 
     <section className={styles.section}>
       <div className={styles.sectionHead}><h2>나의 활동</h2></div>
-      <MenuRow href="/my/reviewer-profile" title="내 리뷰어 소개" detail="소개·블로그·Instagram 공개 연결 관리" />
-      <MenuRow href={`/reviewers/${user.id}`} title="작성 리뷰와 받은 화력" detail={reviewer ? `리뷰 ${reviewer.reviewCount}개 · 받은 평가 ${reviewer.receivedRatingCount}개` : "리뷰 기록 확인"} />
+      <MenuRow href="/my/reviewer-profile" title="내 활동 프로필" detail="활동명·프로필 사진·소개·외부 채널 관리" />
+      <MenuRow href={`/reviewers/${user.id}#reviews`} title="작성 리뷰 관리" detail={reviewer ? `리뷰 ${reviewer.reviewCount}개 · 받은 평가 ${reviewer.receivedRatingCount}개` : "리뷰 기록 확인·수정"} />
       <MenuRow href="/my/usage-videos" title="내 사용법 영상" detail="영상·유튜브 채널 관리 및 승인 상태" />
     </section>
 

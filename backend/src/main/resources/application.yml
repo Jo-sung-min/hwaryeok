@@ -69,6 +69,9 @@ logging:
     org.hibernate.orm.connections.pooling: warn
 
 app:
+  reviewer-profile:
+    image:
+      daily-presigned-url-limit: ${PROFILE_IMAGE_DAILY_PRESIGNED_URL_LIMIT:20}
   storage:
     s3:
       bucket: ${S3_BUCKET:}

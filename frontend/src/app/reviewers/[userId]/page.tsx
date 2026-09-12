@@ -68,7 +68,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
             <Link href="/reviewers" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#77686d]"><ArrowLeft size={16} /> 리뷰어 랭킹</Link>
             <div className="mt-6 grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
               <div className="flex items-center gap-4 sm:gap-5">
-                <span className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-[#edc6d1] bg-white text-2xl font-bold text-[#b44968] shadow-sm sm:h-20 sm:w-20 sm:text-3xl" aria-hidden="true">{data.reviewer.nickname.slice(0, 1)}</span>
+                <span className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border border-[#edc6d1] bg-white text-2xl font-bold text-[#b44968] shadow-sm sm:h-20 sm:w-20 sm:text-3xl" aria-hidden="true">{profile.profileImageUrl ? <Image src={profile.profileImageUrl} alt="" fill sizes="80px" className="object-cover" /> : data.reviewer.nickname.slice(0, 1)}</span>
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.15em] text-[#b24b69]"><ShieldCheck size={14} /> REVIEWER STORY</p>
                   <h1 className="mt-2 break-words font-myeongjo text-3xl font-semibold sm:text-4xl">{data.reviewer.nickname}님의 화력</h1>
@@ -87,7 +87,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
             </div>
             <div className="mt-6 grid gap-5 rounded-2xl border border-[#edd5df] bg-white p-5 sm:grid-cols-[minmax(180px,1fr)_2fr] sm:items-center sm:gap-8 sm:p-6">
               <ReviewerFirepower score={profile.reviewFirepower} />
-              <div><div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#896f7b]"><span>전체 순위 <strong className="text-[#aa4b6d]">{profile.rank === null ? "집계 전" : `${profile.rank}위`}</strong></span><span>평가자 {profile.uniqueRaterCount}명</span><span>받은 평가 {profile.receivedRatingCount}개</span><span>도움 평가 {profile.averageReceivedRating === null ? "—" : profile.averageReceivedRating.toFixed(1)} / 5</span></div><p className="mt-3 text-[11px] leading-6 text-[#9a858e]">리뷰 화력은 다른 사용자가 평가한 도움 정도와 평가자 수로 계산해요. 제품에 매긴 점수와는 별개예요.</p></div>
+              <div><div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#896f7b]"><span>전체 순위 <strong className="text-[#aa4b6d]">{profile.rank === null ? "집계 전" : `${profile.rank}위`}</strong></span><span>평가자 {profile.uniqueRaterCount}명</span><span>받은 평가 {profile.receivedRatingCount}개</span><span>도움 평가 {profile.averageReceivedRating === null ? "—" : profile.averageReceivedRating.toFixed(1)} / 10</span></div><p className="mt-3 text-[11px] leading-6 text-[#9a858e]">리뷰 화력은 다른 사용자가 평가한 도움 정도와 평가자 수로 계산해요. 제품에 매긴 점수와는 별개예요.</p></div>
             </div>
           </div>
         </section>
@@ -139,7 +139,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
             </div>
           ) : (
             <div className="grid gap-5">
-              {data.content.map((review) => <ReviewCard key={review.id} review={review} authorId={userId} isAuthenticated={Boolean(session)} />)}
+              {data.content.map((review) => <ReviewCard key={review.id} review={review} authorId={userId} isAuthenticated={Boolean(session)} isOwner={isOwner} />)}
             </div>
           )}
 
@@ -159,7 +159,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
   }
 }
 
-function ReviewCard({ review, authorId, isAuthenticated }: { review: ReviewerReview; authorId: string; isAuthenticated: boolean }) {
+function ReviewCard({ review, authorId, isAuthenticated, isOwner }: { review: ReviewerReview; authorId: string; isAuthenticated: boolean; isOwner: boolean }) {
   const imageUrl = resolveProductImageUrl(review.product.imageUrl);
   return (
     <article className="grid overflow-hidden rounded-[26px] border border-[#efd8df] bg-white shadow-[0_9px_28px_rgba(101,53,67,.06)] sm:grid-cols-[190px_1fr]">
@@ -168,7 +168,7 @@ function ReviewCard({ review, authorId, isAuthenticated }: { review: ReviewerRev
       </Link>
       <div className="min-w-0 p-5 sm:p-6 md:p-7">
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a56a7b]">{review.product.brand} · {review.product.category}</p><Link href={`/products/${review.product.id}`} className="mt-1 block font-myeongjo text-lg font-semibold leading-snug hover:text-[#b54768] sm:text-xl">{review.product.name}</Link></div>
+          <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a56a7b]">{review.product.brand} · {review.product.category}</p><Link href={`/products/${review.product.id}`} className="mt-1 block font-myeongjo text-lg font-semibold leading-snug hover:text-[#b54768] sm:text-xl">{review.product.name}</Link>{isOwner && <Link href={`/products/${encodeURIComponent(review.product.id)}?editReview=1#my-review-editor`} className="mt-2 inline-flex min-h-9 items-center gap-1 text-xs font-bold text-[#a54b6c] underline decoration-[#e3a4b7] underline-offset-4"><PencilLine size={13} />리뷰 수정</Link>}</div>
           <div className="shrink-0 rounded-2xl bg-[#fff0f4] px-3 py-2 text-right"><ReviewPetalRating score={Number(review.totalScore)} compact className="mb-0.5 justify-end" /><strong className="font-myeongjo text-2xl text-[#b94769]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] font-semibold text-[#98737e]">리뷰점수</p></div>
         </div>
         <p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#61555a] [overflow-wrap:anywhere]">{review.content}</p>

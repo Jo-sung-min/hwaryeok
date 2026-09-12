@@ -24,6 +24,9 @@ public class User {
     @Column(length = 40, nullable = false)
     private String nickname;
 
+    @Column(name = "nickname_key", length = 80, nullable = false)
+    private String nicknameKey;
+
     @Column(length = 20, nullable = false)
     private String role;
 
@@ -44,7 +47,8 @@ public class User {
         this.id = id;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.nickname = nickname;
+        this.nickname = ActivityNickname.normalize(nickname);
+        this.nicknameKey = ActivityNickname.key(this.nickname);
         this.role = role;
         this.status = status;
         this.createdAt = createdAt;
@@ -56,10 +60,17 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
+    public void changeNickname(String nickname, Instant updatedAt) {
+        this.nickname = ActivityNickname.normalize(nickname);
+        this.nicknameKey = ActivityNickname.key(this.nickname);
+        this.updatedAt = updatedAt;
+    }
+
     public String getId() { return id; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getNickname() { return nickname; }
+    public String getNicknameKey() { return nicknameKey; }
     public String getRole() { return role; }
     public String getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }

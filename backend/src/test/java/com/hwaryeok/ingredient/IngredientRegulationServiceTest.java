@@ -27,12 +27,13 @@ class IngredientRegulationServiceTest {
     @BeforeEach
     void setUp() {
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, 'ADMIN', 'ACTIVE', ?, ?)
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 'ADMIN', 'ACTIVE', ?, ?)
                 """,
                 REVIEWER_ID,
                 "ingredient-regulation-reviewer@example.com",
                 "not-used-in-this-test",
+                "성분규제검수자",
                 "성분규제검수자",
                 Instant.now(),
                 Instant.now()

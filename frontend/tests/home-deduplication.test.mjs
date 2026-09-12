@@ -19,6 +19,7 @@ function load(path, mocks) {
   vm.runInNewContext(code, { module, exports: module.exports, URLSearchParams, require: name => {
     if (name in mocks) return mocks[name];
     if (name === "next/link") return ({ children, scroll, ...props }) => React.createElement("a", props, children);
+    if (name === "next/image") return ({ fill: _fill, priority: _priority, unoptimized: _unoptimized, ...props }) => React.createElement("img", props);
     if (name.endsWith(".module.css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
     if (["react", "react/jsx-runtime", "lucide-react"].includes(name)) return require(name);
     throw Error("Unexpected dependency: " + name);
@@ -77,6 +78,8 @@ for (const personalized of [false, true]) test(`home keeps the primary catalog a
   });
   const requestedFilters = { category: "앰플", ingredientId: "hyaluronic", minReviewScore: 80, minFirepowerScore: 65 };
   const html = renderToStaticMarkup(await HomeCatalog({ requestedFilters }));
+  assert.match(html, /data-home-page="true"/);
+  assert.doesNotMatch(renderToStaticMarkup(await HomeCatalog({ requestedFilters, homePath: "/indextest" })), /data-home-page/);
   assert.match(html, /id="home-products"/);
   for (const kind of ["personal", "ingredients", "rising", "reviewers"]) assert.match(html, new RegExp(`data-ranking-preview="${kind}"`));
   for (const href of ["/ranking/personal", "/ranking", "/ranking/rising", "/reviewers"]) assert.match(html, new RegExp(`href="${href.replaceAll("/", "\\/")}`));
@@ -108,4 +111,14 @@ test("footer does not repeat the two utility destinations owned by the header", 
   assert.doesNotMatch(html, /href="\/(?:ranking|products|reviewers)/);
   assert.doesNotMatch(html, /의료적 진단/);
   assert.equal((html.match(/HWA:RYEOK/g) ?? []).length, 1);
+});
+
+test("home alone hides the repeated footer brand row", () => {
+  const { Footer } = load("../src/components/footer.tsx", {});
+  const html = renderToStaticMarkup(React.createElement(Footer));
+  const styles = readFileSync(new URL("../src/components/home-catalog.module.css", import.meta.url), "utf8");
+
+  assert.match(html, /<div[^>]*data-footer-brand="true"[^>]*>.*aria-label="화력 홈".*화장품의 기준을, 내 피부로\..*<\/div>/s);
+  assert.match(styles, /:global\(\.app-shell\):has\(\.home\[data-home-page="true"\]\)\s*>\s*:global\(footer\)\s+\[data-footer-brand\]\s*\{\s*display:\s*none;\s*\}/);
+  assert.match(styles, /\[data-footer-brand\]\s*\+\s*:global\(nav\)\s*\{\s*margin-top:\s*0;\s*\}/);
 });

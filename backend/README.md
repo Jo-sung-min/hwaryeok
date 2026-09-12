@@ -387,6 +387,10 @@ S3가 설정된 환경에서 새 관리자 화면은 백엔드를 거치지 않�
 2. 응답의 `uploadUrl`로 파일을 `PUT`하며, `headers`의 모든 헤더를 그대로 적용합니다. URL은 기본 5분 동안 유효하고 `If-None-Match: *`가 서명되어 동일 키를 덮어쓸 수 없습니다. `objectKey`는 `hwaryeok/pending/product-images/...`의 임시 키이며 `Cache-Control: private, no-store`로 서명하고 검증합니다. `imageUrl`은 확정 후 사용할 기존 `https://cdn.hwaryeok.co.kr/products/{productId}/{uuid}.{ext}` 형식입니다.
 3. `POST /api/v1/admin/products/{productId}/image-upload-complete`에 `{"objectKey":"..."}`를 보냅니다. 백엔드가 S3 `HeadObject`로 크기·Content-Type·소유 메타데이터·임시 캐시 정책을, Range GET으로 실제 파일 시그니처를 확인합니다. 이후 동일 UUID의 `products/...` 키에 `Cache-Control: public, max-age=31536000, immutable`로 복사가 성공한 뒤에만 `Product.imageUrl`을 저장합니다. PUT 만료 후에도 업로드 완료를 전송할 수 있도록 5분의 확인 유예 시간을 둡니다. pending 객체는 즉시 삭제하지 않아 URL 만료 전 같은 키로 재PUT하면 `If-None-Match: *`에 의해 `412`가 반환되며, 완료 재시도는 같은 pending 객체를 다시 검증해 같은 최종 URL로 멱등적으로 확정합니다.
 
+회원 프로필 사진도 동일한 직접 업로드 구조를 사용하지만 PNG·JPG만 허용합니다. `POST /api/v1/users/me/reviewer-profile/image-upload-url`로 사용자 전용 `hwaryeok/pending/profile-images/{userId}/...` 키를 발급받고, 업로드 후 `POST /api/v1/users/me/reviewer-profile/image-upload-complete`로 확정합니다. 백엔드는 최대 5MB인 객체 전체를 내려받아 JPEG/PNG를 완전히 디코딩하고 가로·세로 각 2,048px 및 총 400만 픽셀 이하인지 확인한 뒤 메타데이터가 제거된 새 이미지로 재인코딩하여 `hwaryeok/profiles/{userId}/...`에 공개합니다. `DELETE /api/v1/users/me/reviewer-profile/image`는 DB 커밋 후 현재 사용자의 기존 객체만 삭제하며, 사진 교체도 새 URL 커밋 이후 이전 객체를 삭제합니다. 삭제한 사진이 CDN에 장기간 남지 않도록 프로필 객체는 1시간 캐시 후 반드시 원본을 재검증하며, 제품 객체의 1년 immutable 정책과 분리합니다.
+
+프로필 사진 Presigned URL은 계정당 하루 20회(한국 시간 기준)까지 발급합니다. 이 횟수는 DB에 저장하고 사용자 행 잠금으로 여러 서버 인스턴스에서도 원자적으로 처리하며, 초과 시 `429 PROFILE_IMAGE_DAILY_LIMIT`와 `Retry-After`를 반환합니다. 운영상 필요하면 `PROFILE_IMAGE_DAILY_PRESIGNED_URL_LIMIT`을 1~100 범위에서 조정할 수 있습니다.
+
 기존 `PUT /api/v1/admin/products/{productId}/image` multipart API는 하위 호환을 위해 유지하지만 `Deprecation: true`와 후속 API `Link` 헤더를 반환합니다. S3 설정이 없는 로컬·테스트 환경에서는 이 기존 API가 PostgreSQL `product_images`와 `/api/v1/media/products/{productId}`를 계속 사용합니다. 일반 사용자는 관리자 API 호출 시 `403`을 반환합니다.
 
 화력 운영값은 `S3_BUCKET=fatell-aws-s3`, `S3_KEY_PREFIX=hwaryeok`, `S3_PUBLIC_BASE_URL=https://cdn.hwaryeok.co.kr`, `AWS_REGION=ap-northeast-2`입니다. CDN 배포의 Origin Path는 `/hwaryeok`을 가리켜야 공개 URL과 S3 객체 키가 일치합니다. 배포 서버는 IAM 역할 사용을 권장하며, 로컬에서만 필요한 AWS 키는 Git에 포함되지 않는 `.env`에 저장합니다.
@@ -405,9 +409,9 @@ Presigned PUT을 브라우저에서 사용하려면 S3 버킷 CORS에 로컬과 
 ]
 ```
 
-백엔드 IAM 역할은 객체 ARN에 `s3:PutObject`(임시 PUT 서명·최종 Copy 대상), `s3:GetObject`(Head·Range GET·Copy 원본)를 허용해야 합니다. S3는 `s3:ListBucket`이 없으면 없는 객체의 `HeadObject`도 `404` 대신 `403`으로 응답할 수 있으므로, 버킷 ARN에 `s3:ListBucket`을 허용하되 `s3:prefix` 조건을 `hwaryeok/pending/product-images/*`, `hwaryeok/products/*`로 제한하세요. AWS IAM에는 별도의 `s3:CopyObject` action이 없습니다.
+백엔드 IAM 역할은 객체 ARN에 `s3:PutObject`(임시 PUT 서명·제품 Copy 대상·프로필 안전 재인코딩 대상), `s3:GetObject`(Head·Range/전체 GET·Copy 원본), `s3:DeleteObject`(교체·삭제된 공개 프로필 사진 정리)를 허용해야 합니다. 객체 리소스는 `hwaryeok/pending/product-images/*`, `hwaryeok/products/*`, `hwaryeok/pending/profile-images/*`, `hwaryeok/profiles/*`로 제한하세요. S3는 `s3:ListBucket`이 없으면 없는 객체의 `HeadObject`도 `404` 대신 `403`으로 응답할 수 있으므로, 버킷 ARN에 `s3:ListBucket`을 허용하되 같은 네 prefix에 `s3:prefix` 조건을 두세요. AWS IAM에는 별도의 `s3:CopyObject` action이 없습니다.
 
-`hwaryeok/pending/product-images/` prefix에는 1일 후 삭제하는 S3 lifecycle을 반드시 추가해 완료·중단된 임시 업로드를 자동 정리하세요. 이 lifecycle을 적용하지 않으면 pending 객체가 계속 누적됩니다.
+`hwaryeok/pending/product-images/`와 `hwaryeok/pending/profile-images/` prefix에는 1일 후 삭제하는 S3 lifecycle을 반드시 추가해 완료·중단된 임시 업로드를 자동 정리하세요. 애플리케이션은 Presigned URL의 유효 시간과 멱등적 완료 재시도를 위해 pending 객체를 즉시 삭제하지 않습니다. 이 lifecycle을 적용하지 않으면 pending 객체가 계속 누적됩니다.
 
 ```json
 {
@@ -417,12 +421,18 @@ Presigned PUT을 브라우저에서 사용하려면 S3 버킷 CORS에 로컬과 
       "Status": "Enabled",
       "Filter": {"Prefix": "hwaryeok/pending/product-images/"},
       "Expiration": {"Days": 1}
+    },
+    {
+      "ID": "expire-hwaryeok-pending-profile-images",
+      "Status": "Enabled",
+      "Filter": {"Prefix": "hwaryeok/pending/profile-images/"},
+      "Expiration": {"Days": 1}
     }
   ]
 }
 ```
 
-CDN은 `/products/**`만 제품 이미지로 공개하고 `/pending/**`는 캐시 동작/원본 정책에서 차단하세요. URL 발급 API 응답은 `Cache-Control: no-store`로 반환됩니다.
+CDN은 `/products/**`와 `/profiles/**`만 공개 이미지 경로로 허용하고 `/pending/**`는 캐시 동작/원본 정책에서 차단하세요. URL 발급 API 응답은 `Cache-Control: no-store`로 반환됩니다.
 
 기존 `frontend/public/products` 정적 이미지는 아래 명령으로 `hwaryeok/products/`에 이관합니다. 첫 번째 명령은 변경 없는 드라이런이고, 두 번째 명령만 실제 업로드를 수행합니다. 동일한 크기·형식·캐시 정책의 객체는 건너뛰며 로컬 원본과 DB 데이터는 삭제하지 않습니다.
 

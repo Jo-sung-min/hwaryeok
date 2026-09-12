@@ -39,8 +39,10 @@ export async function generateMetadata({ params }: PageProps<"/products/[id]">):
   }
 }
 
-export default async function ProductDetailPage({ params }: PageProps<"/products/[id]">) {
-  const { id } = await params;
+export default async function ProductDetailPage({ params, searchParams }: PageProps<"/products/[id]">) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const editReviewValue = query.editReview;
+  const initialReviewEditing = (Array.isArray(editReviewValue) ? editReviewValue[0] : editReviewValue) === "1";
   const [savedProfile, favoriteState, currentUser, authTokens] = await Promise.all([
     getOptionalSkinProfile(),
     getFavoriteViewState(),
@@ -136,7 +138,7 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
         <ProductSourceDetails regulatorySource={regulatorySource} retailSnapshot={retailSnapshot} />
         <FirepowerReport analysis={analysis} ingredientData={ingredientData} reviewSummary={reviewSummary} personalized={Boolean(savedProfile?.skinType)} />
         <ProductIngredientsPanel data={ingredientData}/>
-        <ReviewSection productId={product.id} criteria={reviewCriteria} summary={reviewSummary} isAuthenticated={favoriteState.isAuthenticated} savedSkinType={savedProfile?.skinType ?? null} />
+        <ReviewSection productId={product.id} criteria={reviewCriteria} summary={reviewSummary} isAuthenticated={favoriteState.isAuthenticated} savedSkinType={savedProfile?.skinType ?? null} initialEditing={initialReviewEditing} />
         <div className="container-page pb-8"><ProductUsageVideos productId={product.id} /></div>
         <RelatedProducts products={relatedProducts} favoriteIds={favoriteIds} isAuthenticated={favoriteState.isAuthenticated} currentProductId={product.id} />
       </div>

@@ -51,6 +51,14 @@ test("removed duplicate report sections do not return", () => {
 
 test("review and usage-video contribution paths remain wired", () => {
   assert.match(reviews, /createReviewAction\.bind/);
+  assert.match(reviews, /updateReviewAction\.bind/);
+  assert.match(reviews, /summary\.viewerReview/);
+  assert.match(reviews, /summary\.viewerReviewCriteria\s*\?\?\s*criteria/);
+  assert.match(reviews, /initialEditing/);
+  assert.match(reviews, /내 리뷰 수정/);
+  assert.match(reviews, /수정 내용 저장/);
+  assert.match(page, /query\.editReview/);
+  assert.match(page, /initialEditing=\{initialReviewEditing\}/);
   assert.match(reviews, /<ReviewFirepowerVote\b/);
   assert.match(reviews, /href=\{`\/reviewers\/\$\{review\.authorId\}`\}/);
   assert.match(reviews, /\/products\/\$\{productId\}#reviews/);

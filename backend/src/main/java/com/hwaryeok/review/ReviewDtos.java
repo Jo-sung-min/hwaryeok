@@ -213,6 +213,7 @@ record ProductReviewSummaryResponse(
         long reviewCount,
         boolean viewerHasReviewed,
         ReviewDetailResponse viewerReview,
+        ReviewCriteriaResponse viewerReviewCriteria,
         String rankingStatus,
         int minimumOfficialReviewCount,
         List<ReviewCriterionAverageResponse> criteriaAverages,

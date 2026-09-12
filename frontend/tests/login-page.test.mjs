@@ -84,3 +84,13 @@ test("shared OAuth UI keeps signup and login limited to Kakao", () => {
   assert.doesNotMatch(html, /oauth\/google|Google로 시작/);
   assert.doesNotMatch(html, /oauth\/naver|네이버로 시작/);
 });
+
+test("Kakao OAuth starts with a native document navigation instead of Next client routing", () => {
+  const { SocialLoginButtons } = compile("../src/components/social-login-buttons.tsx", {});
+  const html = renderToStaticMarkup(React.createElement(SocialLoginButtons, {
+    providers: [providers.find((provider) => provider.id === "kakao")],
+    returnTo: "/my",
+  }));
+
+  assert.match(html, /<a[^>]+href="\/api\/auth\/oauth\/kakao\?returnTo=%2Fmy"/);
+});

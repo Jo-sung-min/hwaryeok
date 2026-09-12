@@ -22,6 +22,7 @@ function load(path) {
     if (name === "./skin-check" || name === "@/lib/skin-check") return load("../src/lib/skin-check.ts");
     if (name === "@/lib/skin-report") return load("../src/lib/skin-report.ts");
     if (name === "@/lib/skin-care-guide") return load("../src/lib/skin-care-guide.ts");
+    if (name === "@/lib/skin-tendency-assets") return load("../src/lib/skin-tendency-assets.ts");
     if (name === "next/link") return ({ children, ...props }) => React.createElement("a", props, children);
     if (name.endsWith(".module.css")) return { __esModule: true, default: new Proxy({}, { get: (_, key) => key }) };
     if (["react", "react/jsx-runtime", "lucide-react"].includes(name)) return require(name);
@@ -73,6 +74,45 @@ test("report renders detailed read-only content and labelled cohort percentage",
     assert.match(html, new RegExp(`id="${titleId}"`));
   }
   assert.doesNotMatch(html, /<button|<input|수정/);
+});
+test("result hero selects the existing watercolor asset from the actual skin tendency", () => {
+  const source = readFileSync(new URL("../src/app/skin-check/skin-report.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/app/skin-check/skin-report.module.css", import.meta.url), "utf8");
+  const heroEmblem = source.match(/<div className=\{styles\.hero\}>[\s\S]*?(<div className=\{styles\.emblem\}[\s\S]*?<\/div>)[\s\S]*?<p className=\{styles\.type\}>/)?.[1] ?? "";
+
+  assert.match(source, /import\s*\{\s*skinTendencyAssetKey\s*\}\s*from\s*"@\/lib\/skin-tendency-assets"/);
+  assert.match(source, /const\s+skinAsset\s*=\s*skinTendencyAssetKey\(tendency\.type\)/);
+  assert.match(heroEmblem, /<span className=\{styles\.tendencyAsset\} data-skin-asset=\{skinAsset\}\s*\/>/);
+  assert.doesNotMatch(heroEmblem, /<Flower2\b|<Droplets\b/);
+
+  for (const [overrides, asset] of [
+    [{ oilinessLevel: "LOW", cheekOiliness: "LOW", hydrationLevel: "LOW" }, "dry"],
+    [{ oilinessLevel: "HIGH", cheekOiliness: "HIGH", hydrationLevel: "BALANCED" }, "oily"],
+    [{ oilinessLevel: "HIGH", cheekOiliness: "LOW", hydrationLevel: "BALANCED" }, "combination"],
+    [{ oilinessLevel: "HIGH", cheekOiliness: "HIGH", hydrationLevel: "LOW" }, "dehydrated-oily"],
+    [{ oilinessLevel: "BALANCED", cheekOiliness: "BALANCED", hydrationLevel: "BALANCED" }, "balanced"],
+  ]) {
+    const html = renderToStaticMarkup(React.createElement(SkinReport, { answers: { ...answers(), ...overrides }, statistics: null }));
+    const renderedEmblem = html.match(/<div class="emblem" aria-hidden="true">[\s\S]*?<\/div>/)?.[0] ?? "";
+    assert.match(renderedEmblem, new RegExp(`data-skin-asset="${asset}"`), asset);
+    assert.doesNotMatch(renderedEmblem, /<svg\b/, asset);
+  }
+
+  const assetRule = css.match(/(?:^|\n)\.tendencyAsset\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(assetRule, /background-image:\s*url\("\/skin\/skin-tendency-board\.png"\)/);
+  assert.match(assetRule, /background-repeat:\s*no-repeat/);
+  assert.match(assetRule, /background-size:\s*300%\s+200%/);
+  for (const [asset, position] of [
+    ["dry", "0% 0%"],
+    ["oily", "50% 0%"],
+    ["combination", "100% 0%"],
+    ["dehydrated-oily", "0% 100%"],
+    ["balanced", "50% 100%"],
+    ["sensitive", "100% 100%"],
+  ]) {
+    const escapedPosition = position.replaceAll("%", "\\%").replace(" ", "\\s+");
+    assert.match(css, new RegExp(`\\.tendencyAsset\\[data-skin-asset="${asset}"\\]\\s*\\{[^}]*background-position:\\s*${escapedPosition}`), asset);
+  }
 });
 test("DB ingredient recommendations replace fallback cards and show saved experience", () => {
   const ingredientRecommendations = [{

@@ -145,7 +145,7 @@ function AdminReviewRow({ review }: { review: AdminReviewListItem }) {
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#938188]">
             <span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span>
             <time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(review.createdAt))}</time>
-            <span>{review.sampleReview ? "도움 평가 대상 아님" : review.communityAverageScore === null ? "도움 평가 대기" : `도움 평가 ${review.communityAverageScore.toFixed(1)} / 5 · ${review.communityRatingCount}명`}</span>
+            <span>{review.sampleReview ? "도움 평가 대상 아님" : review.communityAverageScore === null ? "도움 평가 대기" : `도움 평가 ${review.communityAverageScore.toFixed(1)} / 10 · ${review.communityRatingCount}명`}</span>
           </div>
         </div>
 

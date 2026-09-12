@@ -16,6 +16,7 @@ import com.hwaryeok.product.ProductRepository;
 import com.hwaryeok.product.ProductService;
 import com.hwaryeok.ranking.WeeklyRankingDtos.Mode;
 import com.hwaryeok.ranking.WeeklyRankingDtos.UpdateRequest;
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,10 +172,12 @@ class WeeklyRankingServiceTest {
 
     private void addReview(String productId, String status, int score, Instant createdAt) {
         String userId = UUID.randomUUID().toString();
+        String nickname = "주간 랭킹 사용자 " + userId.substring(0, 8);
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, 'test-unused', '주간 랭킹 사용자', 'USER', ?)
-                """, userId, userId + "@example.com", status);
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, 'test-unused', ?, ?, 'USER', ?)
+                """, userId, userId + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)), status);
         jdbc.update("""
                 INSERT INTO reviews (
                     id, product_id, user_id, template_id, total_score, content, skin_type,

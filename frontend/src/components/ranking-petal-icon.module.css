@@ -1,0 +1,33 @@
+.petal {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 38px;
+  flex: 0 0 36px;
+  place-items: center;
+  background-image: url("/ratings/ranking-petals.png");
+  background-repeat: no-repeat;
+  background-size: 400% auto;
+  filter: drop-shadow(0 1px 2px rgba(76, 54, 62, .12));
+}
+
+.number {
+  position: relative;
+  z-index: 1;
+  display: block;
+  min-width: 1.4em;
+  color: var(--rank-number-color, #983757);
+  font-size: 12px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.04em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .9), 0 0 3px rgba(255, 255, 255, .88);
+  transform: translateY(1px);
+}
+
+.gold { --rank-number-color: #714400; background-position: 0 50%; }
+.silver { --rank-number-color: #47515d; background-position: 33.333333% 50%; }
+.bronze { --rank-number-color: #713819; background-position: 66.666667% 50%; }
+.pink { --rank-number-color: #9e3156; background-position: 100% 50%; }

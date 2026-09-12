@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.common.error.ForbiddenOperationException;
 import com.hwaryeok.common.error.ResourceNotFoundException;
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,8 +180,9 @@ class UsageVideoServiceTest {
 
     private String user(String role, String status) {
         String id = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, role, status) VALUES (?, ?, 'unused', ?, ?, ?)",
-                id, id + "@example.com", "영상" + id.substring(0, 8), role, status);
+        String nickname = "영상" + id.substring(0, 8);
+        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status) VALUES (?, ?, 'unused', ?, ?, ?, ?)",
+                id, id + "@example.com", nickname, ActivityNickname.key(ActivityNickname.normalize(nickname)), role, status);
         return id;
     }
 

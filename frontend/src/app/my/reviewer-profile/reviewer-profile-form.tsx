@@ -5,6 +5,7 @@ import { ArrowUpRight, AtSign, LoaderCircle, Save } from "lucide-react";
 import { useActionState, useState } from "react";
 import type { MyReviewerProfile, ReviewerBioBlock } from "@/lib/types";
 import { DynamicBlockNote } from "./dynamic-blocknote";
+import { ProfileImageForm } from "./profile-image-form";
 import { saveReviewerProfileAction, type ReviewerProfileActionState } from "./actions";
 import styles from "./reviewer-profile.module.css";
 
@@ -14,9 +15,20 @@ export function ReviewerProfileForm({ profile }: { profile: MyReviewerProfile })
   const [bioBlocks, setBioBlocks] = useState<ReviewerBioBlock[]>(profile.bioBlocks);
   const [state, formAction, pending] = useActionState(saveReviewerProfileAction, initialActionState);
 
-  return (
+  return <>
+    <ProfileImageForm nickname={profile.nickname} profileImageUrl={profile.profileImageUrl} />
     <form action={formAction} className={styles.form}>
       <input type="hidden" name="bioBlocks" value={JSON.stringify(bioBlocks)} />
+
+      <section className={styles.formSection} aria-labelledby="reviewer-name-heading">
+        <div className={styles.sectionHeading}><div><p>ACTIVITY NAME</p><h2 id="reviewer-name-heading">활동명</h2></div></div>
+        <p className={styles.help}>리뷰와 리뷰어 랭킹에 표시되는 이름이에요. 다른 회원과 같은 활동명은 사용할 수 없어요.</p>
+        <label className={styles.field}>
+          <span>닉네임</span>
+          <input name="nickname" type="text" defaultValue={profile.nickname} autoComplete="nickname" aria-invalid={Boolean(state.fieldErrors.nickname)} />
+          {state.fieldErrors.nickname && <small role="alert">{state.fieldErrors.nickname}</small>}
+        </label>
+      </section>
 
       <section className={styles.formSection} aria-labelledby="reviewer-bio-heading">
         <div className={styles.sectionHeading}>
@@ -56,5 +68,5 @@ export function ReviewerProfileForm({ profile }: { profile: MyReviewerProfile })
         </button>
       </div>
     </form>
-  );
+  </>;
 }

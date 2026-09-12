@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,8 +97,9 @@ class UsageVideoHttpTest {
 
     private String user(String role) {
         String id = UUID.randomUUID().toString();
-        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, role, status) VALUES (?, ?, 'unused', '영상 HTTP 테스트', ?, 'ACTIVE')",
-                id, id + "@example.com", role);
+        String nickname = "영상 HTTP 테스트 " + id.substring(0, 8);
+        jdbc.update("INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status) VALUES (?, ?, 'unused', ?, ?, ?, 'ACTIVE')",
+                id, id + "@example.com", nickname, ActivityNickname.key(ActivityNickname.normalize(nickname)), role);
         users.add(id);
         return id;
     }

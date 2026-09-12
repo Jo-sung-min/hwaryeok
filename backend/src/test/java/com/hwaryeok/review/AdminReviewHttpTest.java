@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.hwaryeok.user.ActivityNickname;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,9 +151,10 @@ class AdminReviewHttpTest {
     private String addUser(String role, String nickname) {
         String id = UUID.randomUUID().toString();
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, NULL, ?, ?, 'ACTIVE')
-                """, id, id + "@example.com", nickname, role);
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, NULL, ?, ?, ?, 'ACTIVE')
+                """, id, id + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)), role);
         users.add(id);
         return id;
     }

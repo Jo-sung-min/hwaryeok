@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { setFavoriteAction } from "@/app/favorites/actions";
+import { FavoriteHeartIcon } from "@/components/favorite-heart-icon";
 import type { Product } from "@/lib/types";
 import { resolveProductImageUrl } from "@/lib/media";
+import favoriteButtonStyles from "./favorite-button.module.css";
 
 const toneMap = {
   peach: "bg-[#fff0ed]",
@@ -75,9 +77,10 @@ export function FavoriteButton({
         aria-label={pending ? "찜 상태 저장 중" : active ? "찜 취소" : "찜하기"}
         aria-pressed={active}
         aria-busy={pending}
-        className={`${small ? "h-11 w-11 sm:h-10 sm:w-10" : "h-11 w-11"} glass-choice grid place-items-center rounded-full disabled:cursor-wait disabled:opacity-65`}
+        data-artwork="watercolor"
+        className={favoriteButtonStyles.button}
       >
-        <Heart size={small ? 17 : 19} className={`${active ? "fill-[#c94f74] text-[#c94f74]" : "text-[#b45b75]"} ${pending ? "animate-pulse" : ""}`} />
+        <FavoriteHeartIcon favorited={active} small={small} pending={pending} />
       </button>
       <span className="sr-only" role="status" aria-live="polite">{statusMessage}</span>
       {error && !pending && <span role="alert" className="absolute right-0 top-full z-30 mt-2 w-48 rounded-xl border border-[#a54f4930] bg-[#fffaf3] px-3 py-2 text-left text-[11px] leading-5 text-[#8f433e] shadow-lg">{error}</span>}

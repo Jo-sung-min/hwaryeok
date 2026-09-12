@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 record ReviewFirepowerRequest(
         @NotNull(message = "리뷰 화력을 선택해 주세요.")
         @Min(value = 1, message = "리뷰 화력은 1점 이상이어야 해요.")
-        @Max(value = 5, message = "리뷰 화력은 5점 이하여야 해요.") Integer score
+        @Max(value = 10, message = "리뷰 도움 평가는 10점 이하여야 해요.") Integer score
 ) {}
 
 record ReviewCommunityRatingResponse(
@@ -23,6 +23,7 @@ record ReviewCommunityRatingResponse(
 record ReviewerProfileResponse(
         String userId,
         String nickname,
+        String profileImageUrl,
         String skinType,
         BigDecimal reviewFirepower,
         BigDecimal averageReceivedRating,
@@ -33,7 +34,7 @@ record ReviewerProfileResponse(
         Integer rank
 ) {
     ReviewerProfileResponse withRank(Integer value) {
-        return new ReviewerProfileResponse(userId, nickname, skinType, reviewFirepower,
+        return new ReviewerProfileResponse(userId, nickname, profileImageUrl, skinType, reviewFirepower,
                 averageReceivedRating, receivedRatingCount, uniqueRaterCount, reviewCount, averageReviewScore, value);
     }
 }

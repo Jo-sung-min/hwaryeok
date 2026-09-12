@@ -1,0 +1,48 @@
+.heart {
+  display: block;
+  flex: 0 0 auto;
+  background-image: url("/favorites/favorite-hearts.png");
+  background-repeat: no-repeat;
+  background-size: 250% auto;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.filled {
+  background-position: 13.2% 52%;
+  transform: scale(1.04);
+}
+
+.outline {
+  background-position: 86.8% 52%;
+}
+
+.small {
+  width: 28px;
+  height: 28px;
+}
+
+.regular {
+  width: 30px;
+  height: 30px;
+}
+
+.pending {
+  animation: favorite-heart-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes favorite-heart-pulse {
+  to {
+    opacity: .55;
+    transform: scale(.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart {
+    transition: none;
+  }
+
+  .pending {
+    animation: none;
+  }
+}

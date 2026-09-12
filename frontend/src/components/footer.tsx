@@ -12,7 +12,7 @@ export function Footer() {
   return (
     <footer className="border-t border-[#ece7eb] bg-[#fcfbfc] text-[#353039]">
       <div className="container-page py-7">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" data-footer-brand>
           <Link href="/" className="inline-flex shrink-0 items-center gap-2.5" aria-label="화력 홈">
             <span className="seal h-9 w-9 font-myeongjo text-base font-bold">화</span>
             <strong className="font-myeongjo text-xl font-semibold tracking-[-.06em]">화력</strong>

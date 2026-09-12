@@ -9,6 +9,8 @@ export type Product = {
   category: string;
   grade: 1 | 2 | 3 | 4 | 5;
   score: number;
+  reviewScore?: number | null;
+  reviewCount?: number;
   benefit: string;
   subBenefit: string;
   priceValue?: number;
@@ -176,7 +178,9 @@ export type ReviewDetail = {
   skinType: string;
   usagePeriod: "ONE_WEEK" | "TWO_WEEKS" | "ONE_MONTH" | "THREE_MONTHS" | "OVER_SIX_MONTHS";
   repurchaseYn: boolean;
+  scores: { criteriaId: string; score: number }[];
   createdAt: string;
+  updatedAt: string;
 };
 
 export type ReviewCriterionAverage = {
@@ -198,6 +202,8 @@ export type ProductReviewSummary = {
   reviewScore: number | null;
   reviewCount: number;
   viewerHasReviewed: boolean;
+  viewerReview: ReviewDetail | null;
+  viewerReviewCriteria: ReviewCriteria | null;
   rankingStatus: "COLLECTING" | "REFERENCE" | "OFFICIAL";
   minimumOfficialReviewCount: number;
   criteriaAverages: ReviewCriterionAverage[];
@@ -278,6 +284,7 @@ export type ReviewCommunityRating = {
 export type ReviewerProfileStats = {
   userId: string;
   nickname: string;
+  profileImageUrl: string | null;
   skinType: string | null;
   reviewFirepower: number | null;
   averageReceivedRating: number | null;
@@ -300,13 +307,14 @@ export type ReviewerBioBlock = Record<string, unknown>;
 export type MyReviewerProfile = {
   userId: string;
   nickname: string;
+  profileImageUrl: string | null;
   bioBlocks: ReviewerBioBlock[];
   blogUrl: string | null;
   instagramUrl: string | null;
   profileUpdatedAt: string | null;
 };
 
-export type ReviewerProfileInput = Pick<MyReviewerProfile, "bioBlocks" | "blogUrl" | "instagramUrl">;
+export type ReviewerProfileInput = Pick<MyReviewerProfile, "nickname" | "bioBlocks" | "blogUrl" | "instagramUrl">;
 
 export type ReviewerRankingPage = {
   content: ReviewerProfileStats[];

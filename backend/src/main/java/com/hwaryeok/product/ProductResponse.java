@@ -34,7 +34,9 @@ public record ProductResponse(
         String scoreBasis,
         List<String> matchReasons,
         List<String> cautions,
-        int ingredientCount
+        int ingredientCount,
+        BigDecimal reviewScore,
+        long reviewCount
 ) {
     public static ProductResponse from(Product product) {
         int score = product.getBaseScore();
@@ -68,6 +70,8 @@ public record ProductResponse(
                 "관리자 등록 기본 점수",
                 List.of(),
                 List.of(),
+                0,
+                null,
                 0
         );
     }
@@ -104,7 +108,19 @@ public record ProductResponse(
                 scoreBasis,
                 match.reasons(),
                 match.cautions(),
-                match.ingredientCount()
+                match.ingredientCount(),
+                null,
+                0
+        );
+    }
+
+    public ProductResponse withReviewMetrics(BigDecimal reviewScore, long reviewCount) {
+        return new ProductResponse(
+                id, brand, name, category, grade, score, benefit, subBenefit,
+                netContentValue, netContentUnit, netContent, priceValue, price, tone, tag,
+                imageUrl, coupangPartnersUrl, publicationStatus, sourceUrl, sourceCheckedAt,
+                ingredientScore, compatibilityScore, dataConfidenceScore, confidenceLevel,
+                scoreBasis, matchReasons, cautions, ingredientCount, reviewScore, reviewCount
         );
     }
 

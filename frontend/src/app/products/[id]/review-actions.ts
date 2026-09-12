@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ApiRequestError, createProductReview } from "@/lib/api";
+import { ApiRequestError, createProductReview, updateProductReview, type ReviewInput } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
 import type { ReviewDetail } from "@/lib/types";
 
@@ -20,12 +20,67 @@ export type ReviewActionState = {
   fieldErrors?: Record<string, string>;
 };
 
+type ReviewOperation = "create" | "update";
+
 export async function createReviewAction(
   productId: string,
   criteriaIds: string[],
   _previousState: ReviewActionState,
   formData: FormData,
 ): Promise<ReviewActionState> {
+  return saveReview("create", productId, criteriaIds, formData);
+}
+
+export async function updateReviewAction(
+  productId: string,
+  criteriaIds: string[],
+  _previousState: ReviewActionState,
+  formData: FormData,
+): Promise<ReviewActionState> {
+  return saveReview("update", productId, criteriaIds, formData);
+}
+
+async function saveReview(
+  operation: ReviewOperation,
+  productId: string,
+  criteriaIds: string[],
+  formData: FormData,
+): Promise<ReviewActionState> {
+  const validated = validateReviewInput(criteriaIds, formData);
+  if (!validated.input) {
+    return { success: false, message: "입력한 리뷰를 다시 확인해 주세요.", fieldErrors: validated.fieldErrors };
+  }
+
+  const accessToken = await getActionAccessToken();
+  if (!accessToken) {
+    return { success: false, message: "로그인이 만료되었어요. 다시 로그인해 주세요." };
+  }
+
+  try {
+    const review = operation === "update"
+      ? await updateProductReview(accessToken, productId, validated.input)
+      : await createProductReview(accessToken, productId, validated.input);
+    revalidateReviewPaths(productId, review.authorId);
+    return operation === "update"
+      ? { success: true, message: "리뷰를 수정했어요. 새 점수와 내용이 바로 반영됐어요." }
+      : { success: true, message: "리뷰를 등록했어요. 항목별 점수와 리뷰점수에 바로 반영했어요." };
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      return { success: false, message: error.message, fieldErrors: error.fieldErrors };
+    }
+    return {
+      success: false,
+      message: operation === "update"
+        ? "리뷰를 수정하지 못했어요. 잠시 후 다시 시도해 주세요."
+        : "리뷰를 등록하지 못했어요. 잠시 후 다시 시도해 주세요.",
+    };
+  }
+}
+
+function validateReviewInput(
+  criteriaIds: string[],
+  formData: FormData,
+): { input: ReviewInput | null; fieldErrors: Record<string, string> } {
   const content = String(formData.get("content") ?? "").trim();
   const skinType = String(formData.get("skinType") ?? "").trim();
   const usagePeriod = String(formData.get("usagePeriod") ?? "").trim() as ReviewDetail["usagePeriod"];
@@ -45,28 +100,17 @@ export async function createReviewAction(
     fieldErrors.scores = "모든 평가 항목의 점수를 선택해 주세요.";
   }
   if (Object.keys(fieldErrors).length > 0) {
-    return { success: false, message: "입력한 리뷰를 다시 확인해 주세요.", fieldErrors };
+    return { input: null, fieldErrors };
   }
 
-  const accessToken = await getActionAccessToken();
-  if (!accessToken) {
-    return { success: false, message: "로그인이 만료되었어요. 다시 로그인해 주세요." };
-  }
+  return {
+    input: { content, skinType, usagePeriod, repurchaseYn: repurchaseValue === "true", scores },
+    fieldErrors,
+  };
+}
 
-  try {
-    await createProductReview(accessToken, productId, {
-      content,
-      skinType,
-      usagePeriod,
-      repurchaseYn: repurchaseValue === "true",
-      scores,
-    });
-    revalidatePath(`/products/${productId}`);
-    return { success: true, message: "리뷰를 등록했어요. 항목별 점수와 리뷰점수에 바로 반영했어요." };
-  } catch (error) {
-    if (error instanceof ApiRequestError) {
-      return { success: false, message: error.message, fieldErrors: error.fieldErrors };
-    }
-    return { success: false, message: "리뷰를 등록하지 못했어요. 잠시 후 다시 시도해 주세요." };
-  }
+function revalidateReviewPaths(productId: string, authorId: string | null) {
+  revalidatePath(`/products/${productId}`);
+  revalidatePath("/my");
+  if (authorId) revalidatePath(`/reviewers/${encodeURIComponent(authorId)}`);
 }

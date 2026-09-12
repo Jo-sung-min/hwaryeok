@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import com.hwaryeok.auth.InvalidCredentialsException;
 import com.hwaryeok.common.error.ForbiddenOperationException;
 import com.hwaryeok.common.error.ResourceNotFoundException;
+import com.hwaryeok.user.ActivityNickname;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,12 +60,12 @@ class ReviewReputationServiceTest {
     }
 
     @Test
-    void repeatPutUpdatesOneRatingWithoutChangingProductReviewScores() {
-        service.rate(review, voter, 2);
-        var updated = service.rate(review, voter, 5);
+    void repeatPutUpdatesOneTenPointHelpfulnessRatingWithoutChangingProductReviewScores() {
+        service.rate(review, voter, 4);
+        var updated = service.rate(review, voter, 10);
         assertThat(updated.ratingCount()).isEqualTo(1);
-        assertThat(updated.averageScore()).isEqualByComparingTo("5.0");
-        assertThat(updated.viewerScore()).isEqualTo(5);
+        assertThat(updated.averageScore()).isEqualByComparingTo("10.0");
+        assertThat(updated.viewerScore()).isEqualTo(10);
         assertThat(updated.canRate()).isTrue();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM review_firepower_ratings WHERE review_id = ?", Integer.class, review))
                 .isEqualTo(1);
@@ -74,11 +75,11 @@ class ReviewReputationServiceTest {
 
     @Test
     void deleteOnlyRemovesTheCallersRatingAndIsIdempotent() {
-        service.rate(review, voter, 5);
-        service.rate(review, otherVoter, 3);
+        service.rate(review, voter, 10);
+        service.rate(review, otherVoter, 6);
         var response = service.remove(review, voter);
         assertThat(response.ratingCount()).isEqualTo(1);
-        assertThat(response.averageScore()).isEqualByComparingTo("3.0");
+        assertThat(response.averageScore()).isEqualByComparingTo("6.0");
         assertThat(response.viewerScore()).isNull();
         assertThat(service.remove(review, voter).ratingCount()).isEqualTo(1);
         var empty = service.remove(review, otherVoter);
@@ -90,12 +91,12 @@ class ReviewReputationServiceTest {
 
     @Test
     void rejectsSelfRatingInvalidScoresAndUnknownVoters() {
-        assertThatThrownBy(() -> service.rate(review, author, 5)).isInstanceOf(ForbiddenOperationException.class);
+        assertThatThrownBy(() -> service.rate(review, author, 10)).isInstanceOf(ForbiddenOperationException.class);
         assertThatThrownBy(() -> service.remove(review, author)).isInstanceOf(ForbiddenOperationException.class);
         assertThatThrownBy(() -> service.rate(review, voter, null)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.rate(review, voter, 0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.rate(review, voter, 6)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> service.rate(review, "missing-user", 5)).isInstanceOf(InvalidCredentialsException.class);
+        assertThatThrownBy(() -> service.rate(review, voter, 11)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.rate(review, "missing-user", 10)).isInstanceOf(InvalidCredentialsException.class);
         assertThat(service.summary(review, author).canRate()).isFalse();
         assertThat(service.summary(review, null).canRate()).isFalse();
         assertThat(service.summary(review, voter).canRate()).isTrue();
@@ -103,7 +104,7 @@ class ReviewReputationServiceTest {
 
     @Test
     void neverExposesHiddenProductsOrTheirReviewsAndRatings() {
-        assertThatThrownBy(() -> service.rate(hiddenReview, voter, 5)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.rate(hiddenReview, voter, 10)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> service.summary(hiddenReview, null)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> service.remove(hiddenReview, voter)).isInstanceOf(ResourceNotFoundException.class);
         var publicReviews = reviewService.reviewsByUser(author, 0, 12, voter);
@@ -112,7 +113,7 @@ class ReviewReputationServiceTest {
         assertThat(publicReviews.content()).extracting(ReviewerReviewResponse::id).containsExactlyInAnyOrder(review, otherReview);
         assertThat(service.profile(author).reviewCount()).isEqualTo(2);
         assertThat(service.profile(author).averageReviewScore()).isEqualByComparingTo("60.0");
-        service.rate(review, voter, 5);
+        service.rate(review, voter, 10);
         jdbc.update("UPDATE products SET publication_status = 'HIDDEN' WHERE id = ?", product);
         assertThat(service.profile(author).reviewFirepower()).isNull();
         assertThat(service.profile(author).reviewCount()).isEqualTo(1);
@@ -121,18 +122,18 @@ class ReviewReputationServiceTest {
 
     @Test
     void suspendedAndWithdrawnVotersLoseInfluenceImmediately() {
-        service.rate(review, voter, 5);
-        service.rate(review, otherVoter, 1);
+        service.rate(review, voter, 10);
+        service.rate(review, otherVoter, 2);
         jdbc.update("UPDATE users SET status = 'SUSPENDED' WHERE id = ?", voter);
         entityManager.clear();
         var summary = service.summary(review, voter);
         assertThat(summary.ratingCount()).isEqualTo(1);
-        assertThat(summary.averageScore()).isEqualByComparingTo("1.0");
+        assertThat(summary.averageScore()).isEqualByComparingTo("2.0");
         assertThat(summary.viewerScore()).isNull();
         assertThat(summary.canRate()).isFalse();
         assertThat(service.profile(author).uniqueRaterCount()).isEqualTo(1);
         assertThat(service.profile(author).reviewFirepower()).isEqualByComparingTo("45.0");
-        assertThatThrownBy(() -> service.rate(review, voter, 4)).isInstanceOf(InvalidCredentialsException.class);
+        assertThatThrownBy(() -> service.rate(review, voter, 8)).isInstanceOf(InvalidCredentialsException.class);
         jdbc.update("UPDATE users SET status = 'WITHDRAWN' WHERE id = ?", otherVoter);
         entityManager.clear();
         assertThat(service.summary(review, null).ratingCount()).isZero();
@@ -142,12 +143,12 @@ class ReviewReputationServiceTest {
 
     @Test
     void inactiveAuthorsAreRemovedFromProfilesRankingAndPublicProductReviews() {
-        service.rate(review, voter, 5);
+        service.rate(review, voter, 10);
         jdbc.update("UPDATE users SET status = 'WITHDRAWN' WHERE id = ?", author);
         entityManager.clear();
         assertThatThrownBy(() -> service.profile(author)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> reviewService.reviewsByUser(author, 0, 12)).isInstanceOf(ResourceNotFoundException.class);
-        assertThatThrownBy(() -> service.rate(review, voter, 3)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.rate(review, voter, 6)).isInstanceOf(ResourceNotFoundException.class);
         assertThatThrownBy(() -> service.summary(review, voter)).isInstanceOf(ResourceNotFoundException.class);
         assertThat(service.ranking(null, 0, 50).content()).noneMatch(profile -> profile.userId().equals(author));
         var summary = reviewService.summary(product, voter);
@@ -157,14 +158,14 @@ class ReviewReputationServiceTest {
     }
 
     @Test
-    void averagesEachEvaluatorsOpinionsOnceAndShowsCurrentPublicSkinType() {
+    void tenPointHelpfulnessAveragesEachEvaluatorOnceAndFeedsReviewerRanking() {
         String competitorReview = addReview(otherAuthor, product, 75);
-        service.rate(review, voter, 5);
-        service.rate(otherReview, voter, 5);
-        service.rate(review, otherVoter, 1);
-        service.rate(competitorReview, voter, 4);
+        service.rate(review, voter, 10);
+        service.rate(otherReview, voter, 10);
+        service.rate(review, otherVoter, 2);
+        service.rate(competitorReview, voter, 8);
         var profile = service.profile(author);
-        assertThat(profile.averageReceivedRating()).isEqualByComparingTo("3.0");
+        assertThat(profile.averageReceivedRating()).isEqualByComparingTo("6.0");
         assertThat(profile.reviewFirepower()).isEqualByComparingTo("52.9");
         assertThat(profile.receivedRatingCount()).isEqualTo(3);
         assertThat(profile.uniqueRaterCount()).isEqualTo(2);
@@ -182,7 +183,7 @@ class ReviewReputationServiceTest {
     @Test
     void appliesSkinFilterBeforePaginationAndHandlesInvalidOrOverflowInputs() {
         addReview(otherAuthor, product, 75);
-        service.rate(review, voter, 5);
+        service.rate(review, voter, 10);
         var first = service.ranking(null, 0, 1);
         var second = service.ranking(null, 1, 1);
         assertThat(first.totalElements()).isEqualTo(3);
@@ -206,18 +207,18 @@ class ReviewReputationServiceTest {
 
     @Test
     void reviewListsIncludeViewerSpecificCommunityRatingsWithoutLeakingOtherVoters() {
-        service.rate(review, voter, 4);
+        service.rate(review, voter, 8);
         var productSummary = reviewService.summary(product, voter);
         assertThat(productSummary.reviews()).filteredOn(item -> item.id().equals(review)).singleElement()
                 .satisfies(item -> {
-                    assertThat(item.communityRating().viewerScore()).isEqualTo(4);
+                    assertThat(item.communityRating().viewerScore()).isEqualTo(8);
                     assertThat(item.communityRating().ratingCount()).isEqualTo(1);
                 });
         var authorReviews = reviewService.reviewsByUser(author, 0, 12, otherVoter);
         assertThat(authorReviews.content()).filteredOn(item -> item.id().equals(review)).singleElement()
                 .satisfies(item -> {
                     assertThat(item.communityRating().viewerScore()).isNull();
-                    assertThat(item.communityRating().averageScore()).isEqualByComparingTo("4.0");
+                    assertThat(item.communityRating().averageScore()).isEqualByComparingTo("8.0");
                     assertThat(item.communityRating().canRate()).isTrue();
                 });
         assertThat(reviewService.reviewsByUser(author, 0, 12, author).content())
@@ -240,13 +241,13 @@ class ReviewReputationServiceTest {
     void concurrentFirstPutsStillCreateOnlyOneRating() throws Exception {
         try (var executor = Executors.newFixedThreadPool(2)) {
             var barrier = new CyclicBarrier(2);
-            var first = executor.submit(() -> { barrier.await(); return service.rate(review, voter, 3); });
-            var second = executor.submit(() -> { barrier.await(); return service.rate(review, voter, 5); });
+            var first = executor.submit(() -> { barrier.await(); return service.rate(review, voter, 6); });
+            var second = executor.submit(() -> { barrier.await(); return service.rate(review, voter, 10); });
             first.get(20, TimeUnit.SECONDS);
             second.get(20, TimeUnit.SECONDS);
             var summary = service.summary(review, voter);
             assertThat(summary.ratingCount()).isEqualTo(1);
-            assertThat(summary.viewerScore()).isIn(3, 5);
+            assertThat(summary.viewerScore()).isIn(6, 10);
             assertThat(service.profile(author).uniqueRaterCount()).isEqualTo(1);
         } finally {
             for (String id : List.of(author, otherAuthor, unratedAuthor, voter, otherVoter)) {
@@ -259,9 +260,10 @@ class ReviewReputationServiceTest {
     private String addUser(String nickname, String status, String skinType) {
         String id = UUID.randomUUID().toString();
         jdbc.update("""
-                INSERT INTO users (id, email, password_hash, nickname, role, status)
-                VALUES (?, ?, 'test-unused', ?, 'USER', ?)
-                """, id, id + "@example.com", nickname, status);
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, 'test-unused', ?, ?, 'USER', ?)
+                """, id, id + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)), status);
         if (skinType != null) jdbc.update("INSERT INTO user_skin_profiles (user_id, skin_type) VALUES (?, ?)", id, skinType);
         return id;
     }

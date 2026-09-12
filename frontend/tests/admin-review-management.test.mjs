@@ -24,7 +24,7 @@ function declaration(source, startPattern, endPattern) {
   return remainder.slice(0, end);
 }
 
-function loadReviewSection() {
+function loadReviewSection(actionBindings = []) {
   const filename = fileURLToPath(new URL("../src/app/products/[id]/review-section.tsx", import.meta.url));
   const { code } = require("next/dist/compiled/babel/core").transformSync(readFileSync(filename, "utf8"), {
     filename,
@@ -44,6 +44,16 @@ function loadReviewSection() {
   const ReviewPetalRating = ({ score }) => score == null ? null : React.createElement("span", {
     "data-petal-count": Math.floor(Number(score) / 20),
   });
+  const actionStub = (kind) => {
+    const action = () => undefined;
+    action.bind = (_this, ...args) => {
+      actionBindings.push({ kind, args });
+      return () => undefined;
+    };
+    return action;
+  };
+  const createReviewAction = actionStub("create");
+  const updateReviewAction = actionStub("update");
 
   vm.runInNewContext(code, {
     module: localModule,
@@ -53,7 +63,7 @@ function loadReviewSection() {
       if (specifier === "next/link") return { __esModule: true, default: Link };
       if (specifier === "@/components/review-firepower-vote") return { ReviewFirepowerVote };
       if (specifier === "@/components/review-petal-rating") return { ReviewPetalRating };
-      if (specifier === "./review-actions") return { createReviewAction: () => undefined };
+      if (specifier === "./review-actions") return { createReviewAction, updateReviewAction };
       if (specifier === "lucide-react") return new Proxy({ __esModule: true }, {
         get: (target, name) => name in target
           ? target[name]
@@ -79,6 +89,8 @@ function reviewSummary(review) {
     reviewScore: 84,
     reviewCount: 1,
     viewerHasReviewed: false,
+    viewerReview: null,
+    viewerReviewCriteria: null,
     rankingStatus: "COLLECTING",
     minimumOfficialReviewCount: 10,
     criteriaAverages: [],
@@ -105,7 +117,9 @@ const baseReview = {
   skinType: "복합성",
   usagePeriod: "ONE_MONTH",
   repurchaseYn: true,
+  scores: [{ criteriaId: "hydration", score: 4 }],
   createdAt: "2026-09-10T00:00:00Z",
+  updatedAt: "2026-09-10T00:00:00Z",
 };
 
 test("review types distinguish nullable sample authors and expose a paged admin model", () => {
@@ -114,6 +128,10 @@ test("review types distinguish nullable sample authors and expose a paged admin 
 
   assert.match(reviewDetail, /authorId:\s*string\s*\|\s*null/);
   assert.match(reviewDetail, /sampleReview:\s*boolean/);
+  assert.match(reviewDetail, /scores:\s*\{\s*criteriaId:\s*string;\s*score:\s*number\s*\}\[\]/);
+  assert.match(reviewDetail, /updatedAt:\s*string/);
+  assert.match(typesSource, /viewerReview:\s*ReviewDetail\s*\|\s*null/);
+  assert.match(typesSource, /viewerReviewCriteria:\s*ReviewCriteria\s*\|\s*null/);
   assert.match(typesSource, /export type AdminReviewKind\s*=\s*"ALL"\s*\|\s*"USER"\s*\|\s*"SAMPLE"/);
   assert.match(typesSource, /export type AdminReviewListItem\s*=\s*\{/);
   for (const field of ["content", "page", "size", "totalElements", "totalPages", "hasNext"]) {
@@ -198,4 +216,50 @@ test("ordinary user reviews retain the reviewer profile and firepower vote journ
   assert.match(html, /data-review-firepower-vote="review-1"/);
   assert.match(html, /data-petal-count="4"/);
   assert.doesNotMatch(html, /화면 예시 · 점수 집계 제외/);
+});
+
+test("the signed-in author's review opens with every editable value prefilled", () => {
+  const actionBindings = [];
+  const ReviewSection = loadReviewSection(actionBindings);
+  const currentCriteria = {
+    ...criteria,
+    templateId: "template-current",
+    templateVersion: 2,
+    criteria: [{ id: "hydration-current", code: "HYDRATION", name: "현재 보습감", description: "현재 보습 기준", displayOrder: 1 }],
+  };
+  const viewerReviewCriteria = {
+    ...criteria,
+    templateId: "template-old",
+    templateVersion: 1,
+    criteria: [{ id: "hydration-old", code: "HYDRATION_OLD", name: "기존 보습 지속력", description: "리뷰 작성 당시 기준", displayOrder: 1 }],
+  };
+  const viewerReview = {
+    ...baseReview,
+    content: "수정 전 사용 후기를 그대로 불러옵니다.",
+    skinType: "건성",
+    usagePeriod: "TWO_WEEKS",
+    repurchaseYn: false,
+    scores: [{ criteriaId: "hydration-old", score: 5 }],
+    updatedAt: "2026-09-11T00:00:00Z",
+  };
+  const html = renderToStaticMarkup(React.createElement(ReviewSection, {
+    productId: "toner-1",
+    criteria: currentCriteria,
+    summary: { ...reviewSummary(viewerReview), viewerHasReviewed: true, viewerReview, viewerReviewCriteria },
+    isAuthenticated: true,
+    savedSkinType: "복합성",
+    initialEditing: true,
+  }));
+
+  assert.match(html, /내 리뷰 수정/);
+  assert.match(html, /수정 내용 저장/);
+  assert.match(html, /기존 보습 지속력/);
+  assert.doesNotMatch(html, /현재 보습감/);
+  assert.match(html, /<input(?=[^>]*name="score_hydration-old")(?=[^>]*value="5")(?=[^>]*checked="")[^>]*>/);
+  assert.match(html, /<option value="TWO_WEEKS" selected="">2주 정도<\/option>/);
+  assert.match(html, /<option selected="">건성<\/option>/);
+  assert.match(html, /<input(?=[^>]*name="repurchaseYn")(?=[^>]*value="false")(?=[^>]*checked="")[^>]*>/);
+  assert.match(html, /수정 전 사용 후기를 그대로 불러옵니다\./);
+  assert.deepEqual(actionBindings.find(({ kind }) => kind === "update")?.args, ["toner-1", ["hydration-old"]]);
+  assert.equal(actionBindings.some(({ kind, args }) => kind === "update" && args[1]?.includes("hydration-current")), false);
 });

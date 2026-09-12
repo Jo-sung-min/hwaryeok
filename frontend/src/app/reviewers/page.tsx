@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { ArrowRight, Droplets, Flame, MessageCircle, UsersRound } from "lucide-react";
 import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
@@ -33,9 +34,9 @@ export default async function ReviewersPage({ searchParams }: { searchParams: Pr
       </div>
       <details className="mt-6 rounded-2xl border border-[#f0dbe3] bg-[#fff8fa] px-5 py-4 text-xs leading-6 text-[#806b74]">
         <summary className="cursor-pointer font-bold text-[#a24966]">리뷰 화력은 어떻게 정해지나요?</summary>
-        <p className="mt-3">제품 자체에 매긴 점수와 별개로, 다른 사용자들이 리뷰의 도움 정도를 1~5점으로 평가해요. 같은 평가자가 여러 리뷰에 남긴 점수는 먼저 평균을 내어 한 사람의 영향이 지나치게 커지지 않도록 해요.</p>
+        <p className="mt-3">제품 자체에 매긴 점수와 별개로, 다른 사용자들이 리뷰의 도움 정도를 1~10점으로 평가해요. 같은 평가자가 여러 리뷰에 남긴 점수는 먼저 평균을 내어 한 사람의 영향이 지나치게 커지지 않도록 해요.</p>
         <p className="mt-2">평가자별 평균을 100점으로 환산한 뒤, 서로 다른 평가자 수에 따라 기준값 50과 함께 보정해요. 화력은 온도 모양으로 표현한 활동 지표이며 제품 효능이나 신원을 보증하지 않아요. 평가가 없으면 ‘집계 전’이며 순위는 부여하지 않아요.</p>
-        <p className="mt-2 break-words text-[11px]">산식: 50 + (평가자별 평균의 평균 × 20 − 50) × 평가자 수 ÷ (평가자 수 + 5). 비공개 제품과 비활성 사용자의 활동은 집계에서 제외해요.</p>
+        <p className="mt-2 break-words text-[11px]">산식: 50 + (평가자별 평균의 평균 × 10 − 50) × 평가자 수 ÷ (평가자 수 + 5). 비공개 제품과 비활성 사용자의 활동은 집계에서 제외해요.</p>
       </details>
     </section>
 
@@ -53,7 +54,7 @@ export default async function ReviewersPage({ searchParams }: { searchParams: Pr
         {data.content.map((reviewer) => <li key={reviewer.userId}>
           <Link href={`/reviewers/${encodeURIComponent(reviewer.userId)}`} className="grid grid-cols-[28px_44px_1fr] items-center gap-x-3 gap-y-3 px-4 py-5 transition hover:bg-[#fff9fb] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#c86483] sm:grid-cols-[40px_60px_1fr_auto] sm:gap-x-5 sm:px-7 sm:py-6">
             <span className={`text-center text-lg font-bold tabular-nums ${reviewer.rank !== null && reviewer.rank <= 3 ? "text-[#be4e72]" : "text-[#a58b95]"}`} aria-label={reviewer.rank === null ? "순위 집계 전" : `${reviewer.rank}위`}>{reviewer.rank ?? "—"}</span>
-            <span aria-hidden="true" className="grid h-11 w-11 place-items-center rounded-full border border-[#efcedb] bg-[#fff0f5] text-lg font-semibold text-[#b45876] sm:h-15 sm:w-15 sm:text-2xl">{Array.from(reviewer.nickname)[0]}</span>
+            <span aria-hidden="true" className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-[#efcedb] bg-[#fff0f5] text-lg font-semibold text-[#b45876] sm:h-15 sm:w-15 sm:text-2xl">{reviewer.profileImageUrl ? <Image src={reviewer.profileImageUrl} alt="" fill sizes="60px" className="object-cover" /> : Array.from(reviewer.nickname)[0]}</span>
             <div className="min-w-0"><h3 className="break-words text-base font-bold sm:text-lg">{reviewer.nickname}</h3><p className="mt-1.5 flex items-center gap-1 text-xs text-[#9b6c80]"><Droplets size={12} />{reviewer.skinType ? `${reviewer.skinType === "민감" ? "민감성" : reviewer.skinType} 피부` : "피부타입 미등록"}</p><p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#94818a]"><span>작성 리뷰 {reviewer.reviewCount}개</span><span>평가자 {reviewer.uniqueRaterCount}명 · 받은 평가 {reviewer.receivedRatingCount}개</span></p></div>
             <div className="col-start-3 flex flex-wrap items-center justify-between gap-3 sm:col-start-auto sm:flex-col sm:items-end"><ReviewerFirepower score={reviewer.reviewFirepower} compact /><span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#a25370]">작성 리뷰 보기 <ArrowRight size={13} /></span></div>
           </Link>

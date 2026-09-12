@@ -19,7 +19,6 @@
 .score span { min-width: 0; overflow: hidden; color: #8b828b; font-size: clamp(8px, 1.9vw, 10px); text-overflow: ellipsis; white-space: nowrap; }
 .benefit { margin: 5px 0 0; overflow: hidden; color: #777079; font-size: clamp(9px, 2.1vw, 11px); line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
 .favorite { position: absolute; z-index: 2; top: 2px; right: 2px; }
-.favorite :global(button) { border-color: transparent !important; background: rgba(255, 255, 255, .88) !important; box-shadow: 0 1px 5px rgba(48, 39, 44, .08) !important; }
 .sentinel { width: 100%; height: 1px; }
 .loadArea { display: grid; min-height: 82px; place-items: center; gap: 8px; padding: 18px 12px 6px; text-align: center; }
 .loadMore { display: inline-flex; min-width: 150px; min-height: 46px; align-items: center; justify-content: center; gap: 7px; border: 1px solid #dfdbe0; border-radius: 10px; color: #4e4951; background: #fff; font-size: 13px; font-weight: 650; }

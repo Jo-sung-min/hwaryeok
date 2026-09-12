@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, ClipboardList, Clock3, Droplets, Flower2, Layers, Leaf, LoaderCircle, Pencil, Save, ShieldCheck, Sparkles, SunMedium, Waves, Wind } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ProductVisual } from "@/components/product-ui";
 import type { SkinProfile } from "@/lib/api";
 import type { SkinTypeStatistics } from "@/lib/skin-report";
@@ -35,6 +35,7 @@ type QuickSkinCheckProps = {
 export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvailable, ingredients, initialPreferredIngredientIds, isAuthenticated, draftOwnerId }: QuickSkinCheckProps) {
   const [answers, setAnswers] = useState<SkinAnswers>({});
   const [answersDirty, setAnswersDirty] = useState(false);
+  const [draftBaseVersion, setDraftBaseVersion] = useState(0);
   const [selectedIngredientIds, setSelectedIngredientIds] = useState(initialPreferredIngredientIds ?? []);
   const [preferenceSelectionDirty, setPreferenceSelectionDirty] = useState(false);
   const [view, setView] = useState<CheckView>(1);
@@ -52,6 +53,9 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
   const profileBaseUpdatedAt = useRef(initialProfile?.updatedAt ?? null);
   const preferenceBaseIds = useRef<string[] | null>(initialPreferredIngredientIds);
   const requestId = useRef(0);
+  const draftRevision = useRef(0);
+  const saveRequestActive = useRef(false);
+  const autoSaveKey = useRef<string | null>(null);
   const questionArea = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -132,7 +136,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
       view,
     })); }
     catch { setNotice("임시 보관 공간을 사용할 수 없어요. 이 화면에서는 계속 답변할 수 있어요."); }
-  }, [answers, answersDirty, draftOwnerId, initialPreferredIngredientIds, preferenceSelectionDirty, ready, selectedIngredientIds, view]);
+  }, [answers, answersDirty, draftBaseVersion, draftOwnerId, initialPreferredIngredientIds, preferenceSelectionDirty, ready, selectedIngredientIds, view]);
 
   useEffect(() => {
     questionArea.current?.scrollTo({ top: 0, behavior: "instant" });
@@ -164,6 +168,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
     writeView(next);
   };
   const updateAnswers = (next: SkinAnswers) => {
+    draftRevision.current++;
     answersRef.current = next;
     setAnswers(next);
     setAnswersDirty(true);
@@ -173,6 +178,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
     requestId.current++;
   };
   const updateIngredientSelection = (ingredientId: string) => {
+    draftRevision.current++;
     setSelectedIngredientIds((current) => current.includes(ingredientId)
       ? current.filter((id) => id !== ingredientId)
       : current.length < 10 ? [...current, ingredientId] : current);
@@ -197,49 +203,76 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
     setEditing(false);
     navigate("result");
   };
-  const saveProfile = async () => {
+  const saveProfile = useCallback(async (): Promise<SkinCheckSaveResult | null> => {
     const profile = toQuickProfile(answersRef.current);
-    if (!profile || !isAuthenticated) return;
+    if (!profile || !isAuthenticated || saveRequestActive.current) return null;
+    const revision = draftRevision.current;
+    saveRequestActive.current = true;
     setSaving(true);
-    const response: SkinCheckSaveResult = await saveSkinCheckProfile(profile, initialPreferredIngredientIds === null ? null : selectedIngredientIds).catch(() => ({
-      success: false,
-      message: "결과를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
-    }));
-    setSaveState(response);
-    setSaving(false);
-    if (response.success) {
-      profileBaseKnown.current = true;
-      profileBaseUpdatedAt.current = response.profileUpdatedAt ?? null;
-      setAnswersDirty(false);
-      if (response.preferredIngredientIds !== null && response.preferredIngredientIds !== undefined) {
-        preferenceBaseIds.current = response.preferredIngredientIds;
-        retainedPreferenceDraft.current = null;
-        setSelectedIngredientIds(response.preferredIngredientIds);
-        setPreferenceSelectionDirty(false);
-      }
-      try {
-        const retained = response.preferredIngredientIds === null ? retainedPreferenceDraft.current : null;
-        if (retained) {
-          window.sessionStorage.setItem(SKIN_CHECK_DRAFT_KEY, JSON.stringify({
-            version: 3,
-            updatedAt: Date.now(),
-            answers,
-            answersDirty: false,
-            draftOwnerId,
-            profileBaseKnown: profileBaseKnown.current,
-            profileBaseUpdatedAt: profileBaseUpdatedAt.current,
-            preferenceBaseIds: retained.preferenceBaseIds,
-            preferenceOwnerId: retained.preferenceOwnerId,
-            preferenceSelectionDirty: retained.preferenceSelectionDirty,
-            preferredIngredientIds: retained.preferredIngredientIds,
-            view,
-          }));
-        } else {
-          window.sessionStorage.removeItem(SKIN_CHECK_DRAFT_KEY);
+    try {
+      const response: SkinCheckSaveResult = await saveSkinCheckProfile(profile, initialPreferredIngredientIds === null ? null : selectedIngredientIds).catch(() => ({
+        success: false,
+        message: "결과를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      }));
+      const requestStillCurrent = revision === draftRevision.current;
+      setSaveState(requestStillCurrent ? response : null);
+      if (response.success) {
+        profileBaseKnown.current = true;
+        profileBaseUpdatedAt.current = response.profileUpdatedAt ?? null;
+        if (response.preferredIngredientIds !== null && response.preferredIngredientIds !== undefined) {
+          preferenceBaseIds.current = response.preferredIngredientIds;
+          retainedPreferenceDraft.current = null;
+          if (requestStillCurrent) {
+            setSelectedIngredientIds(response.preferredIngredientIds);
+            setPreferenceSelectionDirty(false);
+          }
         }
-      } catch { /* 저장한 영역은 계정에서 다시 불러올 수 있어요. */ }
+        setDraftBaseVersion((current) => current + 1);
+        if (requestStillCurrent) {
+          setAnswersDirty(false);
+          try {
+            const retained = response.preferredIngredientIds === null ? retainedPreferenceDraft.current : null;
+            if (retained) {
+              window.sessionStorage.setItem(SKIN_CHECK_DRAFT_KEY, JSON.stringify({
+                version: 3,
+                updatedAt: Date.now(),
+                answers,
+                answersDirty: false,
+                draftOwnerId,
+                profileBaseKnown: profileBaseKnown.current,
+                profileBaseUpdatedAt: profileBaseUpdatedAt.current,
+                preferenceBaseIds: retained.preferenceBaseIds,
+                preferenceOwnerId: retained.preferenceOwnerId,
+                preferenceSelectionDirty: retained.preferenceSelectionDirty,
+                preferredIngredientIds: retained.preferredIngredientIds,
+                view,
+              }));
+            } else {
+              window.sessionStorage.removeItem(SKIN_CHECK_DRAFT_KEY);
+            }
+          } catch { /* 저장한 영역은 계정에서 다시 불러올 수 있어요. */ }
+        }
+      }
+      return response;
+    } finally {
+      saveRequestActive.current = false;
+      setSaving(false);
     }
-  };
+  }, [answers, draftOwnerId, initialPreferredIngredientIds, isAuthenticated, selectedIngredientIds, view]);
+
+  useEffect(() => {
+    if (!ready || view !== "result" || !isAuthenticated) return;
+    if (initialProfile?.configured && !answersDirty && !preferenceSelectionDirty) return;
+    const profile = toQuickProfile(answersRef.current);
+    if (!profile) return;
+    const ingredientIds = initialPreferredIngredientIds === null ? null : [...selectedIngredientIds].sort();
+    const key = JSON.stringify({ profile, preferredIngredientIds: ingredientIds });
+    if (autoSaveKey.current === key || saveRequestActive.current) return;
+    autoSaveKey.current = key;
+    void saveProfile();
+  }, [answersDirty, initialPreferredIngredientIds, initialProfile?.configured, isAuthenticated, preferenceSelectionDirty, ready, saveProfile, selectedIngredientIds, view]);
+
+  const resultIsSaved = Boolean(saveState?.success || (initialProfile?.configured && !answersDirty && !preferenceSelectionDirty));
   const question = typeof view === "number" ? skinQuestions[view - 1] : null;
   const missing = firstMissingAnswer(answers);
   const selected = question ? answers[question.key] : undefined;
@@ -282,9 +315,9 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
         <div className={styles.eyebrow}><span><Sparkles size={15} />피부·성분 통합 결과</span><button type="button" onClick={() => navigate("review")} className={styles.textButton}><Pencil size={13} />답변 수정</button></div>
         <SkinReport answers={answers} statistics={statistics} ingredientRecommendations={result?.ingredients ?? []} />
         <section className={styles.saveCard} aria-labelledby="skin-result-save-title">
-          <div><h3 id="skin-result-save-title">이 기준을 다음 추천에도 사용할까요?</h3><p>{initialPreferredIngredientIds === null ? "피부 답변은 저장하고, 지금 불러오지 못한 기존 성분 선택은 그대로 유지해요." : "피부 타입 답변과 잘 맞았던 성분을 한 번에 저장해 제품·성분 추천에 함께 반영해요."}</p></div>
+          <div><h3 id="skin-result-save-title">{saving ? "맞춤 랭킹에 반영하고 있어요" : resultIsSaved ? "맞춤 랭킹 기준을 저장했어요" : "이 기준을 다음 추천에도 사용할까요?"}</h3><p>{initialPreferredIngredientIds === null ? "피부 답변은 저장하고, 지금 불러오지 못한 기존 성분 선택은 그대로 유지해요." : "피부 타입 답변과 잘 맞았던 성분을 한 번에 저장해 제품·성분 추천에 함께 반영해요."}</p></div>
           {isAuthenticated
-            ? <button type="button" className={styles.saveButton} onClick={saveProfile} disabled={saving}><Save size={15} />{saving ? "저장하는 중…" : "피부·성분 기준 저장"}</button>
+            ? <button type="button" className={styles.saveButton} onClick={() => void saveProfile()} disabled={saving || resultIsSaved}>{resultIsSaved ? <Check size={15} /> : <Save size={15} />}{saving ? "저장하는 중…" : resultIsSaved ? "저장 완료" : "피부·성분 기준 저장"}</button>
             : <Link className={styles.saveButton} href="/login?returnTo=%2Fskin-check%3Fstep%3Dresult">로그인하고 결과 저장</Link>}
           {saveState && <p className={saveState.success ? styles.saveSuccess : styles.validation} role="status">{saveState.message}</p>}
         </section>
@@ -305,7 +338,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
           if (question.multiple && answers[question.key] === undefined) updateAnswers({ ...answers, [question.key]: [] });
           navigate(editing || view === total ? "review" : view + 1);
           setEditing(false);
-        }}>{editing ? "수정 완료" : view === total ? "답변 확인하기" : "다음"}<ArrowRight size={16} /></button> : view === "review" ? <button type="button" onClick={calculate} disabled={pending || !ready} className={styles.next}>{pending ? <><LoaderCircle size={16} className="animate-spin" />피부와 성분을 함께 찾고 있어요</> : missing >= 0 ? <>아직 안 고른 문항 이어하기<ArrowRight size={16} /></> : <><Sparkles size={16} />내 피부 타입과 성분 보기</>}</button> : <Link href="/" className={styles.next}>결과 확인 완료<ArrowRight size={16} /></Link>}
+        }}>{editing ? "수정 완료" : view === total ? "답변 확인하기" : "다음"}<ArrowRight size={16} /></button> : view === "review" ? <button type="button" onClick={calculate} disabled={pending || !ready} className={styles.next}>{pending ? <><LoaderCircle size={16} className="animate-spin" />피부와 성분을 함께 찾고 있어요</> : missing >= 0 ? <>아직 안 고른 문항 이어하기<ArrowRight size={16} /></> : <><Sparkles size={16} />내 피부 타입과 성분 보기</>}</button> : isAuthenticated ? resultIsSaved ? <Link href="/ranking/personal" className={styles.next}>내 맞춤 랭킹 보기<ArrowRight size={16} /></Link> : <button type="button" onClick={() => void saveProfile()} disabled={saving} className={styles.next}>{saving ? <><LoaderCircle size={16} className="animate-spin" />맞춤 랭킹에 반영 중…</> : <><Save size={16} />저장하고 맞춤 랭킹 보기</>}</button> : <Link href="/" className={styles.next}>결과 확인 완료<ArrowRight size={16} /></Link>}
       </div>
       <p className={styles.disclaimer}>피부 상태 자가 체크와 성분 탐색 · 의료 진단이 아니에요</p>
     </footer>

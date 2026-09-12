@@ -17,8 +17,8 @@ export async function rateReviewAction(
   const intent = form.get("intent");
   const score = intent === "remove" ? null : Number(form.get("score"));
   if (intent !== "remove" && intent !== "rate") return { message: "평가 방법을 다시 선택해 주세요." };
-  if (score !== null && (!Number.isInteger(score) || score < 1 || score > 5)) {
-    return { message: "도움이 된 정도를 1~5점으로 선택해 주세요." };
+  if (score !== null && (!Number.isInteger(score) || score < 1 || score > 10)) {
+    return { message: "도움이 된 정도를 1~10점으로 선택해 주세요." };
   }
   const token = await getActionAccessToken();
   if (!token) return { message: "로그인 후 리뷰 화력을 평가할 수 있어요." };
