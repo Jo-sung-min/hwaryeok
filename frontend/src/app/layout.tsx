@@ -35,9 +35,9 @@ export const metadata: Metadata = {
 
 function siteUrl() {
   try {
-    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001");
   } catch {
-    return new URL("http://localhost:3000");
+    return new URL("http://localhost:3001");
   }
 }
 

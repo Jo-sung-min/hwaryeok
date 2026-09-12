@@ -69,6 +69,16 @@ logging:
     org.hibernate.orm.connections.pooling: warn
 
 app:
+  storage:
+    s3:
+      bucket: ${S3_BUCKET:}
+      key-prefix: ${S3_KEY_PREFIX:}
+      public-base-url: ${S3_PUBLIC_BASE_URL:}
+      region: ${AWS_REGION:}
+      access-key-id: ${AWS_ACCESS_KEY_ID:}
+      secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+      session-token: ${AWS_SESSION_TOKEN:}
+      presigned-url-seconds: ${S3_PRESIGNED_URL_SECONDS:300}
   data-sources:
     mfds:
       service-key: ${MFDS_API_SERVICE_KEY:}
@@ -91,12 +101,6 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   oauth:
     frontend-base-url: ${OAUTH_FRONTEND_BASE_URL:http://localhost:3000}
-    google:
-      client-id: ${GOOGLE_CLIENT_ID:}
-      client-secret: ${GOOGLE_CLIENT_SECRET:}
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}
-    naver:
-      client-id: ${NAVER_CLIENT_ID:}
-      client-secret: ${NAVER_CLIENT_SECRET:}

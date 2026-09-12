@@ -89,7 +89,7 @@ export default async function PersonalRankingPage({ searchParams }: { searchPara
       <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-xs text-[#947982]"><ArrowLeft size={14} />메인으로</Link>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 break-words"><p className="mb-2 text-xs font-bold text-[#a63e65]">{user.nickname}님을 위한 랭킹</p><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">내 피부에 맞는 제품 랭킹</h1><p className="mt-3 text-sm leading-7 text-[#69646f]">저장한 피부 설정을 반영해 맞춤 화력이 높은 순서로 보여드려요.</p></div>
-        <Link href="/profile" className="line-btn text-sm"><SlidersHorizontal size={14} />피부 설정 수정</Link>
+        <Link href="/skin-check" className="line-btn text-sm"><SlidersHorizontal size={14} />피부 설정 수정</Link>
       </div>
       <div className="mt-5 rounded-2xl border border-[#efdce4] bg-[#fff8fa] px-4 py-4"><p className="text-sm font-semibold text-[#a33e65]">{care.summary}</p><p className="mt-2 text-sm leading-6 text-[#69646f]">추천 제형 · {care.texture}</p><p className="mt-1 text-xs leading-6 text-[#80717b]">{care.application}</p><div className="mt-3 flex flex-wrap gap-2">{care.ingredients.map(ingredient => <Link key={ingredient.id} href={`/ingredients/${encodeURIComponent(ingredient.id)}`} className="rounded-lg border border-[#edcedc] bg-white px-3 py-2 text-xs text-[#a4476c]">{ingredient.name} 설명과 랭킹</Link>)}</div><p className="mt-3 text-xs leading-6 text-[#80717b]">{care.check.title} · {care.check.text}</p></div>
       <Link href="/principles#skin-guide" className="mt-3 inline-flex min-h-9 items-center text-xs text-[#897581]">맞춤 화력·추천 기준 안내 →</Link>

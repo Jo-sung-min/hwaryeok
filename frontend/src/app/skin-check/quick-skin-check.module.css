@@ -67,6 +67,21 @@
 .reviewList strong { color: #44384c; margin: 3px 0; }
 .reviewList em { color: #9b4367; }
 .reviewList svg { color: #947f93; flex-shrink: 0; }
+.ingredientPicker { margin-top: 24px; padding: 18px; border: 1px solid #e9dfe7; border-radius: 16px; background: #fcfafb; }
+.ingredientPickerHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.ingredientPickerHeader > div { min-width: 0; }
+.ingredientPickerHeader span { color: #a23d65; font-size: 10px; font-weight: 700; }
+.ingredientPickerHeader h3 { margin: 5px 0 0; color: #44384c; font-size: 15px; font-weight: 750; }
+.ingredientPickerHeader p, .ingredientEmpty { margin: 7px 0 0; color: #7b6d7c; font-size: 11px; line-height: 1.7; word-break: keep-all; }
+.ingredientEmpty a { color: #a23d65; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.ingredientPickerHeader > strong { flex-shrink: 0; color: #9d4267; font-size: 11px; font-variant-numeric: tabular-nums; }
+.ingredientChoices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 15px; }
+.ingredientChoices button { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 58px; padding: 10px 11px; border: 1px solid #e7dfe6; border-radius: 11px; background: #fff; color: #544957; text-align: left; transition: border-color .15s, background-color .15s, transform .15s; }
+.ingredientChoices button:hover:not(:disabled) { transform: translateY(-1px); border-color: #d69ab1; }
+.ingredientChoices button[aria-pressed="true"] { border-color: #bd5b80; background: #fff2f7; color: #96385d; }
+.ingredientChoices button:disabled { opacity: .48; }
+.ingredientChoices span { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; }
+.ingredientChoices small { display: block; margin-top: 4px; overflow: hidden; max-width: 100%; color: #867887; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .textButton { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; background: transparent; border: 0; color: #984267; font-size: 12px; }
 .accent { color: #a53e65; }
 .summaryCard { border: 1px solid #efd8e2; border-radius: 16px; padding: 18px; background: #fff8fa; }
@@ -79,8 +94,9 @@
 .signalGrid button { padding: 12px; border: 1px solid #ece3ec; border-radius: 12px; text-align: left; background: white; }
 .signalGrid span { display: flex; justify-content: space-between; color: #857087; font-size: 11px; }
 .signalGrid strong { display: block; margin-top: 7px; font-size: 12px; color: #514056; }
-.resultHeading { margin: 28px 0 14px; }
-.resultHeading h3, .saveCard h3 { font-size: 17px; font-weight: 750; }
+.productResults { margin-top:14px; padding:20px 18px; border:1px solid #e5ddea; border-radius:18px; background:#fbf9fc; }
+.resultHeading { margin: 0 0 14px; padding-bottom:14px; border-bottom:1px solid #e8e0ea; }
+.resultHeading h3, .saveCard h3 { margin: 0; font-size: 17px; font-weight: 750; }
 .resultHeading p { margin-top: 6px; color: #7f7183; font-size: 11px; }
 .productList { display: grid; gap: 12px; }
 .product { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 14px; padding: 12px; border: 1px solid #ede3ea; border-radius: 14px; }
@@ -92,7 +108,11 @@
 .productScore { display: block; color: #a53e65; font-size: 14px; margin-top: 6px; }
 .product p { color: #726775; font-size: 11px; line-height: 1.6; margin: 6px 0; }
 .saveCard { margin-top: 22px; padding: 18px; border: 1px solid #e9dce5; border-radius: 14px; }
-.saveCard a { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin-top: 16px; background: #fff0f6; border-radius: 10px; color: #a33d65; font-size: 13px; font-weight: 650; }
+.saveButton { display: flex; align-items: center; justify-content: center; width: 100%; gap: 6px; min-height: 44px; margin-top: 16px; border: 1px solid #efd4df; background: #fff0f6; border-radius: 10px; color: #a33d65; font-size: 13px; font-weight: 650; }
+.saveButton:disabled { opacity: .55; }
+.saveCard .saveSuccess, .saveCard .validation { margin: 10px 0 0; font-size: 11px; }
+.saveCard .saveSuccess { color: #47755a; }
+.saveCard .validation { color: #a03e49; }
 .emptyResult { padding: 18px; border-radius: 12px; background: #faf7fa; font-size: 12px; line-height: 1.7; color: #7e6d81; }
 @media (max-width: 359px), (max-height: 700px) {
   .topbar { min-height: 50px; padding: 3px 16px; }
@@ -100,6 +120,7 @@
   .topbar a, .reviewLink { font-size: 11px; }
   .progress { margin-inline: 16px; margin-bottom: 2px; }
   .questionArea { padding: 12px 16px; }
+  .productResults { padding:17px 15px; }
   .eyebrow { margin-bottom: 9px; font-size: 11px; }
   .step h2 { font-size: 21px; }
   .description { margin: 7px 0 12px; font-size: 12px; line-height: 1.5; }
@@ -113,6 +134,9 @@
   .multiChoices .selectionMark { width: 13px; height: 13px; right: 6px; top: 10px; }
   .multiChoices .choice strong { font-size: 12px; padding-right: 12px; }
   .multiChoices .choice small { font-size: 10px; }
+  .ingredientPicker { padding: 14px; }
+  .ingredientChoices { gap: 6px; }
+  .ingredientChoices button { min-height: 52px; padding: 8px 9px; }
   .questionNote { margin-top: 10px; font-size: 10px; }
   .intro { margin-top: 8px; padding: 9px; font-size: 10px; }
   .footer { padding: 10px 16px max(8px, env(safe-area-inset-bottom)); }

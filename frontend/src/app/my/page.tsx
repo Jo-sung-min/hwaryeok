@@ -40,7 +40,7 @@ export default async function MyPage() {
     <header className={styles.header}>
       <div className={styles.avatar} aria-hidden="true">{user.nickname.slice(0, 1)}</div>
       <div className={styles.identity}><p className={styles.eyebrow}>MY HWA:RYEOK</p><h1>{user.nickname}님의 마이화력</h1><p>내 피부와 나의 기록, 한눈에.</p></div>
-      <Link href="/profile" className={styles.iconButton} aria-label="내 프로필 설정"><Settings size={19} /></Link>
+      <Link href="/skin-check" className={styles.iconButton} aria-label="나의 성분찾기 설정"><Settings size={19} /></Link>
     </header>
     <MyTabs active="overview" />
     <div className={styles.stats}>{stats.map(({ label, value, icon: Icon, href }) => <Link href={href} key={label}><Icon size={16} /><strong>{value == null ? "—" : Number.isInteger(value) ? value : value.toFixed(1)}</strong><span>{label}</span></Link>)}</div>
@@ -52,7 +52,7 @@ export default async function MyPage() {
         <p className={styles.muted}>{profile?.configured ? "직접 알려주신 피부 상태를 맞춤 순위에 반영해요." : "피부 체크를 완료하고 계정에 저장하면 여기에 정리돼요."}</p>
         {profile?.configured ? <><dl className={styles.metrics}>{details.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl><div className={styles.tags}>{profile.concerns.map(concern => <span key={concern}>{concern}</span>)}</div>{profile.updatedAt && <p className={styles.note}>최근 저장 {new Date(profile.updatedAt).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })} · 측정·의료 진단이 아닌 자가 체크예요.</p>}</> : <Link className={styles.primaryLink} href={profile === null ? "/my" : "/skin-check"}>{profile === null ? "다시 불러오기" : "나의 피부 체크 시작"}<ChevronRight size={15} /></Link>}
       </div>
-      <Link href="/my/photo-analysis" className={styles.photoLink}><span className={styles.cameraIcon}><Camera size={22} /></span><span><strong>사진으로 피부 살펴보기</strong><small>GPT와 함께 보는 피부 표면 관찰 리포트</small></span><ChevronRight size={18} /></Link>
+      <Link href="/my/photo-analysis" className={styles.photoLink}><span className={styles.cameraIcon}><Camera size={22} /></span><span><strong>사진으로 피부 살펴보기</strong><small>사진으로 확인하는 피부 표면 관찰 리포트</small></span><ChevronRight size={18} /></Link>
     </section>
 
     <section className={styles.section}>
@@ -73,7 +73,7 @@ export default async function MyPage() {
     <ProductList id="recent" title="최근 본 제품" items={recent?.content} count={recent?.totalElements} />
 
     <section className={styles.section}><div className={styles.sectionHead}><h2>설정과 도움말</h2></div>
-      <MenuRow href="/profile" title="내 프로필 관리" detail="피부 정보 확인·수정" />
+      <MenuRow href="/skin-check" title="나의 성분찾기" detail="피부 정보 확인·수정" />
       <MenuRow href="/experts/apply" title="전문가 인증" />
       {user.role === "ADMIN" && <MenuRow href="/admin" title="관리자 센터" />}
       <MenuRow href="/privacy" title="개인정보처리방침" />

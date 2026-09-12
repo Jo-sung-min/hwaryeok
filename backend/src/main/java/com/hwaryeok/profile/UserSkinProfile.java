@@ -24,6 +24,9 @@ public class UserSkinProfile {
     @Column(name = "oiliness_level", length = 20, nullable = false)
     private String oilinessLevel;
 
+    @Column(name = "cheek_oiliness", length = 20)
+    private String cheekOiliness;
+
     @Column(name = "sensitivity_level", length = 20, nullable = false)
     private String sensitivityLevel;
 
@@ -65,6 +68,7 @@ public class UserSkinProfile {
         this.skinType = skinType;
         this.hydrationLevel = "BALANCED";
         this.oilinessLevel = "BALANCED";
+        this.cheekOiliness = null;
         this.sensitivityLevel = "MEDIUM";
         this.breakoutFrequency = "OCCASIONAL";
         this.profileVersion = 1;
@@ -82,6 +86,7 @@ public class UserSkinProfile {
             String skinType,
             String hydrationLevel,
             String oilinessLevel,
+            String cheekOiliness,
             String sensitivityLevel,
             String breakoutFrequency,
             String cleansingTightness,
@@ -95,6 +100,7 @@ public class UserSkinProfile {
         this.skinType = skinType;
         this.hydrationLevel = hydrationLevel;
         this.oilinessLevel = oilinessLevel;
+        this.cheekOiliness = cheekOiliness;
         this.sensitivityLevel = sensitivityLevel;
         this.breakoutFrequency = breakoutFrequency;
         this.profileVersion = 2;
@@ -107,10 +113,33 @@ public class UserSkinProfile {
         this.updatedAt = updatedAt;
     }
 
+    /** Keeps older internal callers source-compatible while preserving a previously captured cheek value. */
+    public void update(
+            String skinType,
+            String hydrationLevel,
+            String oilinessLevel,
+            String sensitivityLevel,
+            String breakoutFrequency,
+            String cleansingTightness,
+            String rednessFrequency,
+            String poreLevel,
+            String texturePreference,
+            String routineComplexity,
+            String sunscreenUsage,
+            Instant updatedAt
+    ) {
+        update(
+                skinType, hydrationLevel, oilinessLevel, cheekOiliness, sensitivityLevel, breakoutFrequency,
+                cleansingTightness, rednessFrequency, poreLevel, texturePreference, routineComplexity,
+                sunscreenUsage, updatedAt
+        );
+    }
+
     public String getUserId() { return userId; }
     public String getSkinType() { return skinType; }
     public String getHydrationLevel() { return hydrationLevel; }
     public String getOilinessLevel() { return oilinessLevel; }
+    public String getCheekOiliness() { return cheekOiliness; }
     public String getSensitivityLevel() { return sensitivityLevel; }
     public String getBreakoutFrequency() { return breakoutFrequency; }
     public int getProfileVersion() { return profileVersion; }

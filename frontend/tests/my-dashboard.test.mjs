@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { dashboard, photoForm, harness, profile } from "./my-render-fixtures.mjs";
 
 test("personal dashboard renders actual metrics and text-only product lists", async () => {
@@ -13,6 +14,7 @@ test("personal dashboard renders actual metrics and text-only product lists", as
   assert.match(html, /href="\/my\/reviewer-profile"/);
   assert.match(html, /내 리뷰어 소개/);
   assert.match(html, /left=qa-ampoule&amp;right=qa-cream/);
+  assert.doesNotMatch(html, /GPT|OpenAI/);
   assert.doesNotMatch(html, /<img|must-not-render|나의 추천 제품|수부지 기준/);
 });
 test("missing profile is not treated as a measured normal profile", async () => {
@@ -29,15 +31,26 @@ test("partial API failures remain distinct from empty records", async () => {
   assert.doesNotMatch(html, /수부지/);
 });
 test("photo form distinguishes unconfigured, unavailable and exhausted states", () => {
-  assert.match(photoForm({ enabled: false, dailyLimit: 3, remaining: 3 }), /관리자가 GPT API 연결/);
+  const disabled = photoForm({ enabled: false, dailyLimit: 3, remaining: 3 });
+  assert.match(disabled, /준비가 끝나면 이곳에서 분석/);
+  assert.doesNotMatch(disabled, /GPT|OpenAI|API/);
   assert.match(photoForm(null), /분석 서비스에 연결하지 못했어요/);
   assert.match(photoForm({ enabled: true, dailyLimit: 3, remaining: 0 }), /오늘의 분석 횟수를 모두 사용/);
   const ready = photoForm({ enabled: true, dailyLimit: 3, remaining: 3 });
   assert.match(ready, /capture="user"/);
   assert.match(ready, /type="checkbox" disabled=""/);
   assert.doesNotMatch(ready, /checked=""/);
-  assert.match(ready, /disabled="">동의하고 GPT로 분석하기/);
-  assert.match(ready, /최대 30일/);
+  assert.match(ready, /disabled="">동의하고 분석하기/);
+  assert.match(ready, /사진 분석을 위한 정보 처리에 동의/);
+  assert.match(ready, /href="\/terms"/);
+  assert.doesNotMatch(ready, /GPT|OpenAI|API|최대 30일/);
+});
+test("terms disclose the photo transfer while the feature keeps provider wording out of the flow", () => {
+  const terms = readFileSync(new URL("../src/app/terms/page.tsx", import.meta.url), "utf8");
+  const form = readFileSync(new URL("../src/app/my/photo-analysis/skin-photo-form.tsx", import.meta.url), "utf8");
+  assert.match(terms, /OpenAI의 GPT 기반 분석 서비스로 전송/);
+  assert.match(terms, /이름·이메일·저장된 피부 프로필은 함께 전송하지 않/);
+  assert.doesNotMatch(form, /GPT|OpenAI|API|AI 관찰/);
 });
 test("image metadata validation rejects empty, oversized and unsupported inputs", () => {
   const { photoFileError } = harness().load("../src/lib/skin-photo.ts");

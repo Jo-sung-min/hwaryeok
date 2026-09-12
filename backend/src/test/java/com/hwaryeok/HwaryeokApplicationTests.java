@@ -96,6 +96,7 @@ class HwaryeokApplicationTests {
                 "hwahae-2079267",
                 "hwahae-1920665",
                 "자작나무 수분 크림",
+                "\"coupangPartnersUrl\":\"https://link.coupang.com/a/gYMsiwquY0\"",
                 "\"scoreBasis\":\"성분 55% · 피부 적합 35% · 데이터 신뢰 10%\"",
                 "\"totalElements\":3"
         );
@@ -330,9 +331,38 @@ class HwaryeokApplicationTests {
 
         assertThat(providersResponse.statusCode()).isEqualTo(200);
         assertThat(providersResponse.body())
-                .contains("\"id\":\"google\"", "\"id\":\"kakao\"", "\"id\":\"naver\"")
-                .contains("\"configured\":");
+                .contains("\"id\":\"kakao\"", "\"configured\":")
+                .doesNotContain("\"id\":\"google\"", "\"id\":\"naver\"");
         assertThat(sessionResponse.statusCode()).isEqualTo(401);
+    }
+
+    @Test
+    void rejectsUnboundOrUnsupportedOAuthStartsAsNotFound() throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        String validChallenge = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+        HttpRequest missingAttemptRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + "/oauth2/authorization/kakao"))
+                .GET()
+                .build();
+        HttpRequest unsupportedProviderRequest = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port
+                        + "/oauth2/authorization/google?attempt_challenge=" + validChallenge))
+                .GET()
+                .build();
+
+        HttpResponse<String> missingAttemptResponse = client.send(
+                missingAttemptRequest,
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> unsupportedProviderResponse = client.send(
+                unsupportedProviderRequest,
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertThat(missingAttemptResponse.statusCode()).isEqualTo(404);
+        assertThat(missingAttemptResponse.body()).contains("RESOURCE_NOT_FOUND");
+        assertThat(unsupportedProviderResponse.statusCode()).isEqualTo(404);
+        assertThat(unsupportedProviderResponse.body()).contains("RESOURCE_NOT_FOUND");
     }
 
     @Test
@@ -1061,7 +1091,17 @@ class HwaryeokApplicationTests {
                 bearerRequest("PUT", "/api/v1/admin/products/birch-cream/image", userToken, null),
                 HttpResponse.BodyHandlers.ofString()
         );
+        HttpResponse<String> forbiddenPresignedResponse = client.send(
+                bearerRequest(
+                        "POST",
+                        "/api/v1/admin/products/birch-cream/image-upload-url",
+                        userToken,
+                        "{\"fileName\":\"birch.png\",\"contentType\":\"image/png\",\"size\":12}"
+                ),
+                HttpResponse.BodyHandlers.ofString()
+        );
         assertThat(forbiddenResponse.statusCode()).isEqualTo(403);
+        assertThat(forbiddenPresignedResponse.statusCode()).isEqualTo(403);
 
         String boundary = "HwaryeokImageBoundary";
         byte[] png = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
@@ -1088,6 +1128,9 @@ class HwaryeokApplicationTests {
         );
 
         assertThat(uploadResponse.statusCode()).isEqualTo(200);
+        assertThat(uploadResponse.headers().firstValue("Deprecation")).contains("true");
+        assertThat(uploadResponse.headers().firstValue("Link"))
+                .hasValueSatisfying(value -> assertThat(value).contains("image-upload-url"));
         assertThat(uploadResponse.body()).contains("\"imageUrl\":\"/api/v1/media/products/birch-cream\"");
         assertThat(imageResponse.statusCode()).isEqualTo(200);
         assertThat(imageResponse.headers().firstValue("Content-Type")).contains("image/png");

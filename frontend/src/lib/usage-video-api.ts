@@ -3,7 +3,7 @@ import "server-only";
 import { ApiRequestError } from "@/lib/api";
 import type { UsageVideo, UsageVideoInput, UsageVideoModerationInput, UsageVideoPage, UsageVideoStatus } from "@/lib/usage-video-types";
 
-const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
+const API_BASE_URL = process.env.API_URL ?? "http://localhost:8081/api/v1";
 
 async function request<T>(path: string, accessToken?: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {

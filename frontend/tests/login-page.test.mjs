@@ -60,12 +60,16 @@ test("login exposes exactly Kakao OAuth and site email as the two login paths", 
   const tree = await LoginPage({ searchParams: Promise.resolve({ returnTo: "/my" }) });
   const html = renderToStaticMarkup(tree);
 
-  assert.match(html, /카카오 또는 사이트 이메일/);
-  assert.match(html, /카카오 로그인/);
   assert.match(html, /사이트 이메일 로그인/);
   assert.match(html, /href="\/api\/auth\/oauth\/kakao\?returnTo=%2Fmy"/);
   assert.match(html, /카카오로 시작/);
+  assert.match(html, /<svg[^>]+aria-hidden="true"[^>]*><path/);
+  assert.doesNotMatch(html, />K<\/span>/);
   assert.match(html, /data-email-login="true"/);
+  assert.doesNotMatch(html, /로그인 시간이 만료되었어요/);
+  assert.doesNotMatch(html, /카카오 회원 고유 ID 또는 사이트 이메일/);
+  assert.doesNotMatch(html, /이메일을 로그인 식별값으로 사용하지 않아요/);
+  assert.doesNotMatch(html, /로그인 정보는 안전한 보안 쿠키로 보호해요/);
   assert.doesNotMatch(html, /oauth\/google|Google로 시작/);
   assert.doesNotMatch(html, /oauth\/naver|네이버로 시작/);
 });

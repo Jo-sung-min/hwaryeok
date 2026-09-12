@@ -34,7 +34,8 @@ public class HwaryeokOAuth2UserService implements OAuth2UserService<OAuth2UserRe
         attributes.put(USER_ID_ATTRIBUTE, result.user().getId());
         attributes.put(PROVIDER_ATTRIBUTE, result.provider().registrationId());
         attributes.put(NEW_USER_ATTRIBUTE, result.newUser());
-        attributes.put("email", result.user().getEmail());
+        if (result.user().getEmail() == null) attributes.remove("email");
+        else attributes.put("email", result.user().getEmail());
         attributes.put("nickname", result.user().getNickname());
 
         return new DefaultOAuth2User(providerUser.getAuthorities(), attributes, USER_ID_ATTRIBUTE);

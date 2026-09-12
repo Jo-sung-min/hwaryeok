@@ -8,6 +8,7 @@ public record SkinProfileResponse(
         String skinType,
         String hydrationLevel,
         String oilinessLevel,
+        String cheekOiliness,
         String sensitivityLevel,
         String breakoutFrequency,
         int profileVersion,
@@ -26,6 +27,6 @@ public record SkinProfileResponse(
         Instant updatedAt
 ) {
     public static SkinProfileResponse empty() {
-        return new SkinProfileResponse(false, null, null, null, null, null, 0, null, null, null, null, null, null, List.of(), List.of(), List.of(), List.of(), List.of(), null, null);
+        return new SkinProfileResponse(false, null, null, null, null, null, null, 0, null, null, null, null, null, null, List.of(), List.of(), List.of(), List.of(), List.of(), null, null);
     }
 }

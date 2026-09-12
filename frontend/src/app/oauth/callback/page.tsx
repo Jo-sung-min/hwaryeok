@@ -21,7 +21,6 @@ export default async function OAuthCallbackPage({ searchParams }: { searchParams
   const success = params.status === "success";
   const provider = typeof params.provider === "string" ? params.provider : "";
   const error = typeof params.error === "string" ? params.error : "oauth_failed";
-  const newUser = params.newUser === "true";
   const returnTo = sanitizeReturnTo(typeof params.returnTo === "string" ? params.returnTo : undefined);
 
   return (
@@ -31,12 +30,12 @@ export default async function OAuthCallbackPage({ searchParams }: { searchParams
         <p className="eyebrow mb-3 mt-7">{success ? "LOGIN COMPLETE" : "LOGIN PAUSED"}</p>
         <h1 className="font-myeongjo text-3xl font-semibold">{success ? `${providerNames[provider] ?? "간편"} 로그인 완료` : "로그인을 마치지 못했어요"}</h1>
         <p className="mt-4 text-sm leading-7 text-[#756960]">
-          {success ? (newUser ? "새 화력 계정이 만들어졌어요. 이제 피부 정보를 등록하고 맞춤 분석을 시작해 보세요." : "기존 화력 계정과 안전하게 연결됐어요. 저장한 기록을 이어볼 수 있어요.") : (errorMessages[error] ?? errorMessages.oauth_failed)}
+          {success ? "카카오 계정으로 로그인했어요. 이제 피부 정보와 저장한 기록을 이어볼 수 있어요." : (errorMessages[error] ?? errorMessages.oauth_failed)}
         </p>
         {success ? (
-          <Link href={returnTo} className="ink-btn mt-8 w-full"><Sparkles size={17} /> {returnTo === "/profile" ? "피부 프로필로 이동" : "계속하기"}</Link>
+          <Link href={returnTo} className="ink-btn mt-8 w-full"><Sparkles size={17} /> {returnTo === "/skin-check" ? "나의 성분찾기로 이동" : "계속하기"}</Link>
         ) : (
-          <Link href="/login" className="ink-btn mt-8 w-full">간편 로그인 다시 시도</Link>
+          <Link href={`/login?returnTo=${encodeURIComponent(returnTo)}`} className="ink-btn mt-8 w-full">간편 로그인 다시 시도</Link>
         )}
         <Link href="/products" className="mt-5 inline-flex text-xs font-semibold text-[#8d6155]">화장품 둘러보기</Link>
       </section>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Camera, ImagePlus, LoaderCircle, ShieldCheck, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
 import { analyzePhotoAction } from "./actions";
 import { PHOTO_CONSENT_VERSION, photoFileError, type SkinPhotoReport, type SkinPhotoStatus } from "@/lib/skin-photo";
 import styles from "./skin-photo.module.css";
@@ -80,7 +80,7 @@ export function SkinPhotoForm({ initialStatus }: { initialStatus: SkinPhotoStatu
 
   return <div className={styles.body}>
     <div className={styles.intro}><span className={styles.tag}>사진 기반 · 참고용</span><h2>오늘의 피부, 사진으로 살펴봐요</h2><p>보이는 피부 표면 특징을 정리해 드려요.<br />피부 타입 확정이나 수분·유분 측정, 의료 진단은 할 수 없어요.</p></div>
-    {!status ? <div className={styles.notice} role="status">분석 서비스에 연결하지 못했어요. <Link href="/my/photo-analysis">다시 불러오기</Link></div> : !status.enabled ? <div className={styles.notice} role="status"><strong>사진 분석 서비스를 준비 중이에요</strong><p>관리자가 GPT API 연결을 설정하면 분석할 수 있어요. 사진 미리보기와 <Link href="/skin-check">나의 피부 체크</Link>는 지금 이용할 수 있어요.</p></div> : <p className={styles.quota}>오늘 남은 분석 <strong>{status.remaining} / {status.dailyLimit}회</strong><span>매일 자정(한국 시간) 초기화</span></p>}
+    {!status ? <div className={styles.notice} role="status">분석 서비스에 연결하지 못했어요. <Link href="/my/photo-analysis">다시 불러오기</Link></div> : !status.enabled ? <div className={styles.notice} role="status"><strong>사진 분석 서비스를 준비 중이에요</strong><p>준비가 끝나면 이곳에서 분석할 수 있어요. 사진 미리보기와 <Link href="/skin-check">나의 피부 체크</Link>는 지금 이용할 수 있어요.</p></div> : <p className={styles.quota}>오늘 남은 분석 <strong>{status.remaining} / {status.dailyLimit}회</strong><span>매일 자정(한국 시간) 초기화</span></p>}
 
     <div className={styles.guide}><strong>촬영 전 체크</strong><ul><li>자연광에서 필터·보정 없이 찍어 주세요.</li><li>화장하지 않은 본인의 얼굴만 선명하게 담아 주세요.</li><li>눈·입 주변의 불필요한 배경과 다른 사람은 제외해 주세요.</li></ul><p>JPEG·PNG · 최대 5MB · 256px 이상 · 최대 2천만 화소</p></div>
     <input ref={capture} type="file" accept="image/jpeg,image/png" capture="user" className={styles.hidden} aria-label="카메라로 피부 사진 촬영" disabled={locked} onChange={event => { void select(event.target.files?.[0]); event.target.value = ""; }} />
@@ -89,17 +89,18 @@ export function SkinPhotoForm({ initialStatus }: { initialStatus: SkinPhotoStatu
     <div className={styles.photoButtons}><button type="button" disabled={locked} onClick={() => capture.current?.click()}><Camera size={17} />사진 촬영</button><button type="button" disabled={locked} onClick={() => album.current?.click()}><ImagePlus size={17} />앨범에서 선택</button></div>
     <p className={styles.small}>모바일에서는 카메라가 열릴 수 있어요. PC·일부 브라우저에서는 파일 선택 창이 열립니다.</p>
 
-    <div className={styles.privacy}><strong><ShieldCheck size={16} />사진은 전송 전에 직접 확인해 주세요</strong><p>분석을 누르면 사진이 화력 서버를 거쳐 OpenAI API로 전송됩니다. 이름·이메일·저장된 피부 프로필은 함께 보내지 않아요. 화력은 사진·분석 결과를 저장하지 않으며, 화면을 나가면 결과가 사라질 수 있어요.</p><p>OpenAI는 API 데이터를 기본적으로 학습에 사용하지 않지만, 악용 방지 등을 위해 입력·출력을 최대 30일 또는 예외적으로 더 보관할 수 있어요. <a href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">OpenAI 데이터 처리 안내</a></p>
-      <label className={styles.consent}><input type="checkbox" checked={consent} disabled={locked || !photo} onChange={event => setConsent(event.target.checked)} /><span>본인 사진임을 확인하며, 위 안내에 따른 OpenAI 전송과 참고용 분석에 동의합니다.</span></label>
+    <div className={styles.privacy}>
+      <label className={styles.consent}><input type="checkbox" checked={consent} disabled={locked || !photo} onChange={event => setConsent(event.target.checked)} /><span>사진 분석을 위한 정보 처리에 동의합니다.</span></label>
+      <Link href="/terms">이용약관에서 정보 전송 안내 보기</Link>
     </div>
     {error && <p className={styles.error} role="alert">{error}</p>}
     {status?.enabled && status.remaining <= 0 && <p className={styles.notice}>오늘의 분석 횟수를 모두 사용했어요. 내일 다시 이용해 주세요.</p>}
-    <button type="button" className={styles.analyze} disabled={locked || !photo || !consent || !status?.enabled || status.remaining <= 0} onClick={analyze}>{pending ? <><LoaderCircle size={18} className="animate-spin" />피부 사진 살펴보는 중…</> : "동의하고 GPT로 분석하기"}</button>
-    <p className={styles.small} role="status" aria-live="polite">{pending ? "약 10~45초 걸릴 수 있어요. 이 화면에서 기다려 주세요." : "분석 요청은 1분 간격으로 가능하며, API 오류·재촬영 결과도 이용 횟수에 포함될 수 있어요."}</p>
+    <button type="button" className={styles.analyze} disabled={locked || !photo || !consent || !status?.enabled || status.remaining <= 0} onClick={analyze}>{pending ? <><LoaderCircle size={18} className="animate-spin" />피부 사진 살펴보는 중…</> : "동의하고 분석하기"}</button>
+    <p className={styles.small} role="status" aria-live="polite">{pending ? "약 10~45초 걸릴 수 있어요. 이 화면에서 기다려 주세요." : "분석 요청은 1분 간격으로 가능하며, 분석 실패·재촬영 결과도 이용 횟수에 포함될 수 있어요."}</p>
 
-    {report && <section ref={reportRef} tabIndex={-1} className={styles.report} aria-label="사진 피부 관찰 리포트"><span className={styles.tag}>GPT 사진 관찰 · {new Date(report.analyzedAt).toLocaleDateString("ko-KR")}</span><h2>{report.quality === "USABLE" ? "사진에서 이렇게 보였어요" : "다른 사진으로 다시 살펴봐요"}</h2><p className={styles.summary}>{report.summary}</p>
+    {report && <section ref={reportRef} tabIndex={-1} className={styles.report} aria-label="사진 피부 관찰 리포트"><span className={styles.tag}>사진 관찰 · {new Date(report.analyzedAt).toLocaleDateString("ko-KR")}</span><h2>{report.quality === "USABLE" ? "사진에서 이렇게 보였어요" : "다른 사진으로 다시 살펴봐요"}</h2><p className={styles.summary}>{report.summary}</p>
       {report.quality === "USABLE" && <><div className={styles.observations}>{report.observations.map((item, index) => <article key={index}><h3>{item.area}</h3><p>{item.appearance}</p><small>{item.caveat}</small></article>)}</div>{report.careTips.length > 0 && <div className={styles.guide}><strong>일상에서 참고할 관리 습관</strong><ul>{report.careTips.map((tip, index) => <li key={index}>{tip}</li>)}</ul></div>}</>}
-      <p className={styles.disclaimer}>{report.limitations}</p><p className={styles.disclaimer}>AI 관찰은 틀릴 수 있으며, 피부 타입·질환 진단이나 실제 수분·유분 측정이 아닙니다. 불편함이 지속되거나 악화되면 전문가와 상담해 주세요. 저장된 피부 정보와 제품 랭킹은 자동으로 변경하지 않아요.</p><Link className={styles.checkLink} href="/skin-check">답변으로 내 피부 상태 함께 체크하기 →</Link>
+      <p className={styles.disclaimer}>{report.limitations}</p><p className={styles.disclaimer}>사진 관찰 결과는 틀릴 수 있으며, 피부 타입·질환 진단이나 실제 수분·유분 측정이 아닙니다. 불편함이 지속되거나 악화되면 전문가와 상담해 주세요. 저장된 피부 정보와 제품 랭킹은 자동으로 변경하지 않아요.</p><Link className={styles.checkLink} href="/skin-check">답변으로 내 피부 상태 함께 체크하기 →</Link>
     </section>}
   </div>;
 }

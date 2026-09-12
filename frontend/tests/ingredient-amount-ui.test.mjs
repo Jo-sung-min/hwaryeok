@@ -204,6 +204,7 @@ function loadActions(captured) {
   return compile("../src/app/admin/products/actions.ts", {
     "next/cache": { revalidatePath: () => {} },
     "@/lib/auth-session": { getActionAccessToken: async () => "admin-token" },
+    "@/lib/product-image-upload": { productImageUploadMetadataError: () => null },
     "@/lib/api": {
       ApiRequestError,
       getCurrentUser: async () => ({ role: "ADMIN" }),

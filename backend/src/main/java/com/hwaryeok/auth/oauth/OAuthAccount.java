@@ -31,7 +31,7 @@ public class OAuthAccount {
     @Column(name = "provider_user_id", length = 255, nullable = false)
     private String providerUserId;
 
-    @Column(length = 254, nullable = false)
+    @Column(length = 254)
     private String email;
 
     @Column(name = "created_at", nullable = false)

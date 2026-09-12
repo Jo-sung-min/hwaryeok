@@ -36,7 +36,7 @@ export function Footer() {
           </summary>
           <div className="grid gap-3 pb-2 pt-3 text-[11px] leading-5 text-[#847980] sm:grid-cols-2">
             <dl className="grid grid-cols-[88px_1fr] gap-x-3 gap-y-1">
-              <dt>상호명</dt><dd>파텔</dd>
+              <dt>상호명</dt><dd>루체</dd>
               <dt>대표자</dt><dd>조성민</dd>
               <dt>사업자등록번호</dt><dd>715-01-03479</dd>
               <dt>통신판매업</dt><dd>2025-고양덕양구-1028</dd>

@@ -94,7 +94,7 @@ public class AuthService {
     }
 
     public AuthTokenResponse exchangeOAuthCode(OAuthExchangeRequest request) {
-        return oauthExchangeCodeService.exchange(request.code());
+        return oauthExchangeCodeService.exchange(request.code(), request.attemptVerifier());
     }
 
     @Transactional(readOnly = true)

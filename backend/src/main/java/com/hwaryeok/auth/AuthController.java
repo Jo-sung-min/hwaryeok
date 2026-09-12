@@ -1,6 +1,5 @@
 package com.hwaryeok.auth;
 
-import java.util.Arrays;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,14 +58,13 @@ public class AuthController {
 
     @GetMapping("/oauth/providers")
     public List<OAuthProviderStatus> oauthProviders() {
-        return Arrays.stream(OAuthProvider.values())
-                .map(provider -> new OAuthProviderStatus(
-                        provider.registrationId(),
-                        provider.displayName(),
-                        clientRegistrationRepository.isConfigured(provider.registrationId()),
-                        "/oauth2/authorization/" + provider.registrationId()
-                ))
-                .toList();
+        OAuthProvider provider = OAuthProvider.KAKAO;
+        return List.of(new OAuthProviderStatus(
+                provider.registrationId(),
+                provider.displayName(),
+                clientRegistrationRepository.isConfigured(provider.registrationId()),
+                "/oauth2/authorization/" + provider.registrationId()
+        ));
     }
 
     @GetMapping("/me")

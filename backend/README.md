@@ -23,7 +23,7 @@ cd backend
 ./gradlew bootRun --args="--spring.profiles.active=postgres"
 ```
 
-Windows에서는 `gradlew.bat bootRun` 또는 PostgreSQL용 `gradlew.bat bootRun --args="--spring.profiles.active=postgres"`를 사용합니다. 기본 주소는 `http://localhost:8080`입니다.
+Windows에서는 `gradlew.bat bootRun` 또는 PostgreSQL용 `gradlew.bat bootRun --args="--spring.profiles.active=postgres"`를 사용합니다. 로컬 기본 주소는 `http://localhost:8081`입니다.
 
 백엔드는 실행 위치에 따라 `backend/.env` 또는 저장소 루트의 `.env`를 자동으로 읽습니다. PostgreSQL을 사용할 때는 `backend/.env.example`을 복사하고 접속 정보와 임의의 `JWT_SECRET`, `LICENSE_HASH_SECRET`을 입력합니다.
 
@@ -129,8 +129,8 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | DELETE | `/api/v1/users/me/comparison-products` | 저장한 비교 제품 모두 해제 |
 | GET | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 우선순위 조회 |
 | PUT | `/api/v1/users/me/preferred-ingredients` | 내 관심 성분 0~10개 저장 |
-| GET | `/oauth2/authorization/{provider}` | OAuth 로그인 시작 (`google`, `kakao`, `naver`) |
-| GET | `/login/oauth2/code/{provider}` | 공급자 OAuth 콜백 |
+| GET | `/oauth2/authorization/kakao` | 카카오 로그인 시작 |
+| GET | `/login/oauth2/code/kakao` | 카카오 OAuth 콜백 |
 | GET | `/api/v1/auth/me` | Bearer Token 현재 사용자 확인 |
 | GET | `/api/v1/products` | 제품 검색·필터·페이지네이션·정렬 |
 | GET | `/api/v1/products/{id}` | 제품 상세 |
@@ -140,7 +140,9 @@ gradlew.bat bootRun --args="--spring.profiles.active=local"
 | GET | `/api/v1/ingredients/{id}` | 성분 상세와 포함 제품 |
 | GET | `/api/v1/ingredients/featured` | 대표 관심 성분 목록 |
 | GET | `/api/v1/ingredients/{id}/firepower` | 성분 기준 제품 화력 순위와 세부 점수 |
-| PUT | `/api/v1/admin/products/{id}/image` | 관리자 제품 이미지 등록 |
+| POST | `/api/v1/admin/products/{id}/image-upload-url` | 관리자 제품 이미지 Presigned PUT URL 발급 |
+| POST | `/api/v1/admin/products/{id}/image-upload-complete` | S3 업로드 검증 후 제품 이미지 확정 |
+| PUT | `/api/v1/admin/products/{id}/image` | 기존 multipart 업로드(하위 호환용, deprecated) |
 | GET | `/api/v1/admin/data-sources` | 관리자 공식 데이터 원천·적재 상태 조회 |
 | POST | `/api/v1/admin/data-sources/mfds/sync` | 식약처 기능성 제품·사용제한 원료 동기화 |
 | POST | `/api/v1/admin/data-sources/kcia/import` | 사용권 확인된 협회 성분사전 파일 적재 |
@@ -221,22 +223,20 @@ Content-Type: application/json
 
 ### OAuth 초기 설정
 
-`backend/.env.example`의 공급자별 `CLIENT_ID`, `CLIENT_SECRET`을 `backend/.env`에 복사해 채웁니다. 두 값이 모두 있는 공급자만 `/api/v1/auth/oauth/providers`에서 `configured: true`가 되고 프론트 로그인 버튼이 활성화됩니다.
+`backend/.env.example`의 `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET`을 `backend/.env`에 복사해 채웁니다. 두 값이 모두 있으면 `/api/v1/auth/oauth/providers`에서 카카오가 `configured: true`가 되고 프론트 로그인 버튼이 활성화됩니다. 소셜 로그인은 카카오만 허용합니다.
 
 개발자 콘솔에는 아래 콜백 주소를 등록합니다.
 
 ```text
-Google  http://localhost:8080/login/oauth2/code/google
-Kakao   http://localhost:8080/login/oauth2/code/kakao
-Naver   http://localhost:8080/login/oauth2/code/naver
+http://localhost:8081/login/oauth2/code/kakao
 ```
 
-- Google: OAuth 동의 화면의 `email`, `profile` 범위와 웹 애플리케이션 클라이언트 사용
-- Kakao: 카카오 로그인 활성화, `닉네임`·`카카오계정(이메일)` 동의항목 설정, REST API 키를 `KAKAO_CLIENT_ID`로 사용
-- Naver: 서비스 URL과 Callback URL을 등록하고 회원 정보의 이메일·별명 또는 이름 제공 설정
-- 운영 환경: `localhost:8080`을 실제 백엔드 HTTPS 주소로 바꾸고 `OAUTH_FRONTEND_BASE_URL`은 Vercel 주소로 설정
+- 카카오 로그인 활성화와 Redirect URI 등록 후 REST API 키를 `KAKAO_CLIENT_ID`로 사용합니다. 로그인 식별에는 사용자 정보 응답의 앱별 회원 고유 ID(`id`)만 사용하므로 이메일·닉네임 동의항목은 필수가 아닙니다.
+- 운영 환경: `localhost:8081`을 실제 백엔드 HTTPS 주소로 바꾸고 `OAUTH_FRONTEND_BASE_URL`은 Vercel 주소로 설정
 
-OAuth 계정은 `oauth_accounts`에 공급자 사용자 ID와 화력 회원을 분리해 연결합니다. 같은 이메일의 기존 계정은 보안을 위해 자동 연결하지 않으며, 추후 로그인된 상태에서 계정 연결 기능으로 처리합니다. 공급자 로그인 완료 후에는 120초짜리 일회용 코드만 프론트 서버에 전달하며 실제 토큰은 URL에 노출하지 않습니다.
+OAuth 계정은 `oauth_accounts`에 공급자 사용자 ID와 화력 회원을 분리해 연결합니다. 카카오는 `(KAKAO, 카카오 회원 고유 ID)`를 로그인 키로 사용하며 카카오 이메일이 없거나 바뀌어도 같은 계정으로 처리합니다. 같은 이메일의 기본 계정과 카카오 계정을 자동 연결하지 않으며, 연결이 필요하면 추후 로그인된 상태에서 명시적인 계정 연결 기능으로 처리합니다. 카카오 회원 ID는 앱별 값이므로 운영 DB를 유지하는 동안 같은 Kakao Developers 앱과 REST API 키를 유지해야 합니다.
+
+로그인 시작 때 프론트 서버는 브라우저별 256비트 verifier를 HttpOnly 쿠키에 보관하고 SHA-256 challenge만 백엔드에 전달합니다. 공급자 로그인 완료 후에는 이 challenge에 묶인 120초짜리 일회용 코드만 프론트 서버에 전달하며, 동일 브라우저의 verifier가 일치해야 토큰으로 교환됩니다. 실제 토큰과 verifier는 URL에 노출하지 않습니다.
 
 ### 로그인과 토큰 갱신
 
@@ -381,7 +381,55 @@ Content-Type: application/json
 UPDATE hwaryeok.users SET role = 'ADMIN' WHERE email = 'admin@example.com';
 ```
 
-`PUT /api/v1/admin/products/{productId}/image`에 `multipart/form-data`의 `file` 필드로 이미지를 보냅니다. PNG·JPG·WEBP 실제 파일만 허용하며 최대 크기는 5MB입니다. 이미지 원본은 PostgreSQL의 `product_images`에 저장되고 제품 응답의 `imageUrl`을 통해 공개 조회합니다. 일반 사용자는 관리자 API 호출 시 `403`을 반환합니다.
+S3가 설정된 환경에서 새 관리자 화면은 백엔드를 거치지 않고 Presigned URL로 이미지를 올립니다. PNG·JPG·WEBP만 허용하며 최대 크기는 5MB입니다.
+
+1. `POST /api/v1/admin/products/{productId}/image-upload-url`에 `{"fileName":"product.png","contentType":"image/png","size":12345}`를 보냅니다.
+2. 응답의 `uploadUrl`로 파일을 `PUT`하며, `headers`의 모든 헤더를 그대로 적용합니다. URL은 기본 5분 동안 유효하고 `If-None-Match: *`가 서명되어 동일 키를 덮어쓸 수 없습니다. `objectKey`는 `hwaryeok/pending/product-images/...`의 임시 키이며 `Cache-Control: private, no-store`로 서명하고 검증합니다. `imageUrl`은 확정 후 사용할 기존 `https://cdn.hwaryeok.co.kr/products/{productId}/{uuid}.{ext}` 형식입니다.
+3. `POST /api/v1/admin/products/{productId}/image-upload-complete`에 `{"objectKey":"..."}`를 보냅니다. 백엔드가 S3 `HeadObject`로 크기·Content-Type·소유 메타데이터·임시 캐시 정책을, Range GET으로 실제 파일 시그니처를 확인합니다. 이후 동일 UUID의 `products/...` 키에 `Cache-Control: public, max-age=31536000, immutable`로 복사가 성공한 뒤에만 `Product.imageUrl`을 저장합니다. PUT 만료 후에도 업로드 완료를 전송할 수 있도록 5분의 확인 유예 시간을 둡니다. pending 객체는 즉시 삭제하지 않아 URL 만료 전 같은 키로 재PUT하면 `If-None-Match: *`에 의해 `412`가 반환되며, 완료 재시도는 같은 pending 객체를 다시 검증해 같은 최종 URL로 멱등적으로 확정합니다.
+
+기존 `PUT /api/v1/admin/products/{productId}/image` multipart API는 하위 호환을 위해 유지하지만 `Deprecation: true`와 후속 API `Link` 헤더를 반환합니다. S3 설정이 없는 로컬·테스트 환경에서는 이 기존 API가 PostgreSQL `product_images`와 `/api/v1/media/products/{productId}`를 계속 사용합니다. 일반 사용자는 관리자 API 호출 시 `403`을 반환합니다.
+
+화력 운영값은 `S3_BUCKET=fatell-aws-s3`, `S3_KEY_PREFIX=hwaryeok`, `S3_PUBLIC_BASE_URL=https://cdn.hwaryeok.co.kr`, `AWS_REGION=ap-northeast-2`입니다. CDN 배포의 Origin Path는 `/hwaryeok`을 가리켜야 공개 URL과 S3 객체 키가 일치합니다. 배포 서버는 IAM 역할 사용을 권장하며, 로컬에서만 필요한 AWS 키는 Git에 포함되지 않는 `.env`에 저장합니다.
+
+Presigned PUT을 브라우저에서 사용하려면 S3 버킷 CORS에 로컬과 운영 프론트 출처를 모두 추가해야 합니다. 운영 도메인은 실제 값으로 바꾸세요.
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3001", "https://your-production-frontend.example"],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 300
+  }
+]
+```
+
+백엔드 IAM 역할은 객체 ARN에 `s3:PutObject`(임시 PUT 서명·최종 Copy 대상), `s3:GetObject`(Head·Range GET·Copy 원본)를 허용해야 합니다. S3는 `s3:ListBucket`이 없으면 없는 객체의 `HeadObject`도 `404` 대신 `403`으로 응답할 수 있으므로, 버킷 ARN에 `s3:ListBucket`을 허용하되 `s3:prefix` 조건을 `hwaryeok/pending/product-images/*`, `hwaryeok/products/*`로 제한하세요. AWS IAM에는 별도의 `s3:CopyObject` action이 없습니다.
+
+`hwaryeok/pending/product-images/` prefix에는 1일 후 삭제하는 S3 lifecycle을 반드시 추가해 완료·중단된 임시 업로드를 자동 정리하세요. 이 lifecycle을 적용하지 않으면 pending 객체가 계속 누적됩니다.
+
+```json
+{
+  "Rules": [
+    {
+      "ID": "expire-hwaryeok-pending-product-images",
+      "Status": "Enabled",
+      "Filter": {"Prefix": "hwaryeok/pending/product-images/"},
+      "Expiration": {"Days": 1}
+    }
+  ]
+}
+```
+
+CDN은 `/products/**`만 제품 이미지로 공개하고 `/pending/**`는 캐시 동작/원본 정책에서 차단하세요. URL 발급 API 응답은 `Cache-Control: no-store`로 반환됩니다.
+
+기존 `frontend/public/products` 정적 이미지는 아래 명령으로 `hwaryeok/products/`에 이관합니다. 첫 번째 명령은 변경 없는 드라이런이고, 두 번째 명령만 실제 업로드를 수행합니다. 동일한 크기·형식·캐시 정책의 객체는 건너뛰며 로컬 원본과 DB 데이터는 삭제하지 않습니다.
+
+```powershell
+.\gradlew.bat --no-daemon migrateLegacyProductImages
+.\gradlew.bat --no-daemon migrateLegacyProductImages -PapplyMigration=true
+```
 
 ### 화력 분석 예시
 

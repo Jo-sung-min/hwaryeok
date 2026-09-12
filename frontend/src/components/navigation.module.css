@@ -107,6 +107,42 @@
 .authLink svg { display: none; flex-shrink: 0; }
 .authLink:hover { border-color: #d7b6c3; background: #fff8fa; color: #963858; }
 
+.kakaoAuthLink {
+  max-width: none;
+  gap: 6px;
+  padding: 7px 10px 7px 7px;
+  border-color: #f0df79;
+  background: #fffdf2;
+  color: #332f22;
+}
+
+.kakaoAuthLink:hover {
+  border-color: #e7cf3f;
+  background: #fff9d9;
+  color: #272319;
+}
+
+.authLink .kakaoBadge {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: visible;
+  border-radius: 8px;
+  background: #fee500;
+  color: #191919;
+  text-overflow: clip;
+}
+
+.authLink .kakaoBadge svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.authLink .kakaoLabel { overflow: visible; text-overflow: clip; }
+
 .bottomNav {
   position: fixed;
   right: auto;
@@ -194,6 +230,7 @@
   .brandName { display: none; }
   .navLink { padding-inline: 6px; font-size: 11px; }
   .authLink { max-width: 70px; padding-inline: 8px; }
+  .kakaoAuthLink { max-width: none; padding: 7px 8px 7px 7px; }
   .adLabel { display: none; }
 }
 

@@ -35,7 +35,7 @@ public class OAuthLoginFailureHandler implements AuthenticationFailureHandler {
         if (!PUBLIC_ERROR_CODES.contains(code)) code = "oauth_failed";
 
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
-                .path("/oauth/callback")
+                .path("/api/auth/oauth/callback")
                 .queryParam("status", "error")
                 .queryParam("error", code)
                 .build()

@@ -18,6 +18,9 @@ repositories {
 }
 
 dependencies {
+    implementation platform('software.amazon.awssdk:bom:2.41.28')
+    implementation 'software.amazon.awssdk:s3'
+
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -54,4 +57,17 @@ tasks.named('bootRun') {
                 ?.trim()
     }
     environment 'SPRING_PROFILES_ACTIVE', configuredProfile ?: 'local'
+}
+
+tasks.register('migrateLegacyProductImages', JavaExec) {
+    group = 'application'
+    description = 'Copies the tracked legacy product images to the configured S3 product prefix.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.hwaryeok.product.LegacyProductImageS3Migration'
+    workingDir = projectDir
+
+    args '--source=' + file('../frontend/public/products').absolutePath
+    if (providers.gradleProperty('applyMigration').getOrElse('false').toBoolean()) {
+        args '--apply'
+    }
 }

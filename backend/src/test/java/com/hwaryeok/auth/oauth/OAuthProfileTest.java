@@ -41,4 +41,29 @@ class OAuthProfileTest {
         ))).isInstanceOf(OAuthLoginException.class)
                 .hasMessageContaining("확인된 구글 이메일");
     }
+
+    @Test
+    void mapsKakaoFromItsMemberIdWithoutEmailOrProfileConsent() {
+        OAuthProfile kakao = OAuthProfile.from("kakao", Map.of("id", 987654321L));
+
+        assertThat(kakao.provider()).isEqualTo(OAuthProvider.KAKAO);
+        assertThat(kakao.providerUserId()).isEqualTo("987654321");
+        assertThat(kakao.email()).isNull();
+        assertThat(kakao.nickname()).isEqualTo("카카오 회원");
+    }
+
+    @Test
+    void ignoresUnverifiedKakaoEmailBecauseItIsNotALoginIdentifier() {
+        OAuthProfile kakao = OAuthProfile.from("kakao", Map.of(
+                "id", 987654322L,
+                "kakao_account", Map.of(
+                        "email", "unverified@example.com",
+                        "is_email_verified", false,
+                        "profile", Map.of("nickname", "고유아이디회원")
+                )
+        ));
+
+        assertThat(kakao.email()).isNull();
+        assertThat(kakao.nickname()).isEqualTo("고유아이디회원");
+    }
 }

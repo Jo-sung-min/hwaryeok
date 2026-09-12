@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { rememberOAuthReturnTo, sanitizeReturnTo } from "@/lib/auth-session";
+import { beginOAuthAttempt, sanitizeReturnTo } from "@/lib/auth-session";
 
-const supportedProviders = new Set(["google", "kakao", "naver"]);
-const apiUrl = process.env.API_URL ?? "http://localhost:8080/api/v1";
+const supportedProviders = new Set(["kakao"]);
+const apiUrl = process.env.API_URL ?? "http://localhost:8081/api/v1";
 const backendUrl = process.env.OAUTH_BACKEND_URL ?? new URL(apiUrl).origin;
 
 export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
@@ -14,6 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   if (!supportedProviders.has(provider)) {
     callbackUrl.searchParams.set("status", "error");
     callbackUrl.searchParams.set("error", "invalid_provider");
+    callbackUrl.searchParams.set("returnTo", returnTo);
     return NextResponse.redirect(callbackUrl);
   }
 
@@ -24,14 +25,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
     if (!providers.some((item) => item.id === provider && item.configured)) {
       callbackUrl.searchParams.set("status", "error");
       callbackUrl.searchParams.set("error", "provider_not_configured");
+      callbackUrl.searchParams.set("returnTo", returnTo);
       return NextResponse.redirect(callbackUrl);
     }
   } catch {
     callbackUrl.searchParams.set("status", "error");
     callbackUrl.searchParams.set("error", "backend_unavailable");
+    callbackUrl.searchParams.set("returnTo", returnTo);
     return NextResponse.redirect(callbackUrl);
   }
 
-  await rememberOAuthReturnTo(returnTo);
-  return NextResponse.redirect(new URL(`/oauth2/authorization/${provider}`, backendUrl));
+  const attemptChallenge = await beginOAuthAttempt(returnTo);
+  const authorizationUrl = new URL(`/oauth2/authorization/${provider}`, backendUrl);
+  authorizationUrl.searchParams.set("attempt_challenge", attemptChallenge);
+  return NextResponse.redirect(authorizationUrl);
 }

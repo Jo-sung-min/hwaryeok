@@ -1,18 +1,20 @@
 .report { color: #352e38; }
 .careGuide { padding:20px; border:1px solid #ecd2de; background:#fff8fb; border-radius:17px; margin-bottom:20px; }
 .careSummary { font-size:19px; font-weight:700; line-height:1.6; margin:14px 0; color:#9d3c65; word-break:keep-all; }
+.recommendationBasis { margin:-4px 0 14px; color:#806f7b; font-size:11px; line-height:1.7; }
 .ingredientCards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .ingredientCards > a { padding:14px; background:white; border:1px solid #f0dce6; border-radius:12px; }
 .ingredientCards > a > span { color:#947282; font-size:10px; }
 .ingredientCards h4 { margin:6px 0; font-size:15px; font-weight:700; }
 .ingredientCards h4 span { color:#b16d8c; }
 .ingredientCards p { color:#7c6a77; font-size:12px; line-height:1.8; }
+.ingredientCards em { display:block; margin-top:8px; color:#927383; font-size:10px; font-style:normal; line-height:1.6; }
 .ingredientCards small { display:block; margin-top:10px; color:#ad4b73; font-size:10px; }
 .careTexture { padding-top:15px; margin-top:15px; border-top:1px solid #efdee7; }
 .careTexture > span { display:block; color:#947282; font-size:11px; margin-bottom:5px; }
 .careTexture strong { font-size:14px; }
-.careTexture p { font-size:12px; color:#7c6a77; line-height:1.9; margin:7px 0 0; }
-.guideLink { margin-top:20px; font-size:11px; line-height:1.9; color:#897887; }
+.careTexture p { font-size:13px; color:#7c6a77; line-height:1.85; margin:7px 0 0; }
+.guideLink { margin-top:14px; padding:14px 16px; border:1px dashed #e5d8e0; border-radius:14px; background:#faf8fa; font-size:12px; line-height:1.8; color:#897887; }
 .guideLink a { display:inline-block; padding:8px 0; color:#a54b72; text-decoration:underline; text-underline-offset:3px; }
 @media(max-width:359px) { .careGuide { padding:15px; } .ingredientCards { grid-template-columns:1fr; } }
 .hero { text-align: center; padding: 12px 0 28px; }
@@ -31,7 +33,11 @@
 .code strong { font-size: 29px; color: #785466; font-weight: 650; line-height: 1.2; }
 .code small { font-size: 10px; color: #766b79; margin-top: 8px; word-break: keep-all; }
 .caption { font-size: 10px; line-height: 1.8; color: #857583; margin-top: 12px; }
-.population { background: #fff6f9; border: 1px solid #efdbe4; border-radius: 17px; padding: 20px; }
+.population { background: #f7fbfc; border: 1px solid #dce9ee; border-radius: 17px; padding: 20px; }
+.population .sectionTop { color: #557b89; }
+.population .percentage > strong { color: #4e7e90; }
+.population .bar { background: #dfebef; }
+.population .bar span { background: #6d97a7; }
 .sectionTop { display: flex; align-items: center; gap: 7px; color: #8f4968; }
 .sectionTop svg { flex-shrink: 0; }
 .sectionTop h3 { font-size: 13px; font-weight: 700; }
@@ -44,25 +50,31 @@
 .collecting { display: block; margin: 17px 0 8px; font-size: 17px; font-weight: 700; }
 .collecting + p { font-size: 12px; line-height: 1.8; color: #7d6876; }
 .populationNote { margin: 15px 0 0; padding-top: 13px; border-top: 1px solid #eedce5; font-size: 10px; line-height: 1.8; color: #887584; }
-.section { padding: 28px 0; border-bottom: 1px solid #eee7ee; }
-.sectionHeading { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
-.sectionHeading > span { display: grid; place-items: center; min-width: 29px; height: 29px; border-radius: 9px; background: #fff0f6; color: #a44b70; font-size: 11px; font-weight: 700; }
+.section { --sector-bg:#fffafb; --sector-border:#eddae3; --sector-accent:#b75d7e; --sector-badge:#fff0f6; --sector-number:#a44b70; position:relative; overflow:hidden; margin-top:14px; padding:22px 18px 20px; border:1px solid var(--sector-border); border-radius:18px; background:linear-gradient(180deg,var(--sector-bg) 0%,#fff 46%); box-shadow:0 5px 18px rgba(64,42,55,.035); }
+.section::before { content:""; position:absolute; top:0; left:18px; right:18px; height:3px; border-radius:0 0 4px 4px; background:var(--sector-accent); opacity:.62; }
+.section[data-tone="water"] { --sector-bg:#f7fbfd; --sector-border:#dce9ef; --sector-accent:#6f97a8; --sector-badge:#edf6fa; --sector-number:#557d8e; }
+.section[data-tone="lilac"] { --sector-bg:#fbf9fd; --sector-border:#e6dfee; --sector-accent:#9179a5; --sector-badge:#f4eff9; --sector-number:#765e8b; }
+.section[data-tone="sage"] { --sector-bg:#f8fbf7; --sector-border:#dfe9dd; --sector-accent:#789176; --sector-badge:#eff6ed; --sector-number:#5d775b; }
+.section[data-tone="sand"] { --sector-bg:#fdfaf6; --sector-border:#ebe1d5; --sector-accent:#ad8967; --sector-badge:#f8f1e8; --sector-number:#89694e; }
+.sectionHeading { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 18px; padding-bottom:15px; border-bottom:1px solid var(--sector-border); }
+.sectionHeading > span { display: grid; place-items: center; min-width: 29px; height: 29px; border-radius: 9px; background: var(--sector-badge); color: var(--sector-number); font-size: 11px; font-weight: 700; }
 .sectionHeading h3 { font-size: 17px; font-weight: 750; letter-spacing: -.025em; line-height: 1.5; }
-.sectionHeading p { margin: 5px 0 0; color: #897987; font-size: 11px; line-height: 1.7; }
+.sectionHeading p { margin: 5px 0 0; color: #897987; font-size: 12px; line-height: 1.7; }
 .axes { display: grid; gap: 12px; }
 .axis { border: 1px solid #e9e2e9; border-radius: 14px; padding: 17px; }
 .axisTitle { display: flex; justify-content: space-between; align-items: center; }
 .axisTitle > span { display: flex; align-items: center; gap: 7px; color: #937087; font-size: 11px; }
 .axisTitle b { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 7px; background: #fbf1f6; color: #ad587c; font-size: 13px; }
 .axis h4, .details h4 { font-size: 14px; font-weight: 700; margin: 10px 0 6px; }
-.axis p, .details p, .bodyText { color: #746876; font-size: 12px; line-height: 1.95; margin: 0; word-break: keep-all; overflow-wrap: anywhere; }
+.axis p, .details p, .bodyText { color: #746876; font-size: 13px; line-height: 1.85; margin: 0; word-break: keep-all; overflow-wrap: anywhere; }
 .evidence { padding: 5px 15px; background: #faf8fa; border-radius: 12px; margin-bottom: 16px; }
 .evidence > div, .preferences > div { display: grid; grid-template-columns: 90px minmax(0,1fr); gap: 10px; padding: 11px 0; border-bottom: 1px solid #ebe4eb; }
 .evidence > div:last-child, .preferences > div:last-child { border-bottom: 0; }
-.evidence dt, .preferences dt { color: #8c7989; font-size: 11px; }
-.evidence dd, .preferences dd { margin: 0; color: #59475a; font-size: 12px; font-weight: 600; }
-.callout { border-left: 3px solid #d48aa9; padding-left: 12px; margin: 16px 0 0; color: #84677b; font-size: 11px; line-height: 1.9; }
-.details { display: grid; gap: 20px; }
+.evidence dt, .preferences dt { color: #8c7989; font-size: 12px; }
+.evidence dd, .preferences dd { margin: 0; color: #59475a; font-size: 13px; font-weight: 600; }
+.callout { border-left: 3px solid var(--sector-accent); padding:11px 12px; margin: 16px 0 0; border-radius:0 10px 10px 0; background:rgba(255,255,255,.72); color: #84677b; font-size: 12px; line-height: 1.85; }
+.details { display: grid; gap: 10px; }
+.details > div { padding:15px; border:1px solid var(--sector-border); border-radius:13px; background:rgba(255,255,255,.78); }
 .details h4 { margin-top: 0; }
 .detailLabel { display: inline-block; background: #f7f2f6; border-radius: 6px; padding: 4px 7px; font-size: 10px; color: #94748c; margin-bottom: 9px; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
@@ -73,4 +85,4 @@
 .readingNote h3 { font-size: 13px; font-weight: 700; }
 .readingNote p { font-size: 11px; line-height: 1.9; color: #857487; margin: 8px 0; }
 .readingNote a { font-size: 10px; line-height: 1.8; color: #947287; text-decoration: underline; text-underline-offset: 3px; }
-@media (max-width:359px) { .hero h2 { font-size: 23px; } .code { gap: 5px; } .code small { font-size: 9px; } .population { padding: 16px; } .sectionHeading h3 { font-size: 16px; } }
+@media (max-width:359px) { .hero h2 { font-size: 23px; } .code { gap: 5px; } .code small { font-size: 9px; } .population { padding: 16px; } .section { padding:19px 15px 17px; } .section::before { left:15px; right:15px; } .sectionHeading h3 { font-size: 16px; } }

@@ -1,8 +1,9 @@
 import type { QuickSkinProfile } from "./quick-profile";
+import type { SkinProfile } from "./api";
 
-export const SKIN_CHECK_DRAFT_KEY = "hwaryeok-skin-check-draft-v2";
+export const SKIN_CHECK_DRAFT_KEY = "hwaryeok-skin-check-draft-v3";
 export const DRAFT_MAX_AGE = 24 * 60 * 60 * 1000;
-export type AnswerKey = Exclude<keyof QuickSkinProfile, "skinType"> | "cheekOiliness";
+export type AnswerKey = Exclude<keyof QuickSkinProfile, "skinType">;
 export type SkinAnswers = Partial<Record<AnswerKey, string | string[]>>;
 export type CheckView = number | "review" | "result";
 export type CheckIcon = "drop" | "sun" | "waves" | "shield" | "flower" | "sparkles" | "clock" | "layers" | "leaf" | "wind";
@@ -18,8 +19,9 @@ export const skinQuestions: SkinQuestion[] = [
   { key: "sensitivityLevel", group: "피부 반응", tone: "rose", icon: "shield", title: "새 제품을 쓸 때 따갑거나 불편한가요?", hint: "최근 사용 경험을 기준으로 골라주세요.", note: "민감 반응은 건성·지성 같은 유분 경향과 별도로 보여줘요.", options: [option("LOW", "반응이 드물어요", "대부분 편안하게 사용해요", "shield"), option("MEDIUM", "가끔 반응해요", "제품이나 컨디션에 따라 달라요", "flower"), option("HIGH", "쉽게 반응해요", "따가움·화끈거림이 자주 있어요", "sparkles")] },
   { key: "rednessFrequency", group: "피부 반응", tone: "rose", icon: "flower", title: "평소 붉어짐은 얼마나 자주 보이나요?", hint: "세안이나 온도 변화 뒤의 모습을 떠올려주세요.", note: "붉어짐의 원인이나 피부 질환을 판정하는 질문은 아니에요.", options: [option("RARE", "거의 없어요", "붉어짐이 크게 눈에 띄지 않아요", "leaf"), option("OCCASIONAL", "가끔 보여요", "계절·컨디션에 따라 보여요", "flower"), option("FREQUENT", "자주 보여요", "일상에서 반복적으로 보여요", "sun")] },
   { key: "breakoutFrequency", group: "피부 반응", tone: "rose", icon: "sparkles", title: "최근 한 달, 트러블은 얼마나 있었나요?", hint: "평소보다 특별히 심했던 하루보다는 반복 양상을 봐요.", note: "트러블의 종류나 치료 필요성을 진단하지 않아요.", options: [option("RARE", "거의 없었어요", "가끔 한두 개 생기는 정도예요", "leaf"), option("OCCASIONAL", "주기적으로 생겨요", "피곤할 때나 일정 시기에 보여요", "clock"), option("FREQUENT", "자주 반복돼요", "여러 날에 걸쳐 계속 신경 쓰여요", "sparkles")] },
+  { key: "breakoutZones", group: "피부 반응", tone: "rose", icon: "flower", title: "트러블이 생긴다면 주로 어느 부위인가요?", hint: "최근 반복해서 신경 쓰였던 부위를 모두 골라주세요.", note: "선택하지 않아도 괜찮아요. 위치는 제품의 사용 팁과 추천 근거를 보완해요.", multiple: true, max: 5, options: [option("이마", "이마", "헤어라인을 포함한 이마 주변", "sun"), option("코", "코", "코와 콧방울 주변", "flower"), option("볼", "볼", "양쪽 볼과 광대 주변", "flower"), option("턱·입가", "턱·입가", "턱선과 입 주변", "sparkles"), option("얼굴 전체", "얼굴 전체", "특정 부위보다 넓게 보여요", "waves")] },
   { key: "poreLevel", group: "피부 반응", tone: "rose", icon: "flower", title: "모공은 어느 정도 눈에 띄나요?", hint: "평소 거울로 볼 때 느끼는 정도를 골라주세요.", note: "확대 촬영이나 실제 모공 크기 측정은 하지 않아요.", options: [option("LOW", "크게 신경 쓰이지 않아요", "평소에는 잘 의식하지 않아요", "leaf"), option("MEDIUM", "일부 부위에서 보여요", "코나 볼 안쪽에 주로 보여요", "flower"), option("HIGH", "여러 부위에서 보여요", "얼굴 전반에서 도드라져 보여요", "sparkles")] },
-  { key: "concerns", group: "나의 우선순위", tone: "sage", icon: "leaf", title: "가장 먼저 챙기고 싶은 고민은 무엇인가요?", hint: "1~3개를 골라 나의 우선순위를 알려주세요.", note: "선택한 고민은 피부 경향을 덮어쓰지 않아요.", multiple: true, min: 1, max: 3, options: [option("속건조·당김", "속건조·당김", "건조하고 당기는 느낌", "drop"), option("유분·번들거림", "유분·번들거림", "쉽게 올라오는 유분", "sun"), option("트러블·여드름", "트러블·여드름", "반복되는 피부 고민", "sparkles"), option("블랙헤드·모공", "블랙헤드·모공", "눈에 띄는 모공", "flower"), option("붉은기·민감", "붉은기·민감", "붉어짐과 불편함", "shield"), option("장벽·각질", "장벽·각질", "거칠고 들뜨는 피부", "leaf"), option("잡티·칙칙함", "잡티·칙칙함", "피부 톤에 대한 고민", "sun"), option("탄력·잔주름", "탄력·잔주름", "탄탄함과 잔주름 고민", "waves")] },
+  { key: "concerns", group: "나의 우선순위", tone: "sage", icon: "leaf", title: "가장 먼저 챙기고 싶은 고민은 무엇인가요?", hint: "1~4개를 골라 나의 우선순위를 알려주세요.", note: "선택한 고민은 피부 경향을 덮어쓰지 않아요.", multiple: true, min: 1, max: 4, options: [option("속건조·당김", "속건조·당김", "건조하고 당기는 느낌", "drop"), option("유분·번들거림", "유분·번들거림", "쉽게 올라오는 유분", "sun"), option("트러블·여드름", "트러블·여드름", "반복되는 피부 고민", "sparkles"), option("블랙헤드·모공", "블랙헤드·모공", "눈에 띄는 모공", "flower"), option("붉은기·민감", "붉은기·민감", "붉어짐과 불편함", "shield"), option("장벽·각질", "장벽·각질", "거칠고 들뜨는 피부", "leaf"), option("잡티·칙칙함", "잡티·칙칙함", "피부 톤에 대한 고민", "sun"), option("탄력·잔주름", "탄력·잔주름", "탄탄함과 잔주름 고민", "waves")] },
   { key: "texturePreference", group: "나의 우선순위", tone: "sage", icon: "drop", title: "매일 쓰고 싶은 마무리감은 어떤가요?", hint: "피부 상태가 아니라 나의 사용 취향을 고르는 질문이에요.", note: "취향을 피부 타입으로 해석하지 않아요.", options: [option("LIGHT", "가볍고 산뜻하게", "빠르게 흡수되고 잔여감이 적게", "wind"), option("BALANCED", "촉촉하고 편안하게", "수분감과 마무리감이 균형 있게", "drop"), option("RICH", "쫀쫀하고 든든하게", "보호막 같은 보습감이 남도록", "shield")] },
   { key: "routineComplexity", group: "나의 우선순위", tone: "sage", icon: "layers", title: "평소 스킨케어는 몇 단계로 하나요?", hint: "세안 뒤 사용하는 제품 개수를 생각해 주세요.", note: "현재 루틴을 기록하며 단계가 많다고 더 높은 점수를 주지 않아요.", options: [option("MINIMAL", "1~2단계", "기본 제품으로 간단하게", "leaf"), option("STANDARD", "3~4단계", "세럼·에센스 등을 함께", "layers"), option("LAYERED", "5단계 이상", "여러 제품을 나누어 사용", "sparkles")] },
   { key: "sunscreenUsage", group: "생활과 환경", tone: "lilac", icon: "sun", title: "선케어 제품은 얼마나 자주 사용하나요?", hint: "최근의 실제 사용 습관을 골라주세요.", note: "답변을 잘함·못함으로 평가하지 않아요.", options: [option("RARE", "거의 사용하지 않아요", "특별한 야외 일정이 있을 때만", "leaf"), option("SOMETIMES", "가끔 사용해요", "일정에 따라 일주일에 몇 번", "clock"), option("DAILY", "매일 사용해요", "평소 루틴에 포함되어 있어요", "sun")] },
@@ -76,25 +78,158 @@ export function toQuickProfile(answers: SkinAnswers): QuickSkinProfile | null {
   if (!tendency || firstMissingAnswer(answers) !== -1) return null;
   const profile: Record<string, unknown> = { skinType: tendency.type };
   for (const q of skinQuestions) {
-    if (q.key !== "cheekOiliness") profile[q.key] = answers[q.key] ?? [];
+    profile[q.key] = answers[q.key] ?? [];
   }
   return profile as QuickSkinProfile;
 }
 
-export function restoreSkinDraft(raw: string | null, now = Date.now()): { answers: SkinAnswers; view: CheckView } | null {
+const legacyConcernLabels: Record<string, string> = {
+  속건조: "속건조·당김",
+  민감: "붉은기·민감",
+  모공: "블랙헤드·모공",
+  붉은기: "붉은기·민감",
+  "피부 장벽": "장벽·각질",
+  각질: "장벽·각질",
+  칙칙함: "잡티·칙칙함",
+  탄력: "탄력·잔주름",
+};
+
+/** Restore only values that were actually saved; legacy gaps stay unanswered. */
+export function skinAnswersFromProfile(profile: SkinProfile | null): SkinAnswers {
+  if (!profile?.configured) return {};
+  const source = profile as unknown as Record<string, unknown>;
+  const answers: SkinAnswers = {};
+  for (const question of skinQuestions) {
+    const raw = question.key === "concerns" && Array.isArray(source.concerns)
+      ? [...new Set(source.concerns.map((value) => typeof value === "string" ? legacyConcernLabels[value] ?? value : value))]
+          .slice(0, question.max)
+      : source[question.key];
+    if (validAnswer(question, raw)) answers[question.key] = raw as string | string[];
+  }
+  return answers;
+}
+
+function draftIngredientIds(value: unknown): string[] | null {
+  return Array.isArray(value)
+    && value.length <= 10
+    && new Set(value).size === value.length
+    && value.every((id: unknown) => typeof id === "string" && /^[a-z0-9][a-z0-9-]{0,63}$/.test(id))
+    ? value as string[]
+    : null;
+}
+
+export type RestoredSkinDraft = {
+  answers: SkinAnswers;
+  answersDirty: boolean;
+  draftOwnerId: string | null;
+  profileBaseKnown: boolean;
+  profileBaseUpdatedAt: string | null;
+  preferenceBaseIds: string[] | null;
+  preferenceOwnerId: string | null;
+  preferenceSelectionDirty: boolean;
+  preferredIngredientIds: string[] | null;
+  view: CheckView;
+};
+
+function validDraftOwnerId(value: unknown): value is string | null {
+  return value === null || (typeof value === "string" && value.length > 0 && value.length <= 128);
+}
+
+function ownerCanRestore(savedOwnerId: string | null, currentOwnerId: string | null): boolean {
+  return savedOwnerId === currentOwnerId || (savedOwnerId === null && currentOwnerId !== null);
+}
+
+function sameOrderedIds(left: string[] | null, right: string[]): boolean {
+  return left !== null && left.length === right.length && left.every((id, index) => id === right[index]);
+}
+
+export function resolveSkinDraftAnswers(
+  savedAnswers: SkinAnswers,
+  draft: RestoredSkinDraft | null,
+  currentOwnerId: string | null,
+  currentProfileUpdatedAt: string | null,
+  currentProfileAvailable = true,
+): { answers: SkinAnswers; dirty: boolean; ownerCompatible: boolean } {
+  const ownerCompatible = Boolean(draft && ownerCanRestore(draft.draftOwnerId, currentOwnerId));
+  if (!draft || !ownerCompatible || !draft.answersDirty) return { answers: savedAnswers, dirty: false, ownerCompatible };
+  const guestHandoff = draft.draftOwnerId === null && currentOwnerId !== null;
+  if (currentProfileAvailable && draft.profileBaseKnown && !guestHandoff && draft.profileBaseUpdatedAt !== currentProfileUpdatedAt) {
+    return { answers: savedAnswers, dirty: false, ownerCompatible };
+  }
+  return { answers: { ...savedAnswers, ...draft.answers }, dirty: true, ownerCompatible };
+}
+
+export function resolveSkinDraftIngredients(
+  savedIngredientIds: string[] | null,
+  draft: RestoredSkinDraft | null,
+  currentOwnerId: string | null,
+): { ids: string[]; dirty: boolean; overflowed: boolean; ownerCompatible: boolean } {
+  const ownerCompatible = Boolean(draft && ownerCanRestore(draft.preferenceOwnerId, currentOwnerId));
+  if (savedIngredientIds === null) {
+    const dirty = Boolean(draft && ownerCompatible && draft.preferenceSelectionDirty && draft.preferredIngredientIds !== null);
+    const ids = draft && ownerCompatible && draft.preferenceSelectionDirty && draft.preferredIngredientIds !== null
+      ? draft.preferredIngredientIds
+      : [];
+    return { ids, dirty, overflowed: false, ownerCompatible };
+  }
+  const saved = [...new Set(savedIngredientIds)].slice(0, 10);
+  if (!draft || !ownerCompatible || !draft.preferenceSelectionDirty || draft.preferredIngredientIds === null) {
+    return { ids: saved, dirty: false, overflowed: false, ownerCompatible };
+  }
+  const restored = draft.preferredIngredientIds;
+  const guestHandoff = draft.preferenceOwnerId === null && currentOwnerId !== null;
+  if (guestHandoff) {
+    const merged = [...new Set([...saved, ...restored])];
+    const ids = merged.slice(0, 10);
+    return { ids, dirty: !sameOrderedIds(ids, saved), overflowed: merged.length > 10, ownerCompatible };
+  }
+  if (!sameOrderedIds(draft.preferenceBaseIds, savedIngredientIds)) {
+    return { ids: saved, dirty: false, overflowed: false, ownerCompatible };
+  }
+  return { ids: restored, dirty: true, overflowed: false, ownerCompatible };
+}
+
+export function restoreSkinDraft(raw: string | null, now = Date.now()): RestoredSkinDraft | null {
   if (!raw || raw.length > 15000) return null;
   try {
     const draft = JSON.parse(raw);
-    if (draft?.version !== 2 || !Number.isFinite(draft.updatedAt) || now - draft.updatedAt > DRAFT_MAX_AGE || draft.updatedAt > now + 60000 || !draft.answers || typeof draft.answers !== "object") return null;
+    if (draft?.version !== 3 || !Number.isFinite(draft.updatedAt) || now - draft.updatedAt > DRAFT_MAX_AGE || draft.updatedAt > now + 60000 || !draft.answers || typeof draft.answers !== "object") return null;
+    if (!validDraftOwnerId(draft.draftOwnerId) || !validDraftOwnerId(draft.preferenceOwnerId)) return null;
+    if (typeof draft.answersDirty !== "boolean" || typeof draft.preferenceSelectionDirty !== "boolean") return null;
+    if (draft.profileBaseKnown !== undefined && typeof draft.profileBaseKnown !== "boolean") return null;
+    if (draft.profileBaseUpdatedAt !== null && (typeof draft.profileBaseUpdatedAt !== "string" || draft.profileBaseUpdatedAt.length > 64)) return null;
     const answers: SkinAnswers = {};
     for (const q of skinQuestions) if (validAnswer(q, draft.answers[q.key])) answers[q.key] = draft.answers[q.key];
-    return { answers, view: safeCheckView(draft.view, answers) };
+    const preferredIngredientIds = draftIngredientIds(draft.preferredIngredientIds);
+    const preferenceBaseIds = draftIngredientIds(draft.preferenceBaseIds);
+    if (draft.preferenceBaseIds !== null && preferenceBaseIds === null) return null;
+    if (draft.preferredIngredientIds !== null && preferredIngredientIds === null) return null;
+    return {
+      answers,
+      answersDirty: draft.answersDirty,
+      draftOwnerId: draft.draftOwnerId,
+      // Drafts written before this marker existed are trusted only when they carry
+      // an actual revision. A null base may have been produced during an outage.
+      profileBaseKnown: draft.profileBaseKnown ?? draft.profileBaseUpdatedAt !== null,
+      profileBaseUpdatedAt: draft.profileBaseUpdatedAt,
+      preferenceBaseIds,
+      preferenceOwnerId: draft.preferenceOwnerId,
+      preferenceSelectionDirty: draft.preferenceSelectionDirty,
+      preferredIngredientIds,
+      view: safeCheckView(draft.view, answers),
+    };
   } catch { return null; }
 }
 
-export function restoreSkinDraftSummary(raw: string | null, now = Date.now()): { skinType: string; hasReport: boolean } | null {
+export function restoreSkinDraftSummary(
+  raw: string | null,
+  now = Date.now(),
+  currentOwnerId: string | null = null,
+  currentProfileUpdatedAt: string | null = null,
+): { skinType: string; hasReport: boolean } | null {
   const draft = restoreSkinDraft(raw, now);
-  const profile = draft ? toQuickProfile(draft.answers) : null;
+  const resolved = resolveSkinDraftAnswers({}, draft, currentOwnerId, currentProfileUpdatedAt);
+  const profile = resolved.dirty ? toQuickProfile(resolved.answers) : null;
   return profile ? { skinType: profile.skinType, hasReport: draft?.view === "result" } : null;
 }
 

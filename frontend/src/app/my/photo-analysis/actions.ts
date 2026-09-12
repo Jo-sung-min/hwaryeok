@@ -7,7 +7,7 @@ import { PHOTO_CONSENT_VERSION, photoFileError, type SkinPhotoActionState } from
 export async function analyzePhotoAction(data: FormData): Promise<SkinPhotoActionState> {
   const token = await getActionAccessToken();
   if (!token) return { error: "로그인 후 다시 이용해 주세요." };
-  if (data.get("consent") !== PHOTO_CONSENT_VERSION) return { error: "본인 사진의 OpenAI 전송 및 참고용 분석에 동의해 주세요." };
+  if (data.get("consent") !== PHOTO_CONSENT_VERSION) return { error: "사진 분석을 위한 정보 처리에 동의해 주세요." };
   const photo = data.get("photo");
   if (!(photo instanceof File)) return { error: "먼저 사진을 선택해 주세요." };
   const invalid = photoFileError(photo);

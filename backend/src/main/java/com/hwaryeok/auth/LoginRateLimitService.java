@@ -1,5 +1,6 @@
 package com.hwaryeok.auth;
 
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -57,7 +58,7 @@ public class LoginRateLimitService {
         String address = normalizeAddress(clientAddress);
         Instant identityBlockedUntil = register("identity:" + normalizedEmail, identityLimit, now);
         Instant addressBlockedUntil = register("address:" + address, addressLimit, now);
-        jdbc.update("DELETE FROM auth_login_attempts WHERE updated_at < ?", now.minus(7, ChronoUnit.DAYS));
+        jdbc.update("DELETE FROM auth_login_attempts WHERE updated_at < ?", sqlTimestamp(now.minus(7, ChronoUnit.DAYS)));
         Instant blockedUntil = later(identityBlockedUntil, addressBlockedUntil);
         if (blockedUntil != null) throw blocked(blockedUntil, now);
     }
@@ -94,7 +95,7 @@ public class LoginRateLimitService {
                 UPDATE auth_login_attempts
                 SET attempt_count = ?, window_started = ?, blocked_until = ?, updated_at = ?
                 WHERE key_hash = ?
-                """, nextCount, windowStarted, blockedUntil, now, keyHash);
+                """, nextCount, sqlTimestamp(windowStarted), sqlTimestamp(blockedUntil), sqlTimestamp(now), keyHash);
         return blockedUntil;
     }
 
@@ -119,7 +120,7 @@ public class LoginRateLimitService {
                         (key_hash, attempt_count, window_started, blocked_until, updated_at)
                     VALUES (?, 0, ?, NULL, ?)
                     ON CONFLICT (key_hash) DO NOTHING
-                    """, keyHash, now, now);
+                    """, keyHash, sqlTimestamp(now), sqlTimestamp(now));
             return;
         }
         jdbc.update("""
@@ -127,7 +128,11 @@ public class LoginRateLimitService {
                     (key_hash, attempt_count, window_started, blocked_until, updated_at)
                 SELECT ?, 0, ?, NULL, ?
                 WHERE NOT EXISTS (SELECT 1 FROM auth_login_attempts WHERE key_hash = ?)
-                """, keyHash, now, now, keyHash);
+                """, keyHash, sqlTimestamp(now), sqlTimestamp(now), keyHash);
+    }
+
+    private Timestamp sqlTimestamp(Instant value) {
+        return value == null ? null : Timestamp.from(value);
     }
 
     private TooManyLoginAttemptsException blocked(Instant blockedUntil, Instant now) {

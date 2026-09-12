@@ -8,8 +8,10 @@ import com.hwaryeok.ingredient.ProductIngredientAmountService;
 import com.hwaryeok.ingredient.ProductIngredientsResponse;
 import com.hwaryeok.user.ActiveUserService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -93,13 +95,40 @@ public class AdminProductController {
     }
 
     @PutMapping(path = "/{productId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Deprecated(since = "0.2.0", forRemoval = false)
     public ProductResponse uploadImage(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String productId,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") MultipartFile file,
+            HttpServletResponse response
     ) {
         activeUserService.requireAdmin(jwt.getSubject());
+        response.setHeader("Deprecation", "true");
+        response.setHeader("Link", "</api/v1/admin/products/" + productId
+                + "/image-upload-url>; rel=\"successor-version\"");
         return productImageService.upload(productId, file);
+    }
+
+    @PostMapping("/{productId}/image-upload-url")
+    public ProductImageUploadUrlResponse createImageUploadUrl(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @Valid @RequestBody ProductImageUploadUrlRequest request,
+            HttpServletResponse response
+    ) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        return productImageService.createUploadUrl(productId, request);
+    }
+
+    @PostMapping("/{productId}/image-upload-complete")
+    public ProductResponse completeImageUpload(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String productId,
+            @Valid @RequestBody ProductImageUploadCompleteRequest request
+    ) {
+        activeUserService.requireAdmin(jwt.getSubject());
+        return productImageService.completeUpload(productId, request);
     }
 
     @GetMapping("/{productId}/ingredients")

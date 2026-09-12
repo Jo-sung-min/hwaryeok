@@ -58,7 +58,7 @@ test("report renders detailed read-only content and labelled cohort percentage",
   assert.match(html, /40\.0/);
   assert.match(html, /30명 중 12명/);
   assert.match(html, /프로필을 저장한 화력 회원/);
-  assert.match(html, /내 피부에는 무엇을 먼저 고르면 좋을까요/);
+  assert.match(html, /내 답변과 사용 경험으로 찾은 성분/);
   assert.match(html, /href="\/ingredients\/hyaluronic-acid"/);
   assert.match(html, /href="\/ingredients\/ceramide-np"/);
   assert.match(html, /히알루론산|세라마이드 NP/);
@@ -68,7 +68,27 @@ test("report renders detailed read-only content and labelled cohort percentage",
   assert.doesNotMatch(html, /좋고 나쁨|의학적으로 검증|효과를 보장|임의의 퍼센트|비활성 계정/);
   assert.match(html, /피부가 보내는 세부 신호/);
   assert.match(html, /내 일상에 맞춘 사용 팁/);
+  for (const [tone, titleId] of [["rose", "skin-axes-title"], ["water", "skin-features-title"], ["lilac", "skin-signals-title"], ["sage", "skin-selection-title"], ["sand", "skin-routine-title"]]) {
+    assert.match(html, new RegExp(`data-tone="${tone}"[^>]+aria-labelledby="${titleId}"`));
+    assert.match(html, new RegExp(`id="${titleId}"`));
+  }
   assert.doesNotMatch(html, /<button|<input|수정/);
+});
+test("DB ingredient recommendations replace fallback cards and show saved experience", () => {
+  const ingredientRecommendations = [{
+    ingredient: { id: "niacinamide", name: "나이아신아마이드", englishName: "Niacinamide", role: "피부 컨디셔닝", description: "", status: "GOOD", caution: null, tags: [], evidenceLevel: "A", featured: true, displayOrder: 1 },
+    reason: "복합성 피부와 잡티 고민 정보를 함께 반영했어요.",
+    matchedBy: ["피부 타입 · 복합성", "피부 고민 · 잡티 흔적", "고민 성분군 · 잡티 흔적", "고민 성분군 · 칙칙함", "근거 수준 A"],
+    preferred: true,
+  }];
+  const html = renderToStaticMarkup(React.createElement(SkinReport, { answers: answers(), statistics: stats, ingredientRecommendations }));
+  assert.match(html, /href="\/ingredients\/niacinamide"/);
+  assert.match(html, /나이아신아마이드/);
+  assert.match(html, /잘 맞았던 성분/);
+  assert.match(html, /반영 기준 · 복합성 피부 · 잡티·칙칙함/);
+  assert.doesNotMatch(html, /고민 성분군/);
+  assert.match(html, /기존에 잘 맞았던 성분과 이번 피부 답변/);
+  assert.doesNotMatch(html, /href="\/ingredients\/hyaluronic-acid"/);
 });
 test("collecting and unavailable stats have distinct honest empty states", () => {
   const render = statistics => renderToStaticMarkup(React.createElement(SkinReport, { answers: answers(), statistics }));

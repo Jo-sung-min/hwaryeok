@@ -32,6 +32,7 @@ export async function saveSkinProfileAction(
   const skinType = String(formData.get("skinType") ?? "").trim();
   const hydrationLevel = String(formData.get("hydrationLevel") ?? "").trim();
   const oilinessLevel = String(formData.get("oilinessLevel") ?? "").trim();
+  const cheekOiliness = String(formData.get("cheekOiliness") ?? formData.get("oilinessLevel") ?? "").trim();
   const sensitivityLevel = String(formData.get("sensitivityLevel") ?? "").trim();
   const breakoutFrequency = String(formData.get("breakoutFrequency") ?? "").trim();
   const cleansingTightness = String(formData.get("cleansingTightness") ?? "").trim();
@@ -51,6 +52,7 @@ export async function saveSkinProfileAction(
   if (!allowedSkinTypes.has(skinType)) fieldErrors.skinType = "피부 타입을 선택해 주세요.";
   if (!allowedBalanceLevels.has(hydrationLevel)) fieldErrors.hydrationLevel = "수분 상태를 선택해 주세요.";
   if (!allowedBalanceLevels.has(oilinessLevel)) fieldErrors.oilinessLevel = "유분 상태를 선택해 주세요.";
+  if (!allowedBalanceLevels.has(cheekOiliness)) fieldErrors.cheekOiliness = "볼의 유분 상태를 선택해 주세요.";
   if (!allowedSensitivityLevels.has(sensitivityLevel)) fieldErrors.sensitivityLevel = "민감도를 선택해 주세요.";
   if (!allowedBreakoutFrequencies.has(breakoutFrequency)) fieldErrors.breakoutFrequency = "트러블 빈도를 선택해 주세요.";
   if (!allowedCleansingTightness.has(cleansingTightness)) fieldErrors.cleansingTightness = "세안 후 당김을 선택해 주세요.";
@@ -83,6 +85,7 @@ export async function saveSkinProfileAction(
         skinType,
         hydrationLevel: hydrationLevel as "LOW" | "BALANCED" | "HIGH",
         oilinessLevel: oilinessLevel as "LOW" | "BALANCED" | "HIGH",
+        cheekOiliness: cheekOiliness as "LOW" | "BALANCED" | "HIGH",
         sensitivityLevel: sensitivityLevel as "LOW" | "MEDIUM" | "HIGH",
         breakoutFrequency: breakoutFrequency as "RARE" | "OCCASIONAL" | "FREQUENT",
         cleansingTightness: cleansingTightness as "NONE" | "SHORT" | "LONG",

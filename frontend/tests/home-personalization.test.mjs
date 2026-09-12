@@ -5,7 +5,7 @@ import { homeSkinProfileChips, homeSkinSummaryHref } from "../src/lib/home-perso
 test("a generated skin report opens before either profile editing or answer review", () => {
   assert.equal(homeSkinSummaryHref(true, false), "/skin-check?step=result");
   assert.equal(homeSkinSummaryHref(true, true), "/skin-check?step=result");
-  assert.equal(homeSkinSummaryHref(false, true), "/profile?edit=1");
+  assert.equal(homeSkinSummaryHref(false, true), "/skin-check");
   assert.equal(homeSkinSummaryHref(false, false), "/skin-check?step=review");
 });
 

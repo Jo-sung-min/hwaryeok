@@ -32,13 +32,30 @@ public class OAuthLoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         OAuth2User principal = (OAuth2User) authentication.getPrincipal();
-        String provider = String.valueOf(principal.getAttribute(HwaryeokOAuth2UserService.PROVIDER_ATTRIBUTE));
-        String userId = String.valueOf(principal.getAttribute(HwaryeokOAuth2UserService.USER_ID_ATTRIBUTE));
+        String provider = (String) principal.getAttribute(HwaryeokOAuth2UserService.PROVIDER_ATTRIBUTE);
+        String userId = (String) principal.getAttribute(HwaryeokOAuth2UserService.USER_ID_ATTRIBUTE);
         boolean newUser = Boolean.TRUE.equals(principal.getAttribute(HwaryeokOAuth2UserService.NEW_USER_ATTRIBUTE));
-        String exchangeCode = exchangeCodeService.issue(userId, OAuthProvider.fromRegistrationId(provider), newUser);
+        String attemptChallenge = OAuthAttemptBinding.callbackChallenge(request);
         if (request.getSession(false) != null) {
             request.getSession(false).invalidate();
         }
+        if (attemptChallenge == null) {
+            String failureUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
+                    .path("/api/auth/oauth/callback")
+                    .queryParam("status", "error")
+                    .queryParam("error", "oauth_failed")
+                    .build()
+                    .encode()
+                    .toUriString();
+            response.sendRedirect(failureUrl);
+            return;
+        }
+        String exchangeCode = exchangeCodeService.issue(
+                userId,
+                OAuthProvider.fromRegistrationId(provider),
+                newUser,
+                attemptChallenge
+        );
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl)
                 .path("/api/auth/oauth/callback")
                 .queryParam("code", exchangeCode)

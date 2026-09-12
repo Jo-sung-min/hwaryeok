@@ -2,10 +2,11 @@ import "server-only";
 import type { RisingProductRankingPage } from "@/lib/types";
 import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
+import type { ProductImageUploadMetadata, ProductImageUploadTicket } from "@/lib/product-image-upload";
 
-import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, AdminReviewKind, AdminReviewPage, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
+import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, AdminReviewKind, AdminReviewPage, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRecommendation, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
-const API_BASE_URL = process.env.API_URL ?? "http://localhost:8080/api/v1";
+const API_BASE_URL = process.env.API_URL ?? "http://localhost:8081/api/v1";
 
 export function getSkinPhotoStatus(accessToken: string): Promise<import("./skin-photo").SkinPhotoStatus> {
   return requestJson("/users/me/photo-analysis", { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(5000) });
@@ -197,7 +198,7 @@ export type OAuthProviderStatus = {
 
 export type AuthUser = {
   id: string;
-  email: string;
+  email: string | null;
   nickname: string;
   role: string;
   authMethod: string;
@@ -264,6 +265,7 @@ export type SkinProfile = {
   skinType: string | null;
   hydrationLevel: "LOW" | "BALANCED" | "HIGH" | null;
   oilinessLevel: "LOW" | "BALANCED" | "HIGH" | null;
+  cheekOiliness: "LOW" | "BALANCED" | "HIGH" | null;
   sensitivityLevel: "LOW" | "MEDIUM" | "HIGH" | null;
   breakoutFrequency: "RARE" | "OCCASIONAL" | "FREQUENT" | null;
   profileVersion: number;
@@ -284,8 +286,6 @@ export type SkinProfile = {
 
 const oauthProviderFallback: OAuthProviderStatus[] = [
   { id: "kakao", name: "카카오", configured: false, authorizationPath: "/oauth2/authorization/kakao" },
-  { id: "naver", name: "네이버", configured: false, authorizationPath: "/oauth2/authorization/naver" },
-  { id: "google", name: "구글", configured: false, authorizationPath: "/oauth2/authorization/google" },
 ];
 
 export function signupUser(input: SignupInput): Promise<SignupResult> {
@@ -309,10 +309,10 @@ export function refreshAuthTokens(refreshToken: string): Promise<AuthTokenResult
   });
 }
 
-export function exchangeOAuthCode(code: string): Promise<AuthTokenResult> {
+export function exchangeOAuthCode(code: string, attemptVerifier: string): Promise<AuthTokenResult> {
   return requestJson<AuthTokenResult>("/auth/oauth/exchange", {
     method: "POST",
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, attemptVerifier }),
   });
 }
 
@@ -341,6 +341,7 @@ export function saveUserSkinProfile(
     skinType: string;
     hydrationLevel: "LOW" | "BALANCED" | "HIGH";
     oilinessLevel: "LOW" | "BALANCED" | "HIGH";
+    cheekOiliness: "LOW" | "BALANCED" | "HIGH";
     sensitivityLevel: "LOW" | "MEDIUM" | "HIGH";
     breakoutFrequency: "RARE" | "OCCASIONAL" | "FREQUENT";
     cleansingTightness: "NONE" | "SHORT" | "LONG";
@@ -598,6 +599,17 @@ export function getFeaturedIngredients(limit = 10): Promise<Ingredient[]> {
   return requestJson<Ingredient[]>(`/ingredients/featured?limit=${limit}`);
 }
 
+export function getIngredientRecommendations(
+  profile: Parameters<typeof saveUserSkinProfile>[1],
+  preferredIngredientIds: string[] = [],
+  limit = 4,
+): Promise<IngredientRecommendation[]> {
+  return requestJson<IngredientRecommendation[]>("/ingredients/recommendations", {
+    method: "POST",
+    body: JSON.stringify({ profile, preferredIngredientIds, limit }),
+  });
+}
+
 export function getIngredientFirepower(id: string, limit = 20): Promise<IngredientFirepower> {
   return requestJson<IngredientFirepower>(`/ingredients/${encodeURIComponent(id)}/firepower?limit=${limit}`);
 }
@@ -616,29 +628,28 @@ export function saveUserPreferredIngredients(accessToken: string, ingredientIds:
   });
 }
 
-export async function uploadAdminProductImage(accessToken: string, productId: string, file: File): Promise<Product> {
-  const formData = new FormData();
-  formData.set("file", file);
-  const response = await fetch(`${API_BASE_URL}/admin/products/${encodeURIComponent(productId)}/image`, {
-    method: "PUT",
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: formData,
+export function createAdminProductImageUploadUrl(
+  accessToken: string,
+  productId: string,
+  metadata: ProductImageUploadMetadata,
+): Promise<ProductImageUploadTicket> {
+  return requestJson<ProductImageUploadTicket>(`/admin/products/${encodeURIComponent(productId)}/image-upload-url`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(metadata),
   });
+}
 
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { code?: string; message?: string; fieldErrors?: Record<string, string> } | null;
-    throw new ApiRequestError(
-      body?.message ?? "제품 이미지를 등록하지 못했어요.",
-      response.status,
-      body?.code,
-      body?.fieldErrors ?? {},
-    );
-  }
-  return response.json() as Promise<Product>;
+export function completeAdminProductImageUpload(
+  accessToken: string,
+  productId: string,
+  objectKey: string,
+): Promise<Product> {
+  return requestJson<Product>(`/admin/products/${encodeURIComponent(productId)}/image-upload-complete`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ objectKey }),
+  });
 }
 
 export function getAdminProducts(accessToken: string): Promise<Product[]> {

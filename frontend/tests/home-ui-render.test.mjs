@@ -87,9 +87,9 @@ test("guest panel keeps the main message and a single skin-check action without 
     const html = render(HomePersonalization, { user: null, profile });
     const text = visibleText(html);
     assert.match(html, /data-personalization="guest"/);
-    assert.match(html, /href="\/skin-check"[^>]*>나의 성분 찾기/);
+    assert.match(html, /href="\/skin-check"[^>]*>나의 성분찾기/);
     assert.match(text, /다른 사람의 1위보다,.*내 피부에 맞는 1위/);
-    assert.match(text, /1분 체크로 내 피부 기준/);
+    assert.match(text, /피부 답변으로 내 피부 타입과 성분/);
     assert.doesNotMatch(html, /성분 직접 고르기|수부지|수분 부족|유분 많음/);
   }
 });
@@ -97,7 +97,7 @@ test("guest panel keeps the main message and a single skin-check action without 
 test("logged-in but unconfigured users get the save prompt, never a personalized claim", () => {
   const html = render(HomePersonalization, { user, profile: { ...savedProfile, configured: false } });
   assert.match(html, /data-personalization="needs-profile"/);
-  assert.match(visibleText(html), /피부 체크 후 결과를 저장할 수 있어요/);
+  assert.match(visibleText(html), /나의 성분찾기 결과를 계정에 저장할 수 있어요/);
   assert.match(html, /href="\/skin-check"/);
   assert.doesNotMatch(html, /저장된 피부 타입|수부지|수분 부족/);
 });
@@ -108,7 +108,7 @@ test("personalized panel shows a compact saved skin type and opens editing direc
   assert.match(html, /data-personalization="personalized"/);
   assert.match(html, /aria-label="수부지 경향 설정 수정"/);
   for (const copy of ["다른 사람의 1위보다", "내 피부에 맞는 1위", "저장된 피부 타입", "수부지 경향", "수정"]) assert.ok(text.includes(copy));
-  assert.match(html, /href="\/profile\?edit=1"/);
+  assert.match(html, /href="\/skin-check"/);
   assert.doesNotMatch(text, /수분 부족|유분 많음|민감도 보통|맞춤 화력은 어떻게/);
   assert.doesNotMatch(html, /private-user-id|private@example|private-concern|private-trigger|private-created-at/);
 });

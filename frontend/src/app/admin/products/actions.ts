@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import {
   ApiRequestError,
+  completeAdminProductImageUpload,
   createAdminProduct,
+  createAdminProductImageUploadUrl,
   deleteAdminProductIngredientAmount,
   deleteAdminProduct,
   getCurrentUser,
@@ -15,10 +17,10 @@ import {
   updateAdminProductCoupangPartnersLink,
   updateAdminProductIngredientAmount,
   updateAdminProductIngredients,
-  uploadAdminProductImage,
   type AdminProductInput,
 } from "@/lib/api";
 import { getActionAccessToken } from "@/lib/auth-session";
+import { productImageUploadMetadataError, type ProductImageUploadMetadata, type ProductImageUploadTicket } from "@/lib/product-image-upload";
 import type { AdminMfdsProductMatch, MfdsProductCandidate } from "@/lib/types";
 
 export type ProductActionState = {
@@ -30,6 +32,7 @@ export type ProductActionState = {
 export type ProductImageActionState = {
   success: boolean;
   message: string;
+  upload?: ProductImageUploadTicket;
 };
 
 export type ProductIngredientsActionState = {
@@ -126,23 +129,36 @@ export async function deleteProductAction(
   }
 }
 
-export async function uploadProductImageAction(
+export async function createProductImageUploadUrlAction(
   productId: string,
-  _previousState: ProductImageActionState,
-  formData: FormData,
+  metadata: ProductImageUploadMetadata,
 ): Promise<ProductImageActionState> {
   const authorization = await authorizeAdmin();
   if ("error" in authorization) return { success: false, message: authorization.error.message };
+  const validationError = productImageUploadMetadataError(metadata);
+  if (validationError) return { success: false, message: validationError };
 
   try {
-    const file = formData.get("file");
-    if (!(file instanceof File) || file.size === 0) return { success: false, message: "이미지 파일을 선택해 주세요." };
-    if (file.size > 5 * 1024 * 1024) return { success: false, message: "이미지는 5MB 이하만 등록할 수 있어요." };
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      return { success: false, message: "PNG, JPG, WEBP 이미지만 등록할 수 있어요." };
-    }
+    const upload = await createAdminProductImageUploadUrl(authorization.accessToken, productId, metadata);
+    return { success: true, message: "이미지 전송을 준비했어요.", upload };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof ApiRequestError ? error.message : "이미지 전송을 준비하지 못했어요.",
+    };
+  }
+}
 
-    await uploadAdminProductImage(authorization.accessToken, productId, file);
+export async function completeProductImageUploadAction(
+  productId: string,
+  objectKey: string,
+): Promise<ProductImageActionState> {
+  const authorization = await authorizeAdmin();
+  if ("error" in authorization) return { success: false, message: authorization.error.message };
+  if (typeof objectKey !== "string" || !objectKey.trim()) return { success: false, message: "업로드한 이미지 정보를 다시 확인해 주세요." };
+
+  try {
+    await completeAdminProductImageUpload(authorization.accessToken, productId, objectKey);
     revalidateProductPages(productId);
     return { success: true, message: "제품 이미지를 등록했어요." };
   } catch (error) {

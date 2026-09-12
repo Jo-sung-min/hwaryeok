@@ -5,6 +5,7 @@ import java.time.Instant;
 
 import com.hwaryeok.auth.AuthTokenResponse;
 import com.hwaryeok.auth.InvalidOAuthExchangeCodeException;
+import com.hwaryeok.auth.oauth.OAuthAttemptBinding;
 import com.hwaryeok.auth.oauth.OAuthProvider;
 import com.hwaryeok.user.User;
 import com.hwaryeok.user.UserRepository;
@@ -36,7 +37,10 @@ public class OAuthExchangeCodeService {
     }
 
     @Transactional
-    public String issue(String userId, OAuthProvider provider, boolean newUser) {
+    public String issue(String userId, OAuthProvider provider, boolean newUser, String attemptChallenge) {
+        if (!OAuthAttemptBinding.isValidChallenge(attemptChallenge)) {
+            throw new IllegalArgumentException("OAuth attempt challenge is missing or invalid");
+        }
         String rawCode = tokenHashService.createOpaqueToken();
         Instant now = Instant.now();
         codeRepository.save(new OAuthExchangeCode(
@@ -44,6 +48,7 @@ public class OAuthExchangeCodeService {
                 userId,
                 provider.name(),
                 newUser,
+                attemptChallenge,
                 now.plus(codeTtl),
                 now
         ));
@@ -51,11 +56,17 @@ public class OAuthExchangeCodeService {
     }
 
     @Transactional
-    public AuthTokenResponse exchange(String rawCode) {
+    public AuthTokenResponse exchange(String rawCode, String attemptVerifier) {
+        if (!OAuthAttemptBinding.isValidVerifier(attemptVerifier)) {
+            throw new InvalidOAuthExchangeCodeException();
+        }
+        String presentedChallenge = OAuthAttemptBinding.challengeForVerifier(attemptVerifier);
         Instant now = Instant.now();
         OAuthExchangeCode code = codeRepository.findByCodeHashForUpdate(tokenHashService.hash(rawCode))
                 .orElseThrow(InvalidOAuthExchangeCodeException::new);
-        if (code.getUsedAt() != null || !code.getExpiresAt().isAfter(now)) {
+        if (code.getUsedAt() != null
+                || !code.getExpiresAt().isAfter(now)
+                || !OAuthAttemptBinding.matches(code.getAttemptChallenge(), presentedChallenge)) {
             throw new InvalidOAuthExchangeCodeException();
         }
         code.markUsed(now);

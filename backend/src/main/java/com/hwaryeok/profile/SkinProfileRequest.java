@@ -18,6 +18,9 @@ public record SkinProfileRequest(
         @Pattern(regexp = "LOW|BALANCED|HIGH", message = "유분 상태를 다시 선택해 주세요.")
         String oilinessLevel,
 
+        @Pattern(regexp = "LOW|BALANCED|HIGH", message = "볼 유분 상태를 다시 선택해 주세요.")
+        String cheekOiliness,
+
         @Pattern(regexp = "LOW|MEDIUM|HIGH", message = "민감도를 다시 선택해 주세요.")
         String sensitivityLevel,
 

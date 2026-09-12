@@ -27,7 +27,7 @@ public class SkinPhotoController {
     public ResponseEntity<OpenAiSkinPhotoClient.Report> analyze(@AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "X-Photo-Consent", defaultValue = "") String consent, HttpServletRequest request) throws IOException {
         users.requireActive(jwt.getSubject());
-        if (!"photo-v1".equals(consent)) throw new PhotoAnalysisException(400, "CONSENT_REQUIRED", "본인 사진의 OpenAI 전송 및 참고용 분석에 동의해 주세요.");
+        if (!"photo-v1".equals(consent)) throw new PhotoAnalysisException(400, "CONSENT_REQUIRED", "사진 분석을 위한 정보 처리에 동의해 주세요.");
         if (!client.available()) throw new PhotoAnalysisException(503, "NOT_CONFIGURED", "사진 분석 서비스를 준비 중이에요. 피부 체크는 바로 이용할 수 있어요.");
         if (request.getContentLengthLong() > SkinPhotoNormalizer.MAX_BYTES) throw new PhotoAnalysisException(413, "PHOTO_TOO_LARGE", "사진은 5MB 이하로 선택해 주세요.");
         byte[] jpeg = normalizer.normalize(request.getInputStream().readNBytes(SkinPhotoNormalizer.MAX_BYTES + 1));

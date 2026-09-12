@@ -20,6 +20,7 @@
 | `NEXT_PUBLIC_API_URL` | `https://api.example.com/api/v1` | 제품 이미지 등 브라우저에 공개되는 API 주소. Docker 빌드 시 고정 |
 | `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. Docker 빌드 시 고정 |
 | `OAUTH_BACKEND_URL` | `https://api.example.com` | OAuth 인증 시작용 공개 백엔드 주소 |
+| `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 프론트 빌드 시 고정 |
 
 ### 백엔드
 
@@ -32,8 +33,18 @@
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
-| 공급자별 `*_CLIENT_ID`, `*_CLIENT_SECRET` | 사용하는 OAuth 공급자만 설정 |
+| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 REST API 키와 클라이언트 시크릿 |
 | `SESSION_COOKIE_SAME_SITE`, `SESSION_COOKIE_SECURE` | 서로 다른 HTTPS 도메인이면 `none`, `true` 검토 |
+| `S3_BUCKET` | S3 버킷명만 입력. 화력은 `fatell-aws-s3` |
+| `S3_KEY_PREFIX` | 버킷 안 객체 접두사. 화력은 `hwaryeok` |
+| `S3_PUBLIC_BASE_URL` | `S3_KEY_PREFIX`를 Origin Path로 연결한 공개 CDN 주소 |
+| `AWS_REGION` | S3 버킷 리전. 화력 버킷은 `ap-northeast-2` |
+| `S3_PRESIGNED_URL_SECONDS` | 브라우저 직접 업로드 URL 유효 시간. 기본 300초, 허용 60~900초 |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` | IAM 역할을 쓸 수 없는 로컬 환경에서만 설정하는 AWS 자격증명 |
+
+`S3_BUCKET`에는 `fatell-aws-s3.s3.amazonaws.com/hwaryeok` 같은 호스트·경로를 넣지 않는다. 버킷명과 경로를 각각 `S3_BUCKET=fatell-aws-s3`, `S3_KEY_PREFIX=hwaryeok`으로 분리한다. 운영에서는 정적 키보다 인스턴스 역할 등 AWS 기본 자격증명 체인을 우선 사용하고 실제 키를 저장소나 Docker 이미지에 넣지 않는다.
+
+관리자 이미지는 Presigned PUT으로 `hwaryeok/pending/product-images/` 아래에 올라간 뒤 검증·Copy가 성공해야 `hwaryeok/products/` 공개 경로에 확정된다. pending 객체는 URL 만료 전 재PUT을 막기 위해 즉시 삭제하지 않고 1일 lifecycle로만 정리한다. lifecycle이 없으면 임시 객체가 누적되므로 반드시 설정한다. 버킷 CORS에 프론트 출처의 `PUT`과 서명 헤더를 허용하고 CDN `/pending/**`는 차단한다. IAM은 객체 prefix에 `s3:PutObject`, `s3:GetObject`, 버킷에 prefix 조건을 둔 `s3:ListBucket`을 최소 범위로 허용한다.
 
 ## 3. Docker Compose 실행
 
@@ -47,7 +58,7 @@ docker compose up -d
 docker compose ps
 ```
 
-기본 공개 주소는 프론트 `http://localhost:3000`, API `http://localhost:8080`이다. PostgreSQL은 호스트의 loopback에만 바인딩되고 데이터는 `hwaryeok-postgres-data` 볼륨에 남는다. 운영에서는 프론트와 API 포트를 인터넷에 직접 노출하지 말고 HTTPS 역방향 프록시나 관리형 로드 밸런서 뒤에 둔다.
+기본 공개 주소는 프론트 `http://localhost:3001`, API `http://localhost:8081`이다. PostgreSQL은 호스트의 loopback에만 바인딩되고 데이터는 `hwaryeok-postgres-data` 볼륨에 남는다. 운영에서는 프론트와 API 포트를 인터넷에 직접 노출하지 말고 HTTPS 역방향 프록시나 관리형 로드 밸런서 뒤에 둔다.
 
 배포 상태는 다음 경로로 확인한다.
 
@@ -59,14 +70,12 @@ GET https://example.com/sitemap.xml
 
 ## 4. 분리 배포
 
-프론트는 Vercel 또는 Node.js 22 컨테이너에 배포할 수 있다. Vercel에서는 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 네 개를 환경별로 등록한다. 백엔드는 Java 21 컨테이너를 실행할 수 있는 서비스에 배포하고 PostgreSQL과 같은 리전에 둔다.
+프론트는 Vercel 또는 Node.js 22 컨테이너에 배포할 수 있다. Vercel에서는 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 표의 값을 환경별로 등록한다. 백엔드는 Java 21 컨테이너를 실행할 수 있는 서비스에 배포하고 PostgreSQL과 같은 리전에 둔다.
 
-OAuth 공급자 콘솔의 callback URL은 다음 형식으로 등록한다.
+카카오 개발자 콘솔의 로그인 Redirect URI는 다음 형식으로 등록한다.
 
 ```text
-https://api.example.com/login/oauth2/code/google
 https://api.example.com/login/oauth2/code/kakao
-https://api.example.com/login/oauth2/code/naver
 ```
 
 ## 5. 마이그레이션과 배포 순서
@@ -74,8 +83,11 @@ https://api.example.com/login/oauth2/code/naver
 1. 운영 DB 스냅샷 또는 백업을 만든다.
 2. 백엔드 새 이미지를 한 인스턴스에 배포한다. 시작 시 Flyway가 순서대로 마이그레이션한다.
 3. `/actuator/health`와 핵심 공개 API, 로그인 API를 확인한다.
-4. `NEXT_PUBLIC_*` 값이 반영된 프론트 이미지를 빌드해 배포한다.
-5. 로그인, 제품 상세, 비교 저장, 관리자 권한 흐름을 스모크 테스트한다.
+
+`V39`는 배포 순간 남아 있을 수 있는 120초짜리 OAuth 교환 코드를 폐기하고 브라우저 시도값 열을 필수로 추가합니다. 구버전 백엔드와 동시에 쓰는 롤링 배포는 호환되지 않으므로, 이 버전은 백엔드 트래픽을 잠시 중단한 원자 배포 또는 단일 인스턴스 교체로 적용합니다.
+4. CDN의 Origin Path가 S3의 `/hwaryeok`을 가리키고 `https://cdn.hwaryeok.co.kr/products/...`가 공개 조회되는지 확인한다.
+5. `NEXT_PUBLIC_*` 및 `S3_PUBLIC_BASE_URL` 값이 반영된 프론트 이미지를 빌드해 배포한다.
+6. 로그인, 제품 상세, 비교 저장, 관리자 이미지 업로드 흐름을 스모크 테스트한다.
 
 Flyway가 실패하면 새 백엔드 인스턴스를 트래픽에 연결하지 않는다. 이미 적용된 마이그레이션 파일은 수정하지 말고 후속 마이그레이션으로 교정한다.
 
@@ -83,7 +95,7 @@ Flyway가 실패하면 새 백엔드 인스턴스를 트래픽에 연결하지 �
 
 - 애플리케이션 오류만 있고 DB 변경이 하위 호환이면 직전 프론트·백엔드 이미지로 되돌린다.
 - 파괴적 DB 변경은 자동 롤백하지 않는다. 사전 백업에서 별도 DB로 복구하고 데이터 차이를 확인한 뒤 전환한다.
-- 제품 이미지도 PostgreSQL에 저장되므로 DB 백업 범위에 포함한다.
+- 신규 제품 이미지는 S3 버전 관리·수명 주기·백업 정책에 포함하고, 레거시 제품 이미지는 PostgreSQL 백업 범위에도 포함한다.
 - 배포 버전, 적용된 Flyway 버전, 스모크 테스트 결과를 배포 기록에 남긴다.
 
 ## 7. 운영 점검 목록

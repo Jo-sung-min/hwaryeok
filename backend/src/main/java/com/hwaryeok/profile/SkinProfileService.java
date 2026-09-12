@@ -61,10 +61,14 @@ public class SkinProfileService {
         String sunscreenUsage = valueOrDefault(request.sunscreenUsage(), "SOMETIMES");
         UserSkinProfile profile = profileRepository.findById(userId)
                 .orElseGet(() -> new UserSkinProfile(userId, request.skinType(), now, now));
+        String cheekOiliness = request.cheekOiliness() == null
+                ? profile.getCheekOiliness()
+                : request.cheekOiliness();
         profile.update(
                 request.skinType(),
                 hydrationLevel,
                 oilinessLevel,
+                cheekOiliness,
                 sensitivityLevel,
                 breakoutFrequency,
                 cleansingTightness,
@@ -104,6 +108,7 @@ public class SkinProfileService {
                 profile.getSkinType(),
                 profile.getHydrationLevel(),
                 profile.getOilinessLevel(),
+                profile.getCheekOiliness(),
                 profile.getSensitivityLevel(),
                 profile.getBreakoutFrequency(),
                 profile.getProfileVersion(),

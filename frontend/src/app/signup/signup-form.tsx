@@ -25,7 +25,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
         <p className="eyebrow mb-3 mt-7">WELCOME TO HWA:RYEOK</p>
         <h1 className="font-myeongjo text-3xl font-semibold">{state.nickname}님, 가입을 환영해요</h1>
         <p className="mt-4 text-sm leading-7 text-[#756960]">계정이 안전하게 만들어졌어요. 이제 피부 타입과 고민을 알려주면 화장품을 나만의 화력으로 분석할 수 있어요.</p>
-        <Link href="/profile" className="ink-btn mt-8 w-full"><Sparkles size={17} /> 피부 프로필 등록하기</Link>
+        <Link href="/skin-check" className="ink-btn mt-8 w-full"><Sparkles size={17} /> 나의 성분찾기 시작하기</Link>
         <Link href="/products" className="mt-5 inline-flex text-xs font-semibold text-[#8d6155]">먼저 화장품 둘러보기</Link>
       </div>
     );

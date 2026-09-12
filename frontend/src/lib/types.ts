@@ -354,6 +354,13 @@ export type Ingredient = {
   displayOrder: number;
 };
 
+export type IngredientRecommendation = {
+  ingredient: Ingredient;
+  reason: string;
+  matchedBy: string[];
+  preferred: boolean;
+};
+
 export type IngredientPage = {
   content: Ingredient[];
   page: number;

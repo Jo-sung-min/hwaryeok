@@ -4,11 +4,16 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { ApiRequestError, getCurrentUser, getUserComparisonProducts, getUserFavorites, getUserSkinProfile, refreshAuthTokens, type AuthTokenResult, type AuthUser, type SkinProfile } from "@/lib/api";
+import { createOAuthAttempt, isOAuthAttemptVerifier } from "@/lib/oauth-attempt";
+import { sanitizeReturnTo } from "@/lib/safe-return-to";
 import type { ComparisonProductList } from "@/lib/types";
+
+export { sanitizeReturnTo } from "@/lib/safe-return-to";
 
 export const ACCESS_TOKEN_COOKIE = "hwaryeok_access_token";
 export const REFRESH_TOKEN_COOKIE = "hwaryeok_refresh_token";
 export const OAUTH_RETURN_TO_COOKIE = "hwaryeok_oauth_return_to";
+export const OAUTH_ATTEMPT_COOKIE = "hwaryeok_oauth_attempt";
 
 const cookieOptions = {
   httpOnly: true,
@@ -43,19 +48,30 @@ export async function readAuthTokens() {
   };
 }
 
-export async function rememberOAuthReturnTo(returnTo: string) {
+export async function beginOAuthAttempt(returnTo: string) {
   const cookieStore = await cookies();
+  const attempt = createOAuthAttempt();
   cookieStore.set(OAUTH_RETURN_TO_COOKIE, sanitizeReturnTo(returnTo), {
     ...cookieOptions,
     maxAge: 600,
   });
+  cookieStore.set(OAUTH_ATTEMPT_COOKIE, attempt.verifier, {
+    ...cookieOptions,
+    maxAge: 600,
+  });
+  return attempt.challenge;
 }
 
-export async function takeOAuthReturnTo() {
+export async function takeOAuthAttempt() {
   const cookieStore = await cookies();
   const returnTo = sanitizeReturnTo(cookieStore.get(OAUTH_RETURN_TO_COOKIE)?.value);
+  const storedVerifier = cookieStore.get(OAUTH_ATTEMPT_COOKIE)?.value;
   cookieStore.delete(OAUTH_RETURN_TO_COOKIE);
-  return returnTo;
+  cookieStore.delete(OAUTH_ATTEMPT_COOKIE);
+  return {
+    returnTo,
+    verifier: isOAuthAttemptVerifier(storedVerifier) ? storedVerifier : null,
+  };
 }
 
 export const getCurrentSession = cache(async (): Promise<AuthUser | null> => {
@@ -145,8 +161,4 @@ export async function recoverAdminPageSession(error: unknown, returnTo: string):
     redirect(`/api/auth/refresh?returnTo=${encodeURIComponent(sanitizeReturnTo(returnTo, "/admin"))}`);
   }
   throw error;
-}
-
-export function sanitizeReturnTo(value: string | null | undefined, fallback = "/profile") {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : fallback;
 }

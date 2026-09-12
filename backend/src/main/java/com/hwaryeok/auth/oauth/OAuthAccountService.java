@@ -43,7 +43,9 @@ public class OAuthAccountService {
             return new OAuthLoginResult(user, profile.provider(), false);
         }
 
-        if (userRepository.existsByEmail(profile.email())) {
+        boolean kakaoIdLogin = profile.provider() == OAuthProvider.KAKAO;
+        String userEmail = kakaoIdLogin ? null : profile.email();
+        if (userEmail != null && userRepository.existsByEmail(userEmail)) {
             throw new OAuthLoginException(
                     "email_already_exists",
                     "같은 이메일의 화력 계정이 있어요. 기존 로그인 후 소셜 계정을 연결해주세요."
@@ -53,10 +55,10 @@ public class OAuthAccountService {
         Instant now = Instant.now();
         User user = new User(
                 UUID.randomUUID().toString(),
-                profile.email(),
+                userEmail,
                 null,
                 profile.nickname(),
-                adminEmailPolicy.roleFor(profile.email()),
+                userEmail == null ? "USER" : adminEmailPolicy.roleFor(userEmail),
                 "ACTIVE",
                 now,
                 now

@@ -37,7 +37,7 @@ public class OpenAiSkinPhotoClient {
                     .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(payload(jpeg)))).build();
             // No retries: an ambiguous timeout may already have incurred a charge.
             var response = http.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 429) throw new PhotoAnalysisException(503, "PROVIDER_BUSY", "분석 요청이 많거나 API 이용 한도에 도달했어요. 잠시 후 다시 시도해 주세요.");
+            if (response.statusCode() == 429) throw new PhotoAnalysisException(503, "PROVIDER_BUSY", "분석 요청이 많아 잠시 처리할 수 없어요. 잠시 후 다시 시도해 주세요.");
             if (response.statusCode() != 200) throw unavailable();
             return parse(response.body());
         } catch (PhotoAnalysisException ex) { throw ex;
@@ -109,7 +109,7 @@ public class OpenAiSkinPhotoClient {
         if (!value.isTextual() || value.asText().isBlank() || value.asText().length() > max) throw unavailable();
         return value.asText();
     }
-    private PhotoAnalysisException unavailable() { return new PhotoAnalysisException(502, "ANALYSIS_UNAVAILABLE", "분석을 완료하지 못했어요. 연결 또는 API 설정을 확인한 후 다시 시도해 주세요."); }
+    private PhotoAnalysisException unavailable() { return new PhotoAnalysisException(502, "ANALYSIS_UNAVAILABLE", "분석을 완료하지 못했어요. 잠시 후 다시 시도해 주세요."); }
     public record Observation(String area, String appearance, String caveat) {}
     public record Report(String quality, String summary, List<Observation> observations, List<String> careTips, String limitations, String analyzedAt) {}
 }

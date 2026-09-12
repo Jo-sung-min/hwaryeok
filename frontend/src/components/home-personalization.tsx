@@ -19,11 +19,16 @@ export function HomePersonalization({ user, profile }: { user: AuthUser | null; 
 
   useEffect(() => {
     try {
-      setQuickSummary(restoreSkinDraftSummary(window.sessionStorage.getItem(SKIN_CHECK_DRAFT_KEY)));
+      setQuickSummary(restoreSkinDraftSummary(
+        window.sessionStorage.getItem(SKIN_CHECK_DRAFT_KEY),
+        Date.now(),
+        user?.id ?? null,
+        profile?.updatedAt ?? null,
+      ));
     } catch {
       setQuickSummary(null);
     }
-  }, []);
+  }, [profile?.updatedAt, user?.id]);
 
   const hasQuickSummary = Boolean(quickSummary);
   const hasGeneratedReport = quickSummary?.hasReport === true;
@@ -58,16 +63,16 @@ export function HomePersonalization({ user, profile }: { user: AuthUser | null; 
             <span><Droplets size={13} /></span>
           </span>
           <span className={styles.profileCopy}>
-            <small>{showQuickSummary ? "이번 피부 체크" : "저장된 피부 타입"}</small>
+            <small>{showQuickSummary ? "이번 성분찾기 결과" : "저장된 피부 타입"}</small>
             <strong>{skinType ? `${skinType} 경향` : "피부 설정 완료"}</strong>
           </span>
           <span className={styles.editLabel}><Pencil size={12} aria-hidden="true" />수정</span>
         </Link>
       ) : (
         <div className={styles.setup}>
-          <p>{mode === "guest" ? "1분 체크로 내 피부 기준을 찾아보세요." : "피부 체크 후 결과를 저장할 수 있어요."}</p>
+          <p>{mode === "guest" ? "피부 답변으로 내 피부 타입과 성분을 함께 찾아보세요." : "나의 성분찾기 결과를 계정에 저장할 수 있어요."}</p>
           <Link href="/skin-check" className={styles.primary}>
-            나의 성분 찾기<ArrowRight size={16} aria-hidden="true" />
+            나의 성분찾기<ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
       )}

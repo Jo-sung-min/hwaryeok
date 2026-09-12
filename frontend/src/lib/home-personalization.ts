@@ -4,7 +4,7 @@ export type HomeSkinProfileChip = { label: string; value: string };
 
 export function homeSkinSummaryHref(hasGeneratedReport: boolean, hasSavedProfile: boolean) {
   if (hasGeneratedReport) return "/skin-check?step=result";
-  return hasSavedProfile ? "/profile?edit=1" : "/skin-check?step=review";
+  return hasSavedProfile ? "/skin-check" : "/skin-check?step=review";
 }
 
 const hydrationLabels = { LOW: "수분 부족", BALANCED: "수분 균형", HIGH: "수분 높음" };

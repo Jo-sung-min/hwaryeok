@@ -24,6 +24,9 @@ public class OAuthExchangeCode {
     @Column(name = "new_user", nullable = false)
     private boolean newUser;
 
+    @Column(name = "attempt_challenge", length = 43, nullable = false)
+    private String attemptChallenge;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
@@ -37,11 +40,13 @@ public class OAuthExchangeCode {
     }
 
     public OAuthExchangeCode(String codeHash, String userId, String provider, boolean newUser,
+                             String attemptChallenge,
                              Instant expiresAt, Instant createdAt) {
         this.codeHash = codeHash;
         this.userId = userId;
         this.provider = provider;
         this.newUser = newUser;
+        this.attemptChallenge = attemptChallenge;
         this.expiresAt = expiresAt;
         this.createdAt = createdAt;
     }
@@ -54,6 +59,7 @@ public class OAuthExchangeCode {
     public String getUserId() { return userId; }
     public String getProvider() { return provider; }
     public boolean isNewUser() { return newUser; }
+    public String getAttemptChallenge() { return attemptChallenge; }
     public Instant getExpiresAt() { return expiresAt; }
     public Instant getUsedAt() { return usedAt; }
     public Instant getCreatedAt() { return createdAt; }

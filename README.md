@@ -19,7 +19,7 @@ hwaryeok/
 │  └─ .env.example
 ├─ docker-compose.yml    프론트·백엔드·PostgreSQL 컨테이너 구성
 ├─ DEPLOYMENT.md         운영 환경 변수·Docker·배포·롤백 가이드
-├─ .env.example          PostgreSQL 컨테이너 환경 변수 예시
+├─ .env.example          Docker·PostgreSQL·S3/CDN 환경 변수 예시
 └─ plan.md               구현 체크리스트와 작업 기록
 ```
 
@@ -60,9 +60,9 @@ npm install
 npm run dev
 ```
 
-- 프론트엔드: `http://localhost:3000`
-- 백엔드: `http://localhost:8080`
-- 상태 확인: `http://localhost:8080/actuator/health`
+- 프론트엔드: `http://localhost:3001`
+- 백엔드: `http://localhost:8081`
+- 상태 확인: `http://localhost:8081/actuator/health`
 
 ## Vercel 배포
 
@@ -77,11 +77,11 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 
 `API_URL`은 Vercel의 Production, Preview, Development 환경에 각각 등록하는 것을 권장합니다. 브라우저가 백엔드를 직접 호출하는 기능을 배포할 때는 백엔드의 `CORS_ALLOWED_ORIGINS`에 실제 Vercel 도메인을 쉼표로 구분해 추가합니다.
 
-카카오·네이버·구글 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 공급자 개발자 콘솔의 Redirect URI는 `https://<백엔드주소>/login/oauth2/code/{provider}`이며, 백엔드의 `OAUTH_FRONTEND_BASE_URL`에는 실제 Vercel 주소를 설정합니다.
+카카오 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 카카오 개발자 콘솔의 Redirect URI는 `https://<백엔드주소>/login/oauth2/code/kakao`이며, 백엔드의 `OAUTH_FRONTEND_BASE_URL`에는 실제 Vercel 주소를 설정합니다.
 
 로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 서로 다른 32바이트 이상의 임의 `JWT_SECRET`, `LICENSE_HASH_SECRET`을 반드시 등록하세요. 두 값이 없거나 짧으면 백엔드는 시작되지 않습니다.
 
-관리자 제품 이미지는 백엔드와 PostgreSQL에 저장되므로 Vercel에는 별도 이미지 저장소 환경 변수가 필요하지 않습니다. 운영 관리자 지정과 이미지 API 사용법은 [backend/README.md](backend/README.md#관리자-제품-이미지)를 참고하세요.
+관리자 제품 이미지는 운영에서 S3에 저장하고 `S3_PUBLIC_BASE_URL`의 CDN 주소로 제공합니다. 프론트 빌드와 백엔드에 같은 공개 CDN 주소를 설정하고, 백엔드에는 `S3_BUCKET`, `S3_KEY_PREFIX`, `AWS_REGION`도 함께 설정합니다. 기존 PostgreSQL 이미지 API는 이전에 등록된 이미지의 호환용으로 유지됩니다. 운영 관리자 지정과 이미지 API 사용법은 [backend/README.md](backend/README.md#관리자-제품-이미지)를 참고하세요.
 
 식약처 API, 사용권을 확인한 대한화장품협회 성분 파일, 브랜드 공식 전성분을 연결하는 운영 흐름은 [공식 화장품 데이터 파이프라인](backend/README.md#공식-화장품-데이터-파이프라인)에 정리되어 있습니다. 식약처 환경 변수는 백엔드에만 등록하며 프론트나 Vercel 공개 변수로 노출하지 않습니다.
 

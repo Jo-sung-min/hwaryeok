@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const sections: LegalSection[] = [
   {
     title: "약관의 목적",
-    paragraphs: ["이 약관은 파텔이 운영하는 화력 서비스의 이용 조건과 운영자·회원의 기본적인 권리와 책임을 정합니다."],
+    paragraphs: ["이 약관은 루체가 운영하는 화력 서비스의 이용 조건과 운영자·회원의 기본적인 권리와 책임을 정합니다."],
   },
   {
     title: "화력이 제공하는 서비스",
@@ -23,6 +23,10 @@ const sections: LegalSection[] = [
   {
     title: "추천 정보의 성격",
     paragraphs: ["화력의 점수와 추천은 화장품 선택을 돕기 위한 참고 정보입니다. 의료적 진단·처방·치료를 대신하지 않으며, 피부 질환이나 지속적인 이상 반응이 있는 경우 의료 전문가와 상담해 주세요."],
+  },
+  {
+    title: "사진 분석과 정보 전송",
+    paragraphs: ["사진 피부 분석은 선택 기능입니다. 이용자가 동의하고 분석을 요청하면 선택한 사진은 분석 처리를 위해 OpenAI의 GPT 기반 분석 서비스로 전송됩니다. 이름·이메일·저장된 피부 프로필은 함께 전송하지 않으며, 동의하지 않아도 다른 화력 서비스를 이용할 수 있습니다."],
   },
   {
     title: "회원 계정과 이용 책임",
@@ -47,5 +51,5 @@ const sections: LegalSection[] = [
 ];
 
 export default function TermsPage() {
-  return <LegalPage eyebrow="SERVICE POLICY" title="이용약관" description="화력이 제품을 소개하고 개인화된 선택 기준을 제공하는 방식, 이용자가 알아야 할 기본 원칙을 안내합니다." effectiveDate="2026년 8월 20일" sections={sections} />;
+  return <LegalPage eyebrow="SERVICE POLICY" title="이용약관" description="화력이 제품을 소개하고 개인화된 선택 기준을 제공하는 방식, 이용자가 알아야 할 기본 원칙을 안내합니다." effectiveDate="2026년 9월 12일" sections={sections} />;
 }
