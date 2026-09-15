@@ -45,6 +45,7 @@ function loadProductsPage(captures) {
           return { content: [{ id: "toner", name: "토너", brand: "화력", category: "토너", publicationStatus: "PUBLISHED" }], page: 1, size: 9, totalElements: 18, totalPages: 2, hasNext: false };
         },
       };
+      if (specifier === "@/lib/seo") return { buildManagedSeoMetadata: async () => ({}) };
       if (specifier === "@/lib/product-catalog") return productCatalog;
       if (specifier === "./product-catalog-grid") return { ProductCatalogGrid: passthrough("catalog-grid") };
       if (specifier === "./product-quick-filters") return { ProductQuickFilters: passthrough("quick-filters") };

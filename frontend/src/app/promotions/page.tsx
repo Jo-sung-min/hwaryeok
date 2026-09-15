@@ -1,15 +1,13 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowRight, BadgeCheck, ExternalLink, Megaphone, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { ProductVisual } from "@/components/product-ui";
 import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { getPromotions } from "@/lib/api";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "화력 추천",
-  description: "화력 관리자가 평가한 신생 화장품 광고와 추천 이유를 투명하게 확인하세요.",
-  alternates: { canonical: "/promotions" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("PROMOTIONS");
+}
 
 export default async function PromotionsPage() {
   const promotions = await getPromotions(20);

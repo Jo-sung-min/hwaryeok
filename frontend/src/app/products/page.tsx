@@ -1,18 +1,16 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getIngredientRankingOptions, getProductPage } from "@/lib/api";
 import { getFavoriteViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 import { buildProductCatalogFeedUrl, buildProductCatalogHref, getProductConcernOption, PRODUCT_PAGE_SIZE, productCatalogBackendFilters, readProductCatalogState } from "@/lib/product-catalog";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 import { ProductCatalogGrid } from "./product-catalog-grid";
 import { AppliedProductFilters, ProductSearch } from "./product-filters";
 import { ProductQuickFilters } from "./product-quick-filters";
 
-export const metadata: Metadata = {
-  title: "화장품 탐색",
-  description: "제품명과 브랜드뿐 아니라 주름, 모공, 트러블 같은 피부 고민으로 성분 근거가 연결된 화장품을 찾아보세요.",
-  alternates: { canonical: "/products" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("PRODUCTS");
+}
 
 type SearchParams = Promise<{
   query?: string | string[];

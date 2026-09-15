@@ -103,6 +103,7 @@ function loadIngredientsPage(captures, result = resultFixture) {
         return result;
       },
     };
+    if (specifier === "@/lib/seo") return { buildManagedSeoMetadata: async () => ({}) };
     if (specifier.endsWith(".module.css")) return cssModule();
     throw new Error(`Unexpected ingredients-page dependency: ${specifier}`);
   }).default;

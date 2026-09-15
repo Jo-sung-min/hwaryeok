@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeInfo, CheckCircle2, Database, HeartHandshake, Megaphone, Scale, ShieldCheck, TriangleAlert } from "lucide-react";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "성분 랭킹의 기준",
-  description: "성분과 제품 종류를 고르고, 성분 화력순과 사용자 리뷰순으로 화장품 랭킹을 읽는 방법을 알아보세요.",
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("PRINCIPLES");
+}
 
 const currentPromises = [
   {

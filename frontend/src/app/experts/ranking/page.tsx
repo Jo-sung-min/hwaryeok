@@ -2,8 +2,13 @@ import Link from "next/link";
 import { ArrowLeft, Award, Heart, MessageCircle, Sparkles } from "lucide-react";
 import { ExpertAvatar, ExpertDisclaimer, expertTopics } from "@/components/expert-ui";
 import { getExpertRanking } from "@/lib/api";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 
 const periods = [{ code: "WEEK", name: "이번 주" }, { code: "MONTH", name: "이번 달" }, { code: "YEAR", name: "올해" }, { code: "ALL_TIME", name: "전체" }];
+
+export function generateMetadata() {
+  return buildManagedSeoMetadata("EXPERT_RANKING");
+}
 
 export default async function ExpertRankingPage({ searchParams }: { searchParams: Promise<{ period?: string; topic?: string }> }) {
   const params = await searchParams;

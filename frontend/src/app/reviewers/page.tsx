@@ -1,17 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Metadata } from "next";
 import { ArrowRight, Droplets, Flame, MessageCircle, UsersRound } from "lucide-react";
 import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { ReviewerFirepower } from "@/components/reviewer-firepower";
 import { getReviewerRanking } from "@/lib/api";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "리뷰어 랭킹 · 리뷰 화력",
-  description: "사용자들이 평가한 리뷰 화력순으로 리뷰어를 만나보세요. 피부타입과 실제 작성 리뷰를 함께 확인할 수 있어요.",
-  alternates: { canonical: "/reviewers" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("REVIEWERS");
+}
 
 const skinTypes = ["건성", "지성", "복합성", "수부지", "중성", "민감"];
 type Search = { skinType?: string | string[]; page?: string | string[] };

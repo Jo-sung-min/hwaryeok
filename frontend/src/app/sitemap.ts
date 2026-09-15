@@ -1,33 +1,37 @@
 import type { MetadataRoute } from "next";
-import { getExperts, getIngredients, getProducts } from "@/lib/api";
+import { getExperts, getIngredients, getProductPage } from "@/lib/api";
+import { resolveSeoPages } from "@/lib/seo";
+import type { SeoChangeFrequency } from "@/lib/types";
 
-const staticPaths = [
-  "",
-  "/products",
-  "/promotions",
-  "/ranking",
-  "/compare",
-  "/ingredients",
-  "/experts",
-  "/experts/ranking",
-  "/questions",
-  "/principles",
-];
+const sitemapFrequency: Record<SeoChangeFrequency, NonNullable<MetadataRoute.Sitemap[number]["changeFrequency"]>> = {
+  ALWAYS: "always",
+  HOURLY: "hourly",
+  DAILY: "daily",
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  YEARLY: "yearly",
+  NEVER: "never",
+};
+const SITEMAP_API_TIMEOUT_MS = 8000;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteUrl();
-  const [products, ingredients, experts] = await Promise.all([
-    getProducts().catch(() => []),
-    getIngredients({ page: 0, size: 50, sort: "name", direction: "asc" }).then((page) => page.content).catch(() => []),
-    getExperts().catch(() => []),
+  const [seoPages, products, ingredients, experts] = await Promise.all([
+    resolveSeoPages(),
+    getAllProducts(),
+    getAllIngredients(),
+    getExperts(undefined, { signal: AbortSignal.timeout(SITEMAP_API_TIMEOUT_MS) }),
   ]);
 
   return [
-    ...staticPaths.map((path, index) => ({
-      url: new URL(path || "/", baseUrl).toString(),
-      changeFrequency: (index === 0 ? "daily" : "weekly") as "daily" | "weekly",
-      priority: index === 0 ? 1 : 0.7,
-    })),
+    ...seoPages
+      .filter((page) => page.indexable && page.includeInSitemap)
+      .map((page) => ({
+        url: new URL(page.path, baseUrl).toString(),
+        lastModified: page.updatedAt ? new Date(page.updatedAt) : undefined,
+        changeFrequency: sitemapFrequency[page.changeFrequency],
+        priority: page.priority,
+      })),
     ...products.map((product) => ({
       url: new URL(`/products/${product.id}`, baseUrl).toString(),
       changeFrequency: "weekly" as const,
@@ -44,6 +48,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
   ];
+}
+
+async function getAllIngredients() {
+  const ingredients = new Map<string, Awaited<ReturnType<typeof getIngredients>>["content"][number]>();
+  const signal = AbortSignal.timeout(SITEMAP_API_TIMEOUT_MS);
+  let page = 0;
+
+  while (page < 1000) {
+    const response = await getIngredients({ page, size: 50, sort: "name", direction: "asc" }, { signal });
+    response.content.forEach((ingredient) => ingredients.set(ingredient.id, ingredient));
+    if (!response.hasNext || page + 1 >= response.totalPages) break;
+    page += 1;
+  }
+
+  return [...ingredients.values()];
+}
+
+async function getAllProducts() {
+  const products = new Map<string, Awaited<ReturnType<typeof getProductPage>>["content"][number]>();
+  const signal = AbortSignal.timeout(SITEMAP_API_TIMEOUT_MS);
+  let page = 0;
+
+  while (page < 1000) {
+    const response = await getProductPage({ page, size: 50 }, { signal });
+    response.content.forEach((product) => products.set(product.id, product));
+    if (!response.hasNext || page + 1 >= response.totalPages) break;
+    page += 1;
+  }
+
+  return [...products.values()];
 }
 
 function siteUrl() {

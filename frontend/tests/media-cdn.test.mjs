@@ -42,17 +42,27 @@ test("product object paths resolve against the normalized CDN base", () => {
   assert.equal(resolveProductImageUrl("/products/%2e%2e/private.webp"), null);
 });
 
-test("absolute, API-relative, local, and legacy image URLs keep their prior behavior", () => {
+test("absolute, API-relative, local, and legacy image URLs resolve safely", () => {
   const { resolveProductImageUrl } = compile("../src/lib/media.ts", {
     NEXT_PUBLIC_API_URL: "http://localhost:8081/api/v1",
     S3_PUBLIC_BASE_URL: "https://cdn.hwaryeok.co.kr",
   });
 
   assert.equal(resolveProductImageUrl("https://images.example.com/item.webp"), "https://images.example.com/item.webp");
-  assert.equal(resolveProductImageUrl("/api/v1/media/products/toner"), "http://localhost:8081/api/v1/media/products/toner");
+  assert.equal(resolveProductImageUrl("/api/v1/media/products/toner"), "/api/v1/media/products/toner");
   assert.equal(resolveProductImageUrl("/hero-watercolor.png"), "/hero-watercolor.png");
   assert.equal(resolveProductImageUrl("legacy.webp"), "http://localhost:8081/legacy.webp");
   assert.equal(resolveProductImageUrl(null), null);
+});
+
+test("API media stays on the same origin when the Vercel proxy path is configured", () => {
+  const { resolveProductImageUrl } = compile("../src/lib/media.ts", {
+    NEXT_PUBLIC_API_URL: "/api/v1",
+    S3_PUBLIC_BASE_URL: "https://cdn.hwaryeok.co.kr",
+  });
+
+  assert.equal(resolveProductImageUrl("/api/v1/media/products/toner"), "/api/v1/media/products/toner");
+  assert.equal(resolveProductImageUrl("legacy.webp"), "/legacy.webp");
 });
 
 test("product object paths remain local when no CDN base is configured", () => {
@@ -74,6 +84,21 @@ test("Next image config retains API media and adds the normalized CDN path", () 
     Array.from(config.images.remotePatterns, (pattern) => pattern.toString()),
     [
       "http://localhost:8081/api/v1/media/products/**",
+      "https://cdn.hwaryeok.co.kr/hwaryeok/products/**",
+      "https://cdn.hwaryeok.co.kr/hwaryeok/profiles/**",
+    ],
+  );
+});
+
+test("Next image config treats proxied API media as a local image path", () => {
+  const { default: config } = compile("../next.config.ts", {
+    NEXT_PUBLIC_API_URL: "/api/v1",
+    S3_PUBLIC_BASE_URL: "https://cdn.hwaryeok.co.kr/hwaryeok/",
+  });
+
+  assert.deepEqual(
+    Array.from(config.images.remotePatterns, (pattern) => pattern.toString()),
+    [
       "https://cdn.hwaryeok.co.kr/hwaryeok/products/**",
       "https://cdn.hwaryeok.co.kr/hwaryeok/profiles/**",
     ],

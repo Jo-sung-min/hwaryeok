@@ -1,18 +1,16 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { ArrowLeft, ArrowRight, TrendingUp } from "lucide-react";
 import { HomeProductCard } from "@/components/home-product-card";
 import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { getRisingProductRanking } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 import { catalogRankingHref, firstSearchValue, RankingPagination, requestedRankingPage, type CatalogRankingSearch } from "../_components/catalog-ranking-controls";
 
-export const metadata: Metadata = {
-  title: "급상승 제품 랭킹",
-  description: "최근 7일 동안 사용자 리뷰가 더 많이 모인 화장품을 카테고리별로 확인하세요. 직전 7일 대비 리뷰 증가 수로 집계해요.",
-  alternates: { canonical: "/ranking/rising" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("RISING_RANKING");
+}
 
 const basePath = "/ranking/rising";
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Boxes, CircleOff, DatabaseZap, FileWarning, Megaphone, MessageSquareText, PackagePlus, Send, ShieldCheck, Stethoscope, Trophy, UsersRound } from "lucide-react";
+import { ArrowRight, Boxes, CircleOff, DatabaseZap, FileWarning, Megaphone, MessageSquareText, PackagePlus, SearchCheck, Send, ShieldCheck, Stethoscope, Trophy, UsersRound } from "lucide-react";
 import { getAdminExpertApplications, getAdminProducts, getAdminPromotions, getAdminReviews } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 
@@ -81,6 +81,12 @@ export default async function AdminPage() {
             <p className="eyebrow mb-2 mt-6">EXPERTS</p><h2 className="font-myeongjo text-2xl font-semibold">전문가 인증 관리</h2>
             <p className="mt-3 text-sm leading-7 text-[#7d6b72]">의사 면허, 전문의 자격, 근무지 확인 결과를 검토하고 신청 상태를 처리합니다.</p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">인증 관리 열기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
+          </Link>
+          <Link href="/admin/seo" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#edf2e9] text-[#63745d]"><SearchCheck size={22} /></span>
+            <p className="eyebrow mb-2 mt-6">SEARCH &amp; SOCIAL</p><h2 className="font-myeongjo text-2xl font-semibold">SEO 관리</h2>
+            <p className="mt-3 text-sm leading-7 text-[#7d6b72]">페이지별 검색 제목과 설명, 공유 이미지, 검색 노출과 사이트맵 포함 기준을 관리합니다.</p>
+            <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#994c60]">SEO 관리 열기 <ArrowRight size={16} className="transition group-hover:translate-x-1" /></span>
           </Link>
           <Link href="/admin/data-sources" className="paper-card group rounded-[26px] p-6 transition hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(145,74,94,.12)] sm:p-8">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f7e4e9] text-[#a44f65]"><DatabaseZap size={22} /></span>

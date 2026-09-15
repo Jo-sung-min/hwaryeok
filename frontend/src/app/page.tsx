@@ -1,14 +1,12 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { HomeCatalog } from "@/components/home-catalog";
 import { rankingHref, readRankingFilters, type IngredientRankingSearchParams } from "@/lib/ingredient-ranking";
 import { readHomeCatalogFilters, type HomeCatalogSearchValues } from "@/lib/home-catalog";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "화력 | 화장품의 기준을, 내 피부로",
-  description: "내 피부 설정에 따라 달라지는 화장품 랭킹. 나에게 맞는 성분을 찾고, 맞춤 화력과 추천 이유를 비교하세요.",
-  alternates: { canonical: "/" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("HOME");
+}
 
 type HomeSearchParams = IngredientRankingSearchParams & Promise<HomeCatalogSearchValues>;
 

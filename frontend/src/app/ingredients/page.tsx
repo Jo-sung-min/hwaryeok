@@ -1,16 +1,14 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ChevronDown, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { getIngredients, type IngredientQuery } from "@/lib/api";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 import type { IngredientStatus } from "@/lib/types";
 import styles from "./ingredients.module.css";
 
-export const metadata: Metadata = {
-  title: "성분 사전",
-  description: "화장품 성분의 역할과 피부별 특징을 알아보고, 성분별 제품 랭킹으로 이어서 탐색하세요.",
-  alternates: { canonical: "/ingredients" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("INGREDIENTS");
+}
 
 type SearchParams = Promise<{
   query?: string | string[];

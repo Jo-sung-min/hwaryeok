@@ -1,4 +1,4 @@
-const publicApiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081/api/v1";
+const publicApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || "/api/v1";
 const s3PublicBaseUrl = normalizePublicBaseUrl(process.env.S3_PUBLIC_BASE_URL);
 
 function normalizePublicBaseUrl(value: string | undefined): URL | null {
@@ -27,8 +27,12 @@ export function resolveProductImageUrl(imageUrl: string | null | undefined): str
     return resolvedUrl.toString();
   }
   if (imageUrl.startsWith("/") && !imageUrl.startsWith("/api/")) return imageUrl;
+  if (imageUrl.startsWith("/api/")) return imageUrl;
   try {
-    return new URL(imageUrl, new URL(publicApiUrl).origin).toString();
+    if (/^https?:\/\//i.test(publicApiUrl)) {
+      return new URL(imageUrl, new URL(publicApiUrl).origin).toString();
+    }
+    return `/${imageUrl.replace(/^\/+/, "")}`;
   } catch {
     return null;
   }

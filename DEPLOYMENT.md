@@ -16,10 +16,10 @@
 
 | 변수 | 예시 | 용도 |
 | --- | --- | --- |
-| `API_URL` | `https://api.example.com/api/v1` | Next.js 서버가 호출할 내부·공개 API 주소 |
-| `NEXT_PUBLIC_API_URL` | `https://api.example.com/api/v1` | 제품 이미지 등 브라우저에 공개되는 API 주소. Docker 빌드 시 고정 |
+| `BACKEND_ORIGIN` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com` | Next.js 서버 호출 및 동일 출처 프록시의 백엔드 원본 |
+| `API_URL` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1` | 선택적인 서버 API 전체 주소. 생략하면 `BACKEND_ORIGIN/api/v1` 사용 |
+| `NEXT_PUBLIC_API_URL` | `/api/v1` | 브라우저에 공개되는 동일 출처 프록시 경로. Docker 빌드 시 고정 |
 | `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. Docker 빌드 시 고정 |
-| `OAUTH_BACKEND_URL` | `https://api.example.com` | OAuth 인증 시작용 공개 백엔드 주소 |
 | `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 프론트 빌드 시 고정 |
 
 ### 백엔드
@@ -31,6 +31,8 @@
 | `DB_POOL_MAX_SIZE`, `DB_POOL_MIN_IDLE` | 인스턴스 수와 DB 연결 한도에 맞춘 풀 크기 |
 | `CORS_ALLOWED_ORIGINS` | 실제 프론트 HTTPS 주소. 여러 개면 쉼표로 구분 |
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
+| `OAUTH_REDIRECT_URI` | 카카오에 등록한 `https://<프론트>/login/oauth2/code/kakao` 콜백 주소 |
+| `PORT`, `SERVER_PORT` | EB Java SE의 `PORT`를 자동 사용하며 `SERVER_PORT`가 있으면 우선 적용 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 REST API 키와 클라이언트 시크릿 |
@@ -63,20 +65,22 @@ docker compose ps
 배포 상태는 다음 경로로 확인한다.
 
 ```text
-GET https://api.example.com/actuator/health
+GET http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/actuator/health
 GET https://example.com/robots.txt
 GET https://example.com/sitemap.xml
 ```
 
 ## 4. 분리 배포
 
-프론트는 Vercel 또는 Node.js 22 컨테이너에 배포할 수 있다. Vercel에서는 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 표의 값을 환경별로 등록한다. 백엔드는 Java 21 컨테이너를 실행할 수 있는 서비스에 배포하고 PostgreSQL과 같은 리전에 둔다.
+프론트는 Vercel 또는 Node.js 22 컨테이너에 배포할 수 있다. Vercel에서는 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 표의 값을 환경별로 등록한다. Next.js가 `/api/v1/*`와 카카오 OAuth 시작·콜백 경로를 `BACKEND_ORIGIN`으로 프록시하므로 브라우저가 HTTP 원본에 직접 접속하지 않는다. 백엔드는 Java 21 컨테이너를 실행할 수 있는 서비스에 배포하고 PostgreSQL과 같은 리전에 둔다.
 
 카카오 개발자 콘솔의 로그인 Redirect URI는 다음 형식으로 등록한다.
 
 ```text
-https://api.example.com/login/oauth2/code/kakao
+https://example.com/login/oauth2/code/kakao
 ```
+
+백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. `server.forward-headers-strategy=framework` 설정도 유지한다. 현재 EB 원본이 HTTP이면 브라우저 혼합 콘텐츠는 방지되지만 Vercel→EB 구간은 암호화되지 않으므로 ACM 인증서를 연결한 HTTPS 전환이 필요하다.
 
 ## 5. 마이그레이션과 배포 순서
 

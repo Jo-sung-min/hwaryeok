@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, AtSign, BookOpen, CheckCircle2, MessageCircle, PencilLine, ShieldCheck, UserRound } from "lucide-react";
 import { ApiRequestError, getReviewerProfile, getReviewerReviews } from "@/lib/api";
 import { getCurrentSession, readAuthTokens } from "@/lib/auth-session";
@@ -10,8 +11,11 @@ import { ReviewerFirepower } from "@/components/reviewer-firepower";
 import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { resolveProductImageUrl } from "@/lib/media";
 import { hasMeaningfulReviewerBio, normalizeReviewerBioBlocks } from "@/lib/reviewer-profile";
+import { buildDetailSeoMetadata } from "@/lib/seo";
 import type { ProductTone, ReviewerReview } from "@/lib/types";
 import { DynamicBlockNote } from "@/app/my/reviewer-profile/dynamic-blocknote";
+
+const getCachedReviewerProfile = cache(getReviewerProfile);
 
 const usagePeriodLabels: Record<ReviewerReview["usagePeriod"], string> = {
   ONE_WEEK: "1주 이내 사용",
@@ -36,15 +40,25 @@ type ReviewerPageProps = {
 
 export async function generateMetadata({ params }: Pick<ReviewerPageProps, "params">): Promise<Metadata> {
   const { userId } = await params;
+  const fallbackCanonical = `/reviewers/${encodeURIComponent(userId)}`;
   try {
-    const profile = await getReviewerProfile(userId);
-    return {
-      title: `${profile.nickname}님의 리뷰어 소개`,
+    const profile = await getCachedReviewerProfile(userId);
+    return buildDetailSeoMetadata({
+      title: `${profile.nickname}님의 리뷰어 소개 | 화력`,
       description: `${profile.nickname}님의 피부 취향과 소개, 연결 채널, 실제 사용 리뷰 ${profile.reviewCount}개를 확인하세요.`,
-      alternates: { canonical: `/reviewers/${profile.userId}` },
-    };
+      canonical: `/reviewers/${encodeURIComponent(profile.userId)}`,
+      imageUrl: profile.profileImageUrl,
+      imageAlt: `${profile.nickname}님의 리뷰어 프로필`,
+      ogTitle: `${profile.nickname}님의 리뷰어 소개`,
+    });
   } catch {
-    return { title: "리뷰 사용자를 찾을 수 없어요", robots: { index: false, follow: false } };
+    return buildDetailSeoMetadata({
+      title: "리뷰 사용자를 찾을 수 없어요 | 화력",
+      description: "요청한 리뷰어 정보를 찾을 수 없어요. 리뷰어 랭킹에서 다른 사용자의 실제 화장품 리뷰를 확인해 보세요.",
+      canonical: fallbackCanonical,
+      indexable: false,
+      followLinks: false,
+    });
   }
 }
 
@@ -55,7 +69,7 @@ export default async function ReviewerPage({ params, searchParams }: ReviewerPag
 
   try {
     const [session, tokens] = await Promise.all([getCurrentSession(), readAuthTokens()]);
-    const [data, profile] = await Promise.all([getReviewerReviews(userId, page, 10, session ? tokens.accessToken : undefined), getReviewerProfile(userId)]);
+    const [data, profile] = await Promise.all([getReviewerReviews(userId, page, 10, session ? tokens.accessToken : undefined), getCachedReviewerProfile(userId)]);
     const averageScore = data.averageReviewScore === null ? "—" : Number(data.averageReviewScore).toFixed(1);
     const bioBlocks = normalizeReviewerBioBlocks(profile.bioBlocks);
     const hasBio = hasMeaningfulReviewerBio(bioBlocks);

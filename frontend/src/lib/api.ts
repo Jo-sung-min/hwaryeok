@@ -1,12 +1,21 @@
 import "server-only";
+import { API_BASE_URL } from "@/lib/backend-url";
 import type { RisingProductRankingPage } from "@/lib/types";
 import type { MyReviewerProfile, ReviewerProfile, ReviewerProfileInput, ReviewCommunityRating, ReviewerRankingPage } from "@/lib/types";
 import type { IngredientRankingOptions, IngredientRankingPage, IngredientRankingSort } from "@/lib/types";
 import type { ProductImageUploadMetadata, ProductImageUploadTicket, ProfileImageUploadMetadata } from "@/lib/product-image-upload";
+import type { SeoPageKey, SeoPageSetting, SeoPageUpdateInput } from "@/lib/types";
 
 import type { AdminIngredientRegulationReview, AdminMfdsProductMatch, AdminReviewKind, AdminReviewPage, Analysis, ComparisonProductList, DataImportResult, DataPipelineStatus, Expert, ExpertAnswer, ExpertApplication, ExpertDetail, ExpertEngagement, ExpertQuestionDetail, ExpertQuestionListItem, ExpertRanking, FavoriteList, FavoriteProduct, Ingredient, IngredientAmount, IngredientDetail, IngredientFirepower, IngredientPage, IngredientRecommendation, IngredientRegulation, IngredientRegulationCandidate, IngredientStatus, MfdsProductCandidate, MfdsSyncResult, OfficialIngredientList, PreferredIngredients, Product, ProductIngredients, ProductPage, ProductPromotion, ProductRegulatorySource, ProductRetailSnapshot, ProductReviewSummary, RecentProduct, RecentProductList, ReviewerReviewList, ReviewCriteria, ReviewDetail, WeeklyRanking } from "@/lib/types";
 
-const API_BASE_URL = process.env.API_URL ?? "http://localhost:8081/api/v1";
+export const SEO_PAGES_CACHE_TAG = "seo-pages";
+
+type ServerRequestInit = RequestInit & {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+};
 
 export function getSkinPhotoStatus(accessToken: string): Promise<import("./skin-photo").SkinPhotoStatus> {
   return requestJson("/users/me/photo-analysis", { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(5000) });
@@ -149,7 +158,7 @@ export type IngredientQuery = {
   direction?: "asc" | "desc";
 };
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+async function requestJson<T>(path: string, init?: ServerRequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     cache: "no-store",
     ...init,
@@ -314,6 +323,40 @@ export function exchangeOAuthCode(code: string, attemptVerifier: string): Promis
   return requestJson<AuthTokenResult>("/auth/oauth/exchange", {
     method: "POST",
     body: JSON.stringify({ code, attemptVerifier }),
+  });
+}
+
+export function getSeoPage(pageKey: SeoPageKey): Promise<SeoPageSetting> {
+  return requestJson<SeoPageSetting>(`/seo/pages/${encodeURIComponent(pageKey)}`, {
+    cache: "force-cache",
+    next: { revalidate: 3600, tags: [SEO_PAGES_CACHE_TAG] },
+    signal: AbortSignal.timeout(5000),
+  });
+}
+
+export function getSeoPages(): Promise<SeoPageSetting[]> {
+  return requestJson<SeoPageSetting[]>("/seo/pages", {
+    cache: "force-cache",
+    next: { revalidate: 3600, tags: [SEO_PAGES_CACHE_TAG] },
+    signal: AbortSignal.timeout(5000),
+  });
+}
+
+export function getAdminSeoPages(accessToken: string): Promise<SeoPageSetting[]> {
+  return requestJson<SeoPageSetting[]>("/admin/seo/pages", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function updateAdminSeoPage(
+  accessToken: string,
+  pageKey: SeoPageKey,
+  input: SeoPageUpdateInput,
+): Promise<SeoPageSetting> {
+  return requestJson<SeoPageSetting>(`/admin/seo/pages/${encodeURIComponent(pageKey)}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(input),
   });
 }
 
@@ -622,7 +665,7 @@ export function getAnalysis(input: AnalysisInput): Promise<Analysis> {
   });
 }
 
-export function getIngredients(query: IngredientQuery = {}): Promise<IngredientPage> {
+export function getIngredients(query: IngredientQuery = {}, init?: RequestInit): Promise<IngredientPage> {
   const search = new URLSearchParams();
   if (query.query) search.set("query", query.query);
   if (query.status) search.set("status", query.status);
@@ -631,7 +674,7 @@ export function getIngredients(query: IngredientQuery = {}): Promise<IngredientP
   search.set("size", String(query.size ?? 12));
   search.set("sort", query.sort ?? "name");
   search.set("direction", query.direction ?? "asc");
-  return requestJson<IngredientPage>(`/ingredients?${search}`);
+  return requestJson<IngredientPage>(`/ingredients?${search}`, init);
 }
 
 export function getIngredient(id: string): Promise<IngredientDetail> {
@@ -995,9 +1038,9 @@ export function getProductRegulatorySource(productId: string): Promise<ProductRe
   return requestJson<ProductRegulatorySource>(`/products/${encodeURIComponent(productId)}/regulatory-source`);
 }
 
-export function getExperts(topic?: string): Promise<Expert[]> {
+export function getExperts(topic?: string, init?: RequestInit): Promise<Expert[]> {
   const search = topic ? `?topic=${encodeURIComponent(topic)}` : "";
-  return requestJson<Expert[]>(`/experts${search}`);
+  return requestJson<Expert[]>(`/experts${search}`, init);
 }
 
 export function getExpert(slug: string): Promise<ExpertDetail> {

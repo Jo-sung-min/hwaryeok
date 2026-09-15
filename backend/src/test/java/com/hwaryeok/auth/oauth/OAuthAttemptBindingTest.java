@@ -93,7 +93,7 @@ class OAuthAttemptBindingTest {
     private OAuthAttemptAuthorizationRequestResolver resolver() {
         OAuthClientConfig config = new OAuthClientConfig();
         ConfiguredClientRegistrationRepository registrations =
-                config.clientRegistrationRepository("client-id", "client-secret");
+                config.clientRegistrationRepository("client-id", "client-secret", "");
         assertThat(registrations.configuredRegistrationIds()).isEqualTo(List.of("kakao"));
         return new OAuthAttemptAuthorizationRequestResolver(registrations);
     }

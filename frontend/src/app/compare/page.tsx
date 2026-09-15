@@ -1,19 +1,17 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Check, Plus, Sparkles } from "lucide-react";
 import { GradeSeal } from "@/components/product-ui";
 import { getAnalysis, getProducts } from "@/lib/api";
 import { getComparisonViewState, getOptionalSkinProfile } from "@/lib/auth-session";
 import type { Analysis, Product } from "@/lib/types";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 import { CompareSelectors } from "./compare-selectors";
 import { ComparisonToolbar } from "./comparison-toolbar";
 
-export const metadata: Metadata = {
-  title: "제품 비교",
-  description: "화장품 2~3개를 같은 피부 조건과 세부 화력 기준으로 나란히 비교하세요.",
-  alternates: { canonical: "/compare" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("COMPARE");
+}
 
 const defaultProfile = {
   skinType: "수부지",

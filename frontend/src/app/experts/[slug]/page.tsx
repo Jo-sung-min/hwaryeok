@@ -1,31 +1,41 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { cache } from "react";
 import { ArrowLeft, Bookmark, Building2, Heart, MapPin, MessageCircle } from "lucide-react";
 import { ExpertAvatar, ExpertDisclaimer, VerificationBadges } from "@/components/expert-ui";
 import { getExpert } from "@/lib/api";
+import { buildDetailSeoMetadata } from "@/lib/seo";
+
+const getCachedExpert = cache(getExpert);
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  const fallbackCanonical = `/experts/${encodeURIComponent(slug)}`;
   try {
-    const { expert } = await getExpert(slug);
-    return {
-      title: `${expert.realName} ${expert.specialty ?? "의사"}`,
+    const { expert } = await getCachedExpert(slug);
+    return buildDetailSeoMetadata({
+      title: `${expert.realName} ${expert.specialty ?? "의사"} | 화력`,
       description: `${expert.verificationLabel}. ${expert.bio}`,
-      alternates: { canonical: `/experts/${expert.slug}` },
-      openGraph: {
-        title: `${expert.realName} ${expert.specialty ?? "의사"}`,
-        description: expert.bio,
-        url: `/experts/${expert.slug}`,
-      },
-    };
+      canonical: `/experts/${encodeURIComponent(expert.slug)}`,
+      imageUrl: expert.profileImageUrl,
+      imageAlt: `${expert.realName} ${expert.specialty ?? "의사"} 프로필`,
+      ogTitle: `${expert.realName} ${expert.specialty ?? "의사"}`,
+      ogDescription: expert.bio,
+    });
   } catch {
-    return { title: "전문가를 찾을 수 없어요", robots: { index: false, follow: false } };
+    return buildDetailSeoMetadata({
+      title: "전문가를 찾을 수 없어요 | 화력",
+      description: "요청한 전문가 정보를 찾을 수 없어요. 전문가 활동에서 다른 인증 전문가의 공개 답변을 확인해 보세요.",
+      canonical: fallbackCanonical,
+      indexable: false,
+      followLinks: false,
+    });
   }
 }
 
 export default async function ExpertDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { expert, recentAnswers } = await getExpert(slug);
+  const { expert, recentAnswers } = await getCachedExpert(slug);
   return (
     <div className="min-h-screen pb-24">
       <section className="border-b border-[#eccfd6] bg-[#fff8fa] py-10 md:py-16">

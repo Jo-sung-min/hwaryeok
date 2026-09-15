@@ -12,6 +12,8 @@ import { ProductUsageVideos } from "@/components/usage-videos/product-usage-vide
 import { ApiRequestError, getAnalysis, getProduct, getProductIngredients, getProductRegulatorySource, getProductRetailSnapshot, getProductReviewSummary, getRelatedProducts } from "@/lib/api";
 import type { Product, ProductRegulatorySource, ProductRetailSnapshot, ReviewCriteria } from "@/lib/types";
 import { getCurrentSession, getFavoriteViewState, getOptionalSkinProfile, readAuthTokens } from "@/lib/auth-session";
+import { resolveProductImageUrl } from "@/lib/media";
+import { buildDetailSeoMetadata } from "@/lib/seo";
 import styles from "./product-detail.module.css";
 
 const defaultProfile = {
@@ -21,21 +23,26 @@ const defaultProfile = {
 
 export async function generateMetadata({ params }: PageProps<"/products/[id]">): Promise<Metadata> {
   const { id } = await params;
+  const fallbackCanonical = `/products/${encodeURIComponent(id)}`;
   try {
     const product = await getProduct(id);
-    return {
-      title: `${product.brand} ${product.name}`,
+    return buildDetailSeoMetadata({
+      title: `${product.brand} ${product.name} | 화력`,
       description: `${product.benefit} · ${product.subBenefit}. 성분, 사용자 리뷰점수, 피부 궁합을 화력 리포트에서 확인하세요.`,
-      alternates: { canonical: `/products/${product.id}` },
-      openGraph: {
-        type: "website",
-        title: `${product.brand} ${product.name}`,
-        description: `${product.benefit} · ${product.subBenefit} 화력 리포트`,
-        url: `/products/${product.id}`,
-      },
-    };
+      canonical: `/products/${encodeURIComponent(product.id)}`,
+      imageUrl: resolveProductImageUrl(product.imageUrl),
+      imageAlt: `${product.brand} ${product.name} 제품 이미지`,
+      ogTitle: `${product.brand} ${product.name}`,
+      ogDescription: `${product.benefit} · ${product.subBenefit} 화력 리포트`,
+    });
   } catch {
-    return { title: "제품을 찾을 수 없어요", robots: { index: false, follow: false } };
+    return buildDetailSeoMetadata({
+      title: "제품을 찾을 수 없어요 | 화력",
+      description: "요청한 제품 정보를 찾을 수 없어요. 화장품 탐색에서 다른 제품의 성분과 리뷰를 확인해 보세요.",
+      canonical: fallbackCanonical,
+      indexable: false,
+      followLinks: false,
+    });
   }
 }
 

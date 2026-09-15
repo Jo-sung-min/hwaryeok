@@ -43,7 +43,8 @@ spring:
       max-request-size: 16MB
 
 server:
-  port: ${SERVER_PORT:8080}
+  # Elastic Beanstalk Java SE는 PORT(기본 5000)를 주입하고, Docker는 기존 8080을 사용합니다.
+  port: ${SERVER_PORT:${PORT:8080}}
   forward-headers-strategy: framework
   servlet:
     session:
@@ -104,6 +105,8 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   oauth:
     frontend-base-url: ${OAUTH_FRONTEND_BASE_URL:http://localhost:3000}
+    # Vercel 프록시 운영에서는 공개 HTTPS 콜백을 명시해 이중 프록시 헤더 오판을 피합니다.
+    redirect-uri: ${OAUTH_REDIRECT_URI:}
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
       client-secret: ${KAKAO_CLIENT_SECRET:}

@@ -1,27 +1,36 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ArrowLeft, ArrowRight, Check, ExternalLink, Leaf, ShieldAlert, ShieldCheck, TriangleAlert } from "lucide-react";
 import { IngredientRankingCard } from "@/components/ingredient-ranking-card";
 import { ApiRequestError, getIngredient, getIngredientRanking, getIngredientRegulations } from "@/lib/api";
 import { getFavoriteViewState } from "@/lib/auth-session";
+import { buildDetailSeoMetadata } from "@/lib/seo";
+
+const getCachedIngredient = cache(getIngredient);
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const fallbackCanonical = `/ingredients/${encodeURIComponent(id)}`;
   try {
-    const ingredient = await getIngredient(id);
-    return {
-      title: `${ingredient.name} 성분`,
+    const ingredient = await getCachedIngredient(id);
+    return buildDetailSeoMetadata({
+      title: `${ingredient.name} 성분 | 화력`,
       description: `${ingredient.name}(${ingredient.englishName})의 역할과 피부별 특징을 알아보고, 이 성분이 포함된 제품의 랭킹과 사용자 리뷰를 확인하세요.`,
-      alternates: { canonical: `/ingredients/${ingredient.id}` },
-      openGraph: {
-        title: `${ingredient.name} 성분 사전`,
-        description: ingredient.description,
-        url: `/ingredients/${ingredient.id}`,
-      },
-    };
+      canonical: `/ingredients/${encodeURIComponent(ingredient.id)}`,
+      imageAlt: `${ingredient.name} 성분 사전`,
+      ogTitle: `${ingredient.name} 성분 사전`,
+      ogDescription: ingredient.description,
+    });
   } catch {
-    return { title: "성분을 찾을 수 없어요", robots: { index: false, follow: false } };
+    return buildDetailSeoMetadata({
+      title: "성분을 찾을 수 없어요 | 화력",
+      description: "요청한 성분 정보를 찾을 수 없어요. 성분 사전에서 다른 화장품 성분을 확인해 보세요.",
+      canonical: fallbackCanonical,
+      indexable: false,
+      followLinks: false,
+    });
   }
 }
 
@@ -30,7 +39,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
 
   try {
     const [ingredient, ranking, regulations, favoriteState] = await Promise.all([
-      getIngredient(id),
+      getCachedIngredient(id),
       getIngredientRanking({ ingredientId: id, sort: "FIREPOWER", page: 0, size: 4 }),
       getIngredientRegulations(id),
       getFavoriteViewState(),

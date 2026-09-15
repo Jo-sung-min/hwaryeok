@@ -35,12 +35,14 @@ function loadIngredientPage(api, favoriteState = { favoriteIds: [], isAuthentica
     exports: module.exports,
     URLSearchParams,
     require: name => {
+      if (name === "react") return require(name);
       if (name === "react/jsx-runtime") return require(name);
       if (name === "next/link") return ({ href, children, ...props }) => React.createElement("a", { ...props, href: renderHref(href) }, children);
       if (name === "next/navigation") return { notFound: () => { throw new Error("not-found"); } };
       if (name === "lucide-react") return require(name);
       if (name === "@/lib/api") return { ...api, ApiRequestError };
       if (name === "@/lib/auth-session") return { getFavoriteViewState: async () => favoriteState };
+      if (name === "@/lib/seo") return { buildDetailSeoMetadata: () => ({}) };
       if (name === "@/components/ingredient-ranking-card") return {
         IngredientRankingCard: ({ item, ingredientName, returnTo }) => React.createElement(
           "article",

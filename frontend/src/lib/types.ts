@@ -2,6 +2,56 @@ export type ProductTone = "peach" | "sage" | "sand" | "rose" | "blue";
 export type ProductPublicationStatus = "DRAFT" | "PUBLISHED" | "HIDDEN";
 export type ProductNetContentUnit = "ML" | "G";
 
+export type SeoPageKey =
+  | "HOME"
+  | "PRODUCTS"
+  | "PROMOTIONS"
+  | "RANKING"
+  | "COMPARE"
+  | "INGREDIENTS"
+  | "EXPERTS"
+  | "EXPERT_RANKING"
+  | "QUESTIONS"
+  | "REVIEWERS"
+  | "PRINCIPLES"
+  | "SKIN_CHECK"
+  | "RISING_RANKING";
+
+export type SeoChangeFrequency = "ALWAYS" | "HOURLY" | "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY" | "NEVER";
+
+export type SeoPageSetting = {
+  pageKey: SeoPageKey;
+  path: string;
+  displayName: string;
+  title: string;
+  description: string;
+  keywords: string[];
+  indexable: boolean;
+  followLinks: boolean;
+  ogTitle: string;
+  ogDescription: string;
+  ogImageUrl: string | null;
+  includeInSitemap: boolean;
+  changeFrequency: SeoChangeFrequency;
+  priority: number;
+  updatedAt: string | null;
+};
+
+export type SeoPageUpdateInput = Pick<
+  SeoPageSetting,
+  | "title"
+  | "description"
+  | "keywords"
+  | "indexable"
+  | "followLinks"
+  | "ogTitle"
+  | "ogDescription"
+  | "ogImageUrl"
+  | "includeInSitemap"
+  | "changeFrequency"
+  | "priority"
+>;
+
 export type Product = {
   id: string;
   brand: string;

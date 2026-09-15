@@ -1,14 +1,12 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getFeaturedIngredients, getSkinTypeStatistics, getUserPreferredIngredients, getUserSkinProfile, type SkinProfile } from "@/lib/api";
 import { getCurrentSession, readAuthTokens } from "@/lib/auth-session";
+import { buildManagedSeoMetadata } from "@/lib/seo";
 import { QuickSkinCheck } from "./quick-skin-check";
 
-export const metadata: Metadata = {
-  title: "나의 성분찾기",
-  description: "피부 상태와 생활 습관, 잘 맞았던 성분을 함께 살펴보고 나의 피부 경향과 맞춤 성분을 확인하세요.",
-  alternates: { canonical: "/skin-check" },
-};
+export function generateMetadata() {
+  return buildManagedSeoMetadata("SKIN_CHECK");
+}
 
 export default async function SkinCheckPage({ searchParams }: PageProps<"/skin-check">) {
   const [search, statistics, featuredIngredients, session, tokens] = await Promise.all([

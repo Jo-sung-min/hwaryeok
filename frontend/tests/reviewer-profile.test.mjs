@@ -74,6 +74,7 @@ function reviewerPage({ profile = publicProfile, session = { id: "reviewer-1" },
       resolveReviewerProfileImageUrl: (value) => value,
     },
     "@/lib/reviewer-profile": reviewerProfileHelpers,
+    "@/lib/seo": { buildDetailSeoMetadata: () => ({}) },
     "@/app/my/reviewer-profile/dynamic-blocknote": { DynamicBlockNote: ({ initialContent, editable }) => React.createElement("div", { "data-blocknote": JSON.stringify(initialContent), "data-editable": String(editable) }) },
   }).default;
 }

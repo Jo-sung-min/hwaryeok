@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { API_BASE_URL } from "@/lib/backend-url";
 import { beginOAuthAttempt, sanitizeReturnTo } from "@/lib/auth-session";
 
 const supportedProviders = new Set(["kakao"]);
-const apiUrl = process.env.API_URL ?? "http://localhost:8081/api/v1";
-const backendUrl = process.env.OAUTH_BACKEND_URL ?? new URL(apiUrl).origin;
 
 export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
@@ -19,7 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   }
 
   try {
-    const response = await fetch(`${apiUrl}/auth/oauth/providers`, { cache: "no-store" });
+    const response = await fetch(`${API_BASE_URL}/auth/oauth/providers`, { cache: "no-store" });
     if (!response.ok) throw new Error("OAuth provider status request failed");
     const providers = await response.json() as Array<{ id: string; configured: boolean }>;
     if (!providers.some((item) => item.id === provider && item.configured)) {
@@ -36,7 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   }
 
   const attemptChallenge = await beginOAuthAttempt(returnTo);
-  const authorizationUrl = new URL(`/oauth2/authorization/${provider}`, backendUrl);
+  const authorizationUrl = new URL(`/oauth2/authorization/${provider}`, requestUrl.origin);
   authorizationUrl.searchParams.set("attempt_challenge", attemptChallenge);
   return NextResponse.redirect(authorizationUrl);
 }
