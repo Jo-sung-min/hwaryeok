@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/backend-url";
 import { beginOAuthAttempt, sanitizeReturnTo } from "@/lib/auth-session";
+import { resolvePublicSiteOrigin } from "@/lib/site-origin";
 
 const supportedProviders = new Set(["kakao"]);
 
 export async function GET(request: Request, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
   const requestUrl = new URL(request.url);
-  const callbackUrl = new URL("/oauth/callback", requestUrl.origin);
+  const siteOrigin = resolvePublicSiteOrigin(requestUrl.origin);
+  if (requestUrl.origin !== siteOrigin) {
+    const canonicalStartUrl = new URL(`${requestUrl.pathname}${requestUrl.search}`, siteOrigin);
+    return NextResponse.redirect(canonicalStartUrl);
+  }
+
+  const callbackUrl = new URL("/oauth/callback", siteOrigin);
   const returnTo = sanitizeReturnTo(requestUrl.searchParams.get("returnTo"));
 
   if (!supportedProviders.has(provider)) {
@@ -35,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ prov
   }
 
   const attemptChallenge = await beginOAuthAttempt(returnTo);
-  const authorizationUrl = new URL(`/oauth2/authorization/${provider}`, requestUrl.origin);
+  const authorizationUrl = new URL(`/oauth2/authorization/${provider}`, siteOrigin);
   authorizationUrl.searchParams.set("attempt_challenge", attemptChallenge);
   return NextResponse.redirect(authorizationUrl);
 }

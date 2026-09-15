@@ -22,6 +22,8 @@
 | `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. Docker 빌드 시 고정 |
 | `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 프론트 빌드 시 고정 |
 
+`API_URL`은 기존 설정 호환용이며 생략해도 된다. 두 서버 전용 변수를 함께 넣는다면 `BACKEND_ORIGIN`과 `API_URL`의 origin(프로토콜·호스트·포트)은 반드시 같아야 한다. Preview 환경에도 의도한 테스트 백엔드를 명시하고, 변수가 없는 Preview 빌드는 운영 백엔드로 암묵적으로 연결하지 않고 실패한다.
+
 ### 백엔드
 
 | 변수 | 설명 |
@@ -32,7 +34,7 @@
 | `CORS_ALLOWED_ORIGINS` | 실제 프론트 HTTPS 주소. 여러 개면 쉼표로 구분 |
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
 | `OAUTH_REDIRECT_URI` | 카카오에 등록한 `https://<프론트>/login/oauth2/code/kakao` 콜백 주소 |
-| `PORT`, `SERVER_PORT` | EB Java SE의 `PORT`를 자동 사용하며 `SERVER_PORT`가 있으면 우선 적용 |
+| `PORT`, `SERVER_PORT` | EB Java SE는 미설정 시 5000, Docker는 `SERVER_PORT=8080`, 로컬은 8081 사용 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 REST API 키와 클라이언트 시크릿 |
@@ -80,7 +82,9 @@ GET https://example.com/sitemap.xml
 https://example.com/login/oauth2/code/kakao
 ```
 
-백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. `server.forward-headers-strategy=framework` 설정도 유지한다. 현재 EB 원본이 HTTP이면 브라우저 혼합 콘텐츠는 방지되지만 Vercel→EB 구간은 암호화되지 않으므로 ACM 인증서를 연결한 HTTPS 전환이 필요하다.
+백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. `server.forward-headers-strategy=framework` 설정도 유지한다. EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. `PORT`를 바꿨다면 nginx upstream과 같은 값인지 확인한다.
+
+현재 EB 원본이 HTTP이면 Vercel 프록시가 브라우저 혼합 콘텐츠 오류만 가릴 뿐, Vercel→EB 구간의 로그인 정보·쿠키·사진 데이터는 암호화되지 않는다. 실사용 트래픽을 받기 전에 ACM 인증서를 연결해 HTTPS 원본으로 전환하고 `BACKEND_ORIGIN`과 `API_URL`도 `https://` 주소로 바꿔야 한다.
 
 ## 5. 마이그레이션과 배포 순서
 

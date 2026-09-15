@@ -76,9 +76,9 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 6. **Browser API:** `NEXT_PUBLIC_API_URL=/api/v1`
 7. **Site URL:** `NEXT_PUBLIC_SITE_URL=https://<실제-버셀-도메인>`
 
-`/api/v1/*`와 카카오 OAuth 시작·콜백 요청은 Next.js 외부 rewrite를 통해 Vercel에서 백엔드로 전달됩니다. 브라우저에는 EB의 HTTP 주소가 노출되지 않으므로 HTTPS 페이지의 혼합 콘텐츠 오류를 피할 수 있습니다. `API_URL`을 생략하면 `BACKEND_ORIGIN + /api/v1`을 사용하며, 두 서버 전용 값은 Vercel의 Production, Preview, Development 환경별 등록을 권장합니다. 백엔드의 `CORS_ALLOWED_ORIGINS`에는 실제 Vercel 도메인을 등록합니다.
+`/api/v1/*`와 카카오 OAuth 시작·콜백 요청은 Next.js 외부 rewrite를 통해 Vercel에서 백엔드로 전달됩니다. 브라우저에는 EB의 HTTP 주소가 노출되지 않으므로 HTTPS 페이지의 혼합 콘텐츠 오류를 피할 수 있습니다. `API_URL`을 생략하면 `BACKEND_ORIGIN + /api/v1`을 사용합니다. 두 값을 함께 설정하면 반드시 같은 origin이어야 하며, 서로 다르면 OAuth와 데이터 서버가 갈라지는 것을 막기 위해 빌드가 실패합니다. 두 서버 전용 값은 Vercel의 Production, Preview, Development 환경별로 등록하고 백엔드의 `CORS_ALLOWED_ORIGINS`에는 실제 Vercel 도메인을 등록합니다.
 
-카카오 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 카카오 개발자 콘솔의 Redirect URI와 백엔드의 `OAUTH_REDIRECT_URI`는 `https://<실제-버셀-도메인>/login/oauth2/code/kakao`로 같게 등록하고, `OAUTH_FRONTEND_BASE_URL`에도 실제 Vercel 주소를 설정합니다. EB 원본은 현재 HTTP이므로 Vercel과 EB 사이 통신 보호를 위해 추후 ACM 인증서를 연결해 HTTPS로 바꾸는 것을 권장합니다.
+카카오 로그인 키는 프론트나 Vercel에 두지 않고 백엔드 환경변수에만 저장합니다. 카카오 개발자 콘솔의 Redirect URI와 백엔드의 `OAUTH_REDIRECT_URI`는 `https://<실제-버셀-도메인>/login/oauth2/code/kakao`로 같게 등록하고, `OAUTH_FRONTEND_BASE_URL`과 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 대표 Vercel 주소로 맞춥니다. 다른 Vercel 별칭에서 시작한 로그인은 검증 쿠키를 만들기 전에 대표 주소로 정규화됩니다. EB 원본은 현재 HTTP이므로 실사용 전에 ACM 인증서를 연결하고 `BACKEND_ORIGIN`과 `API_URL`을 HTTPS 주소로 바꿔야 합니다.
 
 로그인 토큰도 프론트 브라우저 코드에 노출하지 않습니다. Vercel의 Next.js 서버가 백엔드와 통신한 뒤 Access/Refresh Token을 HttpOnly 쿠키에 보관합니다. 백엔드 운영 환경에는 서로 다른 32바이트 이상의 임의 `JWT_SECRET`, `LICENSE_HASH_SECRET`을 반드시 등록하세요. 두 값이 없거나 짧으면 백엔드는 시작되지 않습니다.
 

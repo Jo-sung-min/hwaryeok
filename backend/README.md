@@ -228,11 +228,11 @@ Content-Type: application/json
 개발자 콘솔에는 아래 콜백 주소를 등록합니다.
 
 ```text
-http://localhost:8081/login/oauth2/code/kakao
+http://localhost:3001/login/oauth2/code/kakao
 ```
 
 - 카카오 로그인 활성화와 Redirect URI 등록 후 REST API 키를 `KAKAO_CLIENT_ID`로 사용합니다. 로그인 식별에는 사용자 정보 응답의 앱별 회원 고유 ID(`id`)만 사용하므로 이메일·닉네임 동의항목은 필수가 아닙니다.
-- 운영 환경: `localhost:8081`을 실제 백엔드 HTTPS 주소로 바꾸고 `OAUTH_FRONTEND_BASE_URL`은 Vercel 주소로 설정
+- 운영 환경: 카카오 Redirect URI와 `OAUTH_REDIRECT_URI`를 모두 `https://<실제-버셀-도메인>/login/oauth2/code/kakao`로 맞추고, `OAUTH_FRONTEND_BASE_URL`에도 같은 Vercel 기본 주소를 설정합니다.
 
 OAuth 계정은 `oauth_accounts`에 공급자 사용자 ID와 화력 회원을 분리해 연결합니다. 카카오는 `(KAKAO, 카카오 회원 고유 ID)`를 로그인 키로 사용하며 카카오 이메일이 없거나 바뀌어도 같은 계정으로 처리합니다. 같은 이메일의 기본 계정과 카카오 계정을 자동 연결하지 않으며, 연결이 필요하면 추후 로그인된 상태에서 명시적인 계정 연결 기능으로 처리합니다. 카카오 회원 ID는 앱별 값이므로 운영 DB를 유지하는 동안 같은 Kakao Developers 앱과 REST API 키를 유지해야 합니다.
 

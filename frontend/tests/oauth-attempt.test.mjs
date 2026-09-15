@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 import { createOAuthAttempt, isOAuthAttemptVerifier } from "../src/lib/oauth-attempt.ts";
+import { resolvePublicSiteOrigin } from "../src/lib/site-origin.ts";
 
 test("OAuth handoff attempts use a fresh 256-bit verifier and SHA-256 challenge", () => {
   const first = createOAuthAttempt();
@@ -31,4 +32,20 @@ test("OAuth start and callback bind the exchange to the HttpOnly attempt cookie"
   assert.match(callbackSource, /exchangeOAuthCode\(code, verifier\)/);
   assert.match(sessionSource, /httpOnly:\s*true/);
   assert.match(sessionSource, /hwaryeok_oauth_attempt/);
+});
+
+test("OAuth starts on the configured canonical host so its verifier cookie survives the callback", () => {
+  assert.equal(
+    resolvePublicSiteOrigin("https://preview-hwaryeok.vercel.app", "https://www.hwaryeok.co.kr/"),
+    "https://www.hwaryeok.co.kr",
+  );
+  assert.equal(
+    resolvePublicSiteOrigin("http://localhost:3001", undefined),
+    "http://localhost:3001",
+  );
+
+  assert.throws(
+    () => resolvePublicSiteOrigin("https://preview.example", "https://example.com/login"),
+    /must be an origin/,
+  );
 });

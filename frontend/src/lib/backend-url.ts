@@ -1,7 +1,6 @@
 import "server-only";
 
 const LOCAL_BACKEND_ORIGIN = "http://localhost:8081";
-const VERCEL_BACKEND_ORIGIN = "http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com";
 
 function normalizeHttpUrl(value: string, variableName: string, originOnly: boolean): string {
   const url = new URL(value.trim());
@@ -19,18 +18,39 @@ function normalizeHttpUrl(value: string, variableName: string, originOnly: boole
   return originOnly ? url.origin : url.toString().replace(/\/$/, "");
 }
 
-const defaultBackendOrigin = process.env.VERCEL === "1"
-  ? VERCEL_BACKEND_ORIGIN
-  : LOCAL_BACKEND_ORIGIN;
+function normalizeApiBaseUrl(value: string): string {
+  const normalized = normalizeHttpUrl(value, "API_URL", false);
+  const url = new URL(normalized);
+  if (url.pathname.replace(/\/+$/, "") !== "/api/v1") {
+    throw new Error("API_URL must end with /api/v1");
+  }
+  return `${url.origin}/api/v1`;
+}
 
-export const BACKEND_ORIGIN = normalizeHttpUrl(
-  process.env.BACKEND_ORIGIN?.trim() || defaultBackendOrigin,
-  "BACKEND_ORIGIN",
-  true,
-);
+function resolveBackendOrigin(): string {
+  const configuredOrigin = process.env.BACKEND_ORIGIN?.trim();
+  const normalizedOrigin = configuredOrigin
+    ? normalizeHttpUrl(configuredOrigin, "BACKEND_ORIGIN", true)
+    : null;
 
-export const API_BASE_URL = normalizeHttpUrl(
-  process.env.API_URL?.trim() || `${BACKEND_ORIGIN}/api/v1`,
-  "API_URL",
-  false,
-);
+  const configuredApiUrl = process.env.API_URL?.trim();
+  if (configuredApiUrl) {
+    const apiOrigin = new URL(normalizeApiBaseUrl(configuredApiUrl)).origin;
+    if (normalizedOrigin && apiOrigin !== normalizedOrigin) {
+      throw new Error("BACKEND_ORIGIN and API_URL must use the same origin");
+    }
+    return normalizedOrigin ?? apiOrigin;
+  }
+
+  if (normalizedOrigin) return normalizedOrigin;
+  if (process.env.VERCEL === "1") {
+    throw new Error("Set BACKEND_ORIGIN or API_URL for this Vercel environment");
+  }
+  return LOCAL_BACKEND_ORIGIN;
+}
+
+export const BACKEND_ORIGIN = resolveBackendOrigin();
+
+export const API_BASE_URL = process.env.API_URL?.trim()
+  ? normalizeApiBaseUrl(process.env.API_URL)
+  : `${BACKEND_ORIGIN}/api/v1`;

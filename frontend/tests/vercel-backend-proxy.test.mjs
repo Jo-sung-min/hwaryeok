@@ -6,6 +6,11 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const require = createRequire(import.meta.url);
+const VERCEL_ENV = {
+  VERCEL: "1",
+  NEXT_PUBLIC_API_URL: "/api/v1",
+  NEXT_PUBLIC_SITE_URL: "https://hwaryeok.example",
+};
 
 function compileConfig(env) {
   const filename = fileURLToPath(new URL("../next.config.ts", import.meta.url));
@@ -30,7 +35,10 @@ function compileConfig(env) {
 }
 
 test("Vercel proxies API and Kakao OAuth paths to Elastic Beanstalk", async () => {
-  const config = compileConfig({ VERCEL: "1" });
+  const config = compileConfig({
+    ...VERCEL_ENV,
+    BACKEND_ORIGIN: "http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com",
+  });
   const rewrites = await config.rewrites();
 
   assert.deepEqual(Array.from(rewrites, (rewrite) => ({ ...rewrite })), [
@@ -51,16 +59,20 @@ test("Vercel proxies API and Kakao OAuth paths to Elastic Beanstalk", async () =
 });
 
 test("proxied API and OAuth responses are not cached", async () => {
-  const config = compileConfig({ VERCEL: "1" });
+  const config = compileConfig({
+    ...VERCEL_ENV,
+    BACKEND_ORIGIN: "http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com",
+  });
   const headers = await config.headers();
 
   assert.deepEqual(Array.from(headers, ({ source, headers: values }) => ({
     source,
     cacheControl: values.find(({ key }) => key === "Cache-Control")?.value,
+    rewriteCaching: values.find(({ key }) => key === "x-vercel-enable-rewrite-caching")?.value,
   })), [
-    { source: "/api/v1/:path*", cacheControl: "private, no-store, max-age=0" },
-    { source: "/oauth2/authorization/kakao", cacheControl: "private, no-store, max-age=0" },
-    { source: "/login/oauth2/code/kakao", cacheControl: "private, no-store, max-age=0" },
+    { source: "/api/v1/:path*", cacheControl: "private, no-store, max-age=0", rewriteCaching: "0" },
+    { source: "/oauth2/authorization/kakao", cacheControl: "private, no-store, max-age=0", rewriteCaching: "0" },
+    { source: "/login/oauth2/code/kakao", cacheControl: "private, no-store, max-age=0", rewriteCaching: "0" },
   ]);
 });
 
@@ -71,16 +83,77 @@ test("local development keeps proxy traffic on port 8081", async () => {
   assert.equal(rewrites[0].destination, "http://localhost:8081/api/v1/:path*");
 });
 
-test("a configured backend origin overrides the deployment default", async () => {
-  const config = compileConfig({ VERCEL: "1", BACKEND_ORIGIN: "https://api.example.com///" });
+test("a configured backend origin is normalized before proxying", async () => {
+  const config = compileConfig({ ...VERCEL_ENV, BACKEND_ORIGIN: "https://api.example.com///" });
   const rewrites = await config.rewrites();
 
   assert.equal(rewrites[0].destination, "https://api.example.com/api/v1/:path*");
 });
 
-test("Kakao OAuth starts through the current frontend origin", () => {
+test("API_URL can supply the proxy origin for an existing Vercel setup", async () => {
+  const config = compileConfig({ ...VERCEL_ENV, API_URL: "https://api.example.com/api/v1" });
+  const rewrites = await config.rewrites();
+
+  assert.equal(rewrites[0].destination, "https://api.example.com/api/v1/:path*");
+});
+
+test("Vercel builds reject split API and OAuth origins", () => {
+  assert.throws(
+    () => compileConfig({
+      ...VERCEL_ENV,
+      BACKEND_ORIGIN: "https://oauth-api.example.com",
+      API_URL: "https://data-api.example.com/api/v1",
+    }),
+    /BACKEND_ORIGIN and API_URL must use the same origin/,
+  );
+});
+
+test("Vercel builds reject an API_URL outside the canonical API prefix", () => {
+  assert.throws(
+    () => compileConfig({ ...VERCEL_ENV, API_URL: "https://api.example.com/internal" }),
+    /API_URL must end with \/api\/v1/,
+  );
+});
+
+test("Vercel builds fail clearly instead of proxying previews to an implicit backend", () => {
+  assert.throws(
+    () => compileConfig(VERCEL_ENV),
+    /Set BACKEND_ORIGIN or API_URL for this Vercel environment/,
+  );
+});
+
+test("Vercel requires one canonical HTTPS site origin for OAuth cookies", () => {
+  assert.throws(
+    () => compileConfig({ ...VERCEL_ENV, BACKEND_ORIGIN: "https://api.example.com", NEXT_PUBLIC_SITE_URL: "" }),
+    /Set NEXT_PUBLIC_SITE_URL/,
+  );
+  assert.throws(
+    () => compileConfig({
+      ...VERCEL_ENV,
+      BACKEND_ORIGIN: "https://api.example.com",
+      NEXT_PUBLIC_SITE_URL: "http://hwaryeok.example",
+    }),
+    /canonical HTTPS origin/,
+  );
+});
+
+test("Vercel rejects a public API URL that bypasses the same-origin proxy", () => {
+  assert.throws(
+    () => compileConfig({
+      ...VERCEL_ENV,
+      BACKEND_ORIGIN: "http://api.example.com",
+      NEXT_PUBLIC_API_URL: "http://api.example.com/api/v1",
+    }),
+    /NEXT_PUBLIC_API_URL must be \/api\/v1 on Vercel/,
+  );
+});
+
+test("Kakao OAuth starts through the canonical same-origin proxy", () => {
   const source = readFileSync(new URL("../src/app/api/auth/oauth/[provider]/route.ts", import.meta.url), "utf8");
 
-  assert.match(source, /new URL\(`\/oauth2\/authorization\/\$\{provider\}`, requestUrl\.origin\)/);
+  assert.match(source, /resolvePublicSiteOrigin\(requestUrl\.origin\)/);
+  assert.match(source, /requestUrl\.origin !== siteOrigin/);
+  assert.match(source, /NextResponse\.redirect\(canonicalStartUrl\)/);
+  assert.match(source, /new URL\(`\/oauth2\/authorization\/\$\{provider\}`, siteOrigin\)/);
   assert.doesNotMatch(source, /OAUTH_BACKEND_URL/);
 });

@@ -23,6 +23,7 @@ services:
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: postgres
+      SERVER_PORT: 8080
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-hwaryeok}
       DB_SCHEMA: ${DB_SCHEMA:-hwaryeok}
       DB_USER: ${DB_USER:-hwaryeok}
@@ -31,6 +32,7 @@ services:
       DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-1}
       CORS_ALLOWED_ORIGINS: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3001}
       OAUTH_FRONTEND_BASE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3001}
+      OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:-http://localhost:3001/login/oauth2/code/kakao}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
       LICENSE_HASH_SECRET: ${LICENSE_HASH_SECRET:?LICENSE_HASH_SECRET must be set}
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}

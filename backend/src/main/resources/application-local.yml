@@ -19,7 +19,7 @@ spring:
     schemas: public
 
 server:
-  port: ${SERVER_PORT:${PORT:8081}}
+  port: ${PORT:${SERVER_PORT:8081}}
   servlet:
     session:
       cookie:
