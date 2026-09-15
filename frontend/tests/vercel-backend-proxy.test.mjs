@@ -8,6 +8,7 @@ import vm from "node:vm";
 const require = createRequire(import.meta.url);
 const VERCEL_ENV = {
   VERCEL: "1",
+  BFF_PROXY_SECRET: "test-bff-proxy-secret-with-32-characters",
   NEXT_PUBLIC_API_URL: "/api/v1",
   NEXT_PUBLIC_SITE_URL: "https://hwaryeok.example",
 };
@@ -145,6 +146,17 @@ test("Vercel rejects a public API URL that bypasses the same-origin proxy", () =
       NEXT_PUBLIC_API_URL: "http://api.example.com/api/v1",
     }),
     /NEXT_PUBLIC_API_URL must be \/api\/v1 on Vercel/,
+  );
+});
+
+test("Vercel requires the shared login proxy secret", () => {
+  assert.throws(
+    () => compileConfig({
+      ...VERCEL_ENV,
+      BACKEND_ORIGIN: "https://api.example.com",
+      BFF_PROXY_SECRET: "short",
+    }),
+    /BFF_PROXY_SECRET.*at least 32 characters/,
   );
 });
 

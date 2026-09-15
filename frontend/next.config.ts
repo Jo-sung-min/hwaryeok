@@ -55,6 +55,11 @@ function validateVercelFrontendConfiguration(configuredPublicApiUrl: string): vo
     throw new Error("NEXT_PUBLIC_API_URL must be /api/v1 on Vercel");
   }
 
+  const bffProxySecret = process.env.BFF_PROXY_SECRET;
+  if (!bffProxySecret || bffProxySecret.length < 32) {
+    throw new Error("Set BFF_PROXY_SECRET to the same value of at least 32 characters on Vercel and the backend");
+  }
+
   const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (!configuredSiteUrl) {
     throw new Error("Set NEXT_PUBLIC_SITE_URL to the canonical HTTPS origin for this Vercel environment");

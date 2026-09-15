@@ -14,14 +14,14 @@ class OAuthProductionConfigurationValidatorTest {
                 "client-secret",
                 "https://www.hwaryeok.co.kr",
                 "https://www.hwaryeok.co.kr/login/oauth2/code/kakao",
-                "postgres"
+                true
         )).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsMissingOrInsecureProductionCallbacks() {
         assertThatThrownBy(() -> OAuthProductionConfigurationValidator.validate(
-                "rest-api-key", "client-secret", "https://www.hwaryeok.co.kr", "", "postgres"
+                "rest-api-key", "client-secret", "https://www.hwaryeok.co.kr", "", true
         )).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("OAUTH_REDIRECT_URI is required");
 
@@ -30,7 +30,7 @@ class OAuthProductionConfigurationValidatorTest {
                 "client-secret",
                 "http://www.hwaryeok.co.kr",
                 "http://www.hwaryeok.co.kr/login/oauth2/code/kakao",
-                "postgres"
+                true
         )).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("OAUTH_FRONTEND_BASE_URL must be a valid HTTPS URL");
     }
@@ -42,19 +42,19 @@ class OAuthProductionConfigurationValidatorTest {
                 "client-secret",
                 "https://www.hwaryeok.co.kr",
                 "https://preview.hwaryeok.co.kr/login/oauth2/code/kakao",
-                "postgres"
+                true
         )).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must use the same origin");
     }
 
     @Test
-    void keepsHttpLocalDevelopmentAvailable() {
+    void keepsHttpDevelopmentAvailableWhenHttpsEnforcementIsExplicitlyDisabled() {
         assertThatCode(() -> OAuthProductionConfigurationValidator.validate(
                 "rest-api-key",
                 "client-secret",
                 "http://localhost:3001",
                 "http://localhost:3001/login/oauth2/code/kakao",
-                "local"
+                false
         )).doesNotThrowAnyException();
     }
 }

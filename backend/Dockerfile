@@ -15,7 +15,7 @@ RUN addgroup -S spring \
     && adduser -S spring -G spring
 COPY --from=builder --chown=spring:spring /workspace/app.jar /app/app.jar
 USER spring
-ENV SERVER_PORT=8080
+ENV PORT=8080
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
   CMD wget -q -O - http://127.0.0.1:8080/actuator/health > /dev/null || exit 1

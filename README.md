@@ -75,6 +75,7 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 5. **Server API:** `API_URL=http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1`
 6. **Browser API:** `NEXT_PUBLIC_API_URL=/api/v1`
 7. **Site URL:** `NEXT_PUBLIC_SITE_URL=https://<실제-버셀-도메인>`
+8. **Login proxy secret:** `BFF_PROXY_SECRET=<32자 이상의 임의 값>` — 백엔드에도 같은 값 설정
 
 `/api/v1/*`와 카카오 OAuth 시작·콜백 요청은 Next.js 외부 rewrite를 통해 Vercel에서 백엔드로 전달됩니다. 브라우저에는 EB의 HTTP 주소가 노출되지 않으므로 HTTPS 페이지의 혼합 콘텐츠 오류를 피할 수 있습니다. `API_URL`을 생략하면 `BACKEND_ORIGIN + /api/v1`을 사용합니다. 두 값을 함께 설정하면 반드시 같은 origin이어야 하며, 서로 다르면 OAuth와 데이터 서버가 갈라지는 것을 막기 위해 빌드가 실패합니다. 두 서버 전용 값은 Vercel의 Production, Preview, Development 환경별로 등록하고 백엔드의 `CORS_ALLOWED_ORIGINS`에는 실제 Vercel 도메인을 등록합니다.
 

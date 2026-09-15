@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | `BACKEND_ORIGIN` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com` | Next.js 서버 호출 및 동일 출처 프록시의 백엔드 원본 |
 | `API_URL` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1` | 선택적인 서버 API 전체 주소. 생략하면 `BACKEND_ORIGIN/api/v1` 사용 |
+| `BFF_PROXY_SECRET` | 32자 이상의 임의 값 | 이메일 로그인 시 실제 사용자 주소를 전달하는 서버 전용 공유 비밀값 |
 | `NEXT_PUBLIC_API_URL` | `/api/v1` | 브라우저에 공개되는 동일 출처 프록시 경로. Docker 빌드 시 고정 |
 | `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. Docker 빌드 시 고정 |
 | `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 프론트 빌드 시 고정 |
@@ -34,8 +35,10 @@
 | `CORS_ALLOWED_ORIGINS` | 실제 프론트 HTTPS 주소. 여러 개면 쉼표로 구분 |
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
 | `OAUTH_REDIRECT_URI` | 카카오에 등록한 `https://<프론트>/login/oauth2/code/kakao` 콜백 주소 |
-| `PORT`, `SERVER_PORT` | EB는 `SERVER_PORT`를 지우고 기본 5000 또는 `PORT`만 사용. Docker는 `SERVER_PORT=8080`, 로컬은 8081 |
+| `OAUTH_REQUIRE_HTTPS` | 운영은 `true`(기본값), 로컬 HTTP Compose만 `false` |
+| `PORT`, `SERVER_PORT` | EB는 기본 5000 또는 `PORT`만 사용. Docker는 `PORT=8080`, 로컬 실행만 `SERVER_PORT=8081` 사용 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
+| `BFF_PROXY_SECRET` | 프론트 서버와 동일한 32자 이상의 값. 브라우저 공개 변수로 만들지 않음 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 REST API 키와 클라이언트 시크릿 |
 | `SESSION_COOKIE_SAME_SITE`, `SESSION_COOKIE_SECURE` | Vercel 프록시 운영값은 각각 `lax`, `true` |
@@ -82,11 +85,13 @@ GET https://example.com/sitemap.xml
 https://example.com/login/oauth2/code/kakao
 ```
 
-백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. 카카오 키가 설정된 비-local 환경에서는 두 OAuth URL이 누락되거나, HTTP이거나, 서로 다른 origin이면 백엔드가 시작 단계에서 실패한다. `server.forward-headers-strategy=framework` 설정도 유지한다.
+백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. 운영에서 `OAUTH_REQUIRE_HTTPS=true`이면 두 OAuth URL이 누락되거나, HTTP이거나, 서로 다른 origin일 때 백엔드가 시작 단계에서 실패한다. `server.forward-headers-strategy=framework` 설정도 유지한다.
 
 EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. EB 환경 속성에 로컬용 `SERVER_PORT=8081`이 남아 있으면 반드시 삭제한다. 포트를 바꿀 때는 `SERVER_PORT`가 아니라 `PORT` 하나만 설정해 nginx upstream과 애플리케이션을 함께 맞춘다.
 
 현재 OAuth authorization request는 서버 세션에 보관한다. EB를 두 대 이상으로 확장하기 전에는 ALB 세션 고정(stickiness)을 활성화하거나 Spring Session 같은 공유 세션 저장소를 도입해야 한다. 그렇지 않으면 로그인 시작과 콜백이 다른 인스턴스에 도착해 간헐적으로 실패할 수 있다.
+
+이메일 로그인은 Vercel Server Action을 거치므로 `BFF_PROXY_SECRET`을 Vercel과 EB에 똑같이 설정한다. Vercel이 제공한 실제 사용자 주소는 이 값이 일치할 때만 백엔드가 신뢰하며, 값이 없거나 다르면 요청 서버 주소를 사용한다. 이를 설정하지 않으면 여러 사용자가 같은 Vercel egress 주소 제한에 묶일 수 있다.
 
 현재 EB 원본이 HTTP이면 Vercel 프록시가 브라우저 혼합 콘텐츠 오류만 가릴 뿐, Vercel→EB 구간의 로그인 정보·쿠키·사진 데이터는 암호화되지 않는다. 실사용 트래픽을 받기 전에 ACM 인증서를 연결해 HTTPS 원본으로 전환하고 `BACKEND_ORIGIN`과 `API_URL`도 `https://` 주소로 바꿔야 한다.
 
