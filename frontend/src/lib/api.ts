@@ -305,10 +305,18 @@ export function signupUser(input: SignupInput): Promise<SignupResult> {
   });
 }
 
-export function loginUser(input: { email: string; password: string }): Promise<AuthTokenResult> {
+export function loginUser(
+  input: { email: string; password: string },
+  clientAddress?: string,
+): Promise<AuthTokenResult> {
+  const proxySecret = process.env.BFF_PROXY_SECRET;
   return requestJson<AuthTokenResult>("/auth/login", {
     method: "POST",
     body: JSON.stringify(input),
+    headers: proxySecret && clientAddress ? {
+      "X-Hwaryeok-Proxy-Secret": proxySecret,
+      "X-Hwaryeok-Client-Address": clientAddress,
+    } : undefined,
   });
 }
 

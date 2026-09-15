@@ -24,10 +24,14 @@ public class AuthController {
 
     private final AuthService authService;
     private final ConfiguredClientRegistrationRepository clientRegistrationRepository;
+    private final TrustedProxyClientAddressResolver clientAddressResolver;
 
-    public AuthController(AuthService authService, ConfiguredClientRegistrationRepository clientRegistrationRepository) {
+    public AuthController(AuthService authService,
+                          ConfiguredClientRegistrationRepository clientRegistrationRepository,
+                          TrustedProxyClientAddressResolver clientAddressResolver) {
         this.authService = authService;
         this.clientRegistrationRepository = clientRegistrationRepository;
+        this.clientAddressResolver = clientAddressResolver;
     }
 
     @PostMapping("/signup")
@@ -38,7 +42,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthTokenResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        return authService.login(request, httpRequest.getRemoteAddr());
+        return authService.login(request, clientAddressResolver.resolve(httpRequest));
     }
 
     @PostMapping("/refresh")

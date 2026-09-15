@@ -100,7 +100,6 @@ if (s3PublicBaseUrl) {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  output: "standalone",
   env: {
     S3_PUBLIC_BASE_URL: s3PublicBaseUrl?.toString().replace(/\/$/, "") ?? "",
   },

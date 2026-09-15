@@ -34,11 +34,11 @@
 | `CORS_ALLOWED_ORIGINS` | 실제 프론트 HTTPS 주소. 여러 개면 쉼표로 구분 |
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
 | `OAUTH_REDIRECT_URI` | 카카오에 등록한 `https://<프론트>/login/oauth2/code/kakao` 콜백 주소 |
-| `PORT`, `SERVER_PORT` | EB Java SE는 미설정 시 5000, Docker는 `SERVER_PORT=8080`, 로컬은 8081 사용 |
+| `PORT`, `SERVER_PORT` | EB는 `SERVER_PORT`를 지우고 기본 5000 또는 `PORT`만 사용. Docker는 `SERVER_PORT=8080`, 로컬은 8081 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 REST API 키와 클라이언트 시크릿 |
-| `SESSION_COOKIE_SAME_SITE`, `SESSION_COOKIE_SECURE` | 서로 다른 HTTPS 도메인이면 `none`, `true` 검토 |
+| `SESSION_COOKIE_SAME_SITE`, `SESSION_COOKIE_SECURE` | Vercel 프록시 운영값은 각각 `lax`, `true` |
 | `S3_BUCKET` | S3 버킷명만 입력. 화력은 `fatell-aws-s3` |
 | `S3_KEY_PREFIX` | 버킷 안 객체 접두사. 화력은 `hwaryeok` |
 | `S3_PUBLIC_BASE_URL` | `S3_KEY_PREFIX`를 Origin Path로 연결한 공개 CDN 주소 |
@@ -82,7 +82,11 @@ GET https://example.com/sitemap.xml
 https://example.com/login/oauth2/code/kakao
 ```
 
-백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. `server.forward-headers-strategy=framework` 설정도 유지한다. EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. `PORT`를 바꿨다면 nginx upstream과 같은 값인지 확인한다.
+백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. 카카오 키가 설정된 비-local 환경에서는 두 OAuth URL이 누락되거나, HTTP이거나, 서로 다른 origin이면 백엔드가 시작 단계에서 실패한다. `server.forward-headers-strategy=framework` 설정도 유지한다.
+
+EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. EB 환경 속성에 로컬용 `SERVER_PORT=8081`이 남아 있으면 반드시 삭제한다. 포트를 바꿀 때는 `SERVER_PORT`가 아니라 `PORT` 하나만 설정해 nginx upstream과 애플리케이션을 함께 맞춘다.
+
+현재 OAuth authorization request는 서버 세션에 보관한다. EB를 두 대 이상으로 확장하기 전에는 ALB 세션 고정(stickiness)을 활성화하거나 Spring Session 같은 공유 세션 저장소를 도입해야 한다. 그렇지 않으면 로그인 시작과 콜백이 다른 인스턴스에 도착해 간헐적으로 실패할 수 있다.
 
 현재 EB 원본이 HTTP이면 Vercel 프록시가 브라우저 혼합 콘텐츠 오류만 가릴 뿐, Vercel→EB 구간의 로그인 정보·쿠키·사진 데이터는 암호화되지 않는다. 실사용 트래픽을 받기 전에 ACM 인증서를 연결해 HTTPS 원본으로 전환하고 `BACKEND_ORIGIN`과 `API_URL`도 `https://` 주소로 바꿔야 한다.
 

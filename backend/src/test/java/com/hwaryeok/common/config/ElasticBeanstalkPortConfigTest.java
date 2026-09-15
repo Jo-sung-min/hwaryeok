@@ -19,20 +19,11 @@ class ElasticBeanstalkPortConfigTest {
     }
 
     @Test
-    void elasticBeanstalkPortTakesPrecedenceOverTheLocalServerPort() throws IOException {
+    void elasticBeanstalkPortCanOverrideTheProxyDefault() throws IOException {
         MockEnvironment environment = applicationEnvironment();
-        environment.setProperty("SERVER_PORT", "8081");
-        environment.setProperty("PORT", "5000");
+        environment.setProperty("PORT", "5100");
 
-        assertThat(environment.getProperty("server.port")).isEqualTo("5000");
-    }
-
-    @Test
-    void serverPortRemainsAvailableOutsideElasticBeanstalk() throws IOException {
-        MockEnvironment environment = applicationEnvironment();
-        environment.setProperty("SERVER_PORT", "8081");
-
-        assertThat(environment.getProperty("server.port")).isEqualTo("8081");
+        assertThat(environment.getProperty("server.port")).isEqualTo("5100");
     }
 
     private MockEnvironment applicationEnvironment() throws IOException {

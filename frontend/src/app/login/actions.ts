@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { ApiRequestError, loginUser, logoutSession } from "@/lib/api";
 import { clearAuthCookies, readAuthTokens, sanitizeReturnTo, setAuthCookies } from "@/lib/auth-session";
 
@@ -28,7 +29,13 @@ export async function loginAction(_previousState: LoginActionState, formData: Fo
 
   let tokens;
   try {
-    tokens = await loginUser({ email, password });
+    const requestHeaders = await headers();
+    const clientAddress = normalizeClientAddress(
+      requestHeaders.get("x-vercel-forwarded-for")
+        ?? requestHeaders.get("x-forwarded-for")
+        ?? requestHeaders.get("x-real-ip"),
+    );
+    tokens = await loginUser({ email, password }, clientAddress);
   } catch (error) {
     if (error instanceof ApiRequestError) {
       return { message: error.message, fieldErrors: error.fieldErrors, values: { email } };
@@ -38,6 +45,12 @@ export async function loginAction(_previousState: LoginActionState, formData: Fo
 
   await setAuthCookies(tokens);
   redirect(returnTo);
+}
+
+function normalizeClientAddress(rawValue: string | null): string | undefined {
+  const candidate = rawValue?.split(",", 1)[0]?.trim();
+  if (!candidate || candidate.length > 64 || !/^[0-9a-f:.]+$/i.test(candidate)) return undefined;
+  return candidate;
 }
 
 export async function logoutAction() {
