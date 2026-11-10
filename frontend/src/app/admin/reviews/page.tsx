@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowRight, MessageSquareText, Search, Sparkles, UserRound } from "lucide-react";
-import { AdminHeader } from "@/app/admin/admin-ui";
+import { ChevronDown, Search, X } from "lucide-react";
+import { AdminHeader, adminCardClass } from "@/app/admin/admin-ui";
 import { getAdminReviews } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import type { AdminReviewKind, AdminReviewListItem, ReviewDetail } from "@/lib/types";
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 };
 
 const PAGE_SIZE = 20;
-const reviewKinds: { value: AdminReviewKind; label: string }[] = [
-  { value: "ALL", label: "전체" },
-  { value: "USER", label: "사용자 리뷰" },
-  { value: "SAMPLE", label: "화면 예시" },
+const reviewKinds: { value: AdminReviewKind; label: string; short: string }[] = [
+  { value: "ALL", label: "전체", short: "전체" },
+  { value: "USER", label: "사용자 리뷰", short: "사용자" },
+  { value: "SAMPLE", label: "화면 예시", short: "예시" },
 ];
 const usagePeriodLabels: Record<ReviewDetail["usagePeriod"], string> = {
   ONE_WEEK: "1주 이내",
@@ -56,47 +56,57 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
     <div>
       <AdminHeader title="리뷰" meta={`${data.totalElements.toLocaleString("ko-KR")}개`} />
 
-      <main className="container-page">
-        <section aria-label="리뷰 검색과 구분 필터" className="rounded-[22px] border border-[#ead9df] bg-white p-4 sm:p-5">
-          <form action="/admin/reviews" method="get" role="search" className="flex flex-col gap-3 sm:flex-row">
-            <input type="hidden" name="kind" value={kind} />
-            <label className="relative min-w-0 flex-1">
-              <span className="sr-only">제품, 브랜드, 작성자 또는 리뷰 내용 검색</span>
-              <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#a17d8b]" />
-              <input name="q" defaultValue={q} maxLength={100} autoComplete="off" className="input min-h-12 pl-11" placeholder="제품·브랜드·작성자·리뷰 내용 검색" />
-            </label>
-            <button type="submit" className="ink-btn min-h-12 shrink-0"><Search size={16} /> 검색</button>
-            {(q || kind !== "ALL") && <Link href="/admin/reviews" className="line-btn min-h-12 shrink-0">초기화</Link>}
-          </form>
-          <nav aria-label="리뷰 구분" className="mt-4 flex flex-wrap gap-2 border-t border-[#f1e5e9] pt-4">
-            {reviewKinds.map((option) => (
-              <Link
-                key={option.value}
-                href={adminReviewsHref(q, option.value, 0)}
-                aria-current={kind === option.value ? "page" : undefined}
-                className={`inline-flex min-h-10 items-center rounded-full border px-4 text-xs font-semibold transition ${kind === option.value ? "border-[#cf7d99] bg-[#fff0f5] text-[#aa4669]" : "border-[#eadce1] bg-white text-[#846f78] hover:border-[#d9a8b8]"}`}
-              >
-                {option.label}
+      {/* The site navigation header is sticky at 63px (62px + 1px border), so pin the search right below it. */}
+      <div className="sticky top-[63px] z-20 bg-[#f5f5f7]/85 py-3 backdrop-blur-xl backdrop-saturate-150">
+        <form action="/admin/reviews" method="get" role="search" className="container-page flex items-center gap-2">
+          <input type="hidden" name="kind" value={kind} />
+          <label className="relative min-w-0 flex-1">
+            <span className="sr-only">제품, 브랜드, 작성자 또는 리뷰 내용 검색</span>
+            <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#86868b]" />
+            <input
+              name="q"
+              type="text"
+              enterKeyHint="search"
+              defaultValue={q}
+              maxLength={100}
+              autoComplete="off"
+              placeholder="제품·작성자 검색"
+              className="h-10 w-full rounded-xl bg-white pl-9 pr-9 text-[14px] text-[#1d1d1f] outline-none ring-1 ring-black/[.06] placeholder:text-[#86868b] focus:ring-2 focus:ring-[#0071e3]/40"
+            />
+            {q && (
+              <Link href={adminReviewsHref("", kind, 0)} aria-label="검색어 지우기" className="absolute right-2 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-[#c7c7cc] text-white transition hover:bg-[#aeaeb2]">
+                <X size={12} strokeWidth={2.5} />
               </Link>
-            ))}
+            )}
+          </label>
+          <nav aria-label="리뷰 구분" className="flex shrink-0 rounded-xl bg-[#e8e8ed] p-1">
+            {reviewKinds.map((option) => {
+              const active = kind === option.value;
+              return (
+                <Link
+                  key={option.value}
+                  href={adminReviewsHref(q, option.value, 0)}
+                  aria-current={active ? "page" : undefined}
+                  title={option.label}
+                  className={`inline-flex h-8 items-center rounded-lg px-2.5 text-[13px] font-medium transition sm:px-3 ${active ? "bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,.1)]" : "text-[#6e6e73] hover:text-[#1d1d1f]"}`}
+                >
+                  {option.short}
+                </Link>
+              );
+            })}
           </nav>
-        </section>
+        </form>
+      </div>
 
-        <div className="mb-5 mt-8 flex flex-wrap items-end justify-between gap-3">
-          <div><h2 className="text-[20px] font-semibold tracking-[-0.01em]">{q ? `‘${q}’ 검색 결과` : reviewKinds.find((item) => item.value === kind)?.label} <span className="ml-1 text-[15px] font-medium text-[#86868b]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2></div>
-          <p className="text-xs text-[#8b747d]">최신 등록순 · 삭제 후 복구할 수 없어요</p>
-        </div>
-
+      <main className="container-page mt-2">
         {data.content.length > 0 ? (
-          <ol className="divide-y divide-[#f0e2e7] overflow-hidden rounded-[24px] border border-[#ead7de] bg-white">
+          <ol className={`${adminCardClass} divide-y divide-black/[.06] overflow-hidden`}>
             {data.content.map((review) => <AdminReviewRow key={review.id} review={review} />)}
           </ol>
         ) : (
-          <div className="rounded-[24px] border border-dashed border-[#dfc6d0] bg-[#fffafb] px-5 py-14 text-center">
-            <MessageSquareText className="mx-auto text-[#c16a88]" size={29} />
-            <h3 className="mt-4 text-lg font-bold">조건에 맞는 리뷰가 없어요</h3>
-            <p className="mt-2 text-sm leading-6 text-[#89737c]">검색어 또는 리뷰 구분을 바꿔 다시 확인해 주세요.</p>
-            {(q || kind !== "ALL" || requestedPage > 0) && <Link href="/admin/reviews" className="line-btn mt-5">전체 리뷰 보기</Link>}
+          <div className="py-20 text-center">
+            <p className="text-[15px] font-medium">조건에 맞는 리뷰가 없어요</p>
+            {(q || kind !== "ALL" || requestedPage > 0) && <Link href="/admin/reviews" className="mt-3 inline-block text-[14px] text-[#0071e3]">전체 리뷰 보기</Link>}
           </div>
         )}
 
@@ -107,57 +117,57 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
 }
 
 function AdminReviewRow({ review }: { review: AdminReviewListItem }) {
-  const author = review.sampleReview || !review.author.id
-    ? <span className="inline-flex items-center gap-1.5 font-semibold text-[#65575d]"><Sparkles size={13} className="text-[#bd6582]" />{review.author.nickname}</span>
-    : <Link href={`/reviewers/${encodeURIComponent(review.author.id)}`} className="inline-flex items-center gap-1.5 font-semibold text-[#9f4564] underline decoration-[#e6b5c5] underline-offset-4"><UserRound size={13} />{review.author.nickname}</Link>;
+  const productName = `${review.product.brand} ${review.product.name}`;
 
   return (
     <li>
-      <article className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${review.sampleReview ? "bg-[#fff0f5] text-[#ae4e70]" : "bg-[#edf5ef] text-[#52705b]"}`}>{review.sampleReview ? "화면 예시" : "사용자 리뷰"}</span>
-            {review.sampleReview && <span className="text-[10px] font-semibold text-[#987780]">점수·랭킹 집계 제외</span>}
-            <span className="rounded-full bg-[#f4f1f2] px-2.5 py-1 text-[10px] font-semibold text-[#796b70]">{review.product.category}</span>
-            <span className="text-[10px] text-[#9b8990]">{publicationLabels[review.product.publicationStatus]}</span>
-          </div>
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition hover:bg-black/[.02] sm:px-5 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-medium">{productName}</span>
+            <span className="mt-0.5 block truncate text-[13px] text-[#86868b]">{review.author.nickname}</span>
+          </span>
+          <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-[#c7c7cc] transition group-open:rotate-180" />
+        </summary>
 
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <Link href={`/products/${encodeURIComponent(review.product.id)}`} className="break-words font-myeongjo text-xl font-bold transition hover:text-[#a44766]">{review.product.brand} · {review.product.name}</Link>
-              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#84737a]">{author}<span aria-hidden="true">·</span><span>{review.skinType} 피부</span><span aria-hidden="true">·</span><span>{usagePeriodLabels[review.usagePeriod]}</span></p>
-            </div>
-            <div className="shrink-0 text-left sm:text-right"><strong className="font-myeongjo text-2xl text-[#a04462]">{Number(review.totalScore).toFixed(1)}</strong><p className="text-[9px] text-[#927f86]">{review.sampleReview ? "화면 예시 점수" : "리뷰점수"}</p></div>
-          </div>
-
-          <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-[#65595e]">{review.content}</p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#938188]">
-            <span>{review.repurchaseYn ? "재구매 의향 있음" : "재구매 고민 중"}</span>
+        <div className="space-y-3 px-4 pb-5 sm:px-5">
+          <p className="flex flex-wrap gap-x-2.5 gap-y-1 text-[12px] text-[#86868b]">
+            <span className="font-medium text-[#1d1d1f]">{review.sampleReview ? "화면 예시" : "사용자 리뷰"}</span>
+            <span>{Number(review.totalScore).toFixed(1)}점</span>
+            <span>{review.skinType} 피부</span>
+            <span>{usagePeriodLabels[review.usagePeriod]}</span>
             <time dateTime={review.createdAt}>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(review.createdAt))}</time>
-            <span>{review.sampleReview ? "도움 평가 대상 아님" : review.communityAverageScore === null ? "도움 평가 대기" : `도움 평가 ${review.communityAverageScore.toFixed(1)} / 10 · ${review.communityRatingCount}명`}</span>
+            <span>상품 {publicationLabels[review.product.publicationStatus]}</span>
+          </p>
+          <p className="whitespace-pre-wrap break-words text-[14px] leading-6 text-[#424245]">{review.content}</p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-4 text-[13px]">
+              <Link href={`/products/${encodeURIComponent(review.product.id)}`} className="text-[#0071e3] hover:underline">상품 보기</Link>
+              {!review.sampleReview && review.author.id && <Link href={`/reviewers/${encodeURIComponent(review.author.id)}`} className="text-[#0071e3] hover:underline">작성자 보기</Link>}
+            </div>
+            <AdminReviewDeleteForm
+              reviewId={review.id}
+              productId={review.product.id}
+              productName={productName}
+              authorId={review.author.id}
+              authorNickname={review.author.nickname}
+              sampleReview={review.sampleReview}
+            />
           </div>
         </div>
-
-        <AdminReviewDeleteForm
-          reviewId={review.id}
-          productId={review.product.id}
-          productName={`${review.product.brand} ${review.product.name}`}
-          authorId={review.author.id}
-          authorNickname={review.author.nickname}
-          sampleReview={review.sampleReview}
-        />
-      </article>
+      </details>
     </li>
   );
 }
 
 function AdminReviewPagination({ data, q, kind }: { data: { page: number; totalPages: number; hasNext: boolean }; q: string; kind: AdminReviewKind }) {
   if (data.totalPages <= 1 && data.page === 0) return null;
+  const pageLink = "inline-flex h-9 items-center rounded-full bg-white px-4 text-[13px] font-medium ring-1 ring-black/[.06] transition hover:bg-[#fafafa]";
   return (
-    <nav aria-label="관리자 리뷰 목록 페이지" className="mt-8 flex items-center justify-center gap-4">
-      {data.page > 0 && <Link href={adminReviewsHref(q, kind, data.page - 1)} className="line-btn !min-h-11">이전</Link>}
-      <span className="text-xs text-[#917883]">{data.page + 1} / {Math.max(1, data.totalPages)}</span>
-      {data.hasNext && <Link href={adminReviewsHref(q, kind, data.page + 1)} className="line-btn !min-h-11">다음 <ArrowRight size={14} /></Link>}
+    <nav aria-label="관리자 리뷰 목록 페이지" className="mt-6 flex items-center justify-center gap-2">
+      {data.page > 0 && <Link href={adminReviewsHref(q, kind, data.page - 1)} className={pageLink}>이전</Link>}
+      <span className="px-2 text-[13px] tabular-nums text-[#86868b]">{data.page + 1} / {Math.max(1, data.totalPages)}</span>
+      {data.hasNext && <Link href={adminReviewsHref(q, kind, data.page + 1)} className={pageLink}>다음</Link>}
     </nav>
   );
 }

@@ -50,7 +50,7 @@ export function AdminReviewDeleteForm({
         onClick={requestDelete}
         disabled={pending}
         aria-label={`${authorNickname}님의 ${productName} 리뷰 삭제`}
-        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full px-3.5 text-xs font-semibold text-[#9a4358] transition hover:bg-[#fff0f3] disabled:opacity-60"
+        className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-[#ff3b30] transition hover:bg-[#ff3b30]/10 disabled:opacity-60"
       >
         {pending ? <LoaderCircle size={14} className="animate-spin" /> : <Trash2 size={14} />}
         {pending ? "삭제 중" : "삭제"}
