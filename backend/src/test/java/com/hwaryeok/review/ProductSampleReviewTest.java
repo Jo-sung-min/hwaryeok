@@ -35,7 +35,7 @@ class ProductSampleReviewTest {
         long samples = jdbc.queryForObject("SELECT COUNT(*) FROM product_sample_reviews", Long.class);
 
         assertThat(samples).isEqualTo(products);
-        ProductReviewSummaryResponse summary = reviewService.summary("heartleaf-toner", null);
+        ProductReviewSummaryResponse summary = reviewService.summary("heartleaf-toner", user("ADMIN", "ACTIVE"));
         assertThat(summary.reviewCount()).isZero();
         assertThat(summary.reviewScore()).isNull();
         assertThat(summary.rankingStatus()).isEqualTo("COLLECTING");
@@ -49,6 +49,17 @@ class ProductSampleReviewTest {
         });
         assertThatThrownBy(() -> reputationService.summary("sample:heartleaf-toner", null))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void sampleReviewsAreShownOnlyToActiveAdmins() {
+        assertThat(reviewService.summary("heartleaf-toner", null).reviews()).isEmpty();
+        assertThat(reviewService.summary("heartleaf-toner", user("USER", "ACTIVE")).reviews()).isEmpty();
+        assertThat(reviewService.summary("heartleaf-toner", user("ADMIN", "SUSPENDED")).reviews()).isEmpty();
+        assertThat(reviewService.summary("heartleaf-toner", user("ADMIN", "ACTIVE")).reviews())
+                .singleElement()
+                .extracting(ReviewDetailResponse::sampleReview)
+                .isEqualTo(true);
     }
 
     @Test
@@ -95,9 +106,20 @@ class ProductSampleReviewTest {
         assertThat(jdbc.queryForObject(
                 "SELECT COUNT(*) FROM product_sample_reviews WHERE product_id = ?", Long.class, productId
         )).isEqualTo(1);
-        assertThat(reviewService.summary(productId, null).reviews())
+        assertThat(reviewService.summary(productId, user("ADMIN", "ACTIVE")).reviews())
                 .singleElement()
                 .extracting(ReviewDetailResponse::sampleReview)
                 .isEqualTo(true);
+    }
+
+    private String user(String role, String status) {
+        String userId = UUID.randomUUID().toString();
+        String nickname = "샘플 확인 " + userId.substring(0, 8);
+        jdbc.update("""
+                INSERT INTO users (id, email, password_hash, nickname, nickname_key, role, status)
+                VALUES (?, ?, NULL, ?, ?, ?, ?)
+                """, userId, userId + "@example.com", nickname,
+                ActivityNickname.key(ActivityNickname.normalize(nickname)), role, status);
+        return userId;
     }
 }

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { AdminHeader, adminCardClass } from "@/app/admin/admin-ui";
 import { AdminProductBrowser } from "@/app/admin/products/admin-product-browser";
@@ -8,7 +8,7 @@ import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/a
 
 export default async function AdminProductsPage() {
   const user = await requireSession("/admin/products");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
   const [products, ingredientPage, officialSources, mfdsMatches] = await Promise.all([

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hwaryeok-backend",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".work/tools/run-backend.ps1"],
+      "port": 8080
+    },
+    {
+      "name": "hwaryeok-frontend",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ".work/tools/run-frontend.ps1"],
+      "port": 3001
+    }
+  ]
+}

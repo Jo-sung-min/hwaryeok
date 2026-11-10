@@ -1,31 +1,33 @@
 # 화력 운영 배포 가이드
 
-화력은 Next.js 프론트엔드, Spring Boot API, PostgreSQL을 서로 분리해 배포한다. 가장 단순한 운영 형태는 각 서비스를 한 인스턴스로 실행하고 HTTPS 역방향 프록시 뒤에 두는 구성이다.
+화력은 Next.js 프론트엔드를 Vercel에, Spring Boot API를 AWS Elastic Beanstalk(Java SE)에 배포하고 PostgreSQL은 관리형 데이터베이스를 사용한다. 제품 이미지는 S3에 저장해 CDN으로 공개한다. 프론트는 DB에 직접 접근하지 않으므로 DB 접속 정보는 EB에만 등록한다.
 
 ## 1. 배포 전 필수 조건
 
 - 프론트엔드와 백엔드에 각각 고정된 HTTPS 도메인을 준비한다.
 - PostgreSQL 백업·복구가 가능한 관리형 데이터베이스 또는 영속 볼륨을 사용한다.
 - `JWT_SECRET`과 `LICENSE_HASH_SECRET`은 서로 다른 32바이트 이상의 임의 값으로 만든다.
-- `.env` 파일과 실제 OAuth 비밀키는 저장소나 Docker 이미지에 포함하지 않는다.
+- `.env` 파일과 실제 OAuth 비밀키는 저장소나 배포 JAR에 포함하지 않는다.
 - 다중 Next.js 인스턴스를 운영하면 모든 인스턴스에 같은 `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY`와 배포 식별자를 사용하고 공유 캐시 전략을 별도로 구성한다.
 
 ## 2. 운영 환경 변수
 
-### 프론트엔드
+### 프론트엔드 (Vercel)
 
 | 변수 | 예시 | 용도 |
 | --- | --- | --- |
-| `BACKEND_ORIGIN` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com` | Next.js 서버 호출 및 동일 출처 프록시의 백엔드 원본 |
-| `API_URL` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1` | 선택적인 서버 API 전체 주소. 생략하면 `BACKEND_ORIGIN/api/v1` 사용 |
-| `BFF_PROXY_SECRET` | 32자 이상의 임의 값 | 이메일 로그인 시 실제 사용자 주소를 전달하는 서버 전용 공유 비밀값 |
-| `NEXT_PUBLIC_API_URL` | `/api/v1` | 브라우저에 공개되는 동일 출처 프록시 경로. Docker 빌드 시 고정 |
-| `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. Docker 빌드 시 고정 |
-| `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 프론트 빌드 시 고정 |
+| `BACKEND_ORIGIN` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com` | Next.js 서버 호출 및 동일 출처 프록시의 백엔드 원본. 필수 |
+| `BFF_PROXY_SECRET` | 32자 이상의 임의 값 | 이메일 로그인 시 실제 사용자 주소를 전달하는 서버 전용 공유 비밀값. 필수 |
+| `NEXT_PUBLIC_API_URL` | `/api/v1` | 브라우저에 공개되는 동일 출처 프록시 경로. Vercel에서는 이 값만 허용. 빌드 시 고정 |
+| `NEXT_PUBLIC_SITE_URL` | `https://example.com` | canonical, Open Graph, robots, sitemap 기준 주소. 필수. 빌드 시 고정 |
+| `S3_PUBLIC_BASE_URL` | `https://cdn.hwaryeok.co.kr` | 제품 이미지 CDN 허용 주소. 빌드 시 고정 |
+| `API_URL` | `http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1` | 선택. 생략하면 `BACKEND_ORIGIN/api/v1` 사용 |
+
+Vercel에는 위 표의 값만 등록한다. `DB_*`, `JWT_SECRET`, `LICENSE_HASH_SECRET`, `KAKAO_*`, `OAUTH_*`, `S3_BUCKET`, `AWS_*`, `OPENAI_*`, `MFDS_*` 같은 백엔드 전용 값이 남아 있으면 삭제한다. 빌드 시 고정되는 값을 바꾼 뒤에는 Vercel에서 다시 배포해야 반영된다.
 
 `API_URL`은 기존 설정 호환용이며 생략해도 된다. 두 서버 전용 변수를 함께 넣는다면 `BACKEND_ORIGIN`과 `API_URL`의 origin(프로토콜·호스트·포트)은 반드시 같아야 한다. Preview 환경에도 의도한 테스트 백엔드를 명시하고, 변수가 없는 Preview 빌드는 운영 백엔드로 암묵적으로 연결하지 않고 실패한다.
 
-### 백엔드
+### 백엔드 (Elastic Beanstalk 환경 속성)
 
 | 변수 | 설명 |
 | --- | --- |
@@ -35,8 +37,8 @@
 | `CORS_ALLOWED_ORIGINS` | 실제 프론트 HTTPS 주소. 여러 개면 쉼표로 구분 |
 | `OAUTH_FRONTEND_BASE_URL` | OAuth 완료 후 돌아갈 실제 프론트 주소 |
 | `OAUTH_REDIRECT_URI` | 카카오에 등록한 `https://<프론트>/login/oauth2/code/kakao` 콜백 주소 |
-| `OAUTH_REQUIRE_HTTPS` | 운영은 `true`(기본값), 로컬 HTTP Compose만 `false` |
-| `PORT`, `SERVER_PORT` | EB는 기본 5000 또는 `PORT`만 사용. Docker는 `PORT=8080`, 로컬 실행만 `SERVER_PORT=8081` 사용 |
+| `OAUTH_REQUIRE_HTTPS` | 운영은 `true`(기본값), 로컬 HTTP 실행만 `false` |
+| `PORT`, `SERVER_PORT` | EB는 기본 5000 또는 `PORT`만 사용. 로컬 실행만 `SERVER_PORT=8081` 사용 |
 | `JWT_SECRET`, `LICENSE_HASH_SECRET` | 서로 다른 32바이트 이상의 비밀키 |
 | `BFF_PROXY_SECRET` | 프론트 서버와 동일한 32자 이상의 값. 브라우저 공개 변수로 만들지 않음 |
 | `ADMIN_EMAILS` | 관리자 역할을 부여할 이메일 목록 |
@@ -49,23 +51,15 @@
 | `S3_PRESIGNED_URL_SECONDS` | 브라우저 직접 업로드 URL 유효 시간. 기본 300초, 허용 60~900초 |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` | IAM 역할을 쓸 수 없는 로컬 환경에서만 설정하는 AWS 자격증명 |
 
-`S3_BUCKET`에는 `fatell-aws-s3.s3.amazonaws.com/hwaryeok` 같은 호스트·경로를 넣지 않는다. 버킷명과 경로를 각각 `S3_BUCKET=fatell-aws-s3`, `S3_KEY_PREFIX=hwaryeok`으로 분리한다. 운영에서는 정적 키보다 인스턴스 역할 등 AWS 기본 자격증명 체인을 우선 사용하고 실제 키를 저장소나 Docker 이미지에 넣지 않는다.
+`S3_BUCKET`에는 `fatell-aws-s3.s3.amazonaws.com/hwaryeok` 같은 호스트·경로를 넣지 않는다. 버킷명과 경로를 각각 `S3_BUCKET=fatell-aws-s3`, `S3_KEY_PREFIX=hwaryeok`으로 분리한다. 운영에서는 정적 키보다 인스턴스 역할 등 AWS 기본 자격증명 체인을 우선 사용하고 실제 키를 저장소나 배포 JAR에 넣지 않는다.
 
 관리자 이미지는 Presigned PUT으로 `hwaryeok/pending/product-images/` 아래에 올라간 뒤 검증·Copy가 성공해야 `hwaryeok/products/` 공개 경로에 확정된다. pending 객체는 URL 만료 전 재PUT을 막기 위해 즉시 삭제하지 않고 1일 lifecycle로만 정리한다. lifecycle이 없으면 임시 객체가 누적되므로 반드시 설정한다. 버킷 CORS에 프론트 출처의 `PUT`과 서명 헤더를 허용하고 CDN `/pending/**`는 차단한다. IAM은 객체 prefix에 `s3:PutObject`, `s3:GetObject`, 버킷에 prefix 조건을 둔 `s3:ListBucket`을 최소 범위로 허용한다.
 
-## 3. Docker Compose 실행
+## 3. Vercel·Elastic Beanstalk 배포
 
-개발·단일 서버 검증용으로 세 서비스를 함께 실행할 수 있다.
+프론트는 Vercel에서 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 표의 값을 Production, Preview, Development 환경별로 등록한다. Next.js가 `/api/v1/*`와 카카오 OAuth 시작·콜백 경로를 `BACKEND_ORIGIN`으로 프록시하므로 브라우저가 HTTP 원본에 직접 접속하지 않는다.
 
-```bash
-cp .env.example .env
-# .env의 DB_PASSWORD, JWT_SECRET, LICENSE_HASH_SECRET을 임의 값으로 교체
-docker compose build
-docker compose up -d
-docker compose ps
-```
-
-기본 공개 주소는 프론트 `http://localhost:3001`, API `http://localhost:8081`이다. PostgreSQL은 호스트의 loopback에만 바인딩되고 데이터는 `hwaryeok-postgres-data` 볼륨에 남는다. 운영에서는 프론트와 API 포트를 인터넷에 직접 노출하지 말고 HTTPS 역방향 프록시나 관리형 로드 밸런서 뒤에 둔다.
+백엔드는 `backend`에서 `./gradlew clean bootJar`로 만든 `build/libs/*.jar`(`-plain.jar` 제외)를 Java 21 EB Java SE 환경에 배포하고 PostgreSQL과 같은 리전에 둔다.
 
 배포 상태는 다음 경로로 확인한다.
 
@@ -75,10 +69,6 @@ GET https://example.com/robots.txt
 GET https://example.com/sitemap.xml
 ```
 
-## 4. 분리 배포
-
-프론트는 Vercel 또는 Node.js 22 컨테이너에 배포할 수 있다. Vercel에서는 Root Directory를 `frontend`로 지정하고 프론트 환경 변수 표의 값을 환경별로 등록한다. Next.js가 `/api/v1/*`와 카카오 OAuth 시작·콜백 경로를 `BACKEND_ORIGIN`으로 프록시하므로 브라우저가 HTTP 원본에 직접 접속하지 않는다. 백엔드는 Java 21 컨테이너를 실행할 수 있는 서비스에 배포하고 PostgreSQL과 같은 리전에 둔다.
-
 카카오 개발자 콘솔의 로그인 Redirect URI는 다음 형식으로 등록한다.
 
 ```text
@@ -87,7 +77,7 @@ https://example.com/login/oauth2/code/kakao
 
 백엔드는 `OAUTH_REDIRECT_URI`에도 위 주소를 똑같이 넣고, `CORS_ALLOWED_ORIGINS`와 `OAUTH_FRONTEND_BASE_URL`에는 `https://example.com`처럼 실제 Vercel 주소를 등록한다. 프론트의 `NEXT_PUBLIC_SITE_URL`도 같은 origin으로 맞춘다. Vercel 별칭이나 Preview 호스트에서 로그인을 눌러도 먼저 이 대표 도메인으로 이동한 뒤 검증 쿠키를 만들기 때문에 콜백 호스트가 달라져 로그인에 실패하지 않는다. Preview에서 별도 로그인을 시험하려면 고정 Preview 도메인과 별도 백엔드·카카오 앱을 사용한다. 운영에서 `OAUTH_REQUIRE_HTTPS=true`이면 두 OAuth URL이 누락되거나, HTTP이거나, 서로 다른 origin일 때 백엔드가 시작 단계에서 실패한다. `server.forward-headers-strategy=framework` 설정도 유지한다.
 
-EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. EB 환경 속성에 로컬용 `SERVER_PORT=8081`이 남아 있으면 반드시 삭제한다. 포트를 바꿀 때는 `SERVER_PORT`가 아니라 `PORT` 하나만 설정해 nginx upstream과 애플리케이션을 함께 맞춘다.
+EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 전달하므로 이 JAR도 별도 포트 변수가 없으면 5000에서 시작한다. EB 환경 속성에 로컬용 `SERVER_PORT=8081`이 남아 있으면 반드시 삭제한다. 포트를 바꿀 때는 `SERVER_PORT`가 아니라 `PORT` 하나만 설정해 nginx upstream과 애플리케이션을 함께 맞춘다. EB 환경 속성은 OS 환경 변수로 들어가므로 `SERVER_PORT`가 있으면 `application.yml`의 `PORT` 설정보다 우선한다. 로그에 `Tomcat started on port 8080`과 nginx의 `connect() failed (111: Connection refused) ... upstream: "http://127.0.0.1:5000/..."`가 함께 보이고 모든 API가 502이면 이 경우다. 로컬 `backend/.env`를 EB 환경 속성에 통째로 복사하지 않는다.
 
 현재 OAuth authorization request는 서버 세션에 보관한다. EB를 두 대 이상으로 확장하기 전에는 ALB 세션 고정(stickiness)을 활성화하거나 Spring Session 같은 공유 세션 저장소를 도입해야 한다. 그렇지 않으면 로그인 시작과 콜백이 다른 인스턴스에 도착해 간헐적으로 실패할 수 있다.
 
@@ -95,29 +85,29 @@ EB Java SE의 nginx는 기본적으로 애플리케이션의 5000번 포트로 �
 
 현재 EB 원본이 HTTP이면 Vercel 프록시가 브라우저 혼합 콘텐츠 오류만 가릴 뿐, Vercel→EB 구간의 로그인 정보·쿠키·사진 데이터는 암호화되지 않는다. 실사용 트래픽을 받기 전에 ACM 인증서를 연결해 HTTPS 원본으로 전환하고 `BACKEND_ORIGIN`과 `API_URL`도 `https://` 주소로 바꿔야 한다.
 
-## 5. 마이그레이션과 배포 순서
+## 4. 마이그레이션과 배포 순서
 
 1. 운영 DB 스냅샷 또는 백업을 만든다.
-2. 백엔드 새 이미지를 한 인스턴스에 배포한다. 시작 시 Flyway가 순서대로 마이그레이션한다.
+2. 백엔드 새 JAR를 EB에 배포한다. 시작 시 Flyway가 순서대로 마이그레이션한다.
 3. `/actuator/health`와 핵심 공개 API, 로그인 API를 확인한다.
 
 `V39`는 배포 순간 남아 있을 수 있는 120초짜리 OAuth 교환 코드를 폐기하고 브라우저 시도값 열을 필수로 추가합니다. 구버전 백엔드와 동시에 쓰는 롤링 배포는 호환되지 않으므로, 이 버전은 백엔드 트래픽을 잠시 중단한 원자 배포 또는 단일 인스턴스 교체로 적용합니다.
 4. CDN의 Origin Path가 S3의 `/hwaryeok`을 가리키고 `https://cdn.hwaryeok.co.kr/products/...`가 공개 조회되는지 확인한다.
-5. `NEXT_PUBLIC_*` 및 `S3_PUBLIC_BASE_URL` 값이 반영된 프론트 이미지를 빌드해 배포한다.
+5. Vercel에서 프론트를 배포한다. `NEXT_PUBLIC_*`와 `S3_PUBLIC_BASE_URL`은 빌드 시 고정되므로 값을 바꿨다면 반드시 다시 배포한다.
 6. 로그인, 제품 상세, 비교 저장, 관리자 이미지 업로드 흐름을 스모크 테스트한다.
 
 Flyway가 실패하면 새 백엔드 인스턴스를 트래픽에 연결하지 않는다. 이미 적용된 마이그레이션 파일은 수정하지 말고 후속 마이그레이션으로 교정한다.
 
-## 6. 롤백과 백업
+## 5. 롤백과 백업
 
-- 애플리케이션 오류만 있고 DB 변경이 하위 호환이면 직전 프론트·백엔드 이미지로 되돌린다.
+- 애플리케이션 오류만 있고 DB 변경이 하위 호환이면 Vercel은 직전 배포로 Instant Rollback하고, EB는 직전 애플리케이션 버전을 다시 배포한다.
 - 파괴적 DB 변경은 자동 롤백하지 않는다. 사전 백업에서 별도 DB로 복구하고 데이터 차이를 확인한 뒤 전환한다.
 - 신규 제품 이미지는 S3 버전 관리·수명 주기·백업 정책에 포함하고, 레거시 제품 이미지는 PostgreSQL 백업 범위에도 포함한다.
 - 배포 버전, 적용된 Flyway 버전, 스모크 테스트 결과를 배포 기록에 남긴다.
 
-## 7. 운영 점검 목록
+## 6. 운영 점검 목록
 
-- HTTPS 강제, 보안 헤더, 요청 크기 제한, 속도 제한은 역방향 프록시에서도 적용한다.
+- HTTPS 강제, 보안 헤더, 요청 크기 제한, 속도 제한은 EB 로드 밸런서·nginx에서도 적용한다.
 - 백엔드 Hikari 최대 연결 수 × 백엔드 인스턴스 수가 DB 허용 연결 수보다 작아야 한다.
 - 관리자와 OAuth 계정은 배포 후 다시 로그인해 최신 역할·설정이 토큰에 반영됐는지 확인한다.
 - 로그에 Access/Refresh Token, OAuth 비밀키, 면허번호 원문이 남지 않는지 확인한다.

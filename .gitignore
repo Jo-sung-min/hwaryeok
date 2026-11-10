@@ -6,6 +6,7 @@ out/
 *.log
 .DS_Store
 backend/.gradle/
+backend/.gradle-local/
 backend/build/
 backend/bin/
 frontend/tsconfig.tsbuildinfo

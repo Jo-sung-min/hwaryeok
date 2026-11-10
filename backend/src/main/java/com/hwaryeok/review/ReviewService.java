@@ -104,10 +104,7 @@ public class ReviewService {
         }
         Map<String, ReviewCommunityRatingResponse> communityRatings = reputationService.summaries(ratedReviews, viewerId);
         List<ReviewDetailResponse> displayedReviews = recentReviews.isEmpty()
-                ? sampleReviewRepository.findByProductId(productId)
-                        .map(ReviewDetailResponse::from)
-                        .map(List::of)
-                        .orElseGet(List::of)
+                ? sampleReviewsFor(productId, viewerId)
                 : recentReviews.stream()
                         .map(review -> ReviewDetailResponse.from(review, communityRatings.get(review.getId())))
                         .toList();
@@ -131,6 +128,22 @@ public class ReviewService {
                 averages,
                 displayedReviews
         );
+    }
+
+    /** Sample (test) reviews are a screen check for administrators, so only an active admin sees them. */
+    private List<ReviewDetailResponse> sampleReviewsFor(String productId, String viewerId) {
+        if (!isActiveAdmin(viewerId)) return List.of();
+        return sampleReviewRepository.findByProductId(productId)
+                .map(ReviewDetailResponse::from)
+                .map(List::of)
+                .orElseGet(List::of);
+    }
+
+    private boolean isActiveAdmin(String viewerId) {
+        if (viewerId == null) return false;
+        return userRepository.findById(viewerId)
+                .filter(user -> "ACTIVE".equals(user.getStatus()) && "ADMIN".equals(user.getRole()))
+                .isPresent();
     }
 
     @Transactional(readOnly = true)

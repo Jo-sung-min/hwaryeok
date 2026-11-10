@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Building2, Check, Clock3, X } from "lucide-react";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { reviewExpertAction } from "@/app/admin/experts/actions";
@@ -9,7 +9,7 @@ const statusName = { PENDING: "검토 중", VERIFIED: "승인", REJECTED: "반�
 
 export default async function AdminExpertsPage() {
   const user = await requireSession("/admin/experts");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   const applications = accessToken
     ? await getAdminExpertApplications(accessToken).catch((error) => recoverAdminPageSession(error, "/admin/experts"))

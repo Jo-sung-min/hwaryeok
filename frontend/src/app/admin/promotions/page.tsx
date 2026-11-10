@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BadgeCheck, CalendarDays, Megaphone } from "lucide-react";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminProducts, getAdminPromotions } from "@/lib/api";
@@ -8,7 +8,7 @@ import { PromotionForm } from "./promotion-form";
 
 export default async function AdminPromotionsPage() {
   const user = await requireSession("/admin/promotions");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
   const [products, promotions] = await Promise.all([

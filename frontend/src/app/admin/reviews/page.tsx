@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowRight, MessageSquareText, Search, Sparkles, UserRound } from "lucide-react";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminReviews } from "@/lib/api";
@@ -41,7 +41,7 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
   const requestedPage = readPage(search.page);
   const returnTo = adminReviewsHref(q, kind, requestedPage);
   const user = await requireSession(returnTo);
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import { getAdminUsageVideos } from "@/lib/usage-video-api";
@@ -16,7 +16,7 @@ export default async function AdminUsageVideosPage({ searchParams }: { searchPar
   const status = rawStatus && Object.hasOwn(usageVideoStatusLabels, rawStatus) ? rawStatus as UsageVideoStatus : undefined;
   const returnTo = `/admin/usage-videos?${new URLSearchParams({ ...(status ? { status } : {}), page: String(readUsageVideoPage(search.page) + 1) })}`;
   const user = await requireSession(returnTo);
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
   let data = await getAdminUsageVideos(accessToken, status, readUsageVideoPage(search.page)).catch((error) => recoverAdminPageSession(error, returnTo));

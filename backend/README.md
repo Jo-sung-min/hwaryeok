@@ -10,13 +10,7 @@ PostgreSQL 없이 개발 서버를 빠르게 확인하려면 바로 실행합니
 ./gradlew bootRun
 ```
 
-PostgreSQL 연동을 확인하려면 프로젝트 루트에서 PostgreSQL을 시작합니다.
-
-```bash
-docker compose up -d postgres
-```
-
-백엔드를 실행합니다.
+PostgreSQL 연동을 확인하려면 로컬에 설치한 PostgreSQL 또는 개발용 관리형 PostgreSQL을 준비한 뒤 백엔드를 실행합니다.
 
 ```bash
 cd backend
@@ -98,7 +92,7 @@ node scripts/crawl-hwahae-ranking.mjs --output=src/main/resources/seed/hwahae-ra
 
 수집기는 먼저 `robots.txt`를 확인하고 허용된 공개 `/rankings` 페이지만 한 번 요청합니다. 제품 상세처럼 제한되거나 자동화 차단이 걸린 경로는 우회하지 않습니다. 전성분은 이번 공개 랭킹 데이터에 없으므로 임의로 연결하지 않았습니다.
 
-Docker 없이 화면 연동을 빠르게 확인할 때만 개발용 H2 프로필을 사용할 수 있습니다.
+PostgreSQL 없이 화면 연동을 빠르게 확인할 때만 개발용 H2 프로필을 사용할 수 있습니다.
 
 ```bash
 gradlew.bat bootRun --args="--spring.profiles.active=local"
@@ -232,7 +226,7 @@ http://localhost:3001/login/oauth2/code/kakao
 ```
 
 - 카카오 로그인 활성화와 Redirect URI 등록 후 REST API 키를 `KAKAO_CLIENT_ID`로 사용합니다. 로그인 식별에는 사용자 정보 응답의 앱별 회원 고유 ID(`id`)만 사용하므로 이메일·닉네임 동의항목은 필수가 아닙니다.
-- 운영 환경: 카카오 Redirect URI와 `OAUTH_REDIRECT_URI`를 모두 `https://<실제-버셀-도메인>/login/oauth2/code/kakao`로 맞추고, `OAUTH_FRONTEND_BASE_URL`에도 같은 Vercel 기본 주소를 설정합니다. `OAUTH_REQUIRE_HTTPS=true`를 유지합니다. 로컬 HTTP Compose에서만 이 값을 `false`로 둡니다.
+- 운영 환경: 카카오 Redirect URI와 `OAUTH_REDIRECT_URI`를 모두 `https://<실제-버셀-도메인>/login/oauth2/code/kakao`로 맞추고, `OAUTH_FRONTEND_BASE_URL`에도 같은 Vercel 기본 주소를 설정합니다. `OAUTH_REQUIRE_HTTPS=true`를 유지합니다. 로컬 HTTP 실행에서만 이 값을 `false`로 둡니다.
 
 OAuth 계정은 `oauth_accounts`에 공급자 사용자 ID와 화력 회원을 분리해 연결합니다. 카카오는 `(KAKAO, 카카오 회원 고유 ID)`를 로그인 키로 사용하며 카카오 이메일이 없거나 바뀌어도 같은 계정으로 처리합니다. 같은 이메일의 기본 계정과 카카오 계정을 자동 연결하지 않으며, 연결이 필요하면 추후 로그인된 상태에서 명시적인 계정 연결 기능으로 처리합니다. 카카오 회원 ID는 앱별 값이므로 운영 DB를 유지하는 동안 같은 Kakao Developers 앱과 REST API 키를 유지해야 합니다.
 

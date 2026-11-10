@@ -197,7 +197,7 @@ test("sample reviews are labeled and cannot open a profile or receive community 
     savedSkinType: null,
   }));
 
-  assert.match(html, /화면 예시 · 점수 집계 제외/);
+  assert.match(html, /관리자 전용 테스트 리뷰 · 점수 집계 제외/);
   assert.doesNotMatch(html, /href="\/reviewers\//);
   assert.doesNotMatch(html, /data-review-firepower-vote/);
 });
@@ -215,7 +215,7 @@ test("ordinary user reviews retain the reviewer profile and firepower vote journ
   assert.match(html, /href="\/reviewers\/member-1"/);
   assert.match(html, /data-review-firepower-vote="review-1"/);
   assert.match(html, /data-petal-count="4"/);
-  assert.doesNotMatch(html, /화면 예시 · 점수 집계 제외/);
+  assert.doesNotMatch(html, /관리자 전용 테스트 리뷰 · 점수 집계 제외/);
 });
 
 test("the signed-in author's review opens with every editable value prefilled", () => {

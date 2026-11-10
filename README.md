@@ -17,32 +17,24 @@ hwaryeok/
 │  ├─ build.gradle
 │  ├─ gradlew / gradlew.bat
 │  └─ .env.example
-├─ docker-compose.yml    프론트·백엔드·PostgreSQL 컨테이너 구성
-├─ DEPLOYMENT.md         운영 환경 변수·Docker·배포·롤백 가이드
-├─ .env.example          Docker·PostgreSQL·S3/CDN 환경 변수 예시
+├─ DEPLOYMENT.md         운영 환경 변수·Vercel/EB 배포·롤백 가이드
 └─ plan.md               구현 체크리스트와 작업 기록
 ```
 
-프론트와 백엔드는 의존성, 환경 변수, 빌드 명령을 공유하지 않습니다. Next.js는 PostgreSQL에 직접 접근하지 않고 Spring Boot REST API만 호출합니다.
+프론트(Vercel)와 백엔드(AWS Elastic Beanstalk)는 의존성, 환경 변수, 빌드 명령을 공유하지 않습니다. Next.js는 PostgreSQL에 직접 접근하지 않고 Spring Boot REST API만 호출하므로 DB 접속 정보는 `backend/.env`와 EB 환경 속성에만 둡니다.
 
 ## 로컬 실행
 
 ### 1. PostgreSQL (PostgreSQL 연동을 확인할 때)
 
-```bash
-cp .env.example .env
-# .env의 DB_PASSWORD를 임의의 값으로 교체
-docker compose up -d postgres
-```
-
-Windows PowerShell에서는 `Copy-Item .env.example .env`를 사용합니다.
+로컬에 설치한 PostgreSQL 또는 개발용 관리형 PostgreSQL을 준비하고, 접속 정보를 다음 단계의 `backend/.env`에 입력합니다.
 
 ### 2. 백엔드
 
 ```bash
 cd backend
 cp .env.example .env
-# backend/.env의 DB_PASSWORD를 PostgreSQL과 같은 값으로 설정
+# backend/.env의 DB_URL, DB_USER, DB_PASSWORD를 준비한 PostgreSQL 접속 정보로 설정
 ./gradlew bootRun --args="--spring.profiles.active=postgres"
 ```
 
@@ -60,6 +52,8 @@ npm install
 npm run dev
 ```
 
+프론트는 환경 파일 없이도 로컬 백엔드(`http://localhost:8081`)에 연결됩니다. 값을 바꿀 때만 `frontend/.env.example`을 `frontend/.env.local`로 복사해 수정합니다.
+
 - 프론트엔드: `http://localhost:3001`
 - 백엔드: `http://localhost:8081`
 - 상태 확인: `http://localhost:8081/actuator/health`
@@ -72,10 +66,13 @@ Vercel에서 Git 저장소를 가져온 뒤 다음처럼 설정합니다.
 2. **Framework Preset:** Next.js
 3. **Build Command:** `npm run build` — 자동 감지값 사용 가능
 4. **Backend Origin:** `BACKEND_ORIGIN=http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com`
-5. **Server API:** `API_URL=http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1`
-6. **Browser API:** `NEXT_PUBLIC_API_URL=/api/v1`
-7. **Site URL:** `NEXT_PUBLIC_SITE_URL=https://<실제-버셀-도메인>`
-8. **Login proxy secret:** `BFF_PROXY_SECRET=<32자 이상의 임의 값>` — 백엔드에도 같은 값 설정
+5. **Browser API:** `NEXT_PUBLIC_API_URL=/api/v1`
+6. **Site URL:** `NEXT_PUBLIC_SITE_URL=https://<실제-버셀-도메인>`
+7. **Login proxy secret:** `BFF_PROXY_SECRET=<32자 이상의 임의 값>` — 백엔드에도 같은 값 설정
+8. **Image CDN:** `S3_PUBLIC_BASE_URL=https://cdn.hwaryeok.co.kr`
+9. **Server API (선택):** `API_URL=http://hwaryeok-prd.ap-northeast-2.elasticbeanstalk.com/api/v1`
+
+Vercel에는 위 값만 등록합니다. `DB_*`, `JWT_SECRET`, `KAKAO_*`, `S3_BUCKET`, `AWS_*` 같은 백엔드 전용 값은 Vercel에 두지 않습니다.
 
 `/api/v1/*`와 카카오 OAuth 시작·콜백 요청은 Next.js 외부 rewrite를 통해 Vercel에서 백엔드로 전달됩니다. 브라우저에는 EB의 HTTP 주소가 노출되지 않으므로 HTTPS 페이지의 혼합 콘텐츠 오류를 피할 수 있습니다. `API_URL`을 생략하면 `BACKEND_ORIGIN + /api/v1`을 사용합니다. 두 값을 함께 설정하면 반드시 같은 origin이어야 하며, 서로 다르면 OAuth와 데이터 서버가 갈라지는 것을 막기 위해 빌드가 실패합니다. 두 서버 전용 값은 Vercel의 Production, Preview, Development 환경별로 등록하고 백엔드의 `CORS_ALLOWED_ORIGINS`에는 실제 Vercel 도메인을 등록합니다.
 
@@ -100,6 +97,6 @@ cd ../backend
 
 백엔드 API 문서는 [backend/README.md](backend/README.md), 전체 진행 상태는 [plan.md](plan.md)를 참고합니다.
 
-프론트·백엔드·PostgreSQL 전체를 컨테이너로 검증하거나 운영 배포를 준비할 때는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고하세요.
+운영 배포(Vercel·Elastic Beanstalk)를 준비할 때는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참고하세요.
 
 샘플 제품에는 화해 공개 급상승 랭킹을 화력 형식으로 변환한 16종이 포함됩니다. 수집 범위, 변환 규칙, 재수집 방법은 [backend/README.md](backend/README.md#화해-공개-랭킹-샘플-데이터)에 기록되어 있습니다.

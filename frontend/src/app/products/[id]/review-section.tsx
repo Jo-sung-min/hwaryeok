@@ -62,7 +62,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
                 <article key={review.id} className="rounded-2xl border border-[#e9dfe2] bg-white p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      {review.sampleReview && <span className="mb-2 inline-flex rounded-full bg-[#fff0f5] px-2.5 py-1 text-[10px] font-bold text-[#a84a6c]">화면 예시 · 점수 집계 제외</span>}
+                      {review.sampleReview && <span className="mb-2 inline-flex rounded-full bg-[#fff0f5] px-2.5 py-1 text-[10px] font-bold text-[#a84a6c]">관리자 전용 테스트 리뷰 · 점수 집계 제외</span>}
                       <div>
                         {!review.sampleReview && review.authorId ? (
                           <Link href={`/reviewers/${review.authorId}`} className="inline-flex min-h-7 items-center text-sm font-bold text-[#9e405e] underline decoration-[#e5a9ba] underline-offset-4 transition hover:text-[#bd4d6f]" aria-label={`${review.authorNickname}님의 리뷰 목록 보기`}>{review.authorNickname}</Link>

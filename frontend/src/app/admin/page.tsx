@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DatabaseZap, Megaphone, MessageSquareText, Package, SearchCheck, Stethoscope, Trophy, Video } from "lucide-react";
 import { AdminCard, AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminExpertApplications, getAdminProducts, getAdminPromotions, getAdminReviews } from "@/lib/api";
@@ -6,7 +6,7 @@ import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/a
 
 export default async function AdminPage() {
   const user = await requireSession("/admin");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
 

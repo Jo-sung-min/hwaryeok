@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Database, ExternalLink, Layers3, ShieldCheck } from "lucide-react";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { KciaImportForm, MfdsSyncForm } from "@/app/admin/data-sources/data-source-forms";
@@ -10,7 +10,7 @@ import type { DataSourceStatus } from "@/lib/types";
 
 export default async function AdminDataSourcesPage() {
   const user = await requireSession("/admin/data-sources");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
   const [status, ingredientPage, regulationReviews] = await Promise.all([

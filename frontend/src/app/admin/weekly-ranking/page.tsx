@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CalendarDays, ListOrdered, Trophy } from "lucide-react";
 import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminProducts, getAdminWeeklyRanking } from "@/lib/api";
@@ -7,7 +7,7 @@ import { WeeklyRankingForm } from "./weekly-ranking-form";
 
 export default async function AdminWeeklyRankingPage() {
   const user = await requireSession("/admin/weekly-ranking");
-  if (user.role !== "ADMIN") notFound();
+  if (user.role !== "ADMIN") redirect("/");
   const { accessToken } = await readAuthTokens();
   if (!accessToken) notFound();
 

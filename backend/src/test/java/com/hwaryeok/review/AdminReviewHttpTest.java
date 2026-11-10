@@ -139,7 +139,15 @@ class AdminReviewHttpTest {
                 "GET", "/api/v1/products/" + productId + "/reviews", null
         ).body());
         assertThat(publicSummary.get("reviewCount").asLong()).isZero();
-        assertThat(publicSummary.get("reviews").get(0).get("id").asString()).isEqualTo(sampleId);
+        assertThat(publicSummary.get("reviews").isEmpty()).isTrue();
+        JsonNode userSummary = mapper.readTree(send(
+                "GET", "/api/v1/products/" + productId + "/reviews", userToken
+        ).body());
+        assertThat(userSummary.get("reviews").isEmpty()).isTrue();
+        JsonNode adminSummary = mapper.readTree(send(
+                "GET", "/api/v1/products/" + productId + "/reviews", adminToken
+        ).body());
+        assertThat(adminSummary.get("reviews").get(0).get("id").asString()).isEqualTo(sampleId);
 
         assertThat(send("DELETE", "/api/v1/admin/reviews/" + sampleId, adminToken).statusCode()).isEqualTo(204);
         assertThat(jdbc.queryForObject(
