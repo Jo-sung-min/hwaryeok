@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, SearchCheck, ShieldCheck } from "lucide-react";
+import { SearchCheck } from "lucide-react";
+import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminSeoPages } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import { SEO_PAGE_FALLBACKS, SEO_PAGE_KEYS, seoPageFallback } from "@/lib/seo";
@@ -46,20 +46,8 @@ export default async function AdminSeoPage() {
   });
 
   return (
-    <div className="min-h-screen pb-28">
-      <section className="border-b border-[#eacdd4] bg-[#fff2f5] py-9 md:py-14">
-        <div className="container-page">
-          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#78666c]"><ArrowLeft size={16} /> 관리자 센터</Link>
-          <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="eyebrow mb-2">SEARCH &amp; SOCIAL</p>
-              <h1 className="font-myeongjo text-3xl font-bold sm:text-4xl">SEO 관리</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-[#77666c]">검색 결과에 표시할 제목과 설명, SNS 공유 이미지, 검색 노출 여부와 사이트맵 포함 기준을 페이지별로 관리하세요.</p>
-            </div>
-            <span className="inline-flex self-start items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#954b5f]"><ShieldCheck size={15} /> 관리자 전용</span>
-          </div>
-        </div>
-      </section>
+    <div>
+      <AdminHeader title="SEO" />
 
       <main className="container-page py-8 md:py-12">
         <aside className="mb-7 flex gap-3 rounded-[22px] border border-[#e5d4da] bg-white p-5 text-xs leading-6 text-[#79676e]">

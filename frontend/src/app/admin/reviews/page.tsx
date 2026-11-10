@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, MessageSquareText, Search, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { ArrowRight, MessageSquareText, Search, Sparkles, UserRound } from "lucide-react";
+import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminReviews } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import type { AdminReviewKind, AdminReviewListItem, ReviewDetail } from "@/lib/types";
@@ -52,22 +53,10 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
   }
 
   return (
-    <div className="min-h-screen pb-28">
-      <section className="border-b border-[#eacdd4] bg-[#fff2f5] py-9 md:py-12">
-        <div className="container-page">
-          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#78666c]"><ArrowLeft size={16} /> 관리자 센터</Link>
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="eyebrow mb-2">REVIEW MANAGEMENT</p>
-              <h1 className="font-myeongjo text-3xl font-bold sm:text-4xl">리뷰 관리</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#77666c]">사용자 리뷰와 제품별 화면 예시를 한곳에서 확인하세요. 스팸, 욕설, 개인정보 노출처럼 운영 원칙을 벗어난 리뷰만 신중하게 삭제해 주세요.</p>
-            </div>
-            <span className="inline-flex self-start items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#954b5f]"><ShieldCheck size={15} /> 관리자 전용</span>
-          </div>
-        </div>
-      </section>
+    <div>
+      <AdminHeader title="리뷰" meta={`${data.totalElements.toLocaleString("ko-KR")}개`} />
 
-      <main className="container-page py-8 md:py-10">
+      <main className="container-page">
         <section aria-label="리뷰 검색과 구분 필터" className="rounded-[22px] border border-[#ead9df] bg-white p-4 sm:p-5">
           <form action="/admin/reviews" method="get" role="search" className="flex flex-col gap-3 sm:flex-row">
             <input type="hidden" name="kind" value={kind} />
@@ -94,7 +83,7 @@ export default async function AdminReviewsPage({ searchParams }: { searchParams:
         </section>
 
         <div className="mb-5 mt-8 flex flex-wrap items-end justify-between gap-3">
-          <div><p className="eyebrow mb-2">REVIEWS</p><h2 className="font-myeongjo text-2xl font-bold">{q ? `‘${q}’ 검색 결과` : reviewKinds.find((item) => item.value === kind)?.label} <span className="ml-1 text-base font-semibold text-[#b17288]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2></div>
+          <div><h2 className="text-[20px] font-semibold tracking-[-0.01em]">{q ? `‘${q}’ 검색 결과` : reviewKinds.find((item) => item.value === kind)?.label} <span className="ml-1 text-[15px] font-medium text-[#86868b]">{data.totalElements.toLocaleString("ko-KR")}개</span></h2></div>
           <p className="text-xs text-[#8b747d]">최신 등록순 · 삭제 후 복구할 수 없어요</p>
         </div>
 

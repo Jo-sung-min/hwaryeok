@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, ListOrdered, ShieldCheck, Trophy } from "lucide-react";
+import { CalendarDays, ListOrdered, Trophy } from "lucide-react";
+import { AdminHeader } from "@/app/admin/admin-ui";
 import { getAdminProducts, getAdminWeeklyRanking } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
 import { WeeklyRankingForm } from "./weekly-ranking-form";
@@ -18,18 +18,10 @@ export default async function AdminWeeklyRankingPage() {
   const products = allProducts.filter((product) => product.publicationStatus === "PUBLISHED" && product.imageUrl);
   const formKey = `${ranking.weekStart}-${ranking.mode}-${ranking.content.map((item) => item.product.id).join("-")}`;
 
-  return <div className="min-h-screen pb-28">
-    <section className="border-b border-[#e9cdd5] bg-[#fff2f5] py-9">
-      <div className="container-page">
-        <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#76646b]"><ArrowLeft size={16} /> 관리자 센터</Link>
-        <div className="mt-4 flex flex-col gap-5">
-          <div><p className="eyebrow mb-3">WEEKLY FIREPOWER</p><h1 className="font-myeongjo text-3xl font-semibold">이주의 화력 랭킹 관리</h1><p className="mt-3 max-w-2xl text-sm leading-7 text-[#7b6970]">매주 월요일 0시(한국시간)에 평가 개수, 평가점수 순으로 상위 10개를 새로 계산합니다. 이번 주 배너만 직접 교체하거나 순서를 바꿀 수 있어요.</p></div>
-          <span className="inline-flex self-start items-center gap-2 rounded-full border border-[#c7819540] bg-white px-4 py-2 text-xs font-semibold text-[#9b4a5f]"><ShieldCheck size={15} /> 관리자 전용</span>
-        </div>
-      </div>
-    </section>
+  return <div>
+    <AdminHeader title="주간 랭킹" meta="매주 월요일 0시 자동 갱신" />
 
-    <main className="container-page py-8">
+    <main className="container-page">
       <section className="mb-5 grid grid-cols-2 gap-3" aria-label="주간 랭킹 상태">
         <div className="rounded-2xl border border-[#e6ccd3] bg-white p-4"><CalendarDays size={18} className="text-[#a44f65]" /><p className="mt-2 text-[10px] font-semibold text-[#806d74]">이번 주 · 다음 갱신</p><strong className="mt-1 block text-sm">{ranking.weekStart} · {ranking.nextRefreshOn}</strong></div>
         <div className="rounded-2xl border border-[#e6ccd3] bg-white p-4"><ListOrdered size={18} className="text-[#a44f65]" /><p className="mt-2 text-[10px] font-semibold text-[#806d74]">현재 운영 방식</p><strong className="mt-1 block text-sm">{ranking.mode === "AUTO" ? "자동 상위 10개" : "관리자 수동 편집"}</strong></div>

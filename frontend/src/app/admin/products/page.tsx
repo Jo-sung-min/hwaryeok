@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, PackagePlus, ShieldCheck } from "lucide-react";
-import { AdminProductItem } from "@/app/admin/products/admin-product-item";
+import { Plus } from "lucide-react";
+import { AdminHeader, adminCardClass } from "@/app/admin/admin-ui";
+import { AdminProductBrowser } from "@/app/admin/products/admin-product-browser";
 import { ProductForm } from "@/app/admin/products/product-form";
 import { getAdminMfdsProductMatches, getAdminOfficialIngredientSources, getAdminProductIngredients, getAdminProducts, getIngredients } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
@@ -24,49 +24,28 @@ export default async function AdminProductsPage() {
   const ingredientsByProduct = new Map(ingredientEntries);
   const officialSourceByProduct = new Map(officialSources.map((source) => [source.productId, source]));
   const mfdsMatchByProduct = new Map(mfdsMatches.map((match) => [match.productId, match]));
-  const verifiedMfdsCount = mfdsMatches.filter((match) => match.matchStatus === "ADMIN_VERIFIED").length;
-  const noMatchMfdsCount = mfdsMatches.filter((match) => match.matchStatus === "NO_MATCH").length;
-  const mfdsReviewPercent = products.length === 0 ? 0 : Math.round((mfdsMatches.length / products.length) * 100);
   const defaultCheckedAt = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul" }).format(new Date());
+  const entries = products.map((product) => ({
+    product,
+    ingredients: ingredientsByProduct.get(product.id)!,
+    officialIngredientSource: officialSourceByProduct.get(product.id),
+    mfdsMatch: mfdsMatchByProduct.get(product.id),
+  }));
 
   return (
-    <div className="min-h-screen pb-28">
-      <section className="border-b border-[#dfa6b52b] bg-[#fff0f3] py-9 md:py-14">
-        <div className="container-page">
-          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#76646b]"><ArrowLeft size={16} /> 관리자 센터</Link>
-          <div className="mt-4 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div><p className="eyebrow mb-3">PRODUCT MANAGEMENT</p><h1 className="font-myeongjo text-3xl font-semibold md:text-4xl">상품 정보·공개 관리</h1><p className="mt-3 max-w-2xl text-sm leading-7 text-[#7b6970]">제품 정보, 출처, 성분을 확인한 뒤 공개하세요. 초안과 숨김 상품은 사용자 화면에 나타나지 않아요.</p></div>
-            <span className="inline-flex self-start items-center gap-2 rounded-full border border-[#c7819540] bg-white/80 px-4 py-2 text-xs font-semibold text-[#9b4a5f]"><ShieldCheck size={15} /> 관리자 전용</span>
-          </div>
+    <>
+      <AdminHeader title="상품" meta={`${products.length}개 · 식약처 검수 ${mfdsMatches.length}/${products.length}`} />
+      <main className="container-page">
+        <details className={`${adminCardClass} group`}>
+          <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-5 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+            <Plus size={18} className="text-[#0071e3] transition group-open:rotate-45" />새 상품 등록
+          </summary>
+          <div className="border-t border-black/[.06] p-5 sm:p-6"><ProductForm /></div>
+        </details>
+        <div className="mt-8">
+          <AdminProductBrowser entries={entries} availableIngredients={ingredientPage.content} defaultCheckedAt={defaultCheckedAt} />
         </div>
-      </section>
-
-      <main className="container-page py-8 md:py-12">
-        <section className="paper-card rounded-[24px] p-5 sm:rounded-[28px] sm:p-7 md:p-9">
-          <div className="mb-7 flex items-start gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#f8e1e7] text-[#a44f65]"><PackagePlus size={20} /></span>
-            <div><h2 className="font-myeongjo text-2xl font-semibold">새 상품 등록</h2><p className="mt-1 text-xs leading-5 text-[#88757c]">기본값은 안전한 초안이에요. 등록 후 이미지·출처·성분을 확인하고 공개하세요.</p></div>
-          </div>
-          <ProductForm />
-        </section>
-
-        <section className="mt-10 md:mt-14">
-          <div className="mb-7 rounded-[24px] border border-[#b7cab94d] bg-white p-5 shadow-[0_12px_30px_rgba(83,113,91,.06)] sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div><p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#68806d]">MFDS REVIEW PROGRESS</p><h2 className="mt-2 font-myeongjo text-xl font-semibold">식약처 품목 검수 {mfdsMatches.length}/{products.length}개</h2><p className="mt-2 text-xs leading-5 text-[#7c716c]">연결 완료 {verifiedMfdsCount}개 · 해당 없음 {noMatchMfdsCount}개 · 미검수 {Math.max(0, products.length - mfdsMatches.length)}개</p></div>
-              <strong className="font-myeongjo text-3xl text-[#58715e]">{mfdsReviewPercent}%</strong>
-            </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#edf0ec]" aria-label={`식약처 품목 검수 진행률 ${mfdsReviewPercent}%`}><div className="h-full rounded-full bg-[#6f8b76] transition-[width]" style={{ width: `${mfdsReviewPercent}%` }} /></div>
-          </div>
-          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="eyebrow mb-2">REGISTERED PRODUCTS</p><h2 className="font-myeongjo text-2xl font-semibold">등록 상품 {products.length}개</h2></div>
-            <p className="text-xs leading-5 text-[#89747c]">각 상품을 열어 정보·이미지·성분을 함께 관리할 수 있어요.</p>
-          </div>
-          <div className="space-y-4">
-            {products.map((product) => <AdminProductItem key={product.id} product={product} availableIngredients={ingredientPage.content} initialIngredients={ingredientsByProduct.get(product.id)!} officialIngredientSource={officialSourceByProduct.get(product.id)} mfdsMatch={mfdsMatchByProduct.get(product.id)} defaultCheckedAt={defaultCheckedAt} />)}
-          </div>
-        </section>
       </main>
-    </div>
+    </>
   );
 }

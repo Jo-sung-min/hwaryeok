@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Building2, Check, Clock3, ShieldCheck, X } from "lucide-react";
+import { Building2, Check, Clock3, X } from "lucide-react";
+import { AdminHeader } from "@/app/admin/admin-ui";
 import { reviewExpertAction } from "@/app/admin/experts/actions";
 import { getAdminExpertApplications } from "@/lib/api";
 import { readAuthTokens, recoverAdminPageSession, requireSession } from "@/lib/auth-session";
@@ -16,19 +16,10 @@ export default async function AdminExpertsPage() {
     : [];
 
   return (
-    <div className="min-h-screen pb-28">
-      <section className="border-b border-[#eacdd4] bg-[#fff2f5] py-9 md:py-12">
-        <div className="container-page">
-          <Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#78666c]"><ArrowLeft size={16} /> 관리자 센터</Link>
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="eyebrow mb-2">ADMIN EXPERT REVIEW</p><h1 className="font-myeongjo text-3xl font-bold sm:text-4xl">전문가 인증 관리</h1><p className="mt-3 text-sm leading-7 text-[#77666c]">의사, 전문의, 근무지를 각각 확인한 뒤 상태를 결정합니다.</p></div>
-            <span className="inline-flex self-start items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-[#954b5f]"><ShieldCheck size={15} /> 관리자 전용</span>
-          </div>
-        </div>
-      </section>
+    <div>
+      <AdminHeader title="전문가 인증" meta={`신청 ${applications.length}건 · 대기 ${applications.filter((item) => item.status === "PENDING").length}건`} />
 
-      <main className="container-page py-8 md:py-10">
-        <div className="mb-6 flex items-end justify-between gap-4"><h2 className="font-myeongjo text-2xl font-bold">신청 {applications.length}건</h2><span className="shrink-0 text-xs text-[#8b747b]">대기 {applications.filter((item) => item.status === "PENDING").length}건</span></div>
+      <main className="container-page">
         <div className="space-y-5">
           {applications.map((application) => (
             <article key={application.id} className="paper-card rounded-[24px] p-5 sm:rounded-[26px] sm:p-6">

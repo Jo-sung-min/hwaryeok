@@ -1,7 +1,8 @@
 "use client";
 
-import { BadgeDollarSign, ChevronDown, CircleAlert, FileCheck2, FlaskConical, ImagePlus, Landmark, Link2, ListChecks, PencilLine, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { FlaskConical, ImagePlus, Landmark, Link2, ListChecks, PencilLine, X, type LucideIcon } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { adminCardClass } from "@/app/admin/admin-ui";
 import { ProductDeleteForm } from "@/app/admin/products/product-delete-form";
 import { CoupangPartnersForm } from "@/app/admin/products/coupang-partners-form";
 import { ProductForm } from "@/app/admin/products/product-form";
@@ -28,77 +29,95 @@ export function AdminProductItem({
   defaultCheckedAt: string;
 }) {
   const [open, setOpen] = useState(false);
+  const cardRef = useRef<HTMLElement>(null);
   const ingredientCount = initialIngredients.totalCount;
   const verifiedAmountCount = initialIngredients.verifiedAmountCount ?? initialIngredients.ingredients.filter((item) => item.amount?.verificationStatus === "VERIFIED").length;
+  const ready = isReady(product, ingredientCount);
+  const editorId = `admin-product-${product.id}`;
+
+  useEffect(() => {
+    if (open) cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [open]);
+
+  if (!open) {
+    return (
+      <section ref={cardRef} className={`${adminCardClass} overflow-hidden`}>
+        <button
+          type="button"
+          aria-expanded={false}
+          aria-controls={editorId}
+          onClick={() => setOpen(true)}
+          className="group block w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0071e3]"
+        >
+          <span className="block aspect-square overflow-hidden bg-white">
+            <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="catalog" />
+          </span>
+          <span className="block border-t border-black/[.05] p-3.5">
+            <span className="block truncate text-[12px] text-[#86868b]">{product.brand}</span>
+            <span className="mt-0.5 line-clamp-2 block min-h-[2.6em] text-[14px] font-medium leading-[1.3]">{product.name}</span>
+            <span className="mt-2.5 flex items-center gap-2 text-[12px]">
+              <StatusLabel status={product.publicationStatus} />
+              <span className="text-[#86868b]">성분 {ingredientCount}</span>
+              {!ready && <span className="ml-auto font-medium text-[#c25e00]">보완</span>}
+            </span>
+          </span>
+        </button>
+      </section>
+    );
+  }
 
   return (
-    <section className="overflow-hidden rounded-[24px] border border-[#dca9b63d] bg-[#fffafc] shadow-[0_14px_34px_rgba(151,76,96,.06)]">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={`admin-product-${product.id}`}
-        onClick={() => setOpen((current) => !current)}
-        className="flex min-h-24 w-full items-center gap-4 p-4 text-left sm:gap-5 sm:p-5"
-      >
-        <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-[#f1dfe4] sm:h-24 sm:w-24"><ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="thumbnail" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[10px] font-bold uppercase tracking-[.12em] text-[#9a7d86]">{product.brand} · {product.category}</span>
-          <span className="mt-1 line-clamp-2 block font-myeongjo text-lg font-semibold sm:text-xl">{product.name}</span>
-          <span className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-[#89747c]">
-            <StatusBadge status={product.publicationStatus} />
-            <span className="rounded-full bg-[#f5eff1] px-2 py-1">{product.score}점</span>
-            <span className="rounded-full bg-[#f5eff1] px-2 py-1">성분 {ingredientCount}개</span>
-            {verifiedAmountCount > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 함량 {verifiedAmountCount}개 검증</span>}
-            {product.coupangPartnersUrl && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff0f4] px-2 py-1 font-bold text-[#a34d65]"><BadgeDollarSign size={11} /> 파트너스 연결</span>}
-            {mfdsMatch?.matchStatus === "ADMIN_VERIFIED" && <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5ee] px-2 py-1 font-bold text-[#55735e]"><ShieldCheck size={11} /> 식약처 연결</span>}
-            {mfdsMatch?.matchStatus === "NO_MATCH" && <span className="inline-flex items-center gap-1 rounded-full bg-[#f1eeeb] px-2 py-1 font-bold text-[#71665f]"><CircleAlert size={11} /> 식약처 해당 없음</span>}
-            {!isReady(product, ingredientCount) && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1df] px-2 py-1 text-[#936626]"><CircleAlert size={11} /> 정보 보완 필요</span>}
-          </span>
+    <section ref={cardRef} className={`${adminCardClass} col-span-full scroll-mt-4 overflow-hidden`}>
+      <div className="flex items-center gap-4 border-b border-black/[.06] p-4 sm:p-5">
+        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-black/[.05]">
+          <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="thumbnail" />
         </span>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#fff0f3] text-[#a65066]"><ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} /></span>
-      </button>
-
-      {open && (
-        <div id={`admin-product-${product.id}`} className="border-t border-[#dca9b62f] bg-white/55 p-4 sm:p-6 md:p-7">
-          <div className="mb-5 flex items-center gap-2 text-xs font-bold text-[#8f5262]"><PencilLine size={15} /> 기본 정보 수정</div>
-          <ProductForm product={product} />
-          <div className="mt-7 border-t border-[#74513f18] pt-6">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf2e9] text-[#60755c]"><Landmark size={17} /></span>
-              <div><div className="text-xs font-bold text-[#5d6d5d]">식약처 보고품목 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">품목명과 업체를 직접 확인한 연결만 사용자 제품 상세에 공개돼요.</p></div>
-            </div>
-            <MfdsProductMatchForm productId={product.id} productName={product.name} initialMatch={mfdsMatch} />
-          </div>
-          <div className="mt-7 border-t border-[#74513f18] pt-6">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#edf2e9] text-[#60755c]"><FlaskConical size={17} /></span>
-              <div><div className="text-xs font-bold text-[#6c665b]">제품 성분·공개 함량 연결</div><p className="mt-1 text-[11px] leading-5 text-[#897d78]">성분 순서와 역할을 연결하고, 공식 수치가 있을 때만 단위와 출처를 따로 검수해 주세요.</p></div>
-            </div>
-            <ProductIngredientsForm productId={product.id} availableIngredients={availableIngredients} initialIngredients={initialIngredients} />
-          </div>
-          <div className="mt-7 border-t border-[#74513f18] pt-6">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff0f4] text-[#a65066]"><ListChecks size={17} /></span>
-              <div><div className="text-xs font-bold text-[#8f5262]">브랜드 공식 전성분</div><p className="mt-1 text-[11px] leading-5 text-[#89747c]">공식 페이지 원문을 표준 성분사전과 대조하며, 전부 일치할 때만 사용자 화면에 반영해요.</p></div>
-            </div>
-            <OfficialIngredientForm productId={product.id} initialSource={officialIngredientSource} defaultCheckedAt={defaultCheckedAt} />
-          </div>
-          <div className="mt-7 border-t border-[#74513f18] pt-6">
-            <div className="flex items-start gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#fff0f4] text-[#a65066]"><Link2 size={17} /></span>
-              <div><div className="text-xs font-bold text-[#8f5262]">쿠팡 파트너스 연결</div><p className="mt-1 text-[11px] leading-5 text-[#89747c]">저장된 링크는 이 제품의 구매 버튼에 우선 연결되고 사용자 화면에는 광고 고지가 표시돼요.</p></div>
-            </div>
-            <CoupangPartnersForm productId={product.id} initialUrl={product.coupangPartnersUrl} />
-          </div>
-          <div className="mt-7 grid gap-5 border-t border-[#74513f18] pt-6 lg:grid-cols-[1fr_auto] lg:items-start">
-            <div><div className="flex items-center gap-2 text-xs font-bold text-[#8f5262]"><ImagePlus size={15} /> 제품 이미지</div><ProductImageForm productId={product.id} /></div>
-            <div className="space-y-3">
-              <Readiness product={product} ingredientCount={ingredientCount} />
-              <ProductDeleteForm productId={product.id} productName={product.name} />
-            </div>
-          </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12px] text-[#86868b]">{product.brand} · {product.category}</p>
+          <h2 className="mt-0.5 line-clamp-2 text-[17px] font-semibold leading-snug">{product.name}</h2>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[#6e6e73]">
+            <StatusLabel status={product.publicationStatus} />
+            <span>{product.score}점</span>
+            <span>성분 {ingredientCount}</span>
+            {verifiedAmountCount > 0 && <span>함량 검증 {verifiedAmountCount}</span>}
+            {mfdsMatch?.matchStatus === "ADMIN_VERIFIED" && <span>식약처 연결</span>}
+            {mfdsMatch?.matchStatus === "NO_MATCH" && <span>식약처 해당 없음</span>}
+            {product.coupangPartnersUrl && <span>파트너스</span>}
+          </p>
         </div>
-      )}
+        <button
+          type="button"
+          aria-expanded
+          aria-controls={editorId}
+          aria-label="편집 닫기"
+          onClick={() => setOpen(false)}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f5f5f7] text-[#6e6e73] transition hover:bg-[#e8e8ed] hover:text-[#1d1d1f]"
+        >
+          <X size={16} />
+        </button>
+      </div>
+
+      <div id={editorId} className="px-4 py-2 sm:px-6">
+        <EditorSection icon={PencilLine} title="기본 정보"><ProductForm product={product} /></EditorSection>
+        <EditorSection icon={ImagePlus} title="이미지"><ProductImageForm productId={product.id} /></EditorSection>
+        <EditorSection icon={FlaskConical} title="성분"><ProductIngredientsForm productId={product.id} availableIngredients={availableIngredients} initialIngredients={initialIngredients} /></EditorSection>
+        <EditorSection icon={ListChecks} title="공식 전성분"><OfficialIngredientForm productId={product.id} initialSource={officialIngredientSource} defaultCheckedAt={defaultCheckedAt} /></EditorSection>
+        <EditorSection icon={Landmark} title="식약처 품목"><MfdsProductMatchForm productId={product.id} productName={product.name} initialMatch={mfdsMatch} /></EditorSection>
+        <EditorSection icon={Link2} title="쿠팡 파트너스"><CoupangPartnersForm productId={product.id} initialUrl={product.coupangPartnersUrl} /></EditorSection>
+        <div className="flex flex-col gap-4 border-t border-black/[.06] py-6 sm:flex-row sm:items-center sm:justify-between">
+          <Readiness product={product} ingredientCount={ingredientCount} />
+          <ProductDeleteForm productId={product.id} productName={product.name} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EditorSection({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: ReactNode }) {
+  return (
+    <section className="border-t border-black/[.06] py-6 first:border-t-0">
+      <h3 className="mb-4 flex items-center gap-2 text-[15px] font-semibold"><Icon size={16} className="text-[#86868b]" />{title}</h3>
+      {children}
     </section>
   );
 }
@@ -109,9 +128,14 @@ const statusLabels: Record<ProductPublicationStatus, string> = {
   HIDDEN: "숨김",
 };
 
-function StatusBadge({ status }: { status: ProductPublicationStatus }) {
-  const color = status === "PUBLISHED" ? "bg-[#e8f2e9] text-[#55735e]" : status === "DRAFT" ? "bg-[#fff0d9] text-[#906425]" : "bg-[#eee9eb] text-[#75676c]";
-  return <span className={`rounded-full px-2 py-1 font-bold ${color}`}>{statusLabels[status]}</span>;
+const statusDots: Record<ProductPublicationStatus, string> = {
+  DRAFT: "bg-[#ff9f0a]",
+  PUBLISHED: "bg-[#34c759]",
+  HIDDEN: "bg-[#8e8e93]",
+};
+
+function StatusLabel({ status }: { status: ProductPublicationStatus }) {
+  return <span className="inline-flex items-center gap-1.5 font-medium text-[#1d1d1f]"><span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${statusDots[status]}`} />{statusLabels[status]}</span>;
 }
 
 function isReady(product: Product, ingredientCount: number) {
@@ -123,15 +147,15 @@ function Readiness({ product, ingredientCount }: { product: Product; ingredientC
     { label: "이미지", done: Boolean(product.imageUrl) },
     { label: "출처", done: Boolean(product.sourceUrl) },
     { label: "확인일", done: Boolean(product.sourceCheckedAt) },
-    { label: `성분 ${ingredientCount}개`, done: ingredientCount > 0 },
+    { label: "성분", done: ingredientCount > 0 },
   ];
-  const complete = checks.every((check) => check.done);
   return (
-    <div className={`rounded-2xl border px-4 py-3 text-xs ${complete ? "border-[#9ebea64d] bg-[#f1f7f2] text-[#55735e]" : "border-[#e5be8259] bg-[#fff9ed] text-[#866129]"}`}>
-      <p className="flex items-center gap-2 font-bold"><FileCheck2 size={15} /> {complete ? "공개 정보 준비 완료" : "공개 전 정보 점검"}</p>
-      <div className="mt-2 flex max-w-[17rem] flex-wrap gap-1.5">
-        {checks.map((check) => <span key={check.label} className={`rounded-full px-2 py-1 ${check.done ? "bg-white/80" : "bg-[#f8e3bd]"}`}>{check.done ? "✓" : "!"} {check.label}</span>)}
-      </div>
-    </div>
+    <ul aria-label="공개 전 점검" className="flex flex-wrap gap-1.5 text-[12px]">
+      {checks.map((check) => (
+        <li key={check.label} className={`rounded-full px-2.5 py-1 font-medium ${check.done ? "bg-[#f5f5f7] text-[#1d1d1f]" : "bg-[#fff4e5] text-[#c25e00]"}`}>
+          {check.done ? "✓" : "!"} {check.label}
+        </li>
+      ))}
+    </ul>
   );
 }
