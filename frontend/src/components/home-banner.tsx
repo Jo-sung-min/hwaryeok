@@ -286,7 +286,7 @@ export function HomeBanner({ slides }: { slides: HomeBannerSlide[] }) {
                 >
                   <div className={styles.image}>
                     <div className={styles.productImage}>
-                      <ProductVisual tone={slide.product.tone} imageUrl={slide.product.imageUrl} alt={`${slide.product.brand} ${slide.product.name}`} variant="fill" />
+                      <ProductVisual tone={slide.product.tone} imageUrl={slide.product.imageUrl} alt={`${slide.product.brand} ${slide.product.name}`} variant="fill" fit="cover" />
                     </div>
                   </div>
                   <span className={styles.rankBadge} role="img" aria-label={`${position}번째 배너`}><RankingPetalIcon rank={position} /></span>

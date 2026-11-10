@@ -23,7 +23,7 @@ export function HomeProductCard({ product, rank, scoreLabel, favorited = false, 
     <Link href={`/products/${encodeURIComponent(product.id)}`} className={styles.productLink}>
       <div className={styles.productImage}>
         <div className={styles.productVisual}>
-          <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt="" variant="catalog" />
+          <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt="" variant="catalog" fit="cover" />
         </div>
         {rank !== undefined && <span className={styles.rank} role="img" aria-label={`${rank}위`}><RankingPetalIcon rank={rank} /></span>}
         <div className={styles.imageInfo}>

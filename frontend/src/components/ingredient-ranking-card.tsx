@@ -19,7 +19,7 @@ export function IngredientRankingCard({ item, ingredientName, sort, favorited, i
   return <article className="group relative min-w-0 overflow-hidden rounded-2xl border border-[#eddee3] bg-white transition hover:border-[#d79bb0]">
     <Link href={`/products/${product.id}`} className="block h-full">
       <div className="relative aspect-square overflow-hidden border-b border-[#f4e9ed] bg-white p-3 sm:p-5">
-        <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="fill" />
+        <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="fill" fit="cover" />
         {item.rank !== null && (ingredientName || reviewMode) && <span aria-label={`${item.rank}위`} className={`absolute left-2.5 top-2.5 z-20 grid h-8 w-8 place-items-center rounded-lg text-sm font-bold sm:left-3 sm:top-3 ${item.rank <= 3 ? "bg-[#cf5b7d] text-white" : "bg-[#fff0f5] text-[#ab4c6b]"}`}>{item.rank}</span>}
         {reviewMode && item.rank === null && <span className="absolute bottom-2 left-2 z-20 rounded-full bg-[#fff4f7] px-2 py-1 text-[10px] font-semibold text-[#a57888]">리뷰 집계 대기</span>}
       </div>

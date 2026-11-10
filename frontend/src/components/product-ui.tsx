@@ -93,11 +93,14 @@ export function ProductVisual({
   variant = "card",
   imageUrl,
   alt = "화장품 제품 이미지",
+  fit = "contain",
 }: {
   tone: Product["tone"];
   variant?: "card" | "compact" | "thumbnail" | "comparison" | "fill" | "panel" | "catalog";
   imageUrl?: string | null;
   alt?: string;
+  /** "cover" fills the frame edge to edge (cropping the overflow); "contain" shows the whole image. */
+  fit?: "contain" | "cover";
 }) {
   const resolvedImageUrl = resolveProductImageUrl(imageUrl);
   const visualSize = {
@@ -128,7 +131,7 @@ export function ProductVisual({
           fill
           sizes={responsiveSizes}
           loading={variant === "fill" ? "eager" : "lazy"}
-          className="z-10 object-contain object-center transition-transform duration-500 group-hover:scale-[1.025]"
+          className={`z-10 ${fit === "cover" ? "object-cover" : "object-contain"} object-center transition-transform duration-500 group-hover:scale-[1.025]`}
         />
       ) : (
         <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 ${variant === "thumbnail" || variant === "compact" ? "scale-75" : "scale-100"}`}>
