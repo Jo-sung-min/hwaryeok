@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useTransition, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { ArrowRight, Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus, SlidersHorizontal, Sparkles } from "lucide-react";
+import { ArrowRight, Camera, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Plus, SlidersHorizontal } from "lucide-react";
 import { HomeProductCard } from "@/components/home-product-card";
+import { selectionHaptic } from "@/lib/haptics";
 import {
   FACE_MODEL, FACE_VIEWS, FACE_ZONES, faceSymptomImage, faceZoneImage, findFaceSymptom, findFaceView, findFaceZone,
   symptomsForZone, turnFaceView, viewForZone, zonePlacement,
@@ -48,13 +49,6 @@ function connectorLines(marker: FaceBox, callout: FaceBox) {
     : [[c.topLeft, m.topLeft], [c.bottomRight, m.bottomRight]];
 }
 
-function recommendationBasis(matchedBy: string[]) {
-  const concern = matchedBy.find((label) => label.startsWith("선택 고민: "))?.replace("선택 고민: ", "");
-  const skinType = matchedBy.find((label) => label.startsWith("피부 타입 · "))?.replace("피부 타입 · ", "");
-  const evidence = matchedBy.find((label) => label.startsWith("근거 수준 "));
-  return [concern && `${concern} 고민`, skinType && `${skinType} 피부`, evidence].filter(Boolean).slice(0, 2).join(" · ");
-}
-
 export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResult, isAuthenticated, favoriteIds }: {
   initialZoneId: FaceZoneId | null;
   initialSymptomId: string | null;
@@ -86,8 +80,14 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
     window.history.replaceState(null, "", params.size ? `?${params}` : window.location.pathname);
   }
 
+  function showView(nextView: FaceViewId) {
+    selectionHaptic();
+    setViewId(nextView);
+  }
+
   function selectZone(nextZoneId: FaceZoneId | null) {
     const nextZone = findFaceZone(nextZoneId);
+    selectionHaptic();
     latestRequest.current += 1;
     setZoneId(nextZoneId);
     setSymptomId(null);
@@ -100,6 +100,7 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
     const next = findFaceSymptom(nextSymptomId);
     const nextZone = findFaceZone(next?.zone);
     if (!next || !nextZone) return;
+    selectionHaptic();
     const request = ++latestRequest.current;
     setZoneId(next.zone);
     setSymptomId(next.id);
@@ -118,7 +119,7 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
 
   function rotate(turn: FaceTurn) {
     const target = turnFaceView(viewId, turn);
-    if (target) setViewId(target);
+    if (target) showView(target);
   }
 
   function startDrag(event: ReactPointerEvent<HTMLDivElement>) {
@@ -174,9 +175,7 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
 
   return <div className={`container-page ${styles.page}`}>
     <header className={styles.header}>
-      <p className="eyebrow">FACE CHECK</p>
       <h1>얼굴에서 고민 찾기</h1>
-      <p>신경 쓰이는 부위를 누르고, 확대컷과 비교해 내 증상을 골라 보세요. 얼굴을 돌리면 턱선·턱 밑·정수리도 볼 수 있어요.</p>
     </header>
 
     <div className={styles.zones} role="group" aria-label="얼굴 부위">
@@ -249,15 +248,14 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
             );
           })}
         </div>
-        <p className={styles.viewHint} aria-live="polite">
-          <strong>{view.label}</strong>
-          {viewId === "front" ? "얼굴을 옆으로 밀거나 화살표를 눌러 돌려 보세요" : <button type="button" onClick={() => setViewId("front")}>정면으로</button>}
-        </p>
+        <div className={styles.viewBar}>
+          <span aria-live="polite">{view.label}</span>
+          {viewId !== "front" && <button type="button" onClick={() => showView("front")}>정면</button>}
+        </div>
       </div>
 
       <div className={styles.symptoms}>
-        <p className={styles.panelTitle}>{zone ? `${zone.label}의 증상` : "대표 증상"}</p>
-        <p className={styles.panelHint}>{zone ? zone.description : "증상을 고르면 부위를 표시해요"}</p>
+        <p className={styles.panelTitle}>{zone ? zone.label : "대표 증상"}</p>
         <ul>
           {symptoms.map((item) => (
             <li key={item.id}>
@@ -274,93 +272,81 @@ export function FaceConcernFinder({ initialZoneId, initialSymptomId, initialResu
       </div>
     </div>
 
-    <section className={styles.result} aria-live="polite" aria-busy={loading}>
-      {!symptom || !zone ? (
-        <div className={styles.guide}>
-          <strong>이렇게 찾아요</strong>
-          <ol>
-            <li>얼굴의 <span className={styles.guideDot}><Plus size={11} strokeWidth={2.6} aria-hidden="true" /></span> 표시나 위의 부위 이름을 눌러요. 얼굴을 돌리면 새 표시가 나타나요.</li>
-            <li>오른쪽 증상을 누르면 확대컷이 그 증상 모습으로 바뀌어요.</li>
-            <li>내 모습과 비슷하면, 아래에서 맞는 성분과 화장품을 확인해요.</li>
-          </ol>
-        </div>
-      ) : <>
-        <div className={styles.resultHead}>
-          <p className={styles.resultKicker}>{zone.label} · {symptom.concerns.length ? symptom.concerns.join(" · ") : "두피·모발"}</p>
-          <h2>{symptom.label}</h2>
-          <p>{symptom.summary}</p>
-        </div>
+    {symptom && zone && <section className={styles.result} aria-live="polite" aria-busy={loading}>
+      <div className={styles.resultHead}>
+        <p className={styles.resultKicker}>{zone.label}</p>
+        <h2>{symptom.label}</h2>
+      </div>
 
-        <div className={styles.compare}>
-          <figure>
-            <div className={styles.cut}><Image src={faceZoneImage(zone.id)} alt={`AI 모델의 평소 ${zone.label} 확대 모습`} fill sizes="(max-width: 594px) 45vw, 270px" /></div>
-            <figcaption>{plainLabel}</figcaption>
-          </figure>
-          <figure data-active="true">
-            <div className={styles.cut}><Image key={symptom.id} src={faceSymptomImage(symptom.id)} alt={`${zone.label}에 ${symptom.label}이 나타난 확대 예시`} fill sizes="(max-width: 594px) 45vw, 270px" /></div>
-            <figcaption>{symptom.label}</figcaption>
-          </figure>
-        </div>
-        <p className={styles.aiNote}>AI로 만든 예시 이미지예요. 실제로는 정도와 모습이 다를 수 있어요.</p>
+      <div className={styles.compare}>
+        <figure>
+          <div className={styles.cut}><Image src={faceZoneImage(zone.id)} alt={`AI 모델의 평소 ${zone.label} 확대 모습`} fill sizes="(max-width: 594px) 45vw, 270px" /></div>
+          <figcaption>{plainLabel}</figcaption>
+        </figure>
+        <figure data-active="true">
+          <div className={styles.cut}>
+            <Image key={symptom.id} src={faceSymptomImage(symptom.id)} alt={`${zone.label}에 ${symptom.label}이 나타난 확대 예시`} fill sizes="(max-width: 594px) 45vw, 270px" />
+            <span className={styles.aiBadge}>AI 예시</span>
+          </div>
+          <figcaption>{symptom.label}</figcaption>
+        </figure>
+      </div>
 
-        <div className={styles.checks}>
-          <h3>이런 모습·느낌이라면 이 고민에 가까워요</h3>
-          <ul>{symptom.looks.map((look) => <li key={look}>{look}</li>)}</ul>
-          <p><strong>관리 방향</strong>{symptom.care}</p>
-        </div>
+      <div className={styles.checks}>
+        <ul>{symptom.looks.map((look) => <li key={look}>{look}</li>)}</ul>
+        <details>
+          <summary>관리 팁<ChevronDown size={15} aria-hidden="true" /></summary>
+          <p>{symptom.care}</p>
+        </details>
+      </div>
 
-        {loading ? (
-          <p className={styles.loading}>맞는 성분과 화장품을 찾고 있어요…</p>
-        ) : result && !result.success ? (
-          <p className={styles.error} role="alert">{result.message}</p>
-        ) : result && <>
-          {result.ingredients.length > 0 && <section className={styles.block} aria-labelledby="face-ingredients-title">
-            <div className={styles.blockHead}>
-              <h3 id="face-ingredients-title"><Sparkles size={17} aria-hidden="true" />도움이 되는 성분</h3>
-              <span>{result.personalized ? "내 피부 기준 반영" : "고민 기준"}</span>
-            </div>
-            <div className={styles.ingredients}>
-              {result.ingredients.map(({ ingredient, reason, matchedBy }) => {
-                const basis = recommendationBasis(matchedBy);
-                return <Link key={ingredient.id} href={`/ingredients/${encodeURIComponent(ingredient.id)}`}>
-                  <span>{ingredient.role}</span>
-                  <h4>{ingredient.name}</h4>
-                  <p>{reason}</p>
-                  {basis && <em>반영 기준 · {basis}</em>}
-                </Link>;
-              })}
-            </div>
-          </section>}
+      {loading ? (
+        <div className={styles.skeleton} role="status" aria-label="추천을 불러오는 중"><span /><span /><span /><span /></div>
+      ) : result && !result.success ? (
+        <p className={styles.error} role="alert">{result.message}</p>
+      ) : result && <>
+        {result.ingredients.length > 0 && <section className={styles.block} aria-labelledby="face-ingredients-title">
+          <div className={styles.blockHead}>
+            <h3 id="face-ingredients-title">성분</h3>
+            {result.personalized && <span>내 피부 기준</span>}
+          </div>
+          <div className={styles.ingredients}>
+            {result.ingredients.map(({ ingredient, reason }) => (
+              <Link key={ingredient.id} href={`/ingredients/${encodeURIComponent(ingredient.id)}`}>
+                <h4>{ingredient.name}</h4>
+                <p>{reason}</p>
+              </Link>
+            ))}
+          </div>
+        </section>}
 
-          <section className={styles.block} aria-labelledby="face-products-title">
-            <div className={styles.blockHead}>
-              <h3 id="face-products-title">{result.basis === "category" ? `${symptom.productCategory ?? "관련"} 제품` : "이 고민에 맞는 화장품"}</h3>
-              {result.basis === "concern" && result.totalProducts > result.products.length && (
-                <Link href={`/products?concern=${encodeURIComponent(symptom.concerns[0])}`}>전체 {result.totalProducts.toLocaleString("ko-KR")}개 <ArrowRight size={14} aria-hidden="true" /></Link>
-              )}
-            </div>
-            {result.message && <p className={styles.notice}>{result.message}</p>}
-            {result.products.length > 0 && <div className={styles.products}>
-              {result.products.map((product) => (
-                <HomeProductCard
-                  key={product.id}
-                  product={product}
-                  scoreLabel={result.basis === "category" ? undefined : result.personalized ? "내 피부 적합도" : `${symptom.concerns[0]} 반영 화력`}
-                  favorited={favorites.has(product.id)}
-                  isAuthenticated={isAuthenticated}
-                  returnTo={`${RETURN_TO}?symptom=${symptom.id}`}
-                />
-              ))}
-            </div>}
-          </section>
-        </>}
+        <section className={styles.block} aria-labelledby="face-products-title">
+          <div className={styles.blockHead}>
+            <h3 id="face-products-title">{result.basis === "category" ? symptom.productCategory ?? "제품" : "화장품"}</h3>
+            {result.basis === "concern" && result.totalProducts > result.products.length && (
+              <Link href={`/products?concern=${encodeURIComponent(symptom.concerns[0])}`}>전체 {result.totalProducts.toLocaleString("ko-KR")}개 <ArrowRight size={14} aria-hidden="true" /></Link>
+            )}
+          </div>
+          {result.message && <p className={styles.notice}>{result.message}</p>}
+          {result.products.length > 0 && <div className={styles.products}>
+            {result.products.map((product) => (
+              <HomeProductCard
+                key={product.id}
+                product={product}
+                favorited={favorites.has(product.id)}
+                isAuthenticated={isAuthenticated}
+                returnTo={`${RETURN_TO}?symptom=${symptom.id}`}
+              />
+            ))}
+          </div>}
+        </section>
       </>}
-    </section>
+    </section>}
 
     <div className={styles.more}>
-      <Link href="/skin-check" className="line-btn"><SlidersHorizontal size={17} aria-hidden="true" />문답으로 내 피부 기준 만들기</Link>
-      <Link href="/my/photo-analysis" className="line-btn"><Camera size={17} aria-hidden="true" />내 사진으로 피부 분석하기</Link>
+      <Link href="/skin-check" className="line-btn"><SlidersHorizontal size={17} aria-hidden="true" />피부 문답</Link>
+      <Link href="/my/photo-analysis" className="line-btn"><Camera size={17} aria-hidden="true" />사진 분석</Link>
     </div>
-    <p className={styles.disclaimer}>이 화면은 화장품 선택을 돕는 안내이며 피부·두피 질환을 진단하지 않아요. 통증·진물이 있거나 증상이 빠르게 심해지면 피부과 전문의와 상담해 주세요.</p>
+    <p className={styles.disclaimer}>화장품 선택을 돕는 안내예요. 증상이 심하면 피부과 상담을 권해요.</p>
   </div>;
 }

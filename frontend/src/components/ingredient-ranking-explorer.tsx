@@ -50,9 +50,7 @@ export async function IngredientRankingExplorer({ searchParams, basePath }: {
   return <div className="container-page pb-12 pt-5 sm:pt-8">
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="mb-1 text-[10px] font-bold tracking-[.16em] text-[#c15c7d]">MY INGREDIENT, MY RANKING</p>
-        <h1 className="text-[24px] font-bold tracking-tight text-[#3d3036] sm:text-[32px]">{isHome ? <>나에게 맞는 성분,<span className="text-[#c15175]"> 화력</span></> : "성분으로 찾는 제품 랭킹"}</h1>
-        <p className="mt-1.5 text-xs leading-5 text-[#947b86]">성분을 고르고, 필요한 제품의 순위를 만나보세요.</p>
+        <h1 className="text-[26px] font-bold tracking-tight text-[#3d3036] sm:text-[32px]">{isHome ? <>나에게 맞는 성분,<span className="text-[#c15175]"> 화력</span></> : "성분별 랭킹"}</h1>
       </div>
       <form action="/products" role="search" aria-label="제품 찾기" className="flex h-11 items-center gap-2 rounded-xl border border-[#eedde3] bg-[#fffafb] pl-3 pr-1 sm:w-72">
         <Search size={17} className="shrink-0 text-[#c87590]" /><label className="sr-only" htmlFor="ranking-product-search">제품명 또는 브랜드</label><input id="ranking-product-search" name="query" placeholder="제품명·브랜드 검색" className="min-w-0 flex-1 bg-transparent text-sm outline-none" /><button type="submit" className="h-9 rounded-lg px-3 text-xs font-bold text-[#b24f70]">검색</button>

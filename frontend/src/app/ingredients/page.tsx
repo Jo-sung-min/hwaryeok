@@ -92,7 +92,6 @@ export default async function IngredientsPage({ searchParams }: { searchParams: 
     <header className={styles.header}>
       <div className={`container-page ${styles.headerInner}`}>
         <h1>성분 사전</h1>
-        <p className={styles.intro}>궁금한 성분을 누르면 역할과 피부별 특징, 해당 성분의 제품 랭킹을 자세히 볼 수 있어요.</p>
         <form className={styles.searchForm} action="/ingredients#ingredient-list" role="search">
           <label className={styles.searchField}>
             <Search size={17} aria-hidden="true" focusable="false" />

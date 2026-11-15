@@ -76,6 +76,32 @@ button, a, summary, select { -webkit-tap-highlight-color: transparent; }
 button:disabled { cursor: not-allowed; }
 [class*="backdrop-blur"] { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
+/* ── 앱 터치 반응 ──────────────────────────────────────────────
+   누르면 바로 반응하고, 웹페이지 특유의 지연·선택·길게 누르기 메뉴를 없앤다. */
+html { -webkit-text-size-adjust: 100%; }
+body { overscroll-behavior-y: none; }
+:where(a, button, summary, label, select, [role="button"]) { touch-action: manipulation; }
+:where(a, button, summary, [role="button"]) { -webkit-touch-callout: none; }
+:where(button, summary, [role="button"]) { -webkit-user-select: none; user-select: none; }
+
+/* 위치를 transform으로 잡는 버튼과 겹치지 않도록 눌림은 scale 속성으로 준다. */
+:where(button, .ink-btn, .line-btn, .glass-choice, summary) {
+  transition: scale .1s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+:where(button, .ink-btn, .line-btn, .glass-choice, summary):active:not(:disabled) { scale: .97; }
+/* 카드·목록 줄처럼 넓은 링크는 조금만 줄인다. */
+:where(article, li) > a { transition: scale .12s ease; }
+:where(article, li) > a:active { scale: .985; }
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button, .ink-btn, .line-btn, .glass-choice, summary, a):active { scale: none; }
+}
+
+/* 긴 푸터는 홈과 MY에만 둔다. */
+.app-shell > footer { display: none; }
+.app-shell:has([data-home-page="true"]) > footer,
+.app-shell:has([data-show-footer]) > footer { display: block; }
+
 [data-ui-invalid="true"] {
   border-color: rgba(183, 76, 104, .78) !important;
   box-shadow: 0 0 0 3px rgba(183, 76, 104, .12) !important;
@@ -142,7 +168,10 @@ button:disabled { cursor: not-allowed; }
   transition: background .2s ease, border-color .2s ease;
 }
 
-.ink-btn:hover { background: var(--plum-dark); border-color: var(--plum-dark); }
+@media (hover: hover) {
+  .ink-btn:hover { background: var(--plum-dark); border-color: var(--plum-dark); }
+}
+.ink-btn:active:not(:disabled) { background: #8f2b4d; border-color: #8f2b4d; }
 .ink-btn:focus-visible, .line-btn:focus-visible, .glass-choice:focus-visible, .glass-select:focus-visible { outline: 2px solid #b45b7b; outline-offset: 3px; }
 
 .line-btn {
@@ -165,7 +194,10 @@ button:disabled { cursor: not-allowed; }
   transition: background .2s ease, border-color .2s ease;
 }
 
-.line-btn:hover { background: #fff5f8; border-color: #d5a1b4; }
+@media (hover: hover) {
+  .line-btn:hover { background: #fff5f8; border-color: #d5a1b4; }
+}
+.line-btn:active:not(:disabled) { background: #fde8ef; border-color: #d98ca2; }
 
 .input {
   display: block;
@@ -234,10 +266,16 @@ button:disabled { cursor: not-allowed; }
   box-shadow: none;
 }
 
-.glass-choice:hover {
+@media (hover: hover) {
+  .glass-choice:hover {
+    border-color: #d98ca2 !important;
+    background: #fff8fa !important;
+    box-shadow: none;
+  }
+}
+.glass-choice:active:not(:disabled) {
   border-color: #d98ca2 !important;
-  background: #fff8fa !important;
-  box-shadow: none;
+  background: #fde8ef !important;
 }
 
 .glass-choice[aria-pressed="true"],

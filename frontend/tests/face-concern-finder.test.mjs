@@ -225,7 +225,7 @@ test("scalp symptoms without a concern code show hair care products instead of a
   assert.equal(result.personalized, false);
   assert.equal(result.ingredients.length, 0);
   assert.equal(result.products.length, 2);
-  assert.match(result.message, /아직 맞춤 추천 기준이 없어요/);
+  assert.match(result.message, /맞춤 추천은 준비 중/);
   assert.equal(calls.length, 1, "no ingredient request without a concern");
   const query = calls[0][1];
   assert.equal(query.category, "헤어케어");
@@ -272,6 +272,7 @@ test("the face page opens from an address, stays under the skin tab and is linke
   assert.match(finder, /onPointerDown=\{startDrag\}/);
   assert.match(finder, /onKeyDown=\{turnWithKeyboard\}/);
   assert.match(finder, /href=\{`\/products\?concern=\$\{encodeURIComponent\(symptom\.concerns\[0\]\)\}`\}/);
-  assert.match(finder, /질환을 진단하지 않아요/);
+  assert.match(finder, /피부과 상담을 권해요/);
+  assert.doesNotMatch(finder, /className="eyebrow"/, "the screen keeps a single title without an eyebrow");
   assert.match(check, /href="\/skin-check\/face"/);
 });

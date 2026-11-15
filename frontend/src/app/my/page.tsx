@@ -35,10 +35,10 @@ export default async function MyPage() {
   comparison?.content.slice(0, 3).forEach(({ product }, index) => compareSearch.set(["left", "right", "third"][index], product.id));
   const editableIngredients = [...new Map([...ingredients, ...(preferred?.content.map(row => row.ingredient) ?? [])].map(item => [item.id, item])).values()];
 
-  return <div className={styles.page}>
+  return <div className={styles.page} data-show-footer>
     <header className={styles.header}>
       <div className={styles.avatar} aria-hidden="true">{reviewer?.profileImageUrl ? <Image src={reviewer.profileImageUrl} alt="" fill sizes="46px" /> : displayNickname.slice(0, 1)}</div>
-      <div className={styles.identity}><p className={styles.eyebrow}>MY HWA:RYEOK</p><h1>{displayNickname}님의 마이화력</h1><p>내 피부와 나의 기록, 한눈에.</p></div>
+      <div className={styles.identity}><h1>{displayNickname}님의 마이화력</h1></div>
       <Link href="/skin-check" className={styles.iconButton} aria-label="나의 성분찾기 설정"><Settings size={19} /></Link>
     </header>
     <MyTabs active="overview" />

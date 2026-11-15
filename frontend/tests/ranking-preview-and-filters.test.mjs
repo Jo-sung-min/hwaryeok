@@ -83,7 +83,7 @@ test("home exposes every ranking tab as an honest four-item preview", () => {
   const limitUsages = home.match(/HOME_RANKING_PREVIEW_LIMIT/g) ?? [];
   assert.ok(limitUsages.length >= 5, "The shared top-four limit should be applied, not merely declared");
   assert.match(previewSource("personal"), /\{profile\s*\?/);
-  assert.match(previewSource("personal"), /피부 답변을 저장하면/);
+  assert.match(previewSource("personal"), /피부 체크를 마치면 내 순위가 보여요/);
   assert.doesNotMatch(previewSource("personal"), /가짜 점수|샘플 점수|임시 점수/);
 });
 

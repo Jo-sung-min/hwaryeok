@@ -51,9 +51,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
     <div className="min-h-screen pb-24">
       <header className="border-b border-[#ece8eb] bg-white py-6">
         <div className="container-page">
-          <p className="eyebrow mb-1.5">PRODUCT SEARCH</p>
           <h1 className="font-myeongjo text-[26px] font-semibold leading-tight">화장품 찾기</h1>
-          <p className="mt-2 text-xs leading-6 text-[#756f78]">제품명뿐 아니라 주름, 모공, 트러블 같은 고민으로도 찾아보세요.</p>
           <ProductSearch filters={filters} />
         </div>
       </header>

@@ -290,7 +290,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
         <div className={styles.eyebrow}><span><GroupIcon size={15} aria-hidden="true" />{question.group}</span><span className={styles.counter}><strong>{view}</strong> / {total}</span></div>
         <h2 id="skin-step-title" tabIndex={-1}>{question.title}</h2>
         <p className={styles.description}>{question.hint}</p>
-        <div className={styles.selectionMeta}><span>{question.multiple ? question.min ? "복수 선택 · 최대 " + question.max + "개" : "복수 선택 · 선택 사항" : "하나를 선택해 주세요"}</span>{question.multiple && <strong aria-live="polite">{Array.isArray(selected) ? selected.length : 0} / {question.max}</strong>}</div>
+        {question.multiple && <div className={styles.selectionMeta}><span>{question.min ? "최대 " + question.max + "개" : "선택 사항"}</span><strong aria-live="polite">{Array.isArray(selected) ? selected.length : 0} / {question.max}</strong></div>}
         <div className={styles.choices + " " + (question.multiple ? styles.multiChoices : styles.singleChoices)} role="group" aria-label={question.title}>
           {question.options.map(option => {
             const active = Array.isArray(selected) ? selected.includes(option.value) : selected === option.value;
@@ -303,9 +303,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
             </button>;
           })}
         </div>
-        <p className={styles.questionNote}><ShieldCheck size={14} aria-hidden="true" />{question.note}</p>
-        {view === 1 && <p className={styles.intro}>총 {total}문항 · 답변은 이 탭에 최대 24시간 임시 보관돼요. 이전 답변은 언제든 바꿀 수 있어요.</p>}
-        {view === 1 && <Link href="/skin-check/face" className={styles.faceEntry}><span><strong>증상 이름이 헷갈린다면</strong>얼굴에서 부위를 눌러 확대컷으로 고민 찾기</span><ArrowRight size={16} aria-hidden="true" /></Link>}
+        {view === 1 && <Link href="/skin-check/face" className={styles.faceEntry}><span>얼굴에서 고민 찾기</span><ArrowRight size={16} aria-hidden="true" /></Link>}
       </div> : view === "review" ? <div className={styles.step}>
         <div className={styles.eyebrow}><span><ClipboardList size={15} />나의 답변 노트</span><span>언제든 수정 가능</span></div>
         <h2 id="skin-step-title" tabIndex={-1}>답변을 한 번 더 살펴볼까요?</h2>

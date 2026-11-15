@@ -68,7 +68,6 @@ export default async function IngredientDetailPage({ params }: { params: Promise
               <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-[#a06b5d]">{ingredient.role}</p>
               <h1 className="mt-3 break-keep font-myeongjo text-[34px] font-semibold leading-tight md:text-6xl">{ingredient.name}</h1>
               <p className="mt-3 text-sm text-[#98877b] md:text-base">{ingredient.englishName}</p>
-              <p className="mt-8 max-w-2xl text-base leading-8 text-[#655a52]">이 성분이 무엇인지, 피부에 어떻게 도움을 주는지, 어떤 변화를 기대할 수 있는지 순서대로 확인해보세요.</p>
               <div className="mt-7 flex flex-wrap gap-2">{ingredient.tags.map((tag) => <span key={tag} className="rounded-full border border-[#a45a5025] bg-[#fff9f1] px-3 py-1.5 text-xs text-[#91564d]">#{tag}</span>)}</div>
               <div className="mt-8 flex flex-wrap items-center gap-2">
                 <a href="#ingredient-guide" className="ink-btn">성분 핵심 알아보기 <ArrowRight size={16} /></a>
@@ -80,9 +79,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
 
         <section id="ingredient-guide" className="container-page scroll-mt-5 py-10 md:py-14" aria-labelledby="ingredient-guide-title">
           <div className="mb-6">
-            <p className="eyebrow mb-3">INGREDIENT GUIDE</p>
             <h2 id="ingredient-guide-title" className="section-title font-myeongjo">{ingredient.name}, 핵심만 알아보기</h2>
-            <p className="mt-3 text-sm leading-7 text-[#756b72]">제품을 고르기 전에 가장 궁금한 세 가지를 먼저 정리했어요.</p>
           </div>
 
           <div className="overflow-hidden rounded-[24px] border border-[#e6dce1] bg-white">
@@ -127,9 +124,7 @@ export default async function IngredientDetailPage({ params }: { params: Promise
           <div className="container-page">
             <div className="mb-7 flex items-end justify-between gap-4">
               <div>
-                <p className="eyebrow mb-3">INGREDIENT RANKING</p>
-                <h2 id="ingredient-ranking-title" className="section-title font-myeongjo">{ingredient.name} 제품 랭킹</h2>
-                <p className="mt-3 text-xs leading-6 text-[#826f76]">DB에 연결된 공개 제품을 성분 화력이 높은 순서로 보여드려요. 총 {ranking.totalElements.toLocaleString("ko-KR")}개예요.</p>
+                <h2 id="ingredient-ranking-title" className="section-title font-myeongjo">{ingredient.name} 제품 랭킹 <span className="text-base font-medium text-[#8d8088]">총 {ranking.totalElements.toLocaleString("ko-KR")}개</span></h2>
               </div>
               <Link href={{ pathname: "/ranking", query: { ingredient: ingredient.id } }} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs font-bold text-[#a44765]">전체보기 <ArrowRight size={14} /></Link>
             </div>

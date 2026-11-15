@@ -47,9 +47,8 @@
 .questionNote { display: flex; align-items: flex-start; gap: 6px; margin: 15px 0 0; color: #766b7b; font-size: 11px; line-height: 1.65; }
 .questionNote svg { flex-shrink: 0; margin-top: 2px; }
 .intro { margin: 12px 0 0; padding: 12px; border-radius: 10px; background: #faf8fa; color: #756b7b; font-size: 11px; line-height: 1.6; }
-.faceEntry { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 0; padding: 10px 12px; border: 1px solid #efdae4; border-radius: 10px; background: #fff8fb; color: #a33359; font-size: 12px; line-height: 1.5; }
-.faceEntry span { display: grid; min-width: 0; }
-.faceEntry strong { color: #6d5562; font-size: 11px; font-weight: 600; }
+.faceEntry { display: flex; min-height: 48px; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 0; padding: 0 14px; border-radius: 12px; background: #fff0f5; color: #a33359; font-size: 14px; font-weight: 650; transition: scale .1s ease, background-color .15s ease; }
+.faceEntry:active { background: #fde8ef; scale: .98; }
 .faceEntry svg { flex: 0 0 auto; }
 .footer { flex-shrink: 0; padding: 14px 24px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #ece5eb; background: #fff; }
 .actions { display: flex; gap: 10px; }

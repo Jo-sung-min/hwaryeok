@@ -21,7 +21,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams: Pr
         <div className="container-page">
           <Link href="/experts" className="inline-flex min-h-11 items-center gap-2 text-sm text-[#68575d]"><ArrowLeft size={16} /> 전문가 홈</Link>
           <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div><p className="eyebrow mb-2">EXPERT Q&amp;A</p><h1 className="font-myeongjo text-[32px] font-bold leading-tight sm:text-4xl">화장품 고민 상담소</h1><p className="mt-3 text-sm leading-7 text-[#66565c]">검증된 의료진에게 성분과 피부 반응을 물어보세요.</p></div>
+            <div><h1 className="font-myeongjo text-[28px] font-bold leading-tight sm:text-4xl">화장품 고민 상담소</h1></div>
             <Link href="/questions/ask" className="ink-btn w-full self-start sm:w-auto"><PenLine size={17} /> 질문 작성</Link>
           </div>
         </div>

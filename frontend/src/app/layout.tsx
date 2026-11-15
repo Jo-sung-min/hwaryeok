@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import { BottomNav, Header } from "@/components/navigation";
@@ -31,6 +31,14 @@ export const metadata: Metadata = {
     description: "성분과 제품 종류를 고르고, 성분 화력과 사용자 리뷰를 함께 살펴보세요.",
     images: ["/hero-watercolor.png"],
   },
+};
+
+// 앱(웹뷰)에서 노치·홈 바 영역까지 화면을 쓰도록 한다. 여백은 safe-area inset으로 잡는다.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 function siteUrl() {

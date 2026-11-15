@@ -34,8 +34,8 @@ async function categoryRecommendations(symptomId: string, category: string): Pro
     return {
       success: true,
       message: page.content.length
-        ? `두피·모발 고민은 아직 맞춤 추천 기준이 없어요. ${category} 제품을 성분 화력 순으로 보여드려요.`
-        : `${category} 제품 자료를 준비하고 있어요.`,
+        ? "두피 맞춤 추천은 준비 중이에요."
+        : `${category} 제품을 준비 중이에요.`,
       symptomId,
       basis: "category",
       personalized: false,
@@ -91,7 +91,7 @@ export async function getFaceConcernRecommendations(symptomId: string): Promise<
       ? "성분은 찾았지만 화장품 목록은 잠시 불러오지 못했어요."
       : ingredientResult.status === "rejected"
         ? "화장품은 찾았지만 성분 추천은 잠시 불러오지 못했어요."
-        : products.length ? "" : "이 고민에 맞는 화장품 자료를 준비하고 있어요.",
+        : products.length ? "" : "맞는 화장품을 준비 중이에요.",
     symptomId: symptom.id,
     basis: "concern",
     personalized,

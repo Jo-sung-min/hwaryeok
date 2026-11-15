@@ -2,6 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid #ece9ed;
   background: rgba(255, 255, 255, .97);
 }
@@ -188,8 +189,11 @@
 
 .bottomItem[aria-current="page"] { color: #a33359; font-weight: 750; }
 .bottomItem[aria-current="page"] .bottomIcon { background: #fff0f5; transform: translateY(-1px); }
-.bottomItem:hover { color: #a33359; }
-.bottomItem:active .bottomIcon { transform: scale(.94); }
+@media (hover: hover) {
+  .bottomItem:hover { color: #a33359; }
+}
+.bottomItem:active { color: #a33359; }
+.bottomItem:active .bottomIcon { background: #fde8ef; transform: scale(.88); }
 
 .searchForm {
   display: flex;

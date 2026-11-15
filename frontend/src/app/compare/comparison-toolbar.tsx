@@ -50,7 +50,6 @@ export function ComparisonToolbar({
     <div className="mb-5 rounded-[22px] border border-[#e4afbb45] bg-white/72 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:p-5">
       <div>
         <div className="flex items-center gap-2 text-sm font-semibold"><BookmarkCheck size={17} className="text-[#a44f64]" /> 비교 바구니 {selectedIds.length}/3</div>
-        <p className="mt-1.5 text-xs leading-5 text-[#82736a]">로그인하면 선택한 순서까지 저장되어 다음 방문에도 그대로 이어집니다.</p>
         {message && <p role="status" className="mt-2 text-xs font-semibold text-[#9b4a55]">{message}</p>}
       </div>
       <div className="mt-4 flex flex-col gap-2 min-[380px]:flex-row sm:mt-0 sm:shrink-0">

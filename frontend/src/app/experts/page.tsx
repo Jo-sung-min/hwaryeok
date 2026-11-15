@@ -20,14 +20,12 @@ export default async function ExpertsPage() {
       <section className="relative overflow-hidden border-b border-[#edcbd3] bg-white py-10 md:py-24">
         <div className="container-page relative grid gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
           <div>
-            <p className="eyebrow mb-5">HWA:RYEOK EXPERT</p>
-            <h1 className="font-myeongjo text-[34px] font-semibold leading-tight sm:text-4xl md:text-6xl">피부 고민에<br /><span className="text-[#a24f64]">검증된 시선</span>을 더해요</h1>
-            <p className="mt-6 max-w-xl text-sm leading-7 text-[#75666b] md:text-base">의사·전문의·근무지 인증을 구분해 보여주고, 화장품과 성분에 관한 답변을 한곳에 모았습니다.</p>
+            <h1 className="font-myeongjo text-[30px] font-semibold leading-tight sm:text-4xl md:text-6xl">피부 고민에<br /><span className="text-[#a24f64]">검증된 시선</span>을 더해요</h1>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap"><Link href="/questions" className="ink-btn w-full sm:w-auto"><MessageCircleQuestion size={18} /> 전문가에게 질문하기</Link><Link href="/experts/ranking" className="line-btn w-full sm:w-auto"><Award size={18} /> 활동 랭킹</Link></div>
           </div>
           <div className="paper-card rounded-[28px] p-5 sm:rounded-[34px] sm:p-6 md:p-8">
-            <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f5d5dd] text-[#9a4c61]"><ShieldCheck /></span><div><p className="text-xs font-bold tracking-[.12em] text-[#9a6472]">VERIFICATION</p><h2 className="font-myeongjo text-xl font-bold">인증 정보를 분리해 표시해요</h2></div></div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">{["의사 면허", "전문의 자격", "현재 근무지"].map((label, index) => <div key={label} className="rounded-2xl border border-[#ecd4da] bg-white/70 p-4"><strong className="text-[#a34f64]">0{index + 1}</strong><p className="mt-2 text-sm font-semibold">{label}</p><p className="mt-1 text-[11px] leading-5 text-[#85747a]">각 항목의 확인 여부를 따로 안내</p></div>)}</div>
+            <div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f5d5dd] text-[#9a4c61]"><ShieldCheck /></span><div><h2 className="font-myeongjo text-xl font-bold">인증 정보를 분리해 표시해요</h2></div></div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">{["의사 면허", "전문의 자격", "현재 근무지"].map((label, index) => <div key={label} className="rounded-2xl border border-[#ecd4da] bg-white/70 p-4"><strong className="text-[#a34f64]">0{index + 1}</strong><p className="mt-2 text-sm font-semibold">{label}</p></div>)}</div>
           </div>
         </div>
       </section>

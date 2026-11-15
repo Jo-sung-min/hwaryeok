@@ -34,9 +34,7 @@ export function SignupForm({ oauthProviders }: { oauthProviders: OAuthProviderSt
   return (
     <form action={formAction} className="paper-card min-w-0 rounded-[26px] p-5 sm:rounded-[30px] sm:p-6 md:p-9" noValidate>
       <div className="mb-7">
-        <p className="eyebrow mb-3">CREATE ACCOUNT</p>
         <h1 className="font-myeongjo text-[28px] font-semibold leading-tight sm:text-3xl">나만의 화력을 시작해요</h1>
-        <p className="mt-3 text-sm leading-7 text-[#7b6e65]">가입 후 피부 정보를 등록하면 모든 제품을 내 피부 기준으로 다시 볼 수 있어요.</p>
       </div>
 
       <SocialLoginButtons providers={oauthProviders} />

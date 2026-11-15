@@ -12,5 +12,5 @@ export default async function SkinPhotoPage() {
   const user = await requireSession("/my/photo-analysis");
   const { accessToken } = await readAuthTokens();
   const status = accessToken ? await getSkinPhotoStatus(accessToken).catch(() => null) : null;
-  return <div className={styles.page}><header className={styles.header}><Link href="/my" className={styles.iconButton} aria-label="마이페이지로 돌아가기"><ChevronLeft size={20} /></Link><div className={styles.identity}><p className={styles.eyebrow}>MY SKIN PHOTO</p><h1>사진 피부 분석</h1><p>{user.nickname}님의 피부를 조금 더 자세히.</p></div></header><MyTabs active="photo" /><SkinPhotoForm initialStatus={status} /></div>;
+  return <div className={styles.page}><header className={styles.header}><Link href="/my" className={styles.iconButton} aria-label="마이페이지로 돌아가기"><ChevronLeft size={20} /></Link><div className={styles.identity}><h1>사진 피부 분석</h1></div></header><MyTabs active="photo" /><SkinPhotoForm initialStatus={status} /></div>;
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ReviewFirepowerVote } from "@/components/review-firepower-vote";
 import { ReviewPetalRating } from "@/components/review-petal-rating";
 import { useActionState, useMemo, useState } from "react";
-import { BarChart3, Check, ChevronDown, MessageCircle, PencilLine, Save, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { BarChart3, Check, ChevronDown, PencilLine, Save, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { createReviewAction, updateReviewAction, type ReviewActionState } from "./review-actions";
 import type { ProductReviewSummary, ReviewCriteria, ReviewDetail } from "@/lib/types";
 
@@ -41,9 +41,8 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
       <div className="overflow-hidden rounded-[20px] border border-[#eadde1] bg-white">
         <header className="flex items-start justify-between gap-4 border-b border-[#eee5e8] px-5 py-5">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[#ad4f70]"><MessageCircle size={16} /><p className="text-[10px] font-bold tracking-[.14em]">USER REVIEWS</p></div>
-            <h2 className="mt-2 font-myeongjo text-2xl font-semibold">사용자 리뷰점수</h2>
-            <p className="mt-1 text-xs leading-5 text-[#82747a]">{criteria.categoryName} 기준 · 피부 타입과 사용 기간을 함께 확인해요.</p>
+            <h2 className="font-myeongjo text-2xl font-semibold">사용자 리뷰점수</h2>
+            <p className="mt-1 text-xs leading-5 text-[#82747a]">{criteria.categoryName} 기준</p>
           </div>
           <div className="shrink-0 text-right">
             {summary.rankingStatus !== "COLLECTING" && <ReviewPetalRating score={summary.reviewScore} className="mb-1 justify-end" />}
@@ -55,7 +54,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
         <div className="px-5 py-5">
           <div className="flex items-end justify-between gap-3"><h3 className="font-myeongjo text-xl font-semibold">최근 사용 후기</h3><span className="text-[11px] text-[#8c7d83]">최대 5개</span></div>
           {summary.reviews.length === 0 ? (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-[#dfd2d6] px-4 py-5"><Sparkles className="shrink-0 text-[#c57b94]" size={20} /><div><p className="text-sm font-semibold">아직 등록된 리뷰가 없어요</p><p className="mt-1 text-xs leading-5 text-[#85767c]">첫 번째 리뷰로 실제 사용 경험을 알려주세요.</p></div></div>
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-dashed border-[#dfd2d6] px-4 py-5"><Sparkles className="shrink-0 text-[#c57b94]" size={20} /><p className="text-sm font-semibold">아직 등록된 리뷰가 없어요</p></div>
           ) : (
             <div className="mt-4 grid gap-3">
               {summary.reviews.slice(0, 5).map((review) => (
@@ -108,7 +107,7 @@ export function ReviewSection({ productId, criteria, summary, isAuthenticated, s
 
           <div className="mt-5 border-t border-[#eee5e8] pt-5">
             {!isAuthenticated ? (
-              <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-[#75686e]">로그인하면 내 피부 타입과 함께 리뷰를 남길 수 있어요.</p><Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="line-btn">로그인하고 리뷰 쓰기</Link></div>
+              <Link href={`/login?returnTo=${encodeURIComponent(`/products/${productId}#reviews`)}`} className="line-btn w-full">로그인하고 리뷰 쓰기</Link>
             ) : viewerReview ? (
               <div id="my-review-editor" className="scroll-mt-24">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ead3da] bg-[#fff9fb] px-4 py-3">

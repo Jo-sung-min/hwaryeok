@@ -17,7 +17,7 @@ export function ProductIngredientsPanel({ data }: { data: ProductIngredients }) 
 
   return <section id="ingredients" className="container-page scroll-mt-24 py-8">
     <div className="mb-4 flex items-start justify-between gap-4">
-      <div className="min-w-0"><p className="text-[10px] font-bold tracking-[.14em] text-[#ad4c6e]">INGREDIENTS</p><h2 className="mt-1 font-myeongjo text-2xl font-semibold">핵심 성분과 공개 함량</h2><p className="mt-1 text-xs leading-5 text-[#817780]">내가 고른 성분이 실제로 얼마나 공개됐는지, 근거와 함께 확인하세요.</p></div>
+      <div className="min-w-0"><h2 className="font-myeongjo text-2xl font-semibold">핵심 성분과 공개 함량</h2></div>
       <Link href="/ingredients" className="inline-flex min-h-10 shrink-0 items-center gap-0.5 text-xs font-semibold text-[#a33f62]">성분 사전 <ChevronRight size={14}/></Link>
     </div>
 

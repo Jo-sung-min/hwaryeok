@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ArrowRight, TrendingUp } from "lucide-react";
 import { HomeProductCard } from "@/components/home-product-card";
 import { RankingFilterSheet } from "@/components/ranking-filter-sheet";
@@ -39,7 +40,7 @@ export default async function RisingRankingPage({ searchParams }: { searchParams
     <section className="py-7 sm:py-10">
       <Link href="/" className="inline-flex min-h-10 items-center gap-2 text-xs text-[#947982]"><ArrowLeft size={14} />메인으로</Link>
       <div className="mt-3 flex items-start justify-between gap-4">
-        <div><p className="mb-2 text-xs font-bold text-[#bd5575]">지금 리뷰가 모이는 제품</p><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">급상승 랭킹</h1><p className="mt-3 text-sm leading-7 text-[#8a727d]">최근 {data.window.days}일 리뷰 수가 직전 {data.window.days}일보다 증가한 제품을 모았어요.</p></div>
+        <div><h1 className="text-2xl font-bold tracking-tight sm:text-3xl">급상승 랭킹</h1></div>
         <span className="hidden size-14 shrink-0 place-items-center rounded-2xl bg-[#fff0f5] text-[#bd5575] sm:grid" aria-hidden="true"><TrendingUp size={25} /></span>
       </div>
       <details className="mt-5 rounded-2xl border border-[#efdce4] bg-[#fff8fa] px-4 py-3 text-xs leading-6 text-[#917481]">
@@ -56,9 +57,8 @@ export default async function RisingRankingPage({ searchParams }: { searchParams
       {data.content.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 xl:grid-cols-4">
         {data.content.map((item) => <HomeProductCard key={item.product.id} product={item.product} rank={item.rank} favorited={favoriteIds.has(item.product.id)} isAuthenticated={favorites.isAuthenticated} returnTo={returnTo} growth={{ recentReviewCount: item.recentReviewCount, previousReviewCount: item.previousReviewCount, reviewGrowth: item.reviewGrowth }} review={{ score: item.recentReviewScore, count: item.recentReviewCount }} />)}
       </div> : <div className="rounded-3xl border border-dashed border-[#e6bdcc] bg-[#fffafb] px-5 py-14 text-center">
-        <TrendingUp className="mx-auto text-[#bd5575]" size={30} />
+        <Image src="/icons/rising.png" alt="" width={64} height={64} className="mx-auto" />
         <h3 className="mt-4 text-lg font-semibold">{page > 0 ? "이 페이지에는 제품이 없어요" : "아직 급상승한 제품이 없어요"}</h3>
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-[#8a727d]">{page > 0 ? "첫 페이지로 돌아가 현재 집계된 제품을 확인해 보세요." : `최근 ${data.window.days}일의 실제 리뷰가 직전 기간보다 증가하면 랭킹에 표시돼요. 충분한 활동이 모일 때까지 임의의 순위를 만들지 않아요.`}</p>
         <Link href={page > 0 ? catalogRankingHref(basePath, filters) : category ? basePath : "/products"} className="line-btn mt-6">{page > 0 ? "첫 페이지 보기" : category ? "전체 급상승 보기" : "제품 둘러보기"}<ArrowRight size={14} /></Link>
       </div>}
       <RankingPagination basePath={basePath} filters={filters} page={data.page} totalPages={data.totalPages} hasNext={data.hasNext} />

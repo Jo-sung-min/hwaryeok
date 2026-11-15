@@ -73,7 +73,7 @@
 .filterSheetFooter { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid #eae5e9; background: #fff; }
 .filterApply { display: flex; width: 100%; min-height: 50px; align-items: center; justify-content: center; border: 0; border-radius: 11px; color: #fff; background: #b83e69; font-size: 14px; font-weight: 750; transition: background-color .18s ease, transform .18s ease; }
 .filterApply:active { transform: scale(.985); }
-.catalogMeta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 22px; color: #6c6873; font-size: 13px; line-height: 1.7; }
+.catalogMeta { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 22px; color: #6c6873; font-size: 13px; line-height: 1.7; }
 .catalogMeta p { margin: 0; }
 .catalogMeta > span { display: inline-flex; align-items: center; gap: 6px; color: #56525e; font-weight: 550; }
 .catalogNote { margin: 0 0 22px; color: #6a6672; font-size: 14px; line-height: 1.8; }
@@ -99,6 +99,8 @@
 .rankingPreviewList .matchReason small { display: none; }
 .previewState { display: flex; min-height: 92px; align-items: center; gap: 14px; padding: 18px; border: 1px solid #e9e5eb; border-radius: 12px; color: #9f4a69; background: #fff; }
 .previewState > svg { flex: 0 0 auto; }
+.stateIcon { flex: 0 0 auto; width: 44px; height: 44px; object-fit: contain; }
+.empty .stateIcon { display: block; width: 64px; height: 64px; margin: auto; }
 .previewState > div { min-width: 0; flex: 1; }
 .previewState h3 { margin: 0; color: #3c3740; font-size: 15px; font-weight: 700; line-height: 1.55; word-break: keep-all; }
 .previewState p { margin: 4px 0 0; color: #77717b; font-size: 12px; line-height: 1.65; }

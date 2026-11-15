@@ -12,14 +12,12 @@
 // OPENAI_API_KEY는 환경변수 또는 backend/.env에서 읽으며 출력하지 않는다.
 // Node 24 이상에서 실행한다(카탈로그 .ts 파일을 타입 제거로 직접 불러온다).
 
-import { mkdir, readFile, access } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { FACE_MODEL, FACE_SYMPTOMS, FACE_VIEWS, FACE_ZONES } from "../src/lib/face-concerns.ts";
+import { IMAGE_MODEL as MODEL, IMAGE_QUALITY as QUALITY, exists, publicDir, readApiKey, requestImageEdit as requestEdit } from "./lib/openai-image.mjs";
 
-const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const publicDir = path.join(frontendDir, "public");
 const modelPath = path.join(publicDir, FACE_MODEL.src);
 const zonesDir = path.join(publicDir, "face-check", "zones");
 const symptomsDir = path.join(publicDir, "face-check", "symptoms");
@@ -36,8 +34,6 @@ const viewPrompts = {
   top: "Only the head pose changes: she has bowed her head forward and down so that the top of her head faces the camera. The picture clearly shows the hair parting, the crown of the head and the scalp along the parting; her forehead and the tip of her nose are foreshortened at the bottom of the head.",
 };
 
-const MODEL = process.env.FACE_CONCERN_IMAGE_MODEL || "gpt-image-2.6-sunburst";
-const QUALITY = process.env.FACE_CONCERN_IMAGE_QUALITY || "medium";
 const INPUT_SIZE = 1024;
 const OUTPUT_SIZE = 640;
 const CONCURRENCY = 3;
@@ -102,28 +98,6 @@ function parseArgs(argv) {
   return { only, force: argv.includes("--force"), zonesOnly: argv.includes("--zones-only"), views: argv.includes("--views") };
 }
 
-async function requestEdit(apiKey, { image, filename, prompt, size }) {
-  const form = new FormData();
-  form.set("model", MODEL);
-  form.set("prompt", prompt);
-  form.set("size", size);
-  form.set("quality", QUALITY);
-  form.append("image[]", new Blob([image], { type: "image/png" }), filename);
-
-  const response = await fetch("https://api.openai.com/v1/images/edits", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
-    signal: AbortSignal.timeout(300_000),
-  });
-  const text = await response.text();
-  if (!response.ok) throw new Error(`OpenAI ${response.status}: ${text.slice(0, 600)}`);
-  const body = JSON.parse(text);
-  const encoded = body.data?.[0]?.b64_json;
-  if (!encoded) throw new Error(`OpenAI 응답에 이미지가 없어요: ${text.slice(0, 300)}`);
-  return { image: Buffer.from(encoded, "base64"), usage: body.usage ?? null };
-}
-
 async function generateViews({ only, force }, apiKey) {
   await mkdir(viewsDir, { recursive: true });
   const unknown = (only ?? []).filter((id) => !viewPrompts[id]);
@@ -160,18 +134,6 @@ async function generateViews({ only, force }, apiKey) {
   }
 }
 
-async function exists(file) {
-  try { await access(file); return true; } catch { return false; }
-}
-
-async function readApiKey() {
-  if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY.trim();
-  const envFile = path.resolve(frontendDir, "..", "backend", ".env");
-  if (!(await exists(envFile))) return "";
-  const line = (await readFile(envFile, "utf8")).split(/\r?\n/).find((entry) => entry.startsWith("OPENAI_API_KEY="));
-  return line ? line.slice("OPENAI_API_KEY=".length).trim() : "";
-}
-
 function cropInput(zone) {
   const { x, y, size } = zone.crop;
   const view = FACE_VIEWS.find((entry) => entry.id === zone.cropView);
@@ -204,9 +166,7 @@ async function main() {
   const { only, force, zonesOnly, views } = parseArgs(process.argv.slice(2));
   if (!(await exists(modelPath))) throw new Error(`모델 얼굴 이미지가 없어요: ${modelPath}`);
   if (views) {
-    const apiKey = await readApiKey();
-    if (!apiKey) throw new Error("OPENAI_API_KEY가 없어요. 환경변수나 backend/.env에 설정해 주세요.");
-    await generateViews({ only, force }, apiKey);
+    await generateViews({ only, force }, await readApiKey());
     return;
   }
   const missingPrompts = FACE_SYMPTOMS.filter((symptom) => !symptomPrompts[symptom.id]).map((symptom) => symptom.id);
@@ -234,7 +194,6 @@ async function main() {
   if (!targets.length) { console.log("새로 만들 증상컷이 없어요."); return; }
 
   const apiKey = await readApiKey();
-  if (!apiKey) throw new Error("OPENAI_API_KEY가 없어요. 환경변수나 backend/.env에 설정해 주세요.");
   console.log(`증상컷 ${targets.length}장 생성 시작 · 모델 ${MODEL} · 품질 ${QUALITY}`);
 
   const totals = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
