@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ChevronDown, ChevronRight, ExternalLink, ShieldCheck, ShoppingBag, Store } from "lucide-react";
+import { HomeProductCard } from "@/components/home-product-card";
 import { FavoriteButton, ProductVisual } from "@/components/product-ui";
 import { FirepowerReport } from "@/components/firepower-report";
 import { ProductIngredientsPanel } from "@/components/product-ingredients-panel";
@@ -214,14 +215,8 @@ function RelatedProducts({ products, favoriteIds, isAuthenticated, currentProduc
   if (products.length === 0) return null;
   return <section className="container-page pb-10 pt-2">
     <div className="mb-3 flex items-center justify-between gap-3"><h2 className="font-myeongjo text-xl font-semibold">함께 볼 제품</h2><Link href="/products" className="inline-flex min-h-10 items-center gap-1 text-xs font-semibold text-[#a33f62]">전체보기 <ChevronRight size={13} /></Link></div>
-    <div className="divide-y divide-[#ece9ed] border-y border-[#e8e5e9]">
-      {products.map((item) => <article key={item.id} className="relative">
-        <Link href={`/products/${encodeURIComponent(item.id)}`} className="flex min-h-28 items-center gap-3 py-3 pr-14">
-          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-[#ece9ed] bg-white"><ProductVisual tone={item.tone} imageUrl={item.imageUrl} alt={`${item.brand} ${item.name}`} variant="thumbnail" /></div>
-          <div className="min-w-0"><p className="text-[10px] font-semibold text-[#8b8289]">{item.brand} · {item.category}</p><h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-5">{item.name}</h3><p className="mt-2 text-[11px] text-[#817880]"><strong className="text-[#a33f62]">{item.score}점</strong> · 성분 기준 · {item.grade}등급</p></div>
-        </Link>
-        <div className="absolute right-0 top-1/2 -translate-y-1/2"><FavoriteButton productId={item.id} initialFavorited={favoriteIds.has(item.id)} isAuthenticated={isAuthenticated} returnTo={`/products/${currentProductId}`} small /></div>
-      </article>)}
+    <div className="grid grid-cols-2 gap-x-2.5 gap-y-3">
+      {products.map((item) => <HomeProductCard key={item.id} product={item} favorited={favoriteIds.has(item.id)} isAuthenticated={isAuthenticated} returnTo={`/products/${currentProductId}`} />)}
     </div>
   </section>;
 }

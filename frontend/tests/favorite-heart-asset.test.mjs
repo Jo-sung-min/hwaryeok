@@ -133,7 +133,8 @@ test("all FavoriteButton call sites rely on watercolor artwork and cannot opt ba
     return [...source.matchAll(/<FavoriteButton\b[\s\S]*?\/>/g)].map((match) => ({ path, tag: match[0] }));
   });
 
-  assert.ok(usages.length >= 7, `expected to inspect every FavoriteButton call site, found ${usages.length}`);
+  // 제품 상세의 "함께 볼 제품"이 홈 상품 카드를 재사용하면서 직접 호출이 한 곳 줄었다.
+  assert.ok(usages.length >= 6, `expected to inspect every FavoriteButton call site, found ${usages.length}`);
   for (const usage of usages) {
     assert.doesNotMatch(usage.tag, /\bartwork\s*=\s*(?:"standard"|'standard'|\{\s*["']standard["']\s*\})/, `${usage.path} must not select the old heart glyph`);
   }
