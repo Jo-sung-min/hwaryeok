@@ -305,6 +305,7 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
         </div>
         <p className={styles.questionNote}><ShieldCheck size={14} aria-hidden="true" />{question.note}</p>
         {view === 1 && <p className={styles.intro}>총 {total}문항 · 답변은 이 탭에 최대 24시간 임시 보관돼요. 이전 답변은 언제든 바꿀 수 있어요.</p>}
+        {view === 1 && <Link href="/skin-check/face" className={styles.faceEntry}><span><strong>증상 이름이 헷갈린다면</strong>얼굴에서 부위를 눌러 확대컷으로 고민 찾기</span><ArrowRight size={16} aria-hidden="true" /></Link>}
       </div> : view === "review" ? <div className={styles.step}>
         <div className={styles.eyebrow}><span><ClipboardList size={15} />나의 답변 노트</span><span>언제든 수정 가능</span></div>
         <h2 id="skin-step-title" tabIndex={-1}>답변을 한 번 더 살펴볼까요?</h2>
