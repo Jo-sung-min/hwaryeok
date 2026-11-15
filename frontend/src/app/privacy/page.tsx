@@ -48,7 +48,7 @@ const sections: LegalSection[] = [
     title: "개인정보 보호 문의",
     items: [
       "담당자: 조성민",
-      "이메일: wings2530@gmail.com",
+      "이메일: support@lucelab.co.kr",
       "전화: 070-8027-2561",
     ],
   },

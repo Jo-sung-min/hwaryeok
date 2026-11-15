@@ -45,7 +45,7 @@ export function LegalPage({ eyebrow, title, description, effectiveDate, sections
           ))}
         </div>
 
-        <p className="mt-8 text-center text-xs leading-6 text-[#8b7a81]">문의: <a href="mailto:wings2530@gmail.com" className="font-semibold text-[#8c5368] hover:underline">wings2530@gmail.com</a> · 070-8027-2561</p>
+        <p className="mt-8 text-center text-xs leading-6 text-[#8b7a81]">문의: <a href="mailto:support@lucelab.co.kr" className="font-semibold text-[#8c5368] hover:underline">support@lucelab.co.kr</a> · 070-8027-2561</p>
       </div>
     </div>
   );

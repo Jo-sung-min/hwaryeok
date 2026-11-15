@@ -42,10 +42,10 @@ export function Footer() {
               <dt>통신판매업</dt><dd>2025-고양덕양구-1028</dd>
             </dl>
             <div>
-              <p>서울 강남구 학동로24길 20<br />창준빌딩 402호</p>
+              <p>서울특별시 강남구 논현로38길 30<br />3층 a653호(도곡동)</p>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                 <a href="tel:07080272561" className="inline-flex min-h-7 items-center gap-1.5"><Phone size={12} aria-hidden="true" />070-8027-2561</a>
-                <a href="mailto:wings2530@gmail.com" className="inline-flex min-h-7 items-center gap-1.5"><Mail size={12} aria-hidden="true" />wings2530@gmail.com</a>
+                <a href="mailto:support@lucelab.co.kr" className="inline-flex min-h-7 items-center gap-1.5"><Mail size={12} aria-hidden="true" />support@lucelab.co.kr</a>
               </div>
             </div>
           </div>
