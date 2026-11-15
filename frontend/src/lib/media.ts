@@ -17,6 +17,12 @@ function normalizePublicBaseUrl(value: string | undefined): URL | null {
   }
 }
 
+/** S3(CDN)에 올린 화면용 에셋의 주소. CDN 기준 주소가 설정되지 않았으면 null. */
+export function resolveAssetUrl(assetPath: string): string | null {
+  if (!s3PublicBaseUrl || !assetPath.startsWith("/assets/")) return null;
+  return new URL(assetPath.slice(1), s3PublicBaseUrl).toString();
+}
+
 export function resolveProductImageUrl(imageUrl: string | null | undefined): string | null {
   if (!imageUrl) return null;
   if (/^https?:\/\//i.test(imageUrl)) return imageUrl;

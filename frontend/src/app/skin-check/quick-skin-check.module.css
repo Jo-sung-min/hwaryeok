@@ -31,6 +31,9 @@
 .multiChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .choice { position: relative; display: flex; align-items: center; gap: 12px; min-height: 80px; padding: 15px 14px; border: 1px solid #e7e1e8; border-radius: 14px; background: #fff; color: #48404e; text-align: left; transition: border-color .15s, background-color .15s; }
 .optionIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--tint); color: var(--tone); flex-shrink: 0; }
+/* 그림 아이콘: S3 시트에서 한 칸을 잘라 보여 준다. 바탕 칠 없이 그림만 크게 쓴다. */
+.optionIcon[data-art="true"] { width: 52px; height: 52px; border-radius: 0; background: none; }
+.optionArt { display: block; width: 100%; height: 100%; background-repeat: no-repeat; }
 .optionText { display: block; flex: 1; min-width: 0; }
 .choice strong { display: block; font-size: 14px; font-weight: 650; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
 .choice small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: #736a78; word-break: keep-all; }
@@ -41,6 +44,7 @@
 .multiChoices .choice { min-height: 94px; gap: 6px; padding: 10px; align-items: flex-start; flex-direction: column; }
 .multiChoices .optionIcon { width: 30px; height: 30px; border-radius: 9px; }
 .multiChoices .optionIcon svg { width: 18px; height: 18px; }
+.multiChoices .optionIcon[data-art="true"] { width: 40px; height: 40px; }
 .multiChoices .selectionMark { position: absolute; right: 11px; top: 14px; border-radius: 5px; }
 .multiChoices .choice strong { font-size: 13px; }
 .multiChoices .choice small { font-size: 11px; }
@@ -132,8 +136,12 @@
   .optionIcon { width: 32px; height: 32px; border-radius: 9px; }
   .choice strong { font-size: 13px; }
   .choice small { font-size: 11px; margin-top: 3px; }
+  .optionIcon[data-art="true"] { width: 44px; height: 44px; }
   .multiChoices .choice { min-height: 48px; padding: 8px; gap: 0; }
   .multiChoices .optionIcon { display: none; }
+  /* 그림 아이콘은 작은 화면에서도 숨기지 않고 글 옆에 작게 둔다. */
+  .multiChoices .optionIcon[data-art="true"] { display: grid; width: 32px; height: 32px; }
+  .multiChoices .choice:has(.optionIcon[data-art="true"]) { flex-direction: row; align-items: center; gap: 7px; }
   .multiChoices .selectionMark { width: 13px; height: 13px; right: 6px; top: 10px; }
   .multiChoices .choice strong { font-size: 12px; padding-right: 12px; }
   .multiChoices .choice small { font-size: 10px; }

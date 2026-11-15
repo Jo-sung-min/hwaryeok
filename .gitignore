@@ -10,3 +10,4 @@ backend/.gradle-local/
 backend/build/
 backend/bin/
 frontend/tsconfig.tsbuildinfo
+frontend/.asset-cache/

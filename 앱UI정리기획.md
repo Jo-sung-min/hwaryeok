@@ -52,6 +52,20 @@
 - 생성: `node frontend/scripts/generate-brand-icons.mjs` — 매화 마크를 화풍 참고 이미지로 넣어 OpenAI 이미지 편집으로 만든다. 새 아이콘은 스크립트의 목록에 한 줄 추가하면 된다.
 - 탭 바·버튼 안의 작은 기능 아이콘(검색, 화살표 등)은 선 아이콘을 유지한다. 16~24px 크기에서는 수채화 그림이 뭉개진다.
 
+### 나의 성분찾기 선택지 아이콘 (시트)
+
+문답 16개 문항의 선택지 65개마다 뜻이 바로 읽히는 그림을 둔다. 같은 문항의 선택지는 같은 소재로 정도 차이만 보이게 그린다(예: 번들거림 — 퍼프 든 얼굴 / 윤기 한 점 / 반짝이는 얼굴).
+
+- **한 장의 시트**에 모두 담아 S3에 올리고, 화면은 CDN의 시트에서 위치로 꺼내 쓴다: `https://cdn.hwaryeok.co.kr/assets/skin-check/option-icons-v1.webp` (10열 × 7행, 칸 128px, 330KB)
+- 순서와 버전: `frontend/src/lib/skin-check-icons.ts`
+- 생성·합치기·S3 등록: `node frontend/scripts/generate-skin-check-icons.mjs` (낱장은 깃에 올리지 않는 `.asset-cache`에만 둔다)
+- 아이콘을 바꾸면 버전을 올려 새 파일 이름으로 올린다. CDN이 오래 캐시하므로 같은 이름에 덮어쓰지 않는다.
+- CDN 주소가 설정되지 않은 환경에서는 기존 선 아이콘으로 보인다.
+
+### 에셋 보관 원칙
+
+이미지·아이콘 같은 에셋은 저장소가 아니라 **S3에 먼저 등록**하고 CDN 주소로 쓴다. 올리는 도구는 `frontend/scripts/lib/s3-upload.mjs`.
+
 ## 2-4. 앱다운 화면
 
 - 터치 영역은 최소 44px.

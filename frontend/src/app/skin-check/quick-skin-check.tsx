@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight, Check, ClipboardList, Clock3, Droplets, Flower2,
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ProductVisual } from "@/components/product-ui";
 import type { SkinProfile } from "@/lib/api";
+import { resolveAssetUrl } from "@/lib/media";
+import { skinCheckIconSheetPath, skinCheckIconStyle } from "@/lib/skin-check-icons";
 import type { SkinTypeStatistics } from "@/lib/skin-report";
 import type { Ingredient } from "@/lib/types";
 import { SkinReport } from "./skin-report";
@@ -13,6 +15,8 @@ import { getQuickRecommendations, saveSkinCheckProfile, type QuickRecommendation
 import styles from "./quick-skin-check.module.css";
 
 const icons = { drop: Droplets, sun: SunMedium, waves: Waves, shield: ShieldCheck, flower: Flower2, sparkles: Sparkles, clock: Clock3, layers: Layers, leaf: Leaf, wind: Wind };
+// 선택지 그림 아이콘은 S3의 시트 한 장에서 꺼내 쓴다. CDN 주소가 없으면 선 아이콘으로 대신한다.
+const optionIconSheetUrl = resolveAssetUrl(skinCheckIconSheetPath());
 const total = skinQuestions.length;
 
 function writeView(view: CheckView, replace = false) {
@@ -295,9 +299,10 @@ export function QuickSkinCheck({ statistics, initialProfile, initialProfileAvail
           {question.options.map(option => {
             const active = Array.isArray(selected) ? selected.includes(option.value) : selected === option.value;
             const Icon = icons[option.icon];
+            const art = optionIconSheetUrl ? skinCheckIconStyle(question.key, option.value, optionIconSheetUrl) : null;
             const atLimit = question.multiple && Array.isArray(selected) && selected.length >= (question.max ?? question.options.length) && !active && option.value !== question.exclusive;
             return <button type="button" key={option.value} aria-pressed={active} disabled={Boolean(atLimit)} className={styles.choice} onClick={() => updateAnswers(chooseAnswer(answers, question, option.value))}>
-              <span className={styles.optionIcon}><Icon size={21} strokeWidth={1.7} aria-hidden="true" /></span>
+              <span className={styles.optionIcon} data-art={art ? "true" : undefined}>{art ? <span className={styles.optionArt} style={art} aria-hidden="true" /> : <Icon size={21} strokeWidth={1.7} aria-hidden="true" />}</span>
               <span className={styles.optionText}><strong>{option.label}</strong><small>{option.description}</small></span>
               <span className={styles.selectionMark} aria-hidden="true">{active && <Check size={13} strokeWidth={3} />}</span>
             </button>;
