@@ -194,13 +194,11 @@ function CatalogProductCard({ product, eager, favorited, isAuthenticated, return
               <span>이미지 준비 중</span>
             </div>
           )}
-          {/* 홈 상품 카드와 같은 형태: 브랜드와 이름을 사진 위에 올린다. */}
-          <div className={styles.imageInfo}>
-            <p className={styles.brand}><span>{product.brand}</span><span>{product.category}</span></p>
-            <h2>{product.name}</h2>
-          </div>
         </div>
+        {/* 홈 상품 카드와 같은 형태: 사진은 꽉 채우고, 브랜드와 이름은 사진 아래에 둔다. */}
         <div className={styles.copy}>
+          <p className={styles.brand}><span>{product.brand}</span><span>{product.category}</span></p>
+          <h2>{product.name}</h2>
           <p className={styles.price}>{product.price}</p>
           <p className={styles.score}><strong>{product.score}</strong><span>{scoreLabel}</span></p>
           <p className={styles.benefit}>{concernReason ?? product.benefit}</p>

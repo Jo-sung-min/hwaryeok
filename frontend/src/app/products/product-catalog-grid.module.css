@@ -4,17 +4,18 @@
 .grid > li { min-width: 0; }
 .card { position: relative; min-width: 0; overflow: hidden; background: #fff; }
 .cardLink { display: block; min-width: 0; }
-.imageBox { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #f4f4f5; }
+.imageBox { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: #f7f2f4; }
 .productImage { object-fit: cover; object-position: center; transition: transform .22s ease; }
 .imageFallback { display: flex; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 7px; color: #9a929a; background: #f5f4f5; font-size: 10px; text-align: center; }
-.copy { min-width: 0; padding: 9px 10px 0; }
-/* 브랜드와 이름은 사진 위에 올린다. 흰 글자 그림자로 사진 위에서도 읽히게 한다. */
-.imageInfo { position: absolute; inset: auto 0 0; z-index: 1; min-width: 0; padding: 0 9px 8px; text-shadow: 0 0 8px rgba(255, 255, 255, .95), 0 1px 1px rgba(255, 255, 255, .9); }
-.brand { display: flex; min-width: 0; align-items: center; gap: 4px; margin: 0 0 3px; color: #5b4951; font-size: clamp(9px, 2.2vw, 11px); font-weight: 550; line-height: 1.45; }
+/* 사진 아래 텍스트: 브랜드(테마 플럼) · 카테고리(회색) → 이름 → 가격·점수. 사진 위에는 아무것도 얹지 않는다. */
+.copy { min-width: 0; padding: 10px 10px 0; }
+.brand { display: flex; min-width: 0; align-items: center; gap: 4px; margin: 0 0 4px; font-size: clamp(9px, 2.2vw, 11px); line-height: 1.45; }
 .brand span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.brand span + span::before { content: "·"; margin-right: 4px; }
-.imageInfo h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 2.9em; overflow: hidden; margin: 0; color: #352d31; font-size: clamp(11px, 2.7vw, 14px); font-weight: 650; letter-spacing: -.025em; line-height: 1.45; overflow-wrap: anywhere; }
-.price { margin: 0; overflow: hidden; color: #29262d; font-size: clamp(11px, 2.5vw, 14px); font-weight: 700; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.brand span:first-child { color: var(--plum); font-weight: 650; }
+.brand span + span { flex: 0 0 auto; color: #8e8a93; font-weight: 500; }
+.brand span + span::before { content: "·"; margin-right: 4px; color: #cfc8cd; }
+.copy h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 2.9em; overflow: hidden; margin: 0; color: var(--ink); font-size: clamp(11px, 2.7vw, 14px); font-weight: 650; letter-spacing: -.02em; line-height: 1.45; overflow-wrap: anywhere; word-break: keep-all; transition: color .2s ease; }
+.price { margin: 6px 0 0; overflow: hidden; color: #29262d; font-size: clamp(11px, 2.5vw, 14px); font-weight: 700; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
 .score { display: flex; min-width: 0; align-items: baseline; gap: 4px; margin: 6px 0 0; color: #a43b61; line-height: 1.35; }
 .score strong { flex: 0 0 auto; font-size: clamp(15px, 3.4vw, 20px); font-variant-numeric: tabular-nums; line-height: 1; }
 .score span { min-width: 0; overflow: hidden; color: #8b828b; font-size: clamp(8px, 1.9vw, 10px); text-overflow: ellipsis; white-space: nowrap; }
@@ -42,7 +43,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .cardLink:hover .productImage { transform: scale(1.025); }
-  .cardLink:hover h2 { color: #9e355b; }
+  .cardLink:hover h2 { color: var(--plum-dark); }
   .loadMore:hover { border-color: #d69ab0; color: #9c345a; background: #fff8fa; }
 }
 
