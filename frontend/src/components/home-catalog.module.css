@@ -82,11 +82,9 @@
 .rankingPreview { padding-block: 30px; }
 .rankingPreview .shelfHeading { margin-bottom: 16px; }
 .rankingPreviewList { min-width: 0; margin: 0; padding: 0; list-style: none; }
-.rankingPreviewList .productVisual { padding: 0; }
-.rankingPreviewList .productText { padding-top: 11px; }
+.rankingPreviewList .productText { padding: 13px 13px 14px; }
 .rankingPreviewList .brand { font-size: 11px; }
-.rankingPreviewList .imageInfo { padding: 0 11px 10px; }
-.rankingPreviewList .imageInfo h3 { min-height: 40px; font-size: 14px; line-height: 1.45; }
+.rankingPreviewList .name { font-size: 14px; }
 .rankingPreviewList .firepowerCopy { font-size: 11px; }
 .rankingPreviewList .firepowerCopy strong { font-size: 19px; }
 .rankingPreviewList .growth { margin-top: 6px; font-size: 11px; }
@@ -116,20 +114,22 @@
 .reviewerSkin { display: flex; align-items: center; gap: 4px; margin: 6px 0 0; color: #9b6279; font-size: 11px; }
 .reviewerMeta { margin: 8px 0 15px; color: #827981; font-size: 10px; line-height: 1.55; }
 .reviewerCard [role="meter"] { max-width: 100%; }
-.product { position: relative; min-width: 0; border-radius: 12px; color: #29272f; transition: box-shadow .18s ease, transform .18s ease; }
-.productLink { display: flex; height: 100%; flex-direction: column; overflow: hidden; border: 1px solid #eddee3; border-radius: 12px; background: #fff; transition: border-color .18s ease; }
-.productImage { position: relative; flex: 0 0 auto; aspect-ratio: 4 / 5; overflow: hidden; border-bottom: 1px solid #f4e9ed; background: #fff; }
-.product:hover .productLink { border-color: #d79bb0; }
-.productVisual { position: absolute; inset: 0; overflow: hidden; padding: 0; }
-.imageInfo { position: absolute; inset: auto 0 0; z-index: 15; min-width: 0; padding: 0 14px 12px; background: none; }
-.productText { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 14px 13px 13px; }
-.brand { overflow: hidden; margin: 0 0 4px; color: #5b4951; font-size: 13px; font-weight: 550; line-height: 1.5; text-overflow: ellipsis; text-shadow: 0 0 8px rgba(255, 255, 255, .95), 0 1px 1px rgba(255, 255, 255, .9); white-space: nowrap; }
-.imageInfo h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 48px; margin: 0; color: #352d31; font-size: 16px; font-weight: 650; line-height: 1.5; letter-spacing: -.025em; overflow-wrap: anywhere; text-shadow: 0 0 8px rgba(255, 255, 255, .95), 0 1px 1px rgba(255, 255, 255, .9); }
-.productLink:hover .imageInfo h3 { color: #923454; }
-.firepower { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; margin: 0; }
-.firepowerCopy { display: inline-flex; min-width: 0; align-items: baseline; flex-wrap: wrap; gap: 5px; margin: 0; color: #705d66; font-size: 12px; font-weight: 550; }
-.firepowerCopy strong { color: #bb4b70; font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; line-height: 1; }
-.firepowerCopy small { color: #74606a; font-size: 10px; font-weight: 450; }
+/* Product card: full-bleed square photo on top, quiet text panel below (no overlay on the photo). */
+.product { position: relative; min-width: 0; border-radius: 20px; color: var(--ink); transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
+.productLink { display: flex; height: 100%; flex-direction: column; overflow: hidden; border-radius: 20px; background: #fff; box-shadow: 0 1px 2px rgba(68, 30, 46, .04), 0 8px 24px rgba(150, 62, 96, .06); transition: box-shadow .4s cubic-bezier(.2, .8, .2, 1); }
+.productImage { position: relative; flex: 0 0 auto; aspect-ratio: 1 / 1; overflow: hidden; background: #f7f2f4; }
+.productVisual { position: absolute; inset: 0; overflow: hidden; }
+.productText { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 16px 16px 18px; }
+.brand { display: flex; min-width: 0; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 12px; line-height: 1.4; white-space: nowrap; }
+.brandName { overflow: hidden; color: var(--plum); font-weight: 650; letter-spacing: .01em; text-overflow: ellipsis; }
+.category { flex: 0 0 auto; color: #8e8a93; font-weight: 500; }
+.category::before { content: "·"; margin-right: 6px; color: #cfc8cd; }
+.name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-height: 2.7em; margin: 0; color: var(--ink); font-size: 16px; font-weight: 650; line-height: 1.35; letter-spacing: -.02em; overflow-wrap: anywhere; word-break: keep-all; transition: color .2s ease; }
+.productLink:hover .name { color: var(--plum-dark); }
+.firepower { display: flex; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; margin: auto 0 0; padding-top: 14px; }
+.firepowerCopy { display: inline-flex; min-width: 0; align-items: baseline; flex-wrap: wrap; gap: 5px; margin: 0; color: #8e8a93; font-size: 12px; font-weight: 500; }
+.firepowerCopy strong { color: var(--plum); font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+.firepowerCopy small { color: #aaa4ab; font-size: 11px; font-weight: 450; }
 .firepowerPetals { display: inline-flex; min-height: 14px; flex: 0 0 auto; align-items: center; }
 .matchReason { margin-top: 13px; padding: 11px 12px; border-radius: 8px; background: #fbf7f9; color: #615963; }
 .matchReason > span { display: block; margin-bottom: 4px; color: #994362; font-size: 12px; font-weight: 700; }
@@ -138,7 +138,7 @@
 .rank { position: absolute; top: 8px; left: 8px; z-index: 20; display: block; width: 36px; height: 38px; padding: 0; border: 0; background: transparent; }
 .favorite { position: absolute; right: 8px; top: 8px; z-index: 20; }
 .favorite button { min-height: 44px; width: 44px; height: 44px; box-shadow: none; }
-.review { display: flex; min-height: 20px; align-items: center; flex-wrap: wrap; gap: 4px; margin: 8px 0 0; color: #655b64; font-size: 12px; line-height: 1.65; }
+.review { display: flex; min-height: 20px; align-items: center; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; color: #8e8a93; font-size: 12px; line-height: 1.6; }
 .review strong { color: #5b515a; font-size: 14px; font-variant-numeric: tabular-nums; }
 .reviewStar { flex: 0 0 auto; color: #d97706; }
 .growth { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 8px 0 0; color: #a33c61; font-size: 13px; }
@@ -191,7 +191,8 @@
   .filterIconButton:hover, .filterChip:hover { border-color: #d99bb1; color: #9b3157; background: #fff8fa; transform: translateY(-1px); }
   .filterReset:hover, .filterClose:hover { color: #9b3157; background: #fff1f5; }
   .filterApply:hover { background: #a9345d; }
-  .product:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(61, 44, 54, .07); }
+  .product:hover { transform: translateY(-4px); }
+  .product:hover .productLink { box-shadow: 0 2px 6px rgba(68, 30, 46, .05), 0 20px 44px rgba(150, 62, 96, .12); }
 }
 @media (max-width: 1023px) {
   .catalogProducts, .products { gap: 26px 18px; }
@@ -215,17 +216,15 @@
   .catalogProducts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 14px; }
   .products { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 46%; gap: 14px; overflow-x: auto; padding: 2px 1px 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: #dfd2d9 transparent; }
   .product { scroll-snap-align: start; }
-  .product, .productLink { border-radius: 10px; }
-  .productVisual { padding: 0; }
-  .imageInfo { padding: 0 10px 10px; }
-  .productText { padding: 12px 10px 11px; }
-  .brand { font-size: 12px; }
-  .imageInfo h3 { font-size: 14px; min-height: 42px; }
+  .product, .productLink { border-radius: 16px; }
+  .productText { padding: 12px 12px 14px; }
+  .brand { font-size: 11px; }
+  .name { font-size: 14px; }
   .favorite { right: 8px; top: 8px; }
   .rank { left: 8px; top: 8px; width: 36px; height: 38px; }
   .firepower { gap: 4px 6px; }
   .firepowerCopy { gap: 4px; font-size: 11px; }
-  .firepowerCopy strong { font-size: 21px; }
+  .firepowerCopy strong { font-size: 22px; }
   .matchReason { padding: 10px; }
   .matchReason p { font-size: 12px; }
   .seeAll { margin-top: 24px; font-size: 13px; }

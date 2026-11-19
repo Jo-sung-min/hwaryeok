@@ -349,24 +349,19 @@ test("personalized product card renders score, first recommendation reason, and 
   assert.doesNotMatch(text, /두 번째 내부 근거|성분 근거가 충분하지 않아/);
 });
 
-test("home product card overlays brand and product name on the product image", () => {
+test("home product card keeps the photo clean and puts brand and name below it", () => {
   const html = render(HomeProductCard, { product: product() });
   const imageCard = html.match(/<div class="productImage">([\s\S]*?)<\/div><div class="productText">/)?.[1] ?? "";
+  const textBlock = elementWithClass(html, "div", "productText");
   const productImageRule = homeCatalogCss.match(/(?:^|\n)\.productImage\s*\{([^}]*)\}/)?.[1] ?? "";
-  const imageInfoRule = homeCatalogCss.match(/(?:^|\n)\.imageInfo\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.notEqual(imageCard, "");
-  assert.match(imageCard, /class="imageInfo"/);
-  assert.match(imageCard, /테스트 브랜드 · 앰플/);
-  assert.match(imageCard, /<h3>수분 앰플<\/h3>/);
-  assert.doesNotMatch(elementWithClass(html, "div", "productText"), /테스트 브랜드|수분 앰플/);
+  assert.doesNotMatch(imageCard, /테스트 브랜드|수분 앰플/, "The photo carries no text overlay");
+  assert.match(textBlock, /<span class="brandName">테스트 브랜드<\/span><span class="category">앰플<\/span>/);
+  assert.match(textBlock, /<h3 class="name">수분 앰플<\/h3>/);
   assert.match(productImageRule, /position:\s*relative/);
   assert.match(productImageRule, /overflow:\s*hidden/);
-  assert.match(imageInfoRule, /position:\s*absolute/);
-  assert.match(imageInfoRule, /z-index:\s*\d+/);
-  assert.ok(
-    /bottom:\s*0/.test(imageInfoRule) || /inset:\s*(?:auto\s+)?0(?:\s+0(?:\s+0)?)?/.test(imageInfoRule),
-    "The product identity overlay must be anchored to the bottom of the image",
-  );
+  assert.match(productImageRule, /aspect-ratio:\s*1\s*\/\s*1/);
+  assert.doesNotMatch(homeCatalogCss, /\.imageInfo\b/, "No gradient or overlay layer sits on the photo");
 });
 
 test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {

@@ -26,12 +26,10 @@ export function HomeProductCard({ product, rank, scoreLabel, favorited = false, 
           <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt="" variant="catalog" fit="cover" />
         </div>
         {rank !== undefined && <span className={styles.rank} role="img" aria-label={`${rank}위`}><RankingPetalIcon rank={rank} /></span>}
-        <div className={styles.imageInfo}>
-          <p className={styles.brand}>{product.brand} · {product.category}</p>
-          <h3>{product.name}</h3>
-        </div>
       </div>
       <div className={styles.productText}>
+        <p className={styles.brand}><span className={styles.brandName}>{product.brand}</span><span className={styles.category}>{product.category}</span></p>
+        <h3 className={styles.name}>{product.name}</h3>
         <p className={styles.firepower}>
           <span className={styles.firepowerCopy}><span>{firepowerLabel}</span><strong>{product.score}</strong><small> / 100</small></span>
           <span className={styles.firepowerPetals}><ReviewPetalRating score={product.score} label={firepowerLabel} compact /></span>
