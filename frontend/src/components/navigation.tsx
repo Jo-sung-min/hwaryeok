@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowRight, BarChart3, Home, Search, SlidersHorizontal, UserRound, X } from "lucide-react";
+import { ArrowRight, BarChart3, Home, ScanFace, Search, SlidersHorizontal, UserRound, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import styles from "./navigation.module.css";
 
@@ -44,9 +44,18 @@ const mobileNav = [
   { href: "/", label: "홈", icon: Home },
   { href: "/ranking", label: "랭킹", icon: BarChart3 },
   { href: "/skin-check", label: "내 피부", icon: SlidersHorizontal },
+  { href: "/skin-check/face", label: "고민 찾기", icon: ScanFace },
   { href: "/products", label: "탐색", icon: Search },
   { href: "/my", label: "MY", icon: UserRound },
 ];
+
+/** Only the most specific matching tab is active, so /skin-check/face lights "고민 찾기" and not also "내 피부". */
+function activeMobileHref(pathname: string) {
+  return mobileNav
+    .map((item) => item.href)
+    .filter((href) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -92,7 +101,7 @@ export function BottomNav() {
       ) : (
         <div className={styles.bottomItems}>
           {mobileNav.map(({ href, label, icon: Icon }) => {
-            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            const active = href === activeMobileHref(pathname);
             const className = styles.bottomItem;
             const content = <><span className={styles.bottomIcon}><Icon size={21} strokeWidth={active ? 2.4 : 1.8} aria-hidden="true" /></span>{label}</>;
 
