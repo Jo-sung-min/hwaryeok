@@ -178,7 +178,7 @@ function ReviewCard({ review, authorId, isAuthenticated, isOwner }: { review: Re
   return (
     <article className="grid overflow-hidden rounded-[26px] border border-[#efd8df] bg-white shadow-[0_9px_28px_rgba(101,53,67,.06)] sm:grid-cols-[190px_1fr]">
       <Link href={`/products/${review.product.id}`} className={`relative grid min-h-44 place-items-center overflow-hidden ${productToneMap[review.product.tone]}`} aria-label={`${review.product.brand} ${review.product.name} 제품 보기`}>
-        {imageUrl ? <Image src={imageUrl} alt={`${review.product.brand} ${review.product.name}`} fill sizes="(max-width: 640px) 100vw, 190px" className="object-contain p-5" /> : <><UserRound size={32} className="text-[#cf8ca0]" /><span className="absolute bottom-4 text-[10px] font-bold tracking-[.12em] text-[#b76a80]">HWA:RYEOK REVIEW</span></>}
+        {imageUrl ? <Image src={imageUrl} alt={`${review.product.brand} ${review.product.name}`} fill unoptimized className="object-contain p-5" /> : <><UserRound size={32} className="text-[#cf8ca0]" /><span className="absolute bottom-4 text-[10px] font-bold tracking-[.12em] text-[#b76a80]">HWA:RYEOK REVIEW</span></>}
       </Link>
       <div className="min-w-0 p-5 sm:p-6 md:p-7">
         <div className="flex items-start justify-between gap-4">

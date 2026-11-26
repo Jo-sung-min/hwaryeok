@@ -366,11 +366,18 @@ test("home product card puts brand and name on the 1:1 photo without a gradient"
   assert.doesNotMatch(imageInfoRule, /gradient|background/, "The text sits on the photo with no gradient or tinted band");
 });
 
-test("home card image size hint is not smaller than the 278px card, so photos are not stretched blurry", () => {
-  const productUi = readFileSync(new URL("../src/components/product-ui.tsx", import.meta.url), "utf8");
-  const responsiveSizes = productUi.slice(productUi.indexOf("const responsiveSizes"));
-  const catalogSizes = responsiveSizes.match(/catalog:\s*"([^"]+)"/)?.[1] ?? "";
-  assert.equal(catalogSizes, "(max-width: 594px) 50vw, 278px");
+test("product photos load the original CDN file instead of a downscaled, recompressed copy", () => {
+  const productPhotoSources = [
+    "../src/components/product-ui.tsx",
+    "../src/app/products/product-catalog-grid.tsx",
+    "../src/app/reviewers/[userId]/page.tsx",
+  ];
+  for (const file of productPhotoSources) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    const productImages = [...source.matchAll(/<Image\b[\s\S]*?\/>/g)].map((match) => match[0]).filter((tag) => /resolvedImageUrl|imageUrl/.test(tag));
+    assert.ok(productImages.length > 0, `${file} renders a product photo`);
+    for (const tag of productImages) assert.match(tag, /\bunoptimized\b/, `${file} serves the original file`);
+  }
 });
 
 test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {

@@ -112,25 +112,15 @@ export function ProductVisual({
     panel: "h-64 sm:h-full",
     catalog: "h-full w-full",
   }[variant];
-  const responsiveSizes = {
-    card: "(max-width: 768px) calc(100vw - 48px), (max-width: 1280px) 50vw, 380px",
-    compact: "(max-width: 768px) 82vw, 360px",
-    thumbnail: "96px",
-    comparison: "(max-width: 640px) 50vw, 520px",
-    fill: "(max-width: 1024px) 100vw, 46vw",
-    panel: "(max-width: 640px) 100vw, 220px",
-    // 홈 카드는 594px 앱 폭 안의 2열이라 최대 278px로 그려진다. 이보다 작게 알려 주면 작은 사진을 늘려 써서 흐려진다.
-    catalog: "(max-width: 594px) 50vw, 278px",
-  }[variant];
-
   return (
     <div className={`relative overflow-hidden ${visualSize} ${resolvedImageUrl ? "bg-white" : toneMap[tone]}`}>
       {resolvedImageUrl ? (
+        // 상품 사진은 S3(CDN)의 원본 파일을 그대로 쓴다. Next 이미지 최적화(축소·WebP 재압축)를 거치지 않는다.
         <Image
           src={resolvedImageUrl}
           alt={alt}
           fill
-          sizes={responsiveSizes}
+          unoptimized
           loading={variant === "fill" ? "eager" : "lazy"}
           className={`z-10 ${fit === "cover" ? "object-cover" : "object-contain"} object-center transition-transform duration-500 group-hover:scale-[1.025]`}
         />

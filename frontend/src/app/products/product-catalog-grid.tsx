@@ -183,7 +183,7 @@ function CatalogProductCard({ product, eager, favorited, isAuthenticated, return
               src={imageUrl}
               alt={`${product.brand} ${product.name}`}
               fill
-              sizes="(max-width: 594px) 33vw, 198px"
+              unoptimized
               loading={eager ? "eager" : "lazy"}
               className={styles.productImage}
               onError={() => setImageFailed(true)}
