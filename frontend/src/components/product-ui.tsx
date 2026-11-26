@@ -119,7 +119,8 @@ export function ProductVisual({
     comparison: "(max-width: 640px) 50vw, 520px",
     fill: "(max-width: 1024px) 100vw, 46vw",
     panel: "(max-width: 640px) 100vw, 220px",
-    catalog: "(max-width: 767px) 43vw, (max-width: 1220px) 25vw, 278px",
+    // 홈 카드는 594px 앱 폭 안의 2열이라 최대 278px로 그려진다. 이보다 작게 알려 주면 작은 사진을 늘려 써서 흐려진다.
+    catalog: "(max-width: 594px) 50vw, 278px",
   }[variant];
 
   return (

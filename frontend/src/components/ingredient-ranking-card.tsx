@@ -18,16 +18,18 @@ export function IngredientRankingCard({ item, ingredientName, sort, favorited, i
   const score = showReviewScore ? item.reviewScore : item.firepowerScore;
   return <article className="group relative min-w-0 overflow-hidden rounded-[20px] bg-white shadow-[0_1px_2px_rgba(68,30,46,.04),0_8px_24px_rgba(150,62,96,.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_2px_6px_rgba(68,30,46,.05),0_20px_44px_rgba(150,62,96,.12)]">
     <Link href={`/products/${product.id}`} className="block h-full">
-      {/* 홈 상품 카드와 같은 형태: 사진은 꽉 채우고, 브랜드와 이름은 사진 아래에 둔다. */}
+      {/* 홈 상품 카드와 같은 형태: 1:1 사진 위에 브랜드·이름을 그라데이션 없이 흰 글로우로 얹는다. */}
       <div className="relative aspect-square overflow-hidden bg-[#f7f2f4]">
         <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt={`${product.brand} ${product.name}`} variant="fill" fit="cover" />
         {item.rank !== null && (ingredientName || reviewMode) && <span aria-label={`${item.rank}위`} className={`absolute left-2.5 top-2.5 z-20 grid h-8 w-8 place-items-center rounded-lg text-sm font-bold sm:left-3 sm:top-3 ${item.rank <= 3 ? "bg-[#cf5b7d] text-white" : "bg-[#fff0f5] text-[#ab4c6b]"}`}>{item.rank}</span>}
         {reviewMode && item.rank === null && <span className="absolute left-2 top-2 z-20 rounded-full bg-[#fff4f7] px-2 py-1 text-[10px] font-semibold text-[#a57888]">리뷰 집계 대기</span>}
+        <div className="absolute inset-x-0 bottom-0 z-[15] px-3 pb-2.5 [text-shadow:0_0_6px_rgba(255,255,255,.95),0_0_2px_rgba(255,255,255,.95)] sm:px-4 sm:pb-3">
+          <p className="truncate text-[11px] sm:text-xs"><span className="font-bold text-[#b83e69]">{product.brand}</span> <span className="mx-1 text-[#b9b1b6]">·</span> <span className="font-medium text-[#6f6a73]">{product.category}</span></p>
+          <h3 className="mt-0.5 line-clamp-2 text-sm font-bold leading-5 tracking-[-0.02em] text-[#292730] transition-colors group-hover:text-[#a33359] sm:text-[15px]">{product.name}</h3>
+        </div>
       </div>
       <div className="p-3 sm:p-4">
-        <p className="truncate text-[11px] sm:text-xs"><span className="font-semibold text-[#b83e69]">{product.brand}</span> <span className="mx-1 text-[#cfc8cd]">·</span> <span className="text-[#8e8a93]">{product.category}</span></p>
-        <h3 className="mt-1.5 line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-[-0.02em] text-[#292730] transition-colors group-hover:text-[#a33359] sm:text-[15px]">{product.name}</h3>
-        <p className="mt-2 text-xs font-semibold text-[#74606a]">{product.price}</p>
+        <p className="text-xs font-semibold text-[#74606a]">{product.price}</p>
         {ingredientName && <div className="mt-2 min-h-9 rounded-lg bg-[#fff7f9] px-2.5 py-2 text-[9px] leading-4 text-[#806b73]">
           {item.amount?.verificationStatus === "VERIFIED" ? <><p className="flex items-center gap-1 font-bold text-[#a04464]"><FlaskConical size={10} /> 공개 함량 {item.amount.displayValue}</p><p>{item.amount.amountPerContainer ?? item.amount.comparisonNote}</p></> : <p><strong className="text-[#76666e]">정확 함량 미공개</strong> · 전성분 순서는 실제 함량이 아니에요</p>}
         </div>}

@@ -349,19 +349,28 @@ test("personalized product card renders score, first recommendation reason, and 
   assert.doesNotMatch(text, /두 번째 내부 근거|성분 근거가 충분하지 않아/);
 });
 
-test("home product card keeps the photo clean and puts brand and name below it", () => {
+test("home product card puts brand and name on the 1:1 photo without a gradient", () => {
   const html = render(HomeProductCard, { product: product() });
   const imageCard = html.match(/<div class="productImage">([\s\S]*?)<\/div><div class="productText">/)?.[1] ?? "";
   const textBlock = elementWithClass(html, "div", "productText");
   const productImageRule = homeCatalogCss.match(/(?:^|\n)\.productImage\s*\{([^}]*)\}/)?.[1] ?? "";
+  const imageInfoRule = homeCatalogCss.match(/(?:^|\n)\.imageInfo\s*\{([^}]*)\}/)?.[1] ?? "";
   assert.notEqual(imageCard, "");
-  assert.doesNotMatch(imageCard, /테스트 브랜드|수분 앰플/, "The photo carries no text overlay");
-  assert.match(textBlock, /<span class="brandName">테스트 브랜드<\/span><span class="category">앰플<\/span>/);
-  assert.match(textBlock, /<h3 class="name">수분 앰플<\/h3>/);
+  assert.match(imageCard, /<div class="imageInfo"><p class="brand"><span class="brandName">테스트 브랜드<\/span><span class="category">앰플<\/span><\/p><h3 class="name">수분 앰플<\/h3><\/div>/);
+  assert.doesNotMatch(textBlock, /테스트 브랜드|수분 앰플/, "Brand and name are not repeated below the photo");
   assert.match(productImageRule, /position:\s*relative/);
   assert.match(productImageRule, /overflow:\s*hidden/);
   assert.match(productImageRule, /aspect-ratio:\s*1\s*\/\s*1/);
-  assert.doesNotMatch(homeCatalogCss, /\.imageInfo\b/, "No gradient or overlay layer sits on the photo");
+  assert.match(imageInfoRule, /position:\s*absolute/);
+  assert.match(imageInfoRule, /text-shadow:/);
+  assert.doesNotMatch(imageInfoRule, /gradient|background/, "The text sits on the photo with no gradient or tinted band");
+});
+
+test("home card image size hint is not smaller than the 278px card, so photos are not stretched blurry", () => {
+  const productUi = readFileSync(new URL("../src/components/product-ui.tsx", import.meta.url), "utf8");
+  const responsiveSizes = productUi.slice(productUi.indexOf("const responsiveSizes"));
+  const catalogSizes = responsiveSizes.match(/catalog:\s*"([^"]+)"/)?.[1] ?? "";
+  assert.equal(catalogSizes, "(max-width: 594px) 50vw, 278px");
 });
 
 test("recommendation reason reserves two text lines so adjacent home cards stay aligned", () => {

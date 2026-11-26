@@ -26,10 +26,13 @@ export function HomeProductCard({ product, rank, scoreLabel, favorited = false, 
           <ProductVisual tone={product.tone} imageUrl={product.imageUrl} alt="" variant="catalog" fit="cover" />
         </div>
         {rank !== undefined && <span className={styles.rank} role="img" aria-label={`${rank}위`}><RankingPetalIcon rank={rank} /></span>}
+        {/* 1:1 스튜디오 사진 위에 브랜드·이름을 바로 얹는다. 그라데이션 없이 흰 글로우로만 읽히게 한다. */}
+        <div className={styles.imageInfo}>
+          <p className={styles.brand}><span className={styles.brandName}>{product.brand}</span><span className={styles.category}>{product.category}</span></p>
+          <h3 className={styles.name}>{product.name}</h3>
+        </div>
       </div>
       <div className={styles.productText}>
-        <p className={styles.brand}><span className={styles.brandName}>{product.brand}</span><span className={styles.category}>{product.category}</span></p>
-        <h3 className={styles.name}>{product.name}</h3>
         <p className={styles.firepower}>
           <span className={styles.firepowerCopy}><span>{firepowerLabel}</span><strong>{product.score}</strong><small> / 100</small></span>
           <span className={styles.firepowerPetals}><ReviewPetalRating score={product.score} label={firepowerLabel} compact /></span>
